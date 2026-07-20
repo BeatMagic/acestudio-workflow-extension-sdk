@@ -36,6 +36,13 @@ export const ROOT_REVOCATION_FORMAT = "acestudio.workflowext.root-revocation";
 /** All timestamps on the wire are Unix time in seconds, UTC. */
 export type UnixSeconds = number;
 
+/**
+ * A signed envelope with no `chain`: certificate statements and root-revocation
+ * statements are signed by a root directly, and the schemas pin them to exactly
+ * `{payload, signature}` (additionalProperties: false).
+ */
+export type ChainlessEnvelope = Omit<SignedEnvelope, "chain">;
+
 export interface SignatureBlockPayload {
   format: typeof SIGNATURE_BLOCK_FORMAT;
   formatVersion: 1;
@@ -56,10 +63,10 @@ export interface KeyDirectoryPayload {
   issuedAt: UnixSeconds;
   signedBy: string;
   /** Root-signed certificate statements of currently-valid intermediates. */
-  intermediates: SignedEnvelope[];
+  intermediates: ChainlessEnvelope[];
   revokedIntermediates: Array<{ keyId: string; revokedFrom: UnixSeconds }>;
   /** Root-revocation statements travel with the directory (ADR 0089 §2). */
-  rootRevocations: SignedEnvelope[];
+  rootRevocations: ChainlessEnvelope[];
 }
 
 export type TrustTier = "official" | "verified-partner";

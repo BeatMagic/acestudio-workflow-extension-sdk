@@ -41,7 +41,7 @@ export type UnixSeconds = number;
  * statements are signed by a root directly, and the schemas pin them to exactly
  * `{payload, signature}` (additionalProperties: false).
  */
-export type ChainlessEnvelope = Omit<SignedEnvelope, "chain">;
+export type ChainlessEnvelope = Omit<SignedEnvelope, "chain"> & { chain?: never };
 
 export interface SignatureBlockPayload {
   format: typeof SIGNATURE_BLOCK_FORMAT;

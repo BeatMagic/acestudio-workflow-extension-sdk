@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.acestudio.ai/workflowext-signing/root-revocation-statement.v1.schema.json",
+  "title": "Root-revocation statement (v1)",
+  "description": "A statement revoking a root key, accepted by clients only when signed by an embedded root; clients persist it irreversibly. Root revocation is total — no revoked-from grace: every chain under the revoked root dies, and re-signing under the surviving root restores legitimate bundles. It travels with the key directory and is also embedded in subsequent app builds. The root object is the wire form; `payload` is base64 of the exact signed bytes, which decode to a JSON object valid against `#/$defs/payload`. Root-signed directly, so the envelope carries no chain.",
+  "type": "object",
+  "required": ["payload", "signature"],
+  "additionalProperties": false,
+  "properties": {
+    "payload": { "$ref": "#/$defs/base64" },
+    "signature": { "$ref": "#/$defs/ed25519Signature" }
+  },
+  "$defs": {
+    "payload": {
+      "type": "object",
+      "required": ["format", "formatVersion", "revokedKeyId", "revokedFrom", "reason", "signedBy"],
+      "additionalProperties": false,
+      "properties": {
+        "format": { "const": "acestudio.workflowext.root-revocation" },
+        "formatVersion": { "const": 1 },
+        "revokedKeyId": { "$ref": "#/$defs/keyId" },
+        "revokedFrom": {
+          "description": "Unix time in seconds, UTC. Recorded for the audit trail only — clients apply root revocation totally, ignoring timestamps (a stolen root can backdate anything).",
+          "type": "integer",
+          "minimum": 0
+        },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "signedBy": { "$ref": "#/$defs/keyId" }
+      }
+    },
+    "base64": {
+      "description": "Standard-alphabet base64 with padding.",
+      "type": "string",
+      "minLength": 4,
+      "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+    },
+    "ed25519Signature": {
+      "description": "base64 of a raw 64-byte Ed25519 signature.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9+/]{86}==$"
+    },
+    "keyId": {
+      "type": "string",
+      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$"
+    }
+  }
+}

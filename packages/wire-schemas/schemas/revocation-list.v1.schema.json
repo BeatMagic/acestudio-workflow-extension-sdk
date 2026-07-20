@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.acestudio.ai/workflowext-signing/revocation-list.v1.schema.json",
+  "title": "Revocation list (v1)",
+  "description": "The intermediate-signed served file of revocation entries. Revocation honors time: an entry blocks bundles whose `signedAt` falls strictly after its `revokedFrom`; earlier signatures stay valid. The kill switch is an entry with reason `malicious` — not a separate mechanism. The root object is the wire form; `payload` is base64 of the exact signed bytes, which decode to a JSON object valid against `#/$defs/payload`.",
+  "type": "object",
+  "required": ["payload", "signature", "chain"],
+  "additionalProperties": false,
+  "properties": {
+    "payload": { "$ref": "#/$defs/base64" },
+    "signature": { "$ref": "#/$defs/ed25519Signature" },
+    "chain": {
+      "description": "The signing intermediate's certificate statement, root-signed. Exactly one link in v1.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": { "$ref": "#/$defs/certificateEnvelope" }
+    }
+  },
+  "$defs": {
+    "payload": {
+      "type": "object",
+      "required": ["format", "formatVersion", "sequence", "issuedAt", "signedBy", "entries"],
+      "additionalProperties": false,
+      "properties": {
+        "format": { "const": "acestudio.workflowext.revocation-list" },
+        "formatVersion": { "const": 1 },
+        "sequence": { "$ref": "#/$defs/sequence" },
+        "issuedAt": { "$ref": "#/$defs/unixSeconds" },
+        "signedBy": { "$ref": "#/$defs/keyId" },
+        "entries": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/revocationEntry" }
+        }
+      }
+    },
+    "revocationEntry": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["scope", "extensionId", "revokedFrom", "reason"],
+          "additionalProperties": false,
+          "properties": {
+            "scope": { "const": "extension" },
+            "extensionId": { "$ref": "#/$defs/extensionId" },
+            "revokedFrom": { "$ref": "#/$defs/unixSeconds" },
+            "reason": { "$ref": "#/$defs/reason" },
+            "note": { "$ref": "#/$defs/note" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["scope", "extensionId", "versionRange", "revokedFrom", "reason"],
+          "additionalProperties": false,
+          "properties": {
+            "scope": { "const": "extension-version-range" },
+            "extensionId": { "$ref": "#/$defs/extensionId" },
+            "versionRange": { "$ref": "#/$defs/versionRange" },
+            "revokedFrom": { "$ref": "#/$defs/unixSeconds" },
+            "reason": { "$ref": "#/$defs/reason" },
+            "note": { "$ref": "#/$defs/note" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["scope", "developerId", "revokedFrom", "reason"],
+          "additionalProperties": false,
+          "properties": {
+            "scope": { "const": "developer" },
+            "developerId": { "$ref": "#/$defs/developerSlug" },
+            "revokedFrom": { "$ref": "#/$defs/unixSeconds" },
+            "reason": { "$ref": "#/$defs/reason" },
+            "note": { "$ref": "#/$defs/note" }
+          }
+        }
+      ]
+    },
+    "versionRange": {
+      "description": "Normative comparison rule, pinned here for every consumer: bundle `version` and both bounds are SemVer 2.0.0. A version-range entry matches a bundle when the bundle's `extensionId` equals the entry's and min <= version <= max under SemVer 2.0.0 precedence (SemVer spec §11). Both bounds are inclusive; an absent bound leaves that side unbounded; build metadata never participates in the comparison (SemVer precedence ignores it).",
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "min": { "$ref": "#/$defs/semver" },
+        "max": { "$ref": "#/$defs/semver" }
+      }
+    },
+    "reason": {
+      "description": "`malicious`/`compromised` hard-disable on clients; `trust-withdrawn` drops the extension to the unsigned-tier re-consent flow.",
+      "enum": ["malicious", "compromised", "trust-withdrawn", "developer-request"]
+    },
+    "note": { "type": "string", "maxLength": 1024 },
+    "base64": {
+      "description": "Standard-alphabet base64 with padding.",
+      "type": "string",
+      "minLength": 4,
+      "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+    },
+    "ed25519Signature": {
+      "description": "base64 of a raw 64-byte Ed25519 signature.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9+/]{86}==$"
+    },
+    "certificateEnvelope": {
+      "description": "A certificate statement envelope; its payload decodes per certificate-statement.v1.schema.json.",
+      "type": "object",
+      "required": ["payload", "signature"],
+      "additionalProperties": false,
+      "properties": {
+        "payload": { "$ref": "#/$defs/base64" },
+        "signature": { "$ref": "#/$defs/ed25519Signature" }
+      }
+    },
+    "keyId": {
+      "type": "string",
+      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$"
+    },
+    "developerSlug": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$"
+    },
+    "extensionId": {
+      "type": "string",
+      "maxLength": 129,
+      "pattern": "^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$"
+    },
+    "semver": {
+      "description": "SemVer 2.0.0.",
+      "type": "string",
+      "maxLength": 256,
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+    },
+    "sequence": {
+      "description": "Strictly monotonic publish sequence; clients ratchet forward and refuse older files. Never regresses, including across service restores.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "unixSeconds": {
+      "description": "Unix time in seconds, UTC.",
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@beatmagic/workflowext-verifier",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Reference verifier for ACE Studio extension signatures — implements the client verification policy so tests assert what a real client will conclude. Ships the golden test vectors.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@beatmagic/workflowext-signed-json": "*"
+  },
+  "devDependencies": {
+    "@beatmagic/workflowext-wire-schemas": "*",
+    "ajv": "^8"
+  }
+}

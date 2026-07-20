@@ -111,6 +111,11 @@ describe("parseEnvelope", () => {
     expect(parseEnvelope(utf8Encode('{"payload":"aGk=","signature":"aGk=","chain":"no"}'))).toBeNull();
   });
 
+  it("rejects empty payload or signature strings (schema minLength)", () => {
+    expect(parseEnvelope(utf8Encode('{"payload":"","signature":"aGk="}'))).toBeNull();
+    expect(parseEnvelope(utf8Encode('{"payload":"aGk=","signature":""}'))).toBeNull();
+  });
+
   it("is as strict as the wire schemas: no unknown keys, no nested chains", () => {
     expect(
       parseEnvelope(utf8Encode('{"payload":"aGk=","signature":"aGk=","extra":1}')),

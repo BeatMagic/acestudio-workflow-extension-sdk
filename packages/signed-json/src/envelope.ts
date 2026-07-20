@@ -77,8 +77,10 @@ function isEnvelopeShaped(value: unknown, allowChain: boolean): value is SignedE
   const candidate = value as Record<string, unknown>;
   const knownKeys = allowChain ? ["payload", "signature", "chain"] : ["payload", "signature"];
   if (Object.keys(candidate).some((key) => !knownKeys.includes(key))) return false;
-  if (typeof candidate.payload !== "string") return false;
-  if (typeof candidate.signature !== "string") return false;
+  // Non-empty mirrors the wire schemas (base64 fields carry a minLength), so an
+  // empty payload/signature is a malformed envelope, not a bad signature.
+  if (typeof candidate.payload !== "string" || candidate.payload.length === 0) return false;
+  if (typeof candidate.signature !== "string" || candidate.signature.length === 0) return false;
   if (allowChain && candidate.chain !== undefined) {
     if (!Array.isArray(candidate.chain)) return false;
     if (!candidate.chain.every((link) => isEnvelopeShaped(link, false))) return false;

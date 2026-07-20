@@ -1,0 +1,13 @@
+{
+  "description": "Golden byte-stability vectors for the signing-service wire formats. Keys are throwaway RFC 8032 test seeds; no shipped client ever trusts them.",
+  "trustedRoot": {
+    "keyId": "root-1",
+    "publicKey": "11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo="
+  },
+  "files": {
+    "bundle/manifest.json": "f06cdf97e924d6a8f322af9516b24338cd0945f5ab155840098088f6ca765231",
+    "bundle/dist/index.js": "a2098bd92b10bf8b816d24b7556b1ce8c49a879d130489065ef1051c17e042f6",
+    "bundle/_signature/block.json": "d19c696ce9d35b8df3950f4de2b55da9122508b8cbf3e87eb58c5978b50ed072",
+    "intermediate-certificate.json": "996e3ab0690b2f1daeec26942b9b8c81942080a26b877e2941a3b8a3df43357e"
+  }
+}

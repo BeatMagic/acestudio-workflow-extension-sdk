@@ -7,6 +7,7 @@ export type RejectReason =
   | "bad-signature"
   | "invalid-payload"
   | "signer-not-yet-valid"
+  | "duplicate-file"
   | "file-hash-mismatch"
   | "unlisted-file"
   | "missing-file";

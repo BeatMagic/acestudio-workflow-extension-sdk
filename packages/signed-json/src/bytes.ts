@@ -10,8 +10,14 @@ export function utf8Decode(bytes: Uint8Array): string {
 const BASE64_PATTERN = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
 
 export function toBase64(bytes: Uint8Array): string {
+  // Build the binary string in chunks: per-byte `+=` is O(n^2) in most
+  // engines, and spreading the whole array into fromCharCode overflows the
+  // call stack on large inputs. 0x8000 stays isomorphic (Node/Workers).
   let binary = "";
-  for (const byte of bytes) binary += String.fromCharCode(byte);
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
   return btoa(binary);
 }
 

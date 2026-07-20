@@ -82,6 +82,15 @@ describe("verifySignedBundle — the client's conclusion (ADR 0089 §4-5)", () =
     expect(verdict).toMatchObject({ ok: false, reason: "unlisted-file" });
   });
 
+  it("rejects a duplicate path before coverage, even when one copy is smuggled", async () => {
+    const bundle = await buildSignedBundle(keys, files);
+    // Two entries at the same path: the signed copy the digest was taken over,
+    // plus a smuggled variant. digestFiles keeps the last, find picks the first.
+    bundle.push({ path: "dist/index.js", bytes: utf8Encode("export default 666;") });
+    const verdict = await verifySignedBundle(bundle, trustedRoots);
+    expect(verdict).toMatchObject({ ok: false, reason: "duplicate-file", detail: "dist/index.js" });
+  });
+
   it("rejects a bundle missing a covered file as missing-file", async () => {
     const bundle = await buildSignedBundle(keys, files);
     const withoutIndex = bundle.filter((f) => f.path !== "dist/index.js");

@@ -15,6 +15,18 @@ export async function verifySignedBundle(
   trustedRoots: TrustedRoot[],
 ): Promise<BundleVerdict> {
   const archive = Array.from(files);
+
+  // Reject duplicate paths before anything else: digestFiles collapses by path
+  // (last write wins) while the block/coverage lookups pick the first match, so
+  // a duplicate could smuggle content past the digest it was checked against.
+  const seen = new Set<string>();
+  for (const file of archive) {
+    if (seen.has(file.path)) {
+      return { ok: false, reason: "duplicate-file", detail: file.path };
+    }
+    seen.add(file.path);
+  }
+
   const block = archive.find((file) => file.path === SIGNATURE_BLOCK_PATH);
   if (block === undefined) {
     return { ok: false, reason: "missing-signature-block" };

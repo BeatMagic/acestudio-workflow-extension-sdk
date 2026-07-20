@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Versioned JSON Schemas for the six ACE Studio extension-signing wire formats — the normative contract consumed by the Studio client verification module.",
+  "engines": {
+    "node": ">=24"
+  },
   "exports": {
     ".": "./src/index.ts",
     "./schemas/*": "./schemas/*"

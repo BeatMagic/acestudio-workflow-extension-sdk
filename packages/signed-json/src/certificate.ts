@@ -48,6 +48,13 @@ export function isUnixSeconds(value: unknown): value is number {
   return typeof value === "number" && Number.isInteger(value) && value >= 0;
 }
 
+// The keyId grammar every signed statement shares (mirrors the wire schemas).
+const KEY_ID_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/;
+
+function isKeyId(value: unknown): value is string {
+  return typeof value === "string" && KEY_ID_PATTERN.test(value);
+}
+
 function isBase64PublicKey(value: unknown): value is string {
   if (typeof value !== "string") return false;
   try {
@@ -74,10 +81,10 @@ export function parseCertificatePayload(payloadBytes: Uint8Array): CertificatePa
   if (Object.keys(candidate).some((key) => !knownKeys.includes(key))) return null;
   if (candidate.format !== CERTIFICATE_FORMAT) return null;
   if (candidate.formatVersion !== 1) return null;
-  if (typeof candidate.keyId !== "string" || candidate.keyId.length === 0) return null;
+  if (!isKeyId(candidate.keyId)) return null;
   if (!isBase64PublicKey(candidate.publicKey)) return null;
   if (candidate.role !== "root" && candidate.role !== "intermediate") return null;
   if (!isUnixSeconds(candidate.validFrom)) return null;
-  if (typeof candidate.signedBy !== "string" || candidate.signedBy.length === 0) return null;
+  if (!isKeyId(candidate.signedBy)) return null;
   return candidate as unknown as CertificatePayload;
 }

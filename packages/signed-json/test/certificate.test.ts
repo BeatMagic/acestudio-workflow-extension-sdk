@@ -84,12 +84,15 @@ describe("parseCertificatePayload structural checks", () => {
     ["wrong formatVersion", { ...valid, formatVersion: 2 }],
     ["missing keyId", { ...valid, keyId: undefined }],
     ["empty keyId", { ...valid, keyId: "" }],
+    ["keyId with disallowed characters", { ...valid, keyId: "Intermediate_1" }],
+    ["keyId with a leading hyphen", { ...valid, keyId: "-intermediate" }],
     ["unknown role", { ...valid, role: "leaf" }],
     ["non-integer validFrom", { ...valid, validFrom: 1.5 }],
     ["negative validFrom", { ...valid, validFrom: -1 }],
     ["publicKey not base64", { ...valid, publicKey: "@@" }],
     ["publicKey wrong length", { ...valid, publicKey: toBase64(new Uint8Array(31)) }],
     ["missing signedBy", { ...valid, signedBy: undefined }],
+    ["signedBy with disallowed characters", { ...valid, signedBy: "ROOT-1" }],
     ["extra property (closed contract)", { ...valid, nickname: "spare key" }],
   ])("rejects %s", (_name, payload) => {
     expect(parseCertificatePayload(bytesOf(payload))).toBeNull();

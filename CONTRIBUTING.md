@@ -1,7 +1,9 @@
 # Contributing
 
-Thanks for your interest in the ACE Studio workflow-extension SDK. This guide
-covers the repo layout and the local development workflow.
+This SDK is open source, but it is developed first for ACE Studio's own teams
+rather than run as a community project. Contributions are accepted; this guide is
+written for anyone working on the code — and mostly for the maintainers who do so
+day to day — covering the repo layout, the local development workflow, and the build.
 
 ## Prerequisites
 

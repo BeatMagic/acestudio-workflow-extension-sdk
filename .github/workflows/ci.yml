@@ -33,7 +33,9 @@ jobs:
 
       - name: Verify the CLI runs from a packed tarball
         run: |
-          tgz=$(npm pack -w @timedomain/aceworkflow --pack-destination "$RUNNER_TEMP" | tail -1)
+          # The Build step above already produced dist/; --ignore-scripts skips the
+          # prepack hook so pack reuses it instead of rebuilding everything again.
+          tgz=$(npm pack -w @timedomain/aceworkflow --ignore-scripts --pack-destination "$RUNNER_TEMP" | tail -1)
           mkdir -p "$RUNNER_TEMP/packtest" && cd "$RUNNER_TEMP/packtest"
           npm init -y >/dev/null
           npm install "$RUNNER_TEMP/$tgz"

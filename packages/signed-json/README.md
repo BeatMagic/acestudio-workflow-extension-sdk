@@ -1,4 +1,4 @@
-# @beatmagic/workflowext-signed-json
+# @timedomain/workflowext-signed-json
 
 Signed-JSON primitives shared by the signing pipeline and the reference
 verifier: Ed25519 and SHA-256 via WebCrypto only — no custom crypto — over

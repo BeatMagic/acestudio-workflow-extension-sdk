@@ -4,15 +4,15 @@ import {
   createSignedEnvelope,
   utf8Encode,
   type SignedEnvelope,
-} from "@beatmagic/workflowext-signed-json";
-import { revocationListSchema, trustRegistrySchema } from "@beatmagic/workflowext-wire-schemas";
+} from "@timedomain/workflowext-signed-json";
+import { revocationListSchema, trustRegistrySchema } from "@timedomain/workflowext-wire-schemas";
 import {
   parseRevocationListPayload,
   parseTrustRegistryPayload,
   verifyRevocationList,
   verifyTrustRegistry,
   type TrustedRoot,
-} from "@beatmagic/workflowext-verifier";
+} from "@timedomain/workflowext-verifier";
 import { CERT_VALID_FROM, makeTestKeys, type TestKeys } from "./helpers";
 
 const NOW = 1_752_969_600;

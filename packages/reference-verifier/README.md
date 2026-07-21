@@ -1,4 +1,4 @@
-# @beatmagic/workflowext-verifier
+# @timedomain/workflowext-verifier
 
 The reference verifier: implements the **client** verification policy so every
 service test asserts what a real client will conclude, not what the server

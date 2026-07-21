@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { Ajv2020 } from "ajv/dist/2020.js";
-import { utf8Encode } from "@beatmagic/workflowext-signed-json";
-import { signatureBlockSchema } from "@beatmagic/workflowext-wire-schemas";
-import { parseSignatureBlockPayload } from "@beatmagic/workflowext-verifier";
+import { utf8Encode } from "@timedomain/workflowext-signed-json";
+import { signatureBlockSchema } from "@timedomain/workflowext-wire-schemas";
+import { parseSignatureBlockPayload } from "@timedomain/workflowext-verifier";
 
 // The verifier hand-rolls the structural checks the schema publishes (the C++
 // client will too). This suite locks the two to the same verdicts.

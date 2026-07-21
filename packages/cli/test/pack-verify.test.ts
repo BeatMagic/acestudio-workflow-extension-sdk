@@ -6,7 +6,7 @@ import { deriveBundleName, packDir, PackError } from "../src/bundle/pack";
 import { writeZip } from "../src/bundle/zip";
 import { PACK_MODIFIED_AT } from "../src/bundle/constants";
 import { verifyBundleBytes } from "../src/verify/verify";
-import { loadRoots, DEFAULT_ROOTS_PATH } from "../src/verify/roots";
+import { defaultRoots, loadRoots } from "../src/verify/roots";
 import { makeTestSigner, rootsOf, signFiles, FIXTURE_SIGNED_AT } from "./fixtures";
 
 let dir: string;
@@ -97,8 +97,8 @@ describe("verify", () => {
 });
 
 describe("roots", () => {
-  it("loads the embedded production root", async () => {
-    const roots = await loadRoots(DEFAULT_ROOTS_PATH);
+  it("exposes the embedded production root as the default trust anchor", () => {
+    const roots = defaultRoots();
     expect(roots.some((root) => root.keyId === "root-1")).toBe(true);
     expect(roots[0]!.publicKey).toHaveLength(32);
   });

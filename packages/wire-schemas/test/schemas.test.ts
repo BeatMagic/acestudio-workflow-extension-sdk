@@ -8,7 +8,7 @@ import {
   rootRevocationStatementSchema,
   signatureBlockSchema,
   trustRegistrySchema,
-} from "@beatmagic/workflowext-wire-schemas";
+} from "@timedomain/workflowext-wire-schemas";
 
 // 44-char base64 (32 bytes) / 88-char base64 (64 bytes) stand-ins.
 const B64_32BYTES = "A".repeat(43) + "=";

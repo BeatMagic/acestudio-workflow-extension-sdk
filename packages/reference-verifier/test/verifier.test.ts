@@ -4,8 +4,8 @@ import {
   createSignedEnvelope,
   generateSigningKey,
   utf8Encode,
-} from "@beatmagic/workflowext-signed-json";
-import { verifySignedBundle, type TrustedRoot } from "@beatmagic/workflowext-verifier";
+} from "@timedomain/workflowext-signed-json";
+import { verifySignedBundle, type TrustedRoot } from "@timedomain/workflowext-verifier";
 import {
   buildSignedBundle,
   CERT_VALID_FROM,

@@ -1,5 +1,5 @@
 {
-  "name": "@beatmagic/workflowext-wire-schemas",
+  "name": "@timedomain/workflowext-wire-schemas",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,14 +7,27 @@
   "engines": {
     "node": ">=24"
   },
+  "main": "./dist/index.js",
+  "types": "./dist/src/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/index.js"
+    },
     "./schemas/*": "./schemas/*"
   },
   "dependencies": {
-    "@beatmagic/workflowext-signed-json": "*"
+    "@timedomain/workflowext-signed-json": "*"
   },
   "devDependencies": {
     "ajv": "^8"
+  },
+  "files": ["dist", "schemas"],
+  "scripts": {
+    "prepack": "node ../../scripts/build.mjs"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

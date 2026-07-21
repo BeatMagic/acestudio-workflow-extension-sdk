@@ -1,4 +1,4 @@
-# @beatmagic/aceworkflow
+# @timedomain/aceworkflow
 
 The ACE Studio workflow-extension CLI. A pure client of the signing service's
 submission API: it packs a `.aceworkflow` bundle, submits it to be signed, and

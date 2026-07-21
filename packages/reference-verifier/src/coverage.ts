@@ -1,4 +1,4 @@
-import { sha256Hex } from "@beatmagic/workflowext-signed-json";
+import { sha256Hex } from "@timedomain/workflowext-signed-json";
 
 export const SIGNATURE_BLOCK_PATH = "_signature/block.json";
 

@@ -5,14 +5,14 @@ import {
   utf8Decode,
   verifyEnvelope,
   type CertificatePayload,
-} from "@beatmagic/workflowext-signed-json";
+} from "@timedomain/workflowext-signed-json";
 import {
   REVOCATION_LIST_FORMAT,
   TRUST_REGISTRY_FORMAT,
   type RevocationEntry,
   type RevocationListPayload,
   type TrustRegistryPayload,
-} from "@beatmagic/workflowext-wire-schemas";
+} from "@timedomain/workflowext-wire-schemas";
 import { resolveChain } from "./chain";
 import { DEVELOPER_SLUG_PATTERN, EXTENSION_ID_PATTERN, SEMVER_PATTERN } from "./payload";
 import { hasExactKeys, KEY_ID_PATTERN } from "./trust-files";

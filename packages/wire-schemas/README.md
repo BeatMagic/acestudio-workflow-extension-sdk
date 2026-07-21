@@ -1,4 +1,4 @@
-# @beatmagic/workflowext-wire-schemas
+# @timedomain/workflowext-wire-schemas
 
 Versioned JSON Schemas for the six ACE Studio extension-signing wire formats —
 the **normative contract** consumed by the Studio client verification module.

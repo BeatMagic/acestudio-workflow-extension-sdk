@@ -1,8 +1,8 @@
-import { isUnixSeconds, utf8Decode } from "@beatmagic/workflowext-signed-json";
+import { isUnixSeconds, utf8Decode } from "@timedomain/workflowext-signed-json";
 import {
   SIGNATURE_BLOCK_FORMAT,
   type SignatureBlockPayload,
-} from "@beatmagic/workflowext-wire-schemas";
+} from "@timedomain/workflowext-wire-schemas";
 
 // Mirrors signature-block.v1.schema.json — the verifier hand-rolls the checks
 // the C++ client will also hand-roll; a test cross-checks them against the

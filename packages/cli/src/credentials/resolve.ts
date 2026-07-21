@@ -14,7 +14,10 @@ export interface ResolvedCredential {
  * `--token` > `ACEWORKFLOW_TOKEN` > the cached store. The env var always wins
  * over the store and never writes to it — that is the CI/agent path, where a
  * pipeline injects the credential and nothing should persist. Returns null
- * when nothing is found; the caller decides whether to prompt, mint, or fail.
+ * when nothing usable is found; blank/whitespace-only values are ignored, and
+ * a returned bearer is trimmed so a stray-whitespace entry never becomes an
+ * unusable Authorization header. The caller decides whether to prompt, mint,
+ * or fail.
  */
 export async function resolveCredential(options: {
   explicitToken?: string | undefined;
@@ -23,15 +26,16 @@ export async function resolveCredential(options: {
   origin: string;
 }): Promise<ResolvedCredential | null> {
   const { explicitToken, env, store, origin } = options;
-  if (explicitToken !== undefined && explicitToken.length > 0) {
-    return { bearer: explicitToken, source: "flag" };
+  const flag = explicitToken?.trim();
+  if (flag !== undefined && flag.length > 0) {
+    return { bearer: flag, source: "flag" };
   }
-  const fromEnv = env[TOKEN_ENV_VAR];
+  const fromEnv = env[TOKEN_ENV_VAR]?.trim();
   if (fromEnv !== undefined && fromEnv.length > 0) {
     return { bearer: fromEnv, source: "env" };
   }
-  const stored = await store.get(origin);
-  if (stored !== null && stored.length > 0) {
+  const stored = (await store.get(origin))?.trim();
+  if (stored !== undefined && stored.length > 0) {
     return { bearer: stored, source: "store" };
   }
   return null;

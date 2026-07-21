@@ -109,4 +109,22 @@ describe("resolveCredential", () => {
     const resolved = await resolveCredential({ env: {}, store, origin: ORIGIN });
     expect(resolved).toBeNull();
   });
+
+  it("ignores blank/whitespace-only candidates", async () => {
+    const store = new FileCredentialStore(dir);
+    const resolved = await resolveCredential({
+      explicitToken: "  ",
+      env: { [TOKEN_ENV_VAR]: "\t" },
+      store,
+      origin: ORIGIN,
+    });
+    expect(resolved).toBeNull();
+  });
+
+  it("trims a stored bearer before returning it", async () => {
+    const store = new FileCredentialStore(dir);
+    await store.set(ORIGIN, "  wxsa_padded  ");
+    const resolved = await resolveCredential({ env: {}, store, origin: ORIGIN });
+    expect(resolved).toEqual({ bearer: "wxsa_padded", source: "store" });
+  });
 });

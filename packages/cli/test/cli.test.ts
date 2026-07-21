@@ -95,6 +95,13 @@ describe("pack", () => {
     expect(code).toBe(ExitCode.Success);
     expect(existsSync(join(dir, "demo-1.2.0.aceworkflow"))).toBe(true);
   });
+
+  it("resolves a relative input path against the injected cwd", async () => {
+    await makeExtensionDir(); // creates <cwd>/ext
+    const code = await run(deps(["pack", "ext"])); // relative; deps() cwd is the temp dir
+    expect(code).toBe(ExitCode.Success);
+    expect(existsSync(join(dir, "demo-1.2.0.aceworkflow"))).toBe(true);
+  });
 });
 
 describe("service override banner", () => {

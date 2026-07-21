@@ -1,5 +1,5 @@
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { PACK_MODIFIED_AT } from "./bundle/constants";
 import { deriveBundleName, extensionSlug, packDir, PackError } from "./bundle/pack";
 import { writeZip } from "./bundle/zip";
@@ -20,6 +20,16 @@ function requirePositional(ctx: Ctx, name: string): string | null {
     return null;
   }
   return value;
+}
+
+/** Resolves a user-supplied path against the injected cwd; absolute paths pass through. */
+function atCwd(ctx: Ctx, p: string): string {
+  return resolve(ctx.cwd, p);
+}
+
+/** The trusted-roots file: an explicit --roots (resolved against cwd) or the embedded default. */
+function rootsPath(ctx: Ctx): string {
+  return ctx.options.roots !== undefined ? atCwd(ctx, ctx.options.roots) : DEFAULT_ROOTS_PATH;
 }
 
 function signedFilename(result: SignedResult): string {
@@ -92,7 +102,7 @@ export async function cmdPack(ctx: Ctx): Promise<number> {
 
   let files;
   try {
-    files = await packDir(dir);
+    files = await packDir(atCwd(ctx, dir));
   } catch (error) {
     if (error instanceof PackError) {
       ctx.reporter.failure(error.message, "pack-failed");
@@ -102,7 +112,8 @@ export async function cmdPack(ctx: Ctx): Promise<number> {
   }
 
   const name = deriveBundleName(files);
-  const outPath = ctx.options.out ?? (name !== null ? join(ctx.cwd, name) : null);
+  const outPath =
+    ctx.options.out !== undefined ? atCwd(ctx, ctx.options.out) : name !== null ? join(ctx.cwd, name) : null;
   if (outPath === null) {
     ctx.reporter.failure("cannot derive an output name from the manifest; pass -o <file>", "usage");
     return ExitCode.Usage;
@@ -124,7 +135,7 @@ export async function cmdVerify(ctx: Ctx): Promise<number> {
 
   let roots;
   try {
-    roots = await loadRoots(ctx.options.roots ?? DEFAULT_ROOTS_PATH);
+    roots = await loadRoots(rootsPath(ctx));
   } catch (error) {
     if (error instanceof RootsError) {
       ctx.reporter.failure(error.message, "no-trusted-roots");
@@ -135,7 +146,7 @@ export async function cmdVerify(ctx: Ctx): Promise<number> {
 
   let bytes: Uint8Array;
   try {
-    bytes = new Uint8Array(await readFile(bundle));
+    bytes = new Uint8Array(await readFile(atCwd(ctx, bundle)));
   } catch {
     ctx.reporter.failure(`cannot read ${bundle}`, "io-error");
     return ExitCode.Generic;
@@ -169,7 +180,7 @@ export async function cmdSubmit(ctx: Ctx): Promise<number> {
 
   let bytes: Uint8Array<ArrayBuffer>;
   try {
-    bytes = new Uint8Array(await readFile(bundle));
+    bytes = new Uint8Array(await readFile(atCwd(ctx, bundle)));
   } catch {
     ctx.reporter.failure(`cannot read ${bundle}`, "io-error");
     return ExitCode.Generic;
@@ -184,7 +195,8 @@ export async function cmdSubmit(ctx: Ctx): Promise<number> {
     return exitForServiceCode(res.error.code);
   }
 
-  const outPath = ctx.options.out ?? join(ctx.cwd, signedFilename(res.value));
+  const outPath =
+    ctx.options.out !== undefined ? atCwd(ctx, ctx.options.out) : join(ctx.cwd, signedFilename(res.value));
   await writeOutput(outPath, res.value.signedBundle);
   ctx.reporter.result(`signed ${res.value.extensionId} ${res.value.version} → ${outPath}`, {
     command: "submit",
@@ -201,11 +213,12 @@ export async function cmdSubmit(ctx: Ctx): Promise<number> {
 export async function cmdSign(ctx: Ctx): Promise<number> {
   const input = requirePositional(ctx, "<dir|bundle>");
   if (input === null) return ExitCode.Usage;
+  const inputPath = atCwd(ctx, input);
 
   let unsigned: Uint8Array<ArrayBuffer>;
   let isDirectory: boolean;
   try {
-    isDirectory = (await stat(input)).isDirectory();
+    isDirectory = (await stat(inputPath)).isDirectory();
   } catch {
     ctx.reporter.failure(`cannot read ${input}`, "io-error");
     return ExitCode.Generic;
@@ -214,7 +227,7 @@ export async function cmdSign(ctx: Ctx): Promise<number> {
   if (isDirectory) {
     let files;
     try {
-      files = await packDir(input);
+      files = await packDir(inputPath);
     } catch (error) {
       if (error instanceof PackError) {
         ctx.reporter.failure(error.message, "pack-failed");
@@ -226,7 +239,7 @@ export async function cmdSign(ctx: Ctx): Promise<number> {
     ctx.reporter.step(`✓ packed        ${input} (${files.length} entries)`);
   } else {
     try {
-      unsigned = new Uint8Array(await readFile(input));
+      unsigned = new Uint8Array(await readFile(inputPath));
     } catch {
       ctx.reporter.failure(`cannot read ${input}`, "io-error");
       return ExitCode.Generic;
@@ -251,7 +264,7 @@ export async function cmdSign(ctx: Ctx): Promise<number> {
   if (!ctx.options.noVerify) {
     let roots;
     try {
-      roots = await loadRoots(ctx.options.roots ?? DEFAULT_ROOTS_PATH);
+      roots = await loadRoots(rootsPath(ctx));
     } catch (error) {
       if (!(error instanceof RootsError)) throw error;
       // No trust anchor to check against — announce loudly and continue rather
@@ -272,7 +285,8 @@ export async function cmdSign(ctx: Ctx): Promise<number> {
     }
   }
 
-  const outPath = ctx.options.out ?? join(ctx.cwd, SIGN_OUTPUT_DIR, signedFilename(value));
+  const outPath =
+    ctx.options.out !== undefined ? atCwd(ctx, ctx.options.out) : join(ctx.cwd, SIGN_OUTPUT_DIR, signedFilename(value));
   await writeOutput(outPath, value.signedBundle);
   ctx.reporter.step(`→ wrote         ${outPath}`);
   ctx.reporter.result(`signed ${value.extensionId} ${value.version} → ${outPath}`, {

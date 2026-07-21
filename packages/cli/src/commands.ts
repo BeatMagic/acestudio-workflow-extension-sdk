@@ -225,7 +225,12 @@ export async function cmdSign(ctx: Ctx): Promise<number> {
     unsigned = await writeZip(files, PACK_MODIFIED_AT);
     ctx.reporter.step(`✓ packed        ${input} (${files.length} entries)`);
   } else {
-    unsigned = new Uint8Array(await readFile(input));
+    try {
+      unsigned = new Uint8Array(await readFile(input));
+    } catch {
+      ctx.reporter.failure(`cannot read ${input}`, "io-error");
+      return ExitCode.Generic;
+    }
   }
 
   const acquired = await acquireBearer(ctx);

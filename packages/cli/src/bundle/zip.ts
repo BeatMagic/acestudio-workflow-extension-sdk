@@ -285,8 +285,8 @@ export async function writeZip(files: readonly ZipFile[], modifiedAtSeconds: num
   const { date, time } = dosDateTime(modifiedAtSeconds);
   const encoder = new TextEncoder();
 
-  // Sequential on purpose: preparing one entry at a time keeps a single
-  // compression stream's state live instead of one per entry.
+  // Sequential on purpose: deflating one entry at a time bounds memory to a
+  // single in-flight compression stream, rather than N running concurrently.
   const prepared = [];
   for (const file of files) {
     const nameBytes = encoder.encode(file.path);

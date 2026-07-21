@@ -1,0 +1,24 @@
+{
+  "name": "@beatmagic/aceworkflow",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The ACE Studio workflow-extension CLI: pack, submit, and verify .aceworkflow bundles against the signing service. A pure client of the submission API.",
+  "engines": {
+    "node": ">=24"
+  },
+  "bin": {
+    "aceworkflow": "./src/cli.ts"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@beatmagic/workflowext-verifier": "*",
+    "@napi-rs/keyring": "^1.3.0"
+  },
+  "devDependencies": {
+    "@beatmagic/workflowext-signed-json": "*",
+    "@beatmagic/workflowext-wire-schemas": "*"
+  }
+}

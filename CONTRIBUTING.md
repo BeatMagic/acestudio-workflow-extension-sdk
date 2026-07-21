@@ -1,9 +1,7 @@
-# Contributing
+# Contributing guide for internal teams
 
-This SDK is open source, but it is developed first for ACE Studio's own teams
-rather than run as a community project. Contributions are accepted; this guide is
-written for anyone working on the code — and mostly for the maintainers who do so
-day to day — covering the repo layout, the local development workflow, and the build.
+This guide covers the repo layout, the local development workflow, and how the
+build works.
 
 ## Prerequisites
 

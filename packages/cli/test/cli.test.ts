@@ -391,7 +391,8 @@ describe("login / whoami / logout", () => {
   });
 
   it("bare login refuses in a non-interactive session", async () => {
-    const code = await run(deps(["login", "--service", SERVICE], { stdinIsTTY: false, stdoutIsTTY: false }));
+    const code = await run(deps(["login", "--service", SERVICE, "--json"], { stdinIsTTY: false, stdoutIsTTY: false }));
     expect(code).toBe(ExitCode.Usage);
+    expect(JSON.parse(out.join("")) as { code: string }).toMatchObject({ code: "usage" });
   });
 });

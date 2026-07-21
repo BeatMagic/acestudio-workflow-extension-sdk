@@ -303,7 +303,7 @@ export async function cmdLogin(ctx: Ctx): Promise<number> {
   if (!ctx.interactive) {
     ctx.reporter.failure(
       "login needs --token or --ad-hoc in a non-interactive session",
-      "missing-credential",
+      "usage",
     );
     return ExitCode.Usage;
   }

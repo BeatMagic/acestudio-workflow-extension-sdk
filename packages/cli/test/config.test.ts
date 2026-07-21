@@ -51,4 +51,15 @@ describe("resolveService with aliases", () => {
   it("rejects an unknown name that is neither a URL nor an alias", () => {
     expect(() => resolveService({ flag: "staging", env: {}, aliases: {} })).toThrow(ServiceUrlError);
   });
+
+  it("trims surrounding whitespace from the override before resolving", () => {
+    const resolved = resolveService({ flag: "  https://dev.example  ", env: {}, aliases: {} });
+    expect(resolved.url.origin).toBe("https://dev.example");
+    expect(resolved.overridden).toBe(true);
+  });
+
+  it("treats a whitespace-only override as no override (production)", () => {
+    const resolved = resolveService({ flag: "   ", env: {}, aliases: {} });
+    expect(resolved.overridden).toBe(false);
+  });
 });

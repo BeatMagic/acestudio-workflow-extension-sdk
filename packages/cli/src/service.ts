@@ -24,7 +24,7 @@ export function resolveService(options: {
   env: NodeJS.ProcessEnv;
   aliases?: Record<string, string>;
 }): ResolvedService {
-  const raw = options.flag ?? options.env[SERVICE_ENV_VAR];
+  const raw = (options.flag ?? options.env[SERVICE_ENV_VAR])?.trim();
   if (raw === undefined || raw.length === 0) {
     return { url: withTrailingSlash(PRODUCTION_SERVICE), overridden: false };
   }

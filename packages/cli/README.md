@@ -11,7 +11,7 @@ cannot already do.
 aceworkflow pack   <dir> [-o <out.aceworkflow>]     pack a source tree (local, deterministic)
 aceworkflow submit <bundle.aceworkflow> [-o <out>]  submit a prebuilt bundle to be signed
 aceworkflow verify <bundle.aceworkflow> [--roots <file>]   check a signed bundle
-aceworkflow sign   <dir|bundle> [-o <out>]          pack → submit → self-verify → write
+aceworkflow sign   <dir|bundle> [-o <out>] [--roots <file>]   pack → submit → self-verify → write
 
 aceworkflow login  [--token <bearer> | --ad-hoc]    store a credential for a service
 aceworkflow logout                                  forget the stored credential
@@ -19,6 +19,7 @@ aceworkflow whoami                                  show the resolved credential
 ```
 
 Global options: `--service <url>` (defaults to production), `--token <bearer>`,
+`--roots <file>` (trust anchor for `verify` and `sign`'s self-verify),
 `--json`, `--quiet`, `-y/--yes`, `--help`, `--version`.
 
 ## Credentials

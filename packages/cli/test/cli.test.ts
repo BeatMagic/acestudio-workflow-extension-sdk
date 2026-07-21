@@ -174,7 +174,13 @@ describe("submit credential handling", () => {
         Promise.resolve(
           new Response(new Uint8Array([1]), {
             status: 200,
-            headers: { "x-extension-id": "team.demo", "x-developer-id": "team", "x-version": "1.0.0" },
+            headers: {
+              "x-extension-id": "team.demo",
+              "x-developer-id": "team",
+              "x-version": "1.0.0",
+              "x-signed-at": "1752710400",
+              "x-bundle-sha256": "abc123",
+            },
           }),
         ),
       ),
@@ -292,7 +298,13 @@ describe("sign end-to-end (mocked service)", () => {
         Promise.resolve(
           new Response(signedBytes, {
             status: 200,
-            headers: { "x-extension-id": "team.demo", "x-version": "1.2.0", "x-developer-id": "team" },
+            headers: {
+              "x-extension-id": "team.demo",
+              "x-version": "1.2.0",
+              "x-developer-id": "team",
+              "x-signed-at": "1752710400",
+              "x-bundle-sha256": "abc123",
+            },
           }),
         ),
       ),
@@ -317,7 +329,13 @@ describe("sign end-to-end (mocked service)", () => {
         Promise.resolve(
           new Response(signedBytes, {
             status: 200,
-            headers: { "x-extension-id": "team.demo", "x-version": "1.2.0", "x-developer-id": "team" },
+            headers: {
+              "x-extension-id": "team.demo",
+              "x-version": "1.2.0",
+              "x-developer-id": "team",
+              "x-signed-at": "1752710400",
+              "x-bundle-sha256": "abc123",
+            },
           }),
         ),
       ),
@@ -413,5 +431,13 @@ describe("login / whoami / logout", () => {
     const code = await run(deps(["login", "--token", "  wxst_padded  ", "--service", SERVICE]));
     expect(code).toBe(ExitCode.Success);
     expect(store.map.get(SERVICE)).toBe("wxst_padded");
+  });
+
+  it("treats a truthy CI value as non-interactive even on a TTY", async () => {
+    // With CI set, a bare login must refuse rather than prompt and hang a pipeline.
+    const code = await run(
+      deps(["login", "--service", SERVICE], { stdinIsTTY: true, stdoutIsTTY: true, env: { CI: "1" } }),
+    );
+    expect(code).toBe(ExitCode.Usage);
   });
 });

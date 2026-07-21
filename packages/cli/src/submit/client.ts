@@ -80,16 +80,33 @@ export async function submitBundle(
   if (!response.ok) {
     return { ok: false, error: await errorFromResponse(response) };
   }
-  const signedAt = Number(response.headers.get("x-signed-at") ?? "");
+  const extensionId = response.headers.get("x-extension-id");
+  const developerId = response.headers.get("x-developer-id");
+  const version = response.headers.get("x-version");
+  const bundleSha256 = response.headers.get("x-bundle-sha256");
+  const signedAtRaw = response.headers.get("x-signed-at");
+  const signedAt = Number(signedAtRaw ?? "");
+  // A 200 missing its metadata is a protocol regression, not a signed bundle.
+  // Surfacing it beats emitting misleading names/JSON from empty placeholders.
+  if (!extensionId || !developerId || !version || !bundleSha256 || signedAtRaw === null || !Number.isFinite(signedAt)) {
+    return {
+      ok: false,
+      error: {
+        status: response.status,
+        code: "malformed-response",
+        message: "signing response is missing required metadata headers",
+      },
+    };
+  }
   return {
     ok: true,
     value: {
       signedBundle: new Uint8Array(await response.arrayBuffer()),
-      extensionId: response.headers.get("x-extension-id") ?? "",
-      developerId: response.headers.get("x-developer-id") ?? "",
-      version: response.headers.get("x-version") ?? "",
-      signedAt: Number.isFinite(signedAt) ? signedAt : 0,
-      bundleSha256: response.headers.get("x-bundle-sha256") ?? "",
+      extensionId,
+      developerId,
+      version,
+      signedAt,
+      bundleSha256,
       filename: filenameFromDisposition(response.headers.get("content-disposition")),
     },
   };

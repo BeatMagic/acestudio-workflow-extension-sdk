@@ -38,7 +38,7 @@ Usage:
   aceworkflow pack   <dir> [-o <out.aceworkflow>]
   aceworkflow submit <bundle.aceworkflow> [-o <out>] [--ad-hoc]
   aceworkflow verify <bundle.aceworkflow> [--roots <file>]
-  aceworkflow sign   <dir|bundle> [-o <out>] [--ad-hoc] [--no-verify]
+  aceworkflow sign   <dir|bundle> [-o <out>] [--ad-hoc] [--no-verify] [--roots <file>]
 
   aceworkflow login  [--token <bearer> | --ad-hoc]
   aceworkflow logout
@@ -47,12 +47,19 @@ Usage:
 Global options:
   --service <url>   target a specific signing service (default: production)
   --token <bearer>  use this credential for one command, without storing it
+  --roots <file>    trust anchor for verify and sign self-verify (default: embedded)
   --json            emit a machine-readable result object on stdout
   --quiet           print only the final result or error
   -y, --yes         never prompt (assume non-interactive)
   -h, --help        show this help
   --version         print the version
 `;
+
+/** True in a CI environment. Any non-falsey CI value counts — not just "true". */
+function isCI(env: NodeJS.ProcessEnv): boolean {
+  const ci = env.CI;
+  return ci !== undefined && ci !== "" && ci !== "0" && ci.toLowerCase() !== "false";
+}
 
 function version(): string {
   try {
@@ -130,7 +137,7 @@ export async function run(deps: RunDeps): Promise<number> {
   }
 
   const interactive =
-    (deps.stdinIsTTY ?? false) && (deps.stdoutIsTTY ?? false) && !options.yes && deps.env.CI !== "true";
+    (deps.stdinIsTTY ?? false) && (deps.stdoutIsTTY ?? false) && !options.yes && !isCI(deps.env);
 
   const ctx: Ctx = {
     options,

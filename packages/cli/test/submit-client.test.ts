@@ -66,6 +66,15 @@ describe("submitBundle", () => {
     expect(result.error.status).toBe(0);
   });
 
+  it("treats a 200 missing required metadata headers as a malformed response", async () => {
+    mockFetch(() => new Response(new Uint8Array([1, 2, 3]), { status: 200 }));
+    const result = await submitBundle(SERVICE, "wxsa_x", new Uint8Array([1]));
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe("malformed-response");
+    expect(result.error.status).toBe(200);
+  });
+
   it("treats a non-JSON error body as a generic http-error", async () => {
     mockFetch(() => new Response("<html>502</html>", { status: 502 }));
     const result = await submitBundle(SERVICE, "wxsa_x", new Uint8Array([1]));

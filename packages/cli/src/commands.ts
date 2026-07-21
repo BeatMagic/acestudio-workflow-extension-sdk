@@ -29,10 +29,8 @@ function atCwd(ctx: Ctx, p: string): string {
 }
 
 /** The trust anchor: an explicit --roots file (resolved against cwd) or the embedded default. */
-function resolveRoots(ctx: Ctx): Promise<TrustedRoot[]> {
-  return ctx.options.roots !== undefined
-    ? loadRoots(atCwd(ctx, ctx.options.roots))
-    : Promise.resolve(defaultRoots());
+async function resolveRoots(ctx: Ctx): Promise<TrustedRoot[]> {
+  return ctx.options.roots !== undefined ? loadRoots(atCwd(ctx, ctx.options.roots)) : defaultRoots();
 }
 
 function signedFilename(result: SignedResult): string {

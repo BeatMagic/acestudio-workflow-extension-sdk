@@ -22,4 +22,4 @@ npm test          # vitest
 npm run build     # bundle every package to dist/ (see PUBLISHING.md)
 ```
 
-See [PUBLISHING.md](./PUBLISHING.md) for the build and publish pipeline.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the development workflow and build details.

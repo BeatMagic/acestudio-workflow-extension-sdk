@@ -68,7 +68,7 @@ export class FileCredentialStore implements CredentialStore {
     }
     try {
       const value = JSON.parse(text) as Partial<StoreFile>;
-      if (value.services !== null && typeof value.services === "object") {
+      if (value.services !== null && typeof value.services === "object" && !Array.isArray(value.services)) {
         return { version: 1, services: value.services as StoreFile["services"] };
       }
     } catch {

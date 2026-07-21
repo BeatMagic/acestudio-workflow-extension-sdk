@@ -292,6 +292,10 @@ export async function cmdLogin(ctx: Ctx): Promise<number> {
   const origin = ctx.service.url.origin;
 
   if (ctx.options.token !== undefined) {
+    if (ctx.options.token.trim().length === 0) {
+      ctx.reporter.failure("empty --token", "usage");
+      return ExitCode.Usage;
+    }
     await ctx.store.set(origin, ctx.options.token);
     return reportLogin(ctx, origin, ctx.options.token, undefined);
   }

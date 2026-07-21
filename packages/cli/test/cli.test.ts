@@ -395,4 +395,10 @@ describe("login / whoami / logout", () => {
     expect(code).toBe(ExitCode.Usage);
     expect(JSON.parse(out.join("")) as { code: string }).toMatchObject({ code: "usage" });
   });
+
+  it("refuses an empty --token instead of persisting an unusable credential", async () => {
+    const code = await run(deps(["login", "--token", "  ", "--service", SERVICE, "--json"]));
+    expect(code).toBe(ExitCode.Usage);
+    expect(JSON.parse(out.join("")) as { code: string }).toMatchObject({ code: "usage" });
+  });
 });

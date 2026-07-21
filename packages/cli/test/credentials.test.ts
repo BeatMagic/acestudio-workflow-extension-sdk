@@ -1,4 +1,4 @@
-import { mkdtemp, rm, stat } from "node:fs/promises";
+import { mkdtemp, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -50,6 +50,15 @@ describe("FileCredentialStore", () => {
     expect(await store.remove(ORIGIN)).toBe(true);
     expect(await store.get(ORIGIN)).toBeNull();
     expect(await store.remove(ORIGIN)).toBe(false);
+  });
+
+  it("treats an array services value as an empty store", async () => {
+    await writeFile(join(dir, "credentials.json"), JSON.stringify({ version: 1, services: [] }));
+    const store = new FileCredentialStore(dir);
+    expect(await store.get(ORIGIN)).toBeNull();
+    // and it recovers cleanly on the next write
+    await store.set(ORIGIN, "wxsa_x");
+    expect(await store.get(ORIGIN)).toBe("wxsa_x");
   });
 
   it("writes the store file owner-only (0600)", async () => {

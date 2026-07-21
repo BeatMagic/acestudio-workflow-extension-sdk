@@ -1,5 +1,5 @@
 import { createInterface } from "node:readline/promises";
-import { stdin, stdout } from "node:process";
+import { stdin, stderr } from "node:process";
 
 /** Interactive input for `login`. Only ever constructed on an interactive TTY. */
 export interface Prompter {
@@ -9,7 +9,8 @@ export interface Prompter {
 
 export function stdioPrompter(): Prompter {
   async function line(question: string): Promise<string> {
-    const rl = createInterface({ input: stdin, output: stdout });
+    // Prompts go to stderr so `--json` keeps stdout to a single result object.
+    const rl = createInterface({ input: stdin, output: stderr });
     try {
       return (await rl.question(question)).trim();
     } finally {

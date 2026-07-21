@@ -19,7 +19,7 @@ day-to-day work.
 npm install       # install workspace dependencies
 npm run typecheck # tsc --noEmit
 npm test          # vitest
-npm run build     # bundle every package to dist/ (see PUBLISHING.md)
+npm run build     # bundle every package to dist/ (see CONTRIBUTING.md)
 ```
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for the development workflow and build details.

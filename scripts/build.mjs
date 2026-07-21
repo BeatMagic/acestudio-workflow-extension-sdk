@@ -45,7 +45,9 @@ for (const pkg of PACKAGES) {
     logLevel: "info",
   });
   if (pkg.types) {
-    execFileSync(abs("node_modules/.bin/tsc"), ["-p", abs(`${pkg.dir}/tsconfig.build.json`)], {
+    // Run tsc via `node <tsc entry>` rather than the .bin shim, so the build
+    // works on Windows too (where the shim is tsc.cmd, not an execFile target).
+    execFileSync(process.execPath, [abs("node_modules/typescript/bin/tsc"), "-p", abs(`${pkg.dir}/tsconfig.build.json`)], {
       stdio: "inherit",
     });
   }

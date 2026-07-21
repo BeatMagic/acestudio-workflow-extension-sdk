@@ -9,8 +9,10 @@ import {
   cmdVerify,
   cmdWhoami,
 } from "./commands";
+import { loadServiceAliases } from "./config";
 import type { Ctx } from "./context";
-import { FileCredentialStore, type CredentialStore } from "./credentials/store";
+import { defaultCredentialStore } from "./credentials/keychain";
+import type { CredentialStore } from "./credentials/store";
 import { ExitCode } from "./exit-codes";
 import { stdioPrompter, type Prompter } from "./prompt";
 import { Reporter } from "./reporter";
@@ -26,6 +28,8 @@ export interface RunDeps {
   prompter?: Prompter;
   stdinIsTTY?: boolean;
   stdoutIsTTY?: boolean;
+  /** Overrides where service-alias config is read from (tests). */
+  configDir?: string;
 }
 
 const USAGE = `aceworkflow — pack, submit, and verify .aceworkflow bundles
@@ -102,9 +106,14 @@ export async function run(deps: RunDeps): Promise<number> {
 
   const reporter = new Reporter({ json: options.json, quiet: options.quiet }, { out: deps.out, err: deps.err });
 
+  // Only read the config file when there is an override to resolve — the
+  // default (production) path touches no disk.
+  const hasOverride = options.service !== undefined || (deps.env.ACEWORKFLOW_SERVICE ?? "").length > 0;
+  const aliases = hasOverride ? await loadServiceAliases(deps.configDir) : {};
+
   let service;
   try {
-    service = resolveService({ flag: options.service, env: deps.env });
+    service = resolveService({ flag: options.service, env: deps.env, aliases });
   } catch (error) {
     if (error instanceof ServiceUrlError) {
       reporter.failure(error.message, "usage");
@@ -115,7 +124,10 @@ export async function run(deps: RunDeps): Promise<number> {
   // A service override is a safety-relevant fact: announce it on stderr on
   // every path — even under --json (which governs stdout) and --quiet — so a
   // command can never quietly hit a non-production backend.
-  if (service.overridden) deps.err(`service: ${service.url.origin} (overridden)\n`);
+  if (service.overridden) {
+    const via = service.alias !== undefined ? `${service.alias} → ` : "";
+    deps.err(`service: ${via}${service.url.origin} (overridden)\n`);
+  }
 
   const interactive =
     (deps.stdinIsTTY ?? false) && (deps.stdoutIsTTY ?? false) && !options.yes && deps.env.CI !== "true";
@@ -125,7 +137,7 @@ export async function run(deps: RunDeps): Promise<number> {
     positionals,
     service,
     reporter,
-    store: deps.store ?? new FileCredentialStore(),
+    store: deps.store ?? defaultCredentialStore(deps.env),
     env: deps.env,
     cwd: deps.cwd,
     interactive,

@@ -14,7 +14,8 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@beatmagic/workflowext-verifier": "*"
+    "@beatmagic/workflowext-verifier": "*",
+    "@napi-rs/keyring": "^1.3.0"
   },
   "devDependencies": {
     "@beatmagic/workflowext-signed-json": "*",

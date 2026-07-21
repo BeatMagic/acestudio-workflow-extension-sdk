@@ -6,7 +6,7 @@ import { deriveBundleName, packDir, PackError } from "../src/bundle/pack";
 import { writeZip } from "../src/bundle/zip";
 import { PACK_MODIFIED_AT } from "../src/bundle/constants";
 import { verifyBundleBytes } from "../src/verify/verify";
-import { loadRoots, RootsError, DEFAULT_ROOTS_PATH } from "../src/verify/roots";
+import { loadRoots, DEFAULT_ROOTS_PATH } from "../src/verify/roots";
 import { makeTestSigner, rootsOf, signFiles, FIXTURE_SIGNED_AT } from "./fixtures";
 
 let dir: string;
@@ -97,8 +97,10 @@ describe("verify", () => {
 });
 
 describe("roots", () => {
-  it("rejects the shipped placeholder as an empty trust anchor", async () => {
-    await expect(loadRoots(DEFAULT_ROOTS_PATH)).rejects.toBeInstanceOf(RootsError);
+  it("loads the embedded production root", async () => {
+    const roots = await loadRoots(DEFAULT_ROOTS_PATH);
+    expect(roots.some((root) => root.keyId === "root-1")).toBe(true);
+    expect(roots[0]!.publicKey).toHaveLength(32);
   });
 
   it("loads a base64 root file", async () => {

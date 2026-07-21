@@ -277,7 +277,7 @@ describe("sign end-to-end (mocked service)", () => {
     expect(parsed.verified).toBeNull();
   });
 
-  it("skips self-verify (exit 0) when the default roots are the empty placeholder", async () => {
+  it("skips self-verify with a warning when the roots resolve empty", async () => {
     const signedBytes = await buildSignedBundle();
     vi.stubGlobal(
       "fetch",
@@ -291,9 +291,53 @@ describe("sign end-to-end (mocked service)", () => {
       ),
     );
     const ext = await makeExtensionDir();
-    const code = await run(deps(["sign", ext, "--service", SERVICE, "--token", "wxst_test", "-o", join(dir, "o.aceworkflow")]));
+    const emptyRoots = join(dir, "empty-roots.json");
+    await writeFile(emptyRoots, "[]");
+    const code = await run(
+      deps(["sign", ext, "--service", SERVICE, "--token", "wxst_test", "--roots", emptyRoots, "-o", join(dir, "o.aceworkflow")]),
+    );
     expect(code).toBe(ExitCode.Success);
     expect(err.join("")).toContain("self-verify skipped");
+  });
+
+  it("self-verify against the default production root rejects a foreign-signed bundle (exit 8)", async () => {
+    // The mocked service returns a bundle signed by the throwaway test root,
+    // which does not chain to the embedded production root.
+    const signedBytes = await buildSignedBundle();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(signedBytes, {
+            status: 200,
+            headers: { "x-extension-id": "team.demo", "x-version": "1.2.0", "x-developer-id": "team" },
+          }),
+        ),
+      ),
+    );
+    const ext = await makeExtensionDir();
+    const outPath = join(dir, "o.aceworkflow");
+    const code = await run(deps(["sign", ext, "--service", SERVICE, "--token", "wxst_test", "-o", outPath]));
+    expect(code).toBe(ExitCode.VerifyFailed);
+    expect(existsSync(outPath)).toBe(false);
+  });
+});
+
+describe("service alias", () => {
+  it("resolves --service <alias> from the config dir and names it in the banner", async () => {
+    const configDir = join(dir, "cfg");
+    await mkdir(configDir, { recursive: true });
+    await writeFile(join(configDir, "config.json"), JSON.stringify({ services: { dev: "https://dev.example" } }));
+    const ext = await makeExtensionDir();
+    await run(deps(["pack", ext, "--service", "dev"], { configDir }));
+    expect(err.join("")).toContain("dev → https://dev.example");
+    expect(err.join("")).toContain("(overridden)");
+  });
+
+  it("errors on an unknown --service name with no matching alias", async () => {
+    const ext = await makeExtensionDir();
+    const code = await run(deps(["pack", ext, "--service", "staging"], { configDir: join(dir, "nonexistent") }));
+    expect(code).toBe(ExitCode.Usage);
   });
 });
 

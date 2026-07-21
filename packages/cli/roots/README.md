@@ -9,8 +9,10 @@ vectors:
 [{ "keyId": "root-1", "publicKey": "<base64 of the raw 32-byte Ed25519 key>" }]
 ```
 
-It ships **empty** until the production signing ceremony publishes its root
-public key. While empty, the default trust anchor is unset: `verify` and
-`sign` fail closed unless you pass `--roots <file>` (e.g. the dev root while
-testing against the dev service). A root public key is publishable — this is a
-data update, not a code change, the moment the ceremony's root is available.
+A root **public** key is publishable — it is the trust anchor every client
+embeds, not a secret. Adding or rotating one is a data change here, reviewed
+like any other. The private root key lives only in the offline signing
+ceremony and never touches this repository.
+
+Pass `--roots <file>` to check against a different anchor — e.g. a
+non-production environment's root while testing.

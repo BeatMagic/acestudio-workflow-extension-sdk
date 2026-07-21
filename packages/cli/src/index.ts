@@ -17,4 +17,13 @@ export {
   FileCredentialStore,
   type CredentialStore,
 } from "./credentials/store";
+export {
+  defaultCredentialStore,
+  KeychainCredentialStore,
+  KeychainOrFileStore,
+  keychainAvailable,
+  napiKeyring,
+  type KeyringPort,
+} from "./credentials/keychain";
 export { resolveCredential, TOKEN_ENV_VAR, type ResolvedCredential } from "./credentials/resolve";
+export { configPath, loadServiceAliases } from "./config";

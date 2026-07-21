@@ -401,4 +401,10 @@ describe("login / whoami / logout", () => {
     expect(code).toBe(ExitCode.Usage);
     expect(JSON.parse(out.join("")) as { code: string }).toMatchObject({ code: "usage" });
   });
+
+  it("stores a --token trimmed of surrounding whitespace", async () => {
+    const code = await run(deps(["login", "--token", "  wxst_padded  ", "--service", SERVICE]));
+    expect(code).toBe(ExitCode.Success);
+    expect(store.map.get(SERVICE)).toBe("wxst_padded");
+  });
 });

@@ -5,14 +5,14 @@ import {
   importSigningKeyFromSeed,
   utf8Encode,
   type SigningKey,
-} from "@beatmagic/workflowext-signed-json";
-import { keyDirectorySchema } from "@beatmagic/workflowext-wire-schemas";
+} from "@timedomain/workflowext-signed-json";
+import { keyDirectorySchema } from "@timedomain/workflowext-wire-schemas";
 import {
   KEY_ID_PATTERN,
   verifyKeyDirectory,
   verifyRootRevocation,
   type TrustedRoot,
-} from "@beatmagic/workflowext-verifier";
+} from "@timedomain/workflowext-verifier";
 import { INTERMEDIATE_SEED, makeTestKeys, ROOT_SEED } from "./helpers";
 
 const NOW = 1_752_969_600;

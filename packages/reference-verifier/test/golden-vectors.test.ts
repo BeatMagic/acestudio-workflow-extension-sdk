@@ -9,12 +9,12 @@ import {
   toBase64,
   utf8Decode,
   utf8Encode,
-} from "@beatmagic/workflowext-signed-json";
+} from "@timedomain/workflowext-signed-json";
 import {
   certificateStatementSchema,
   signatureBlockSchema,
-} from "@beatmagic/workflowext-wire-schemas";
-import { verifySignedBundle, type TrustedRoot } from "@beatmagic/workflowext-verifier";
+} from "@timedomain/workflowext-wire-schemas";
+import { verifySignedBundle, type TrustedRoot } from "@timedomain/workflowext-verifier";
 import { buildSignedBundle, makeTestKeys, SIGNED_AT } from "./helpers";
 
 /**

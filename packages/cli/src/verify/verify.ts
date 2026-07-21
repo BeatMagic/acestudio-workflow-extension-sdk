@@ -1,4 +1,4 @@
-import { verifySignedBundle, type BundleVerdict, type TrustedRoot } from "@beatmagic/workflowext-verifier";
+import { verifySignedBundle, type BundleVerdict, type TrustedRoot } from "@timedomain/workflowext-verifier";
 import { ZIP_LIMITS } from "../bundle/constants";
 import { readZip, ZipError } from "../bundle/zip";
 

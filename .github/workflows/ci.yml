@@ -27,3 +27,14 @@ jobs:
 
       - name: Test
         run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify the CLI runs from a packed tarball
+        run: |
+          tgz=$(npm pack -w @timedomain/aceworkflow --pack-destination "$RUNNER_TEMP" | tail -1)
+          mkdir -p "$RUNNER_TEMP/packtest" && cd "$RUNNER_TEMP/packtest"
+          npm init -y >/dev/null
+          npm install "$RUNNER_TEMP/$tgz"
+          npx aceworkflow --help

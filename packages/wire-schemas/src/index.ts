@@ -4,7 +4,7 @@ import revocationListSchema from "../schemas/revocation-list.v1.schema.json";
 import rootRevocationStatementSchema from "../schemas/root-revocation-statement.v1.schema.json";
 import signatureBlockSchema from "../schemas/signature-block.v1.schema.json";
 import trustRegistrySchema from "../schemas/trust-registry.v1.schema.json";
-import type { SignedEnvelope } from "@beatmagic/workflowext-signed-json";
+import type { SignedEnvelope } from "@timedomain/workflowext-signed-json";
 
 export {
   certificateStatementSchema,
@@ -26,7 +26,7 @@ export const ALL_SCHEMAS = [
 
 // Format discriminators carried by every signed payload (domain separation).
 // The certificate format constant lives with the crypto core.
-export { CERTIFICATE_FORMAT, type CertificatePayload, type KeyRole } from "@beatmagic/workflowext-signed-json";
+export { CERTIFICATE_FORMAT, type CertificatePayload, type KeyRole } from "@timedomain/workflowext-signed-json";
 export const SIGNATURE_BLOCK_FORMAT = "acestudio.workflowext.signature-block";
 export const KEY_DIRECTORY_FORMAT = "acestudio.workflowext.key-directory";
 export const TRUST_REGISTRY_FORMAT = "acestudio.workflowext.trust-registry";

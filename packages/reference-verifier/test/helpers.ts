@@ -7,8 +7,8 @@ import {
   utf8Encode,
   type SignedEnvelope,
   type SigningKey,
-} from "@beatmagic/workflowext-signed-json";
-import { SIGNATURE_BLOCK_FORMAT, type SignatureBlockPayload } from "@beatmagic/workflowext-wire-schemas";
+} from "@timedomain/workflowext-signed-json";
+import { SIGNATURE_BLOCK_FORMAT, type SignatureBlockPayload } from "@timedomain/workflowext-wire-schemas";
 
 // Throwaway test seeds (RFC 8032 vectors) — no shipped client ever trusts these.
 export const ROOT_SEED = "9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60";

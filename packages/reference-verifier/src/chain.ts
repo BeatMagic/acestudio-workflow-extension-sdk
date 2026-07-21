@@ -3,7 +3,7 @@ import {
   verifyEnvelope,
   type CertificatePayload,
   type SignedEnvelope,
-} from "@beatmagic/workflowext-signed-json";
+} from "@timedomain/workflowext-signed-json";
 import type { TrustedRoot } from "./verdict";
 
 export type ChainResolution =

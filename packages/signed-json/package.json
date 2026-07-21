@@ -1,5 +1,5 @@
 {
-  "name": "@beatmagic/workflowext-signed-json",
+  "name": "@timedomain/workflowext-signed-json",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,7 +7,20 @@
   "engines": {
     "node": ">=24"
   },
+  "main": "./dist/index.js",
+  "types": "./dist/src/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "prepack": "node ../../scripts/build.mjs"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

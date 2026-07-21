@@ -8,7 +8,8 @@ import { classifyCredential } from "./credentials/classify";
 import { resolveCredential } from "./credentials/resolve";
 import { ExitCode, exitForServiceCode } from "./exit-codes";
 import { mintAdhocIdentity, submitBundle, type SignedResult } from "./submit/client";
-import { loadRoots, RootsError, DEFAULT_ROOTS_PATH } from "./verify/roots";
+import type { TrustedRoot } from "@timedomain/workflowext-verifier";
+import { defaultRoots, loadRoots, RootsError } from "./verify/roots";
 import { verifyBundleBytes } from "./verify/verify";
 
 const SIGN_OUTPUT_DIR = "dist";
@@ -27,9 +28,11 @@ function atCwd(ctx: Ctx, p: string): string {
   return resolve(ctx.cwd, p);
 }
 
-/** The trusted-roots file: an explicit --roots (resolved against cwd) or the embedded default. */
-function rootsPath(ctx: Ctx): string {
-  return ctx.options.roots !== undefined ? atCwd(ctx, ctx.options.roots) : DEFAULT_ROOTS_PATH;
+/** The trust anchor: an explicit --roots file (resolved against cwd) or the embedded default. */
+function resolveRoots(ctx: Ctx): Promise<TrustedRoot[]> {
+  return ctx.options.roots !== undefined
+    ? loadRoots(atCwd(ctx, ctx.options.roots))
+    : Promise.resolve(defaultRoots());
 }
 
 function signedFilename(result: SignedResult): string {
@@ -135,7 +138,7 @@ export async function cmdVerify(ctx: Ctx): Promise<number> {
 
   let roots;
   try {
-    roots = await loadRoots(rootsPath(ctx));
+    roots = await resolveRoots(ctx);
   } catch (error) {
     if (error instanceof RootsError) {
       ctx.reporter.failure(error.message, "no-trusted-roots");
@@ -264,7 +267,7 @@ export async function cmdSign(ctx: Ctx): Promise<number> {
   if (!ctx.options.noVerify) {
     let roots;
     try {
-      roots = await loadRoots(rootsPath(ctx));
+      roots = await resolveRoots(ctx);
     } catch (error) {
       if (!(error instanceof RootsError)) throw error;
       // No trust anchor to check against — announce loudly and continue rather

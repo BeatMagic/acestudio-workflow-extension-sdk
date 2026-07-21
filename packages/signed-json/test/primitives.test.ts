@@ -9,7 +9,7 @@ import {
   toHex,
   utf8Encode,
   verifySignature,
-} from "@beatmagic/workflowext-signed-json";
+} from "@timedomain/workflowext-signed-json";
 
 describe("byte encodings", () => {
   it("round-trips standard padded base64", () => {

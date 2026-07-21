@@ -1,4 +1,4 @@
-import type { SignatureBlockPayload } from "@beatmagic/workflowext-wire-schemas";
+import type { SignatureBlockPayload } from "@timedomain/workflowext-wire-schemas";
 
 export type RejectReason =
   | "missing-signature-block"

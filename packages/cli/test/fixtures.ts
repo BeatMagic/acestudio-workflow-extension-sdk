@@ -7,9 +7,9 @@ import {
   toBase64,
   utf8Encode,
   type SigningKey,
-} from "@beatmagic/workflowext-signed-json";
-import { SIGNATURE_BLOCK_FORMAT, type SignatureBlockPayload } from "@beatmagic/workflowext-wire-schemas";
-import type { TrustedRoot } from "@beatmagic/workflowext-verifier";
+} from "@timedomain/workflowext-signed-json";
+import { SIGNATURE_BLOCK_FORMAT, type SignatureBlockPayload } from "@timedomain/workflowext-wire-schemas";
+import type { TrustedRoot } from "@timedomain/workflowext-verifier";
 import type { ZipFile } from "../src/bundle/zip";
 
 // Throwaway RFC 8032 test seeds — no shipped client ever trusts these.

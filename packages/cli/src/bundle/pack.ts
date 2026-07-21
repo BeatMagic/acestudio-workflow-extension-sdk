@@ -1,6 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
-import { isValidArchivePath } from "@beatmagic/workflowext-verifier";
+import { isValidArchivePath } from "@timedomain/workflowext-verifier";
 import { BUNDLE_EXTENSION } from "./constants";
 import type { ZipFile } from "./zip";
 

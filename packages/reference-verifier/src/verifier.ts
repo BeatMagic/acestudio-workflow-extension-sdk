@@ -1,4 +1,4 @@
-import { parseEnvelope, verifyEnvelope, fromBase64 } from "@beatmagic/workflowext-signed-json";
+import { parseEnvelope, verifyEnvelope, fromBase64 } from "@timedomain/workflowext-signed-json";
 import { resolveChain } from "./chain";
 import { checkCoverage, digestFiles, SIGNATURE_BLOCK_PATH, type ArchiveFile } from "./coverage";
 import { parseSignatureBlockPayload } from "./payload";

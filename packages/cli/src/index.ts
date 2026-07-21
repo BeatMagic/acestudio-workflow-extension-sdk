@@ -4,7 +4,7 @@ export { PRODUCTION_SERVICE, resolveService, type ResolvedService } from "./serv
 export { deriveBundleName, packDir, PackError } from "./bundle/pack";
 export { readZip, writeZip, ZipError, type ZipFile } from "./bundle/zip";
 export { verifyBundleBytes, type VerifyResult } from "./verify/verify";
-export { loadRoots, RootsError, DEFAULT_ROOTS_PATH } from "./verify/roots";
+export { defaultRoots, loadRoots, parseRoots, RootsError } from "./verify/roots";
 export {
   mintAdhocIdentity,
   submitBundle,

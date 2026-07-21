@@ -1,5 +1,5 @@
 {
-  "name": "@beatmagic/aceworkflow",
+  "name": "@timedomain/aceworkflow",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -8,17 +8,28 @@
     "node": ">=24"
   },
   "bin": {
-    "aceworkflow": "./src/cli.ts"
+    "aceworkflow": "./dist/cli.js"
   },
+  "main": "./dist/index.js",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "development": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
   },
   "dependencies": {
-    "@beatmagic/workflowext-verifier": "*",
     "@napi-rs/keyring": "^1.3.0"
   },
   "devDependencies": {
-    "@beatmagic/workflowext-signed-json": "*",
-    "@beatmagic/workflowext-wire-schemas": "*"
+    "@timedomain/workflowext-signed-json": "*",
+    "@timedomain/workflowext-verifier": "*",
+    "@timedomain/workflowext-wire-schemas": "*"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "prepack": "node ../../scripts/build.mjs"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

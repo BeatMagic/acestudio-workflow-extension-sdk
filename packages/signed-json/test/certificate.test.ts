@@ -8,7 +8,7 @@ import {
   toBase64,
   utf8Encode,
   verifyEnvelope,
-} from "@beatmagic/workflowext-signed-json";
+} from "@timedomain/workflowext-signed-json";
 
 const ROOT_SEED = fromHex("9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60");
 const INTERMEDIATE_SEED = fromHex("4ccd089b28ff96da9db6c346ec114e0f5b8a319f35aba624da8cf6ed4fb8a6fb");

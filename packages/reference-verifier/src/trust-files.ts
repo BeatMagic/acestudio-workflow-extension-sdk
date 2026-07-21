@@ -4,13 +4,13 @@ import {
   parseEnvelope,
   utf8Decode,
   verifyEnvelope,
-} from "@beatmagic/workflowext-signed-json";
+} from "@timedomain/workflowext-signed-json";
 import {
   KEY_DIRECTORY_FORMAT,
   ROOT_REVOCATION_FORMAT,
   type KeyDirectoryPayload,
   type RootRevocationPayload,
-} from "@beatmagic/workflowext-wire-schemas";
+} from "@timedomain/workflowext-wire-schemas";
 import type { TrustedRoot } from "./verdict";
 
 /**

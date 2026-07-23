@@ -1,7 +1,6 @@
 {
   "name": "@timedomain/workflowext-wire-schemas",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "description": "Versioned JSON Schemas for the six ACE Studio extension-signing wire formats — the normative contract consumed by the Studio client verification module.",
   "engines": {
@@ -18,7 +17,7 @@
     "./schemas/*": "./schemas/*"
   },
   "dependencies": {
-    "@timedomain/workflowext-signed-json": "*"
+    "@timedomain/workflowext-signed-json": "^0.1.0"
   },
   "devDependencies": {
     "ajv": "^8"

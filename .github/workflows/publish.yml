@@ -1,0 +1,53 @@
+name: publish
+
+# Stage every publishable workspace to npm on a version tag, via npm trusted publishing (OIDC):
+# no long-lived token, and provenance is generated automatically. This uses STAGED publishing —
+# CI can only queue a release; a maintainer must approve it (with 2FA) from a trusted device
+# before it goes live. The trusted publisher for each package must be configured as stage-only on
+# npmjs.com, so a plain `npm publish` from this workflow is rejected by the registry.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  id-token: write # OIDC for npm trusted publishing
+  contents: read
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+
+      # `npm stage` needs npm >= 11.15.0; the version bundled with Node may be older.
+      - run: npm install -g npm@^11.15.0
+
+      - run: npm ci
+
+      # Gate the release on the same checks CI runs, so a bad tag can't stage a broken package.
+      - run: npm run typecheck
+      - run: npm test
+
+      # Stage each non-private workspace. Private packages (internal/fixtures) are skipped, and
+      # newly added public packages are picked up automatically — but note each package name still
+      # needs its own stage-only trusted publisher configured on npmjs.com before this can succeed.
+      - name: Stage publishable workspaces
+        run: |
+          set -euo pipefail
+          for dir in packages/*/; do
+            name=$(node -p "require('./${dir}package.json').name")
+            private=$(node -p "!!require('./${dir}package.json').private")
+            if [ "$private" = "true" ]; then
+              echo "skip ${name} (private)"
+              continue
+            fi
+            echo "staging ${name}"
+            ( cd "$dir" && npm stage publish )
+          done

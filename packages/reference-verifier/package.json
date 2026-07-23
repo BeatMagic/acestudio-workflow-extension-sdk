@@ -1,7 +1,6 @@
 {
   "name": "@timedomain/workflowext-verifier",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "description": "Reference verifier for ACE Studio extension signatures — implements the client verification policy so tests assert what a real client will conclude. Ships the golden test vectors.",
   "engines": {
@@ -17,8 +16,8 @@
     }
   },
   "dependencies": {
-    "@timedomain/workflowext-signed-json": "*",
-    "@timedomain/workflowext-wire-schemas": "*"
+    "@timedomain/workflowext-signed-json": "^0.1.0",
+    "@timedomain/workflowext-wire-schemas": "^0.1.0"
   },
   "devDependencies": {
     "ajv": "^8"

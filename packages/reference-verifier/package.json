@@ -17,8 +17,8 @@
     }
   },
   "dependencies": {
-    "@timedomain/workflowext-signed-json": "*",
-    "@timedomain/workflowext-wire-schemas": "*"
+    "@timedomain/workflowext-signed-json": "^0.1.0",
+    "@timedomain/workflowext-wire-schemas": "^0.1.0"
   },
   "devDependencies": {
     "ajv": "^8"

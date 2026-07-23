@@ -18,7 +18,7 @@
     "./schemas/*": "./schemas/*"
   },
   "dependencies": {
-    "@timedomain/workflowext-signed-json": "*"
+    "@timedomain/workflowext-signed-json": "^0.1.0"
   },
   "devDependencies": {
     "ajv": "^8"

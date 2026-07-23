@@ -1,7 +1,6 @@
 {
   "name": "@timedomain/workflowext-signed-json",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "description": "Signed-JSON primitives for ACE Studio extension signing: Ed25519 over exact stored bytes, verify-before-parse, no canonicalization.",
   "engines": {

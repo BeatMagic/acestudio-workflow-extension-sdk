@@ -1,7 +1,6 @@
 {
   "name": "@timedomain/aceworkflow",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "description": "The ACE Studio workflow-extension CLI: pack, submit, and verify .aceworkflow bundles against the signing service. A pure client of the submission API.",
   "engines": {

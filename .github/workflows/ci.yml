@@ -10,33 +10,5 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 24
-          cache: npm
-
-      - run: npm ci
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Test
-        run: npm test
-
-      - name: Build
-        run: npm run build
-
-      - name: Verify the CLI runs from a packed tarball
-        run: |
-          # The Build step above already produced dist/; --ignore-scripts skips the
-          # prepack hook so pack reuses it instead of rebuilding everything again.
-          tgz=$(npm pack -w @timedomain/aceworkflow --ignore-scripts --pack-destination "$RUNNER_TEMP" | tail -1)
-          mkdir -p "$RUNNER_TEMP/packtest" && cd "$RUNNER_TEMP/packtest"
-          npm init -y >/dev/null
-          npm install "$RUNNER_TEMP/$tgz"
-          npx aceworkflow --help
+  validate:
+    uses: ./.github/workflows/_validate.yml

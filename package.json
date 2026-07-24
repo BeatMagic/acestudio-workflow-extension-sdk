@@ -9,13 +9,28 @@
     "node": ">=24"
   },
   "scripts": {
-    "build": "node scripts/build.mjs",
+    "lint": "eslint packages/*/src --ext .ts",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "build": "node scripts/build.mjs",
+    "api:check": "node scripts/api-extractor.mjs",
+    "api:update": "node scripts/api-extractor.mjs --local",
+    "check:exports": "node scripts/check-exports.mjs",
+    "docs": "typedoc",
+    "docs:check": "node scripts/check-docs.mjs",
+    "validate": "npm run lint && npm run typecheck && npm test && npm run build && npm run api:check && npm run check:exports && npm run docs:check"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.3",
+    "@microsoft/api-extractor": "^7.58.7",
     "@types/node": "^24",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
     "esbuild": "^0.28.1",
+    "eslint": "^8.56.0",
+    "publint": "^0.3.21",
+    "typedoc": "^0.28.19",
+    "typedoc-plugin-markdown": "^4.12.0",
     "typescript": "^5",
     "vitest": "^3.2"
   }

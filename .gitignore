@@ -3,6 +3,10 @@ dist/
 .DS_Store
 .env
 
+# api-extractor writes the candidate report here to diff against the committed
+# one under etc/; only etc/ is committed.
+temp/
+
 # Golden test vectors are wire-contract fixtures — never ignore them,
 # even when their bundle layout contains dist/.
 !packages/reference-verifier/vectors/**

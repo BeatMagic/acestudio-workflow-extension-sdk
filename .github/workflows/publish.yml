@@ -15,7 +15,13 @@ permissions:
   contents: read
 
 jobs:
+  # Gate the release on the same full pipeline CI runs, so a bad tag can't stage
+  # a broken package.
+  validate:
+    uses: ./.github/workflows/_validate.yml
+
   stage:
+    needs: validate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -30,10 +36,6 @@ jobs:
       - run: npm install -g npm@^11.15.0
 
       - run: npm ci
-
-      # Gate the release on the same checks CI runs, so a bad tag can't stage a broken package.
-      - run: npm run typecheck
-      - run: npm test
 
       # Stage each non-private workspace. Private packages (internal/fixtures) are skipped, and
       # newly added public packages are picked up automatically — but note each package name still

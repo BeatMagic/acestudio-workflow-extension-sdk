@@ -1,0 +1,46 @@
+name: validate
+
+# The full quality pipeline — lint → typecheck → test → build → api:check →
+# check:exports → docs:check (see the root `validate` script) — plus the CLI
+# pack-and-run smoke check. Reused by ci.yml (pull requests) and publish.yml
+# (release tags) so both gate on the identical checks.
+#
+# Node is gated in CI only; it is not part of the published contract. Node 24 is
+# the required leg; 26 runs as a non-blocking canary.
+
+on:
+  workflow_call:
+
+jobs:
+  validate:
+    name: validate (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["24"]
+        include:
+          - node: "26"
+            experimental: true
+    continue-on-error: ${{ matrix.experimental == true }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run validate
+
+      - name: Verify the CLI runs from a packed tarball
+        run: |
+          # `npm run validate` already produced dist/; --ignore-scripts skips the
+          # prepack hook so pack reuses it instead of rebuilding everything again.
+          tgz=$(npm pack -w @timedomain/aceworkflow --ignore-scripts --pack-destination "$RUNNER_TEMP" | tail -1)
+          mkdir -p "$RUNNER_TEMP/packtest" && cd "$RUNNER_TEMP/packtest"
+          npm init -y >/dev/null
+          npm install "$RUNNER_TEMP/$tgz"
+          npx aceworkflow --help

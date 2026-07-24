@@ -27,9 +27,12 @@ const PACKAGES = [
   // The extension SDK packages. bridge-core is the connection layer; the
   // extension SDK sits above it. The extension SDK's browser-only page side
   // ships from the ./page subpath (a second entry). The scaffolder ships as a
-  // bin — no .d.ts. (When the extension SDK gains a real import of bridge-core,
-  // that slice declares it as a dependency and keeps it external here so
-  // consumers share one copy.)
+  // bin — no .d.ts. Two things wait for the slices that add real code: when the
+  // extension SDK gains a real import of bridge-core, that slice declares it as
+  // a dependency and keeps it external here so consumers share one copy; and
+  // when ./page gains real browser code, that slice bundles it with
+  // platform: "browser" so Node built-ins become hard errors. Today every entry
+  // is node-bundled, which is harmless for the placeholder exports.
   { dir: "packages/acestudio-bridge-core", entries: ["src/index.ts"], external: [], types: true },
   { dir: "packages/acestudio-extension-sdk", entries: ["src/index.ts", "src/page/index.ts"], external: [], types: true },
   { dir: "packages/create-acestudio-extension", entries: ["src/index.ts"], external: [], types: false },

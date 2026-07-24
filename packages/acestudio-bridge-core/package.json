@@ -1,0 +1,25 @@
+{
+  "name": "@timedomain/acestudio-bridge-core",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "The connection core for programming against a running ACE Studio: the canonical handshake over a pluggable message-port transport, the generated capability bindings, grants, jobs, and one typed error.",
+  "engines": {
+    "node": ">=24"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "prepack": "node ../../scripts/build.mjs"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

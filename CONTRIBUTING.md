@@ -1,7 +1,7 @@
 # Contributing guide for internal teams
 
-This guide covers the repo layout, the local development workflow, and how the
-build works.
+This guide covers the repo layout, the local development workflow, the validate
+pipeline, and how the build works.
 
 ## Prerequisites
 
@@ -9,7 +9,17 @@ build works.
 
 ## Packages
 
-This is an npm workspaces monorepo. The packages are scoped under `@timedomain`:
+This is an npm workspaces monorepo. The packages are scoped under `@timedomain`.
+
+The extension SDK:
+
+| Package                                  | Role                                                                   |
+| ---------------------------------------- | ---------------------------------------------------------------------- |
+| `@timedomain/acestudio-extension-sdk`    | The SDK for building extensions: `defineExtension`, lifecycle, UI      |
+| `@timedomain/acestudio-bridge-core`      | The connection core beneath the SDK: handshake, bindings, jobs, errors |
+| `@timedomain/create-acestudio-extension` | The `npm create`-native scaffolder for a new extension                 |
+
+Signing and submission tooling:
 
 | Package                                | Role                                                     |
 | -------------------------------------- | -------------------------------------------------------- |
@@ -17,6 +27,11 @@ This is an npm workspaces monorepo. The packages are scoped under `@timedomain`:
 | `@timedomain/workflowext-verifier`     | Reference verifier for the client verification policy    |
 | `@timedomain/workflowext-signed-json`  | Signed-JSON primitives (Ed25519 over exact stored bytes) |
 | `@timedomain/workflowext-wire-schemas` | Versioned JSON Schemas for the wire formats              |
+
+The three extension SDK packages are skeletons — they build and are wired into
+the pipeline, but their public API is filled in by subsequent slices. They are
+versioned `0.0.0` until their first release. The name `@timedomain/acestudio-sdk`
+is intentionally left unclaimed, reserved for a future umbrella package.
 
 ## Development
 
@@ -28,6 +43,7 @@ npm install       # install workspace dependencies
 npm run typecheck # tsc --noEmit
 npm test          # vitest
 npm run build     # bundle every package to dist/ (see "Build" below)
+npm run validate  # the full pipeline CI runs (see "Validate pipeline" below)
 ```
 
 Source-first resolution is expressed with a `development` export condition on each
@@ -40,6 +56,59 @@ package that points back at `src/`:
 Anything consuming a built package (rather than the workspace) has no `development`
 condition, so it resolves to `dist/` through the `default`/`types` entries.
 
+## Validate pipeline
+
+`npm run validate` runs the full quality pipeline, in order:
+
+```
+lint → typecheck → test → build → api:check → check:exports → docs:check
+```
+
+CI runs the same pipeline through the reusable `.github/workflows/_validate.yml`
+workflow (used by both `ci.yml` and `publish.yml`). Node is gated in CI only —
+it is not part of the published contract: Node 24 is the required leg and Node 26
+runs as a non-blocking canary.
+
+The **surface gates** — `api:check`, `check:exports`, `docs:check` — apply to the
+type-bearing library packages (`acestudio-bridge-core` and
+`acestudio-extension-sdk`). The CLI and the scaffolder ship as bins with no public
+type surface, so they are outside those gates; the CLI has its own pack-and-run
+smoke check instead.
+
+### API reports (api-extractor)
+
+Each library package commits an API report under `packages/<pkg>/etc/<name>.api.md`.
+`api:check` regenerates the report from the built `.d.ts` and fails if it differs
+from the committed one — so a change to the public surface can never land silently
+(this is where the "removing public API is a major bump" rule becomes observable).
+After an **intended** API change, refresh the reports and commit them:
+
+```sh
+npm run build      # api-extractor reads dist/src/index.d.ts
+npm run api:update  # rewrite the committed reports
+```
+
+api-extractor snapshots the package's `.` entry. The extension SDK's `./page`
+subpath is guarded by `docs:check` and `check:exports` instead.
+
+### API docs (typedoc)
+
+`docs` generates the Markdown API reference into `docs/api/`, which is committed.
+`docs:check` regenerates into a temp directory and diffs it against the committed
+output, failing on any drift. After an intended change, refresh and commit:
+
+```sh
+npm run docs
+```
+
+### Package surface (publint + are-the-types-wrong)
+
+`check:exports` runs publint and attw over the library packages, checking that
+every `exports` entry (including the `./page` subpath) resolves to matching types.
+The packages are ESM-only, so attw uses the `esm-only` profile. publint's one
+expected finding — the `development` condition pointing at unpublished source — is
+suppressed in `scripts/check-exports.mjs`; every other finding is a real error.
+
 ## Build
 
 ```sh
@@ -47,9 +116,9 @@ npm run build
 ```
 
 `scripts/build.mjs` bundles every package to `dist/` with esbuild and emits `.d.ts`
-declarations for the three libraries with `tsc`. The bundle resolves the
-extensionless relative imports Node's ESM loader rejects, so the output runs under
-plain `node`.
+declarations with `tsc` for every package that has a public type surface. The
+bundle resolves the extensionless relative imports Node's ESM loader rejects, so
+the output runs under plain `node`.
 
 ### The CLI is self-contained
 
@@ -68,15 +137,10 @@ CI runs this same pack-and-run check on every pull request.
 
 ## Releasing (maintainers)
 
-The packages are `private: true` and are not published to npm — they are consumed
-as source within this repo. Releasing, when it happens, is a deliberate manual step;
-there is no CI publish job. To publish:
-
-1. Set `private: false` on the packages being released.
-2. Pin the inter-package dependency versions (they are `*` for in-repo workspace
-   resolution — npm does not rewrite them on publish).
-3. `npm publish -w <package>` — `prepack` builds automatically, and `publishConfig`
-   sets `access: public` for the scoped packages.
+Publishing is staged from CI on a version tag (`v*`) via npm trusted publishing —
+see `.github/workflows/publish.yml`. CI can only *queue* a release; a maintainer
+approves it with 2FA before it goes live, and each package name needs its own
+stage-only trusted publisher configured on npmjs.com first.
 
 ## Notes
 

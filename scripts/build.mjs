@@ -1,15 +1,12 @@
 // Builds every workspace package to dist/. esbuild bundles the JS — resolving the
 // extensionless relative imports Node's ESM loader rejects, and inlining the
 // shared contract code the CLI needs to run standalone — and tsc emits the .d.ts
-// for the three contract libraries. Same esbuild approach as the signing-service
-// repo's ceremony bundle.
+// for every package with a public type surface. Same esbuild approach as the
+// signing-service repo's ceremony bundle.
 import { execFileSync } from "node:child_process";
 import { rm } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
-
-const repoRoot = new URL("../", import.meta.url);
-const abs = (p) => fileURLToPath(new URL(p, repoRoot));
+import { abs } from "./_lib.mjs";
 
 // The contract packages layer on each other; a library keeps its peers external
 // so consumers share one copy (and one class identity) rather than inlined dupes.
@@ -26,6 +23,19 @@ const PACKAGES = [
   // The CLI inlines the contract packages so its bin runs from a packed tarball
   // with only the one native dependency installed. It ships as a binary — no .d.ts.
   { dir: "packages/cli", entries: ["src/index.ts", "src/cli.ts"], external: ["@napi-rs/keyring"], types: false },
+
+  // The extension SDK packages. bridge-core is the connection layer; the
+  // extension SDK sits above it. The extension SDK's browser-only page side
+  // ships from the ./page subpath (a second entry). The scaffolder ships as a
+  // bin — no .d.ts. Two things wait for the slices that add real code: when the
+  // extension SDK gains a real import of bridge-core, that slice declares it as
+  // a dependency and keeps it external here so consumers share one copy; and
+  // when ./page gains real browser code, that slice bundles it with
+  // platform: "browser" so Node built-ins become hard errors. Today every entry
+  // is node-bundled, which is harmless for the placeholder exports.
+  { dir: "packages/acestudio-bridge-core", entries: ["src/index.ts"], external: [], types: true },
+  { dir: "packages/acestudio-extension-sdk", entries: ["src/index.ts", "src/page/index.ts"], external: [], types: true },
+  { dir: "packages/create-acestudio-extension", entries: ["src/index.ts", "src/cli.ts"], external: [], types: false },
 ];
 
 for (const pkg of PACKAGES) {

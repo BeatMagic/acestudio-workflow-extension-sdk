@@ -1,0 +1,30 @@
+{
+  "name": "@timedomain/acestudio-extension-sdk",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "The SDK for building ACE Studio workflow extensions: defineExtension, a TypeScript manifest with a manifest-scoped typed client, lifecycle choreography, and the optional UI paved road.",
+  "engines": {
+    "node": ">=24"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./page": {
+      "development": "./src/page/index.ts",
+      "types": "./dist/src/page/index.d.ts",
+      "default": "./dist/page/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "prepack": "node ../../scripts/build.mjs"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

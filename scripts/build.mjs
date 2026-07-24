@@ -1,8 +1,8 @@
 // Builds every workspace package to dist/. esbuild bundles the JS — resolving the
 // extensionless relative imports Node's ESM loader rejects, and inlining the
 // shared contract code the CLI needs to run standalone — and tsc emits the .d.ts
-// for the three contract libraries. Same esbuild approach as the signing-service
-// repo's ceremony bundle.
+// for every package with a public type surface. Same esbuild approach as the
+// signing-service repo's ceremony bundle.
 import { execFileSync } from "node:child_process";
 import { rm } from "node:fs/promises";
 import { build } from "esbuild";
@@ -35,7 +35,7 @@ const PACKAGES = [
   // is node-bundled, which is harmless for the placeholder exports.
   { dir: "packages/acestudio-bridge-core", entries: ["src/index.ts"], external: [], types: true },
   { dir: "packages/acestudio-extension-sdk", entries: ["src/index.ts", "src/page/index.ts"], external: [], types: true },
-  { dir: "packages/create-acestudio-extension", entries: ["src/index.ts"], external: [], types: false },
+  { dir: "packages/create-acestudio-extension", entries: ["src/index.ts", "src/cli.ts"], external: [], types: false },
 ];
 
 for (const pkg of PACKAGES) {

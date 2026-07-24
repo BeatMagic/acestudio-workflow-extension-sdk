@@ -20,6 +20,7 @@ export default defineConfig({
       "@timedomain/acestudio-bridge-core": source("acestudio-bridge-core"),
       "@timedomain/acestudio-extension-sdk/page": sourceFile("acestudio-extension-sdk/src/page/index.ts"),
       "@timedomain/acestudio-extension-sdk": source("acestudio-extension-sdk"),
+      "@timedomain/create-acestudio-extension": source("create-acestudio-extension"),
     },
   },
   test: {

@@ -9,7 +9,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "lint": "eslint packages/*/src --ext .ts",
+    "lint": "eslint \"packages/*/src/**/*.ts\"",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "build": "node scripts/build.mjs",
@@ -21,17 +21,18 @@
     "validate": "npm run lint && npm run typecheck && npm test && npm run build && npm run api:check && npm run check:exports && npm run docs:check"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.18.3",
-    "@microsoft/api-extractor": "^7.58.7",
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@eslint/js": "^10.0.1",
+    "@microsoft/api-extractor": "^7.58.12",
     "@types/node": "^24",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^7.18.0",
     "esbuild": "^0.28.1",
-    "eslint": "^8.56.0",
-    "publint": "^0.3.21",
-    "typedoc": "^0.28.19",
+    "eslint": "^10.7.0",
+    "globals": "^17.7.0",
+    "publint": "^0.3.22",
+    "typedoc": "^0.28.20",
     "typedoc-plugin-markdown": "^4.12.0",
     "typescript": "^5",
-    "vitest": "^3.2"
+    "typescript-eslint": "^8.65.0",
+    "vitest": "^4.1.10"
   }
 }

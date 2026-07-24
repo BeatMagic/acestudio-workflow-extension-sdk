@@ -47,7 +47,7 @@ for (const pkg of PACKAGES) {
     bundle: true,
     platform: "node",
     format: "esm",
-    target: "node20",
+    target: "node24",
     // Resolve @timedomain peers to their source (the packages' dev entry), the
     // same as tsc's customConditions and vitest's alias.
     conditions: ["development"],

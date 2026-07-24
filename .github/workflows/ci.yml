@@ -12,3 +12,12 @@ concurrency:
 jobs:
   validate:
     uses: ./.github/workflows/_validate.yml
+
+  # One stable status context for branch protection to require, instead of the
+  # matrix legs whose names shift with the Node versions. It succeeds only when
+  # the required validate leg did, so gating on it gates on the real pipeline.
+  check:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "validate passed"

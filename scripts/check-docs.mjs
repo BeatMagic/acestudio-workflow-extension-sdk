@@ -11,11 +11,15 @@ import { abs } from "./_lib.mjs";
 const committed = abs("docs/api");
 const tmp = mkdtempSync(join(tmpdir(), "aceext-docs-"));
 
+// Normalize line endings so a CRLF checkout (git autocrlf on Windows) does not
+// diff against typedoc's LF output and report a false "stale" result.
+const read = (path) => readFileSync(path, "utf8").replace(/\r\n/g, "\n");
+
 const walk = (root, dir = root, files = new Map()) => {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const full = join(dir, entry.name);
     if (entry.isDirectory()) walk(root, full, files);
-    else files.set(relative(root, full), readFileSync(full, "utf8"));
+    else files.set(relative(root, full), read(full));
   }
   return files;
 };

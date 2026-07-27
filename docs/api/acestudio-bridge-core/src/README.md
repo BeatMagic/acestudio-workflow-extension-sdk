@@ -4,11 +4,23 @@ The connection core for programming against a running ACE Studio.
 
 ## Remarks
 
-This is the package skeleton; the public API is introduced in subsequent
-releases.
+[connect](functions/connect.md) runs the canonical capability handshake over a pluggable
+[Transport](interfaces/Transport.md) and hands back a granted, session-established
+[BridgeConnection](interfaces/BridgeConnection.md). Anything that can be refused is refused as a
+[BridgeError](classes/BridgeError.md).
+
+## Classes
+
+- [BridgeError](classes/BridgeError.md)
+- [BridgePeer](classes/BridgePeer.md)
+- [FrameDecoder](classes/FrameDecoder.md)
+- [LocalSocketTransport](classes/LocalSocketTransport.md)
 
 ## Interfaces
 
+- [BridgeConnection](interfaces/BridgeConnection.md)
+- [BridgeErrorDetails](interfaces/BridgeErrorDetails.md)
+- [BridgeErrorInit](interfaces/BridgeErrorInit.md)
 - [BulkBlob](interfaces/BulkBlob.md)
 - [BulkFieldDescriptor](interfaces/BulkFieldDescriptor.md)
 - [CallOptions](interfaces/CallOptions.md)
@@ -31,6 +43,10 @@ releases.
 - [ClipNoteContentParams](interfaces/ClipNoteContentParams.md)
 - [ClipNoteContentResult](interfaces/ClipNoteContentResult.md)
 - [ClipOperations](interfaces/ClipOperations.md)
+- [CommandErrorPayload](interfaces/CommandErrorPayload.md)
+- [CommandResultEnvelope](interfaces/CommandResultEnvelope.md)
+- [CommandWarning](interfaces/CommandWarning.md)
+- [ConnectOptions](interfaces/ConnectOptions.md)
 - [ConvertEditorToGlobalParams](interfaces/ConvertEditorToGlobalParams.md)
 - [ConvertEditorToGlobalResult](interfaces/ConvertEditorToGlobalResult.md)
 - [ConvertGlobalToEditorParams](interfaces/ConvertGlobalToEditorParams.md)
@@ -57,6 +73,10 @@ releases.
 - [EditorOperations](interfaces/EditorOperations.md)
 - [EditorStatusResult](interfaces/EditorStatusResult.md)
 - [EditorTickRangeResult](interfaces/EditorTickRangeResult.md)
+- [HelloParams](interfaces/HelloParams.md)
+- [HelloResult](interfaces/HelloResult.md)
+- [InvokeCommandParams](interfaces/InvokeCommandParams.md)
+- [InvokeOptions](interfaces/InvokeOptions.md)
 - [JobCancelParams](interfaces/JobCancelParams.md)
 - [JobDiscardResultParams](interfaces/JobDiscardResultParams.md)
 - [JobGetParams](interfaces/JobGetParams.md)
@@ -74,10 +94,12 @@ releases.
 - [MixerOperations](interfaces/MixerOperations.md)
 - [MutatingCallOptions](interfaces/MutatingCallOptions.md)
 - [OperationDescriptor](interfaces/OperationDescriptor.md)
+- [PingPayload](interfaces/PingPayload.md)
 - [ProjectInfoResult](interfaces/ProjectInfoResult.md)
 - [ProjectOperations](interfaces/ProjectOperations.md)
 - [ProjectSynthesisStatusResult](interfaces/ProjectSynthesisStatusResult.md)
 - [PublicBindings](interfaces/PublicBindings.md)
+- [RequestOptions](interfaces/RequestOptions.md)
 - [SelectionGetParams](interfaces/SelectionGetParams.md)
 - [SelectionGetResult](interfaces/SelectionGetResult.md)
 - [SelectionOperations](interfaces/SelectionOperations.md)
@@ -102,9 +124,11 @@ releases.
 - [TrackSetRecordParams](interfaces/TrackSetRecordParams.md)
 - [TrackSingerRecipeParams](interfaces/TrackSingerRecipeParams.md)
 - [TrackSingerRecipeResult](interfaces/TrackSingerRecipeResult.md)
+- [Transport](interfaces/Transport.md)
 - [TransportLoopResult](interfaces/TransportLoopResult.md)
 - [TransportMetronomeParams](interfaces/TransportMetronomeParams.md)
 - [TransportOperations](interfaces/TransportOperations.md)
+- [TransportPair](interfaces/TransportPair.md)
 - [TransportSeekParams](interfaces/TransportSeekParams.md)
 - [TransportSetLoopParams](interfaces/TransportSetLoopParams.md)
 - [TransportStateResult](interfaces/TransportStateResult.md)
@@ -126,11 +150,16 @@ releases.
 
 ## Type Aliases
 
+- [AnyBridgeErrorCode](type-aliases/AnyBridgeErrorCode.md)
 - [BridgeErrorCode](type-aliases/BridgeErrorCode.md)
 - [CapabilityToken](type-aliases/CapabilityToken.md)
+- [DetailsFor](type-aliases/DetailsFor.md)
 - [Dtype](type-aliases/Dtype.md)
 - [Fingerprint](type-aliases/Fingerprint.md)
+- [RequestHandler](type-aliases/RequestHandler.md)
+- [SdkErrorCode](type-aliases/SdkErrorCode.md)
 - [TypedArrayFor](type-aliases/TypedArrayFor.md)
+- [Unsubscribe](type-aliases/Unsubscribe.md)
 
 ## Variables
 
@@ -138,7 +167,16 @@ releases.
 - [BULK\_RESULT\_FIELDS](variables/BULK_RESULT_FIELDS.md)
 - [DTYPE\_BYTES](variables/DTYPE_BYTES.md)
 - [FIELD\_CAPABILITIES](variables/FIELD_CAPABILITIES.md)
+- [method](variables/method.md)
 - [OPERATIONS](variables/OPERATIONS.md)
-- [packageName](variables/packageName.md)
+- [PROTOCOL\_VERSION](variables/PROTOCOL_VERSION.md)
 - [REQUIRED\_TOKENS](variables/REQUIRED_TOKENS.md)
 - [SURFACE\_VERSION](variables/SURFACE_VERSION.md)
+
+## Functions
+
+- [connect](functions/connect.md)
+- [createTransportPair](functions/createTransportPair.md)
+- [encodeFrame](functions/encodeFrame.md)
+- [isBridgeError](functions/isBridgeError.md)
+- [isCode](functions/isCode.md)

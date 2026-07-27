@@ -28,10 +28,18 @@ Signing and submission tooling:
 | `@timedomain/workflowext-signed-json`  | Signed-JSON primitives (Ed25519 over exact stored bytes) |
 | `@timedomain/workflowext-wire-schemas` | Versioned JSON Schemas for the wire formats              |
 
-The three extension SDK packages are skeletons — they build and are wired into
-the pipeline, but their public API is filled in by subsequent slices. They are
+`acestudio-bridge-core` carries the transport seam, `connect()`, and the error
+class; the domain bindings, grants, and jobs land on top of them. The extension
+SDK and the scaffolder are still skeletons — they build and are wired into the
+pipeline, but their public API is filled in by subsequent slices. All three are
 versioned `0.0.0` until their first release. The name `@timedomain/acestudio-sdk`
 is intentionally left unclaimed, reserved for a future umbrella package.
+
+Bridge-core tests drive the real stack over an in-memory transport pair against
+`packages/acestudio-bridge-core/test/support/host-peer.ts` — a scripted stand-in
+for the Studio side, speaking the canonical handshake payload and the
+command-result envelope. Later slices test against the same peer rather than
+mocking the layer under test.
 
 ## Development
 

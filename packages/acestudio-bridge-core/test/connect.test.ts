@@ -86,6 +86,20 @@ describe("connect", () => {
     expect(isCode(error, "HANDSHAKE_FAILED")).toBe(true);
   });
 
+  it("fails the handshake when the host's answer omits the accepted protocol version", async () => {
+    const { client, host: hostTransport } = createTransportPair();
+    new ScriptedHostPeer(hostTransport, {
+      handshakeResult: { grantedTokens: [], sessionId: "session-1" },
+    });
+
+    const error = await connect({ transport: client, authToken: "t" }).catch((reason: unknown) => reason);
+
+    // HANDSHAKE_FAILED, not PROTOCOL_VERSION_MISMATCH: the host never named a
+    // version, and defaulting the field would report a mismatch against a version
+    // nobody claimed to speak.
+    expect(isCode(error, "HANDSHAKE_FAILED")).toBe(true);
+  });
+
   it("fails the handshake when the host refuses the auth token", async () => {
     const { client, host: hostTransport } = createTransportPair();
     new ScriptedHostPeer(hostTransport, { authToken: "expected" });

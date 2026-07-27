@@ -168,19 +168,26 @@ class Connection implements BridgeConnection {
  */
 function readHandshakeResult(answer: unknown): HandshakeResult {
   const result = answer as Partial<HandshakeResult> | null | undefined;
+  // The accepted version is checked here rather than defaulted, because there is
+  // no honest default: coercing a missing field to 0 would come back out of
+  // connect() as a version mismatch claiming the host speaks 0, when what
+  // actually happened is that it never said. An answer missing any required
+  // field is not a handshake answer.
   if (
     typeof result?.sessionId !== "string" ||
+    typeof result.acceptedProtocolVersion !== "number" ||
     !Array.isArray(result.grantedTokens) ||
     result.grantedTokens.some((token) => typeof token !== "string")
   ) {
     throw new BridgeError({
       code: "HANDSHAKE_FAILED",
-      message: "The ACE Studio bridge answered the handshake with no session id or granted-token list.",
+      message:
+        "The ACE Studio bridge's handshake answer is missing its session id, accepted protocol version, or granted-token list.",
       hint: "the peer on the other end may not be an ACE Studio bridge, or may speak a different protocol",
     });
   }
   return {
-    acceptedProtocolVersion: typeof result.acceptedProtocolVersion === "number" ? result.acceptedProtocolVersion : 0,
+    acceptedProtocolVersion: result.acceptedProtocolVersion,
     grantedTokens: result.grantedTokens,
     sessionId: result.sessionId,
   };

@@ -90,23 +90,39 @@ describe("LocalSocketTransport", () => {
     }
   });
 
-  /** Listen on a socket in a temp directory and echo every frame back. */
-  async function echoServer(): Promise<string> {
+  /**
+   * Listen on a socket in a temp directory and echo every frame back. `stop`
+   * takes the server down the way a host crash would, so a test can distinguish
+   * that from this side hanging up.
+   */
+  async function echoServer(): Promise<{ socketPath: string; stop: () => Promise<void> }> {
     const dir = await mkdtemp(join(tmpdir(), "bridge-core-"));
     const socketPath = join(dir, "bridge.sock");
+    const accepted = new Set<net.Socket>();
     const server = net.createServer((socket) => {
+      accepted.add(socket);
+      socket.on("close", () => accepted.delete(socket));
       socket.on("data", (chunk: Buffer) => socket.write(chunk));
     });
     await new Promise<void>((resolve) => server.listen(socketPath, resolve));
-    cleanups.push(async () => {
+    const stop = async (): Promise<void> => {
+      // close() only stops new connections; the client sees nothing until the
+      // socket it is actually holding goes away too.
+      for (const socket of accepted) {
+        socket.destroy();
+      }
       await new Promise<void>((resolve) => server.close(() => resolve()));
+    };
+    cleanups.push(async () => {
+      await stop();
       await rm(dir, { recursive: true, force: true });
     });
-    return socketPath;
+    return { socketPath, stop };
   }
 
   it("frames messages over a real socket", async () => {
-    const transport = await LocalSocketTransport.connect(await echoServer());
+    const { socketPath } = await echoServer();
+    const transport = await LocalSocketTransport.connect(socketPath);
     cleanups.push(() => transport.close());
 
     const echoed = new Promise<string>((resolve) => transport.onMessage(resolve));
@@ -116,7 +132,20 @@ describe("LocalSocketTransport", () => {
   });
 
   it("reports a close when the server goes away", async () => {
-    const socketPath = await echoServer();
+    const { socketPath, stop } = await echoServer();
+    const transport = await LocalSocketTransport.connect(socketPath);
+    cleanups.push(() => transport.close());
+    const closed = new Promise<void>((resolve) => transport.onClose(resolve));
+
+    // The server drops us, rather than this side hanging up: that is the shape a
+    // host crash has, and the one an unreachable bridge is reported from.
+    await stop();
+
+    await expect(closed).resolves.toBeUndefined();
+  });
+
+  it("reports a close when this side hangs up", async () => {
+    const { socketPath } = await echoServer();
     const transport = await LocalSocketTransport.connect(socketPath);
     const closed = new Promise<void>((resolve) => transport.onClose(resolve));
 

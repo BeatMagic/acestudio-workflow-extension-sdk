@@ -37,9 +37,10 @@ is intentionally left unclaimed, reserved for a future umbrella package.
 
 Bridge-core tests drive the real stack over an in-memory transport pair against
 `packages/acestudio-bridge-core/test/support/host-peer.ts` — a scripted stand-in
-for the Studio side, speaking the canonical handshake payload and the
-command-result envelope. Later slices test against the same peer rather than
-mocking the layer under test.
+for the Studio side, serving the session surface the schema declares: the
+handshake, the liveness ping, and the shutdown notice. It grows as the surface
+does; the operation-invocation envelope joins it when that surface is declared.
+Later slices test against the same peer rather than mocking the layer under test.
 
 ## Development
 

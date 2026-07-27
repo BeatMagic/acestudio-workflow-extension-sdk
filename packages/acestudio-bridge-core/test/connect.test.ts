@@ -1,3 +1,4 @@
+import { getEventListeners } from "node:events";
 import { describe, expect, it } from "vitest";
 import {
   connect,
@@ -140,6 +141,26 @@ describe("connect", () => {
 
     const error = await pending.catch((reason: unknown) => reason);
     expect(isCode(error, "TIMEOUT")).toBe(true);
+  });
+
+  it("leaves no abort listener behind on a signal whose call succeeded", async () => {
+    // One controller for a whole session is the normal shape, so it outlives every
+    // call made under it. `once` only detaches a listener that fired, so a call that
+    // simply succeeded has to take its own off — otherwise the signal accumulates a
+    // listener, and the closure it holds, per call.
+    const controller = new AbortController();
+    for (let i = 0; i < 3; i += 1) {
+      const { client, host } = createTransportPair();
+      new ScriptedHostPeer(host, {});
+      const connection = await connect({
+        transport: client,
+        authToken: "token-abc",
+        signal: controller.signal,
+      });
+      connection.close();
+    }
+
+    expect(getEventListeners(controller.signal, "abort")).toHaveLength(0);
   });
 
   it("notifies close listeners when the host drops the connection", async () => {

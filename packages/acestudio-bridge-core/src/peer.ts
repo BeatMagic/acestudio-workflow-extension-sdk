@@ -132,13 +132,20 @@ export class BridgePeer {
       return call();
     }
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let detachSignal: (() => void) | undefined;
     const expiry = new Promise<never>((_resolve, reject) => {
       const abort = (): void => reject(this.timedOut("the call", options));
       if (options.signal?.aborted === true) {
         abort();
         return;
       }
-      options.signal?.addEventListener("abort", abort, { once: true });
+      const signal = options.signal;
+      if (signal !== undefined) {
+        signal.addEventListener("abort", abort, { once: true });
+        detachSignal = (): void => {
+          signal.removeEventListener("abort", abort);
+        };
+      }
       if (options.timeoutMs !== undefined) {
         timer = setTimeout(abort, options.timeoutMs);
         timer.unref?.();
@@ -150,6 +157,11 @@ export class BridgePeer {
       if (timer !== undefined) {
         clearTimeout(timer);
       }
+      // `once` only detaches a listener that fired. A caller's signal normally
+      // outlives the call it guards — one controller for a whole session — so a
+      // call that simply finished has to take its own listener back off, or each
+      // one leaves a listener behind holding its closure.
+      detachSignal?.();
     }
   }
 

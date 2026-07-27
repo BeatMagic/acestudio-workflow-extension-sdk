@@ -107,7 +107,11 @@ export async function connect(options: ConnectOptions): Promise<BridgeConnection
   const request: HandshakeParams = {
     authToken: options.authToken,
     protocolVersion: PROTOCOL_VERSION,
-    requestedCapabilities: options.requestedCapabilities as string[] | undefined,
+    // Copied rather than cast. The generated wire type is mutable and the caller's
+    // array is the caller's, so a cast would both lie about the type and hand our
+    // serializer something it could write through.
+    requestedCapabilities:
+      options.requestedCapabilities === undefined ? undefined : [...options.requestedCapabilities],
   };
 
   try {

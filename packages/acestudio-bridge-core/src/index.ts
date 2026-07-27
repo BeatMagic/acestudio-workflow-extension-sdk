@@ -15,3 +15,8 @@
  * @public
  */
 export const packageName = "@timedomain/acestudio-bridge-core";
+
+// The generated capability bindings (ADR 0094 §2). Regenerated in the Studio
+// repo by `cargo run -p ace_command_catalog --bin gen_sdk_bindings`; this copy
+// arrives by regen PR and is drift-gated there. Do not edit it here.
+export * from "./generated/bindings.js";

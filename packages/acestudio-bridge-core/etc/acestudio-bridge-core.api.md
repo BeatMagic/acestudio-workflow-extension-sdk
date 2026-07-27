@@ -5,6 +5,1185 @@
 ```ts
 
 // @public
+export type BridgeErrorCode = 'ALREADY_RECORDING' | 'BAD_ARGS' | 'BRIDGE_UNREACHABLE' | 'CAPABILITY_DENIED' | 'CAPABILITY_OUT_OF_SURFACE' | 'CHAIN_NOT_GROWN' | 'CREATE_TIMEOUT' | 'EDITOR_NOT_READY' | 'EDIT_TIMEOUT' | 'EXPORT_IN_PROGRESS' | 'EXPORT_START_FAILED' | 'FLUSH_TIMEOUT' | 'GESTURE_HELD' | 'HANDLER_FAILED' | 'INSERT_FAILED' | 'INVALID_ARG' | 'IO_ERROR' | 'JOB_NOT_CANCELLABLE' | 'NOT_FOUND' | 'NO_GESTURE' | 'NO_MASTER_CHAIN' | 'NO_PATTERN_EDIT_OPEN' | 'NO_PROJECT' | 'NO_PROJECT_OPEN' | 'NO_SCENE' | 'NO_STATE' | 'NO_WINDOW' | 'PLAYBACK_START_FAILED' | 'RECORD_START_FAILED' | 'SCENARIO_FAILED' | 'SESSION_INVALID' | 'STALE_WRITE' | 'TIMEOUT' | 'TIME_UNIT_REQUIRED' | 'UNAVAILABLE' | 'UNKNOWN_CAPABILITY' | 'UNKNOWN_COMMAND' | 'UNKNOWN_SCENARIO' | 'USER_BUSY';
+
+// @public
+export const BULK_PARAM_FIELDS: Readonly<Record<string, readonly BulkFieldDescriptor[]>>;
+
+// @public
+export const BULK_RESULT_FIELDS: Readonly<Record<string, readonly BulkFieldDescriptor[]>>;
+
+// @public
+export interface BulkBlob<D extends Dtype = Dtype> {
+    count: number;
+    data: string;
+    // (undocumented)
+    dtype: D;
+}
+
+// @public
+export interface BulkFieldDescriptor {
+    // (undocumented)
+    readonly dtype: Dtype | null;
+    // (undocumented)
+    readonly field: string;
+}
+
+// @public
+export interface CallOptions {
+    signal?: AbortSignal;
+    timeoutMs?: number;
+}
+
+// @public
+export type CapabilityToken = 'caret.read' | 'caret.write' | 'chord.read' | 'chord.write' | 'clip.read' | 'clip.write' | 'device.read' | 'device.write' | 'editor.read' | 'editor.write' | 'export.invoke' | 'fx.read' | 'fx.write' | 'generative.add-layer' | 'generative.enhance' | 'generative.retake' | 'generative.seed-audio' | 'generative.song' | 'generative.sound-effects' | 'generative.stem-split' | 'generative.text2sample' | 'generative.vocal2midi' | 'generative.voice-change' | 'history.control' | 'history.read' | 'import.invoke' | 'job.control' | 'job.read' | 'lyric.read' | 'lyric.write' | 'note.read' | 'note.write' | 'project.lifecycle' | 'project.read' | 'recording.control' | 'selection.read' | 'selection.write' | 'tempo.analyze' | 'tempo.applyV2' | 'tempo.read' | 'tempo.write' | 'timesig.read' | 'timesig.write' | 'track.read' | 'track.write' | 'transport.control' | 'transport.state' | 'ui.view' | 'vocalparam.read' | 'vocalparam.write' | 'voice.read' | 'voice.write' | 'workflow.dev' | 'workflow.ui';
+
+// @public
+export interface CaretGetParams {
+    scope?: string | null;
+}
+
+// @public
+export interface CaretGetResult {
+    focus: string;
+    scope: string;
+    tick: number;
+    trackIndex: number;
+}
+
+// @public
+export interface CaretOperations {
+    get(params: CaretGetParams, options?: CallOptions): Promise<CaretGetResult>;
+    set(params: CaretSetParams, options?: MutatingCallOptions): Promise<void>;
+}
+
+// @public
+export interface CaretSetParams {
+    forceSeek?: boolean | null;
+    is_global_tick?: boolean | null;
+    scope?: string | null;
+    set_to_line_selection?: boolean | null;
+    tick: number;
+    trackIndex?: number | null;
+}
+
+// @public
+export interface ClipAddParams {
+    dur: number;
+    name?: string | null;
+    pos: number;
+    trackIndex: number;
+    type: string;
+}
+
+// @public
+export interface ClipAddResult {
+    clipBegin: number;
+    clipEnd: number;
+    clipName: string;
+    clipType: string;
+    trackName: string;
+}
+
+// @public
+export interface ClipAudioContentParams {
+    clipIndex: number;
+    trackIndex: number;
+}
+
+// @public
+export interface ClipAudioContentResult {
+    audioFileName: string;
+    loadingState: string;
+}
+
+// @public
+export interface ClipGetParams {
+    clipIndex: number;
+    preferredTimeUnit?: string | null;
+    trackIndex: number;
+}
+
+// @public
+export interface ClipGetResult {
+    clipName: string;
+    clipType: string;
+    clipUuid: string;
+    color: string;
+    enabled: boolean;
+    geometry: {
+        clipBegin: number;
+        clipDur: number;
+        clipEnd: number;
+        clipPos: number;
+        dur: number;
+        end: number;
+        pos: number;
+    };
+    isColorLinkToTrack: boolean;
+    rawName: string;
+    usedTimeUnit: string;
+}
+
+// @public
+export interface ClipListParams {
+    trackIndex: number;
+}
+
+// @public
+export interface ClipListResult {
+    clipCount: number;
+    clips: {
+        clipBegin: number;
+        clipColor: string;
+        clipEnd: number;
+        clipName: string;
+        clipType: string;
+        clipUuid: string;
+        noteCount?: number;
+    }[];
+}
+
+// @public
+export interface ClipLyricsParams {
+    clipIndex: number;
+    rangeBegin?: number | null;
+    rangeEnd?: number | null;
+    rangeScope?: string | null;
+    trackIndex: number;
+}
+
+// @public
+export interface ClipLyricsResult {
+    filteredRange?: {
+        begin: number;
+        end: number;
+        scope: string;
+    };
+    sentenceCount: number;
+    sentences: {
+        lyric: string;
+        sentenceBegin: number;
+        sentenceEnd: number;
+    }[];
+}
+
+// @public
+export interface ClipMoveEdgesParams {
+    clipUuid: string;
+    mode: string;
+    side: string;
+    value: number;
+}
+
+// @public
+export interface ClipMoveEdgesResult {
+    clipName: string;
+    clipType: string;
+    clipUuid: string;
+    geometry: {
+        clipBegin: number;
+        clipDur: number;
+        clipEnd: number;
+        clipPos: number;
+        dur: number;
+        end: number;
+        pos: number;
+    };
+}
+
+// @public
+export interface ClipNoteContentParams {
+    clipIndex: number;
+    rangeBegin?: number | null;
+    rangeEnd?: number | null;
+    rangeScope?: string | null;
+    trackIndex: number;
+}
+
+// @public
+export interface ClipNoteContentResult {
+    filteredRange?: {
+        begin: number;
+        end: number;
+        scope: string;
+    };
+    noteCount: number;
+    notes: {
+        articulation?: string;
+        dur: number;
+        endPos: number;
+        headConsonants?: number[];
+        language?: string;
+        lyric?: string;
+        noteUuid: string;
+        pitch: number;
+        pos: number;
+        syllable?: string;
+        tailConsonants?: number[];
+    }[];
+}
+
+// @public
+export interface ClipOperations {
+    add(params: ClipAddParams, options?: MutatingCallOptions): Promise<ClipAddResult>;
+    audioContent(params: ClipAudioContentParams, options?: CallOptions): Promise<ClipAudioContentResult>;
+    get(params: ClipGetParams, options?: CallOptions): Promise<ClipGetResult>;
+    list(params: ClipListParams, options?: CallOptions): Promise<ClipListResult>;
+    lyrics(params: ClipLyricsParams, options?: CallOptions): Promise<ClipLyricsResult>;
+    moveEdges(params: ClipMoveEdgesParams, options?: MutatingCallOptions): Promise<ClipMoveEdgesResult>;
+    noteContent(params: ClipNoteContentParams, options?: CallOptions): Promise<ClipNoteContentResult>;
+}
+
+// @public
+export interface ConvertEditorToGlobalParams {
+    editorTick: number;
+}
+
+// @public
+export interface ConvertEditorToGlobalResult {
+    globalTick: number;
+}
+
+// @public
+export interface ConvertGlobalToEditorParams {
+    globalTick: number;
+}
+
+// @public
+export interface ConvertGlobalToEditorResult {
+    editorTick: number;
+}
+
+// @public
+export interface ConvertMeasureToTickParams {
+    barPos: number;
+    beatPos?: number | null;
+    considerBeatMode: boolean;
+    tickOffset: number;
+}
+
+// @public
+export interface ConvertMeasureToTickResult {
+    tick: number;
+}
+
+// @public
+export interface ConvertOperations {
+    editorToGlobal(params: ConvertEditorToGlobalParams, options?: CallOptions): Promise<ConvertEditorToGlobalResult>;
+    globalToEditor(params: ConvertGlobalToEditorParams, options?: CallOptions): Promise<ConvertGlobalToEditorResult>;
+    measureToTick(params: ConvertMeasureToTickParams, options?: CallOptions): Promise<ConvertMeasureToTickResult>;
+    tickToMeasure(params: ConvertTickToMeasureParams, options?: CallOptions): Promise<ConvertTickToMeasureResult>;
+    tickToTime(params: ConvertTickToTimeParams, options?: CallOptions): Promise<ConvertTickToTimeResult>;
+    timeToTick(params: ConvertTimeToTickParams, options?: CallOptions): Promise<ConvertTimeToTickResult>;
+}
+
+// @public
+export interface ConvertTickToMeasureParams {
+    considerBeatMode: boolean;
+    tick: number;
+}
+
+// @public
+export interface ConvertTickToMeasureResult {
+    barPos: number;
+    beatPos?: number;
+    tickOffset: number;
+}
+
+// @public
+export interface ConvertTickToTimeParams {
+    tick: number;
+}
+
+// @public
+export interface ConvertTickToTimeResult {
+    time: number;
+}
+
+// @public
+export interface ConvertTimeToTickParams {
+    time: number;
+}
+
+// @public
+export interface ConvertTimeToTickResult {
+    tick: number;
+}
+
+// @public
+export interface DeviceCurrentResult {
+    deviceType: string;
+    input: {
+        availableChannels: string[];
+        deviceName: string;
+    };
+    output: {
+        availableChannelPairs: string[];
+        currentChannelPair?: string;
+        currentChannelPairIndex: number;
+        deviceName: string;
+    };
+    properties: {
+        bufferSize: number;
+        sampleRate: number;
+    };
+}
+
+// @public
+export interface DeviceListResult {
+    availableBufferSizes: number[];
+    availableDeviceTypes: string[];
+    availableSampleRates: number[];
+    currentDeviceType: string;
+    inputDevices: {
+        currentDevice: string;
+        devices: string[];
+    };
+    midiInputDevices: {
+        availableChannels: number;
+        deviceName: string;
+    }[];
+    outputDevices: {
+        currentDevice: string;
+        devices: string[];
+    };
+}
+
+// @public
+export interface DeviceOperations {
+    current(options?: CallOptions): Promise<DeviceCurrentResult>;
+    list(options?: CallOptions): Promise<DeviceListResult>;
+}
+
+// @public
+export type Dtype = 'u8' | 'i16le' | 'i32le' | 'i64le' | 'f32le' | 'f64le';
+
+// @public
+export const DTYPE_BYTES: Readonly<Record<Dtype, number>>;
+
+// @public
+export interface EditorAddNotesParams {
+    language?: string | null;
+    lyric_sentence?: string | null;
+    notes: unknown;
+    offset?: number | null;
+}
+
+// @public
+export interface EditorAddNotesResult {
+    lyricsApplied?: string[];
+}
+
+// @public
+export interface EditorCurrentClipResult {
+    clipIndex: number;
+    clipName: string;
+    clipType: string;
+    defaultLanguage?: string;
+    trackIndex: number;
+}
+
+// @public
+export interface EditorDeleteSelectionResult {
+    deletedCount: number;
+    editorType: string;
+    success: boolean;
+}
+
+// @public
+export interface EditorGetContentParams {
+    range?: string | null;
+    rangeBegin?: number | null;
+    rangeEnd?: number | null;
+}
+
+// @public
+export interface EditorGetContentResult {
+    actualRange: {
+        begin: number;
+        end: number;
+    };
+    chordCount?: number;
+    chords?: {
+        addeds: string[];
+        basicKeys: number[];
+        bass: string;
+        dur: number;
+        endPos: number;
+        isSelected: boolean;
+        keys: number[];
+        pos: number;
+        root: string;
+        type: string;
+        viewName: string;
+    }[];
+    noteCount?: number;
+    notes?: {
+        articulation?: string;
+        dur: number;
+        endPos: number;
+        headConsonants?: number[];
+        isSelected: boolean;
+        language?: string;
+        lyric?: string;
+        pitch: number;
+        pos: number;
+        syllable?: string;
+        tailConsonants?: number[];
+    }[];
+    rangeType: string;
+}
+
+// @public
+export interface EditorOpenResult {
+    wasAlreadyVisible: boolean;
+}
+
+// @public
+export interface EditorOperations {
+    addNotes(params: EditorAddNotesParams, options?: MutatingCallOptions): Promise<EditorAddNotesResult>;
+    currentClip(options?: CallOptions): Promise<EditorCurrentClipResult>;
+    deleteSelection(options?: MutatingCallOptions): Promise<EditorDeleteSelectionResult>;
+    getContent(params: EditorGetContentParams, options?: CallOptions): Promise<EditorGetContentResult>;
+    open(options?: MutatingCallOptions): Promise<EditorOpenResult>;
+    status(options?: CallOptions): Promise<EditorStatusResult>;
+    tickRange(options?: CallOptions): Promise<EditorTickRangeResult>;
+}
+
+// @public
+export interface EditorStatusResult {
+    clipIndex?: number;
+    clipName?: string;
+    clipUuid?: string;
+    defaultArticulation?: string;
+    defaultLanguage?: string;
+    editorType?: string;
+    isAvailable: boolean;
+    isVisible: boolean;
+    supportedArticulations?: string[];
+    supportedLanguages?: string[];
+    trackIndex?: number;
+}
+
+// @public
+export interface EditorTickRangeResult {
+    tickBegin: number;
+    tickEnd: number;
+}
+
+// @public
+export const FIELD_CAPABILITIES: Readonly<Record<string, Readonly<Record<string, CapabilityToken>>>>;
+
+// @public
+export type Fingerprint = string & {
+    readonly __fingerprint: unique symbol;
+};
+
+// @public
+export interface JobCancelParams {
+    id: string;
+}
+
+// @public
+export interface JobDiscardResultParams {
+    resultId: string;
+}
+
+// @public
+export interface JobGetParams {
+    id: string;
+}
+
+// @public
+export interface JobGetResult {
+    cancelable: boolean;
+    delivery: 'direct' | 'staged';
+    hasProgress: boolean;
+    id: string;
+    jobClass: string;
+    launcher: 'ui' | 'cli' | 'extension' | 'agent';
+    launcherLabel: string;
+    lifecycle: 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
+    progress?: number;
+    results: {
+        id: string;
+        state: 'pending' | 'streaming' | 'settled' | 'failed';
+    }[];
+    streamingCapable: boolean;
+}
+
+// @public
+export interface JobListParams {
+    mine: boolean;
+    running: boolean;
+}
+
+// @public
+export interface JobListResult {
+    jobs: {
+        cancelable: boolean;
+        delivery: 'direct' | 'staged';
+        hasProgress: boolean;
+        id: string;
+        jobClass: string;
+        launcher: 'ui' | 'cli' | 'extension' | 'agent';
+        launcherLabel: string;
+        lifecycle: 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
+        progress?: number;
+        results: {
+            id: string;
+            state: 'pending' | 'streaming' | 'settled' | 'failed';
+        }[];
+        streamingCapable: boolean;
+    }[];
+}
+
+// @public
+export interface JobOperations {
+    cancel(params: JobCancelParams, options?: MutatingCallOptions): Promise<void>;
+    discardResult(params: JobDiscardResultParams, options?: MutatingCallOptions): Promise<void>;
+    get(params: JobGetParams, options?: CallOptions): Promise<JobGetResult>;
+    list(params: JobListParams, options?: CallOptions): Promise<JobListResult>;
+    place(params: JobPlaceParams, options?: MutatingCallOptions): Promise<JobPlaceResult>;
+    results(params: JobResultsParams, options?: CallOptions): Promise<JobResultsResult>;
+    wait(params: JobWaitParams, options?: CallOptions): Promise<JobWaitResult>;
+}
+
+// @public
+export interface JobPlaceParams {
+    at?: number | null;
+    resultId: string;
+    trackId: string;
+}
+
+// @public
+export interface JobPlaceResult {
+    resultId: string;
+    trackId: string;
+}
+
+// @public
+export interface JobResultsParams {
+    id: string;
+}
+
+// @public
+export interface JobResultsResult {
+    results: {
+        id: string;
+        state: 'pending' | 'streaming' | 'settled' | 'failed';
+    }[];
+}
+
+// @public
+export interface JobWaitParams {
+    any: boolean;
+    ids: string[];
+    timeoutMs?: number | null;
+}
+
+// @public
+export interface JobWaitResult {
+    done: boolean;
+    finished: string[];
+    jobs: {
+        cancelable: boolean;
+        delivery: 'direct' | 'staged';
+        hasProgress: boolean;
+        id: string;
+        jobClass: string;
+        launcher: 'ui' | 'cli' | 'extension' | 'agent';
+        launcherLabel: string;
+        lifecycle: 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
+        progress?: number;
+        results: {
+            id: string;
+            state: 'pending' | 'streaming' | 'settled' | 'failed';
+        }[];
+        streamingCapable: boolean;
+    }[];
+}
+
+// @public
+export interface MixerGetResult {
+    animating: boolean;
+    visible: boolean;
+}
+
+// @public
+export interface MixerOperations {
+    get(options?: CallOptions): Promise<MixerGetResult>;
+    hide(options?: MutatingCallOptions): Promise<void>;
+    show(options?: MutatingCallOptions): Promise<void>;
+}
+
+// @public
+export interface MutatingCallOptions extends CallOptions {
+    ifMatch?: Fingerprint;
+    waitBusy?: number;
+}
+
+// @public
+export interface OperationDescriptor {
+    readonly capability: string;
+    readonly domain: string;
+    readonly method: string;
+    readonly mutating: boolean;
+    readonly path: string;
+    readonly ungated: boolean;
+}
+
+// @public
+export const OPERATIONS: readonly OperationDescriptor[];
+
+// @public
 export const packageName = "@timedomain/acestudio-bridge-core";
+
+// @public
+export interface ProjectInfoResult {
+    duration: number;
+    isNewProject: boolean;
+    isTempProject: boolean;
+    projectName: string;
+}
+
+// @public
+export interface ProjectOperations {
+    info(options?: CallOptions): Promise<ProjectInfoResult>;
+    synthesisStatus(options?: CallOptions): Promise<ProjectSynthesisStatusResult>;
+}
+
+// @public
+export interface ProjectSynthesisStatusResult {
+    isSynthesizing: boolean;
+}
+
+// @public
+export interface PublicBindings {
+    // (undocumented)
+    readonly caret: CaretOperations;
+    // (undocumented)
+    readonly clip: ClipOperations;
+    // (undocumented)
+    readonly convert: ConvertOperations;
+    // (undocumented)
+    readonly device: DeviceOperations;
+    // (undocumented)
+    readonly editor: EditorOperations;
+    // (undocumented)
+    readonly job: JobOperations;
+    // (undocumented)
+    readonly mixer: MixerOperations;
+    // (undocumented)
+    readonly project: ProjectOperations;
+    // (undocumented)
+    readonly selection: SelectionOperations;
+    // (undocumented)
+    readonly specialTracks: SpecialTracksOperations;
+    // (undocumented)
+    readonly tempo: TempoOperations;
+    // (undocumented)
+    readonly timesig: TimesigOperations;
+    // (undocumented)
+    readonly track: TrackOperations;
+    // (undocumented)
+    readonly transport: TransportOperations;
+    // (undocumented)
+    readonly voice: VoiceOperations;
+}
+
+// @public
+export const REQUIRED_TOKENS: Readonly<Record<string, CapabilityToken>>;
+
+// @public
+export interface SelectionGetParams {
+    scope: string;
+}
+
+// @public
+export interface SelectionGetResult {
+    editorType?: string;
+    hasSelection?: boolean;
+    horizontalSelection?: {
+        begin: number;
+        end: number;
+    };
+    isLineSelection?: boolean;
+    notes?: {
+        dur: number;
+        endPos: number;
+        noteUuid: string;
+        pitch: number;
+        pos: number;
+    }[];
+    selectedTrackCount?: number;
+    selectedTracks?: {
+        trackIndex: number;
+        trackUuid: string;
+    }[];
+    selectionCount?: number;
+    verticalSelection?: {
+        begin: number;
+        end: number;
+    };
+}
+
+// @public
+export interface SelectionOperations {
+    get(params: SelectionGetParams, options?: CallOptions): Promise<SelectionGetResult>;
+    set(params: SelectionSetParams, options?: MutatingCallOptions): Promise<SelectionSetResult>;
+}
+
+// @public
+export interface SelectionSetParams {
+    horizontalSelection?: {
+        begin: number;
+        end: number;
+    } | null;
+    mode?: string | null;
+    notesToDeselect?: unknown;
+    notesToSelect?: unknown;
+    rangeBegin?: number | null;
+    rangeEnd?: number | null;
+    scope: string;
+    selectNotes?: boolean | null;
+    tracks?: unknown;
+    verticalSelection?: {
+        begin: number;
+        end: number;
+    } | null;
+}
+
+// @public
+export interface SelectionSetResult {
+    editorType?: string;
+    // (undocumented)
+    horizontalSelection?: {
+        begin: number;
+        end: number;
+    };
+    itemsSelected?: number;
+    notesDeselected?: number;
+    notesNotFound?: number;
+    notesSelected?: number;
+    rangeBegin?: number;
+    rangeEnd?: number;
+    selectionCount?: number;
+    // (undocumented)
+    selectionRange?: {
+        begin: number;
+        end: number;
+    };
+    success?: boolean;
+    // (undocumented)
+    verticalSelection?: {
+        begin: number;
+        end: number;
+    };
+}
+
+// @public
+export interface SpecialTracksGetResult {
+    chord: {
+        animating: boolean;
+        visible: boolean;
+    };
+    tempo_and_timesig: {
+        animating: boolean;
+        visible: boolean;
+    };
+}
+
+// @public
+export interface SpecialTracksHideParams {
+    track: string;
+}
+
+// @public
+export interface SpecialTracksOperations {
+    get(options?: CallOptions): Promise<SpecialTracksGetResult>;
+    hide(params: SpecialTracksHideParams, options?: MutatingCallOptions): Promise<void>;
+    show(params: SpecialTracksShowParams, options?: MutatingCallOptions): Promise<void>;
+}
+
+// @public
+export interface SpecialTracksShowParams {
+    track: string;
+}
+
+// @public
+export const SURFACE_VERSION = "2.0";
+
+// @public
+export interface TempoGetResult {
+    pointCount: number;
+    points: {
+        bend: number;
+        pos: number;
+        value: number;
+    }[];
+}
+
+// @public
+export interface TempoOperations {
+    get(options?: CallOptions): Promise<TempoGetResult>;
+    set(params: TempoSetParams, options?: MutatingCallOptions): Promise<void>;
+}
+
+// @public
+export interface TempoSetParams {
+    points: unknown;
+}
+
+// @public
+export interface TimesigGetResult {
+    signatureCount: number;
+    signatures: {
+        barPos: number;
+        denominator: number;
+        numerator: number;
+    }[];
+}
+
+// @public
+export interface TimesigOperations {
+    get(options?: CallOptions): Promise<TimesigGetResult>;
+    set(params: TimesigSetParams, options?: MutatingCallOptions): Promise<void>;
+}
+
+// @public
+export interface TimesigSetParams {
+    signatures: unknown;
+}
+
+// @public
+export interface TrackGetParams {
+    trackIndex: number;
+}
+
+// @public
+export interface TrackGetResult {
+    color: string;
+    defaultArticulation?: string;
+    defaultLanguage?: string;
+    mixer: {
+        gain: number;
+        mute: boolean;
+        pan: number;
+        solo: boolean;
+    };
+    rawName: string;
+    recordInput: {
+        inputChannelIndex?: number;
+        listen: boolean;
+        midiInput?: {
+            channel?: number;
+            deviceName?: string;
+            sourceType: string;
+        };
+        record: boolean;
+        recordMode?: string;
+    };
+    soundSourceInfo?: {
+        category?: string;
+        hasSource?: boolean;
+        isVoiceBlend?: boolean;
+        members?: {
+            category?: string;
+            gain: number;
+            isVoiceBlend?: boolean;
+            mute: boolean;
+            name: string;
+            nativeLanguage?: string;
+            supportedLanguages?: string[];
+        }[];
+        metadata?: {
+            memberCount?: number;
+            offset?: number;
+            spread?: number;
+        };
+        name?: string;
+        nativeLanguage?: string;
+        supportedLanguages?: string[];
+        type?: string;
+    };
+    trackName: string;
+    trackType: string;
+}
+
+// @public
+export interface TrackListResult {
+    contentTrackCount: number;
+    tracks: {
+        clipCount: number;
+        soundSourceName?: string;
+        trackIndex: number;
+        trackName: string;
+        trackType: string;
+        trackUuid: string;
+    }[];
+}
+
+// @public
+export interface TrackOperations {
+    delete(options?: MutatingCallOptions): Promise<void>;
+    get(params: TrackGetParams, options?: CallOptions): Promise<TrackGetResult>;
+    list(options?: CallOptions): Promise<TrackListResult>;
+    rename(params: TrackRenameParams, options?: MutatingCallOptions): Promise<void>;
+    set(params: TrackSetParams, options?: MutatingCallOptions): Promise<void>;
+    setRecord(params: TrackSetRecordParams, options?: MutatingCallOptions): Promise<void>;
+    singerRecipe(params: TrackSingerRecipeParams, options?: CallOptions): Promise<TrackSingerRecipeResult>;
+}
+
+// @public
+export interface TrackRenameParams {
+    newName: string;
+    trackIndex: number;
+}
+
+// @public
+export interface TrackSetParams {
+    color?: string | null;
+    gain?: number | null;
+    mute?: boolean | null;
+    pan?: number | null;
+    solo?: boolean | null;
+    trackIndex: number;
+}
+
+// @public
+export interface TrackSetRecordParams {
+    inputChannelIndex?: number | null;
+    listen?: boolean | null;
+    midiInputChannel?: number | null;
+    midiInputDeviceName?: string | null;
+    midiInputSourceType?: string | null;
+    recordMode?: string | null;
+    trackIndex: number;
+}
+
+// @public
+export interface TrackSingerRecipeParams {
+    singerIndex?: number | null;
+    trackIndex: number;
+}
+
+// @public
+export interface TrackSingerRecipeResult {
+    isVoiceBlend: boolean;
+    router: {
+        id: number;
+        isSingingMamba: boolean;
+        isTimbreOnly: boolean;
+        name: string;
+        supportedLanguages: string[];
+        version: number;
+    };
+    saveState: string;
+    seedCount: number;
+    seeds: {
+        code: number;
+        labels: string[];
+        lock: boolean;
+        name: string;
+        style?: number;
+        timbre: number;
+    }[];
+    singerName: string;
+    vocalControls?: {
+        defaultValue: number | null;
+        name: string;
+    }[];
+}
+
+// @public
+export interface TransportLoopResult {
+    active: boolean;
+    endTick: number;
+    fingerprint: Fingerprint;
+    isValid: boolean;
+    startTick: number;
+}
+
+// @public
+export interface TransportMetronomeParams {
+    on: boolean;
+}
+
+// @public
+export interface TransportOperations {
+    loop(options?: CallOptions): Promise<TransportLoopResult>;
+    metronome(params: TransportMetronomeParams, options?: MutatingCallOptions): Promise<void>;
+    play(options?: MutatingCallOptions): Promise<void>;
+    seek(params: TransportSeekParams, options?: MutatingCallOptions): Promise<void>;
+    setLoop(params: TransportSetLoopParams, options?: MutatingCallOptions): Promise<void>;
+    state(options?: CallOptions): Promise<TransportStateResult>;
+    stop(options?: MutatingCallOptions): Promise<void>;
+    toggle(options?: MutatingCallOptions): Promise<void>;
+}
+
+// @public
+export interface TransportSeekParams {
+    time: number;
+}
+
+// @public
+export interface TransportSetLoopParams {
+    active?: boolean | null;
+    endTick?: number | null;
+    startTick?: number | null;
+}
+
+// @public
+export interface TransportStateResult {
+    position: number;
+    status: string;
+}
+
+// @public
+export type TypedArrayFor<D extends Dtype> = D extends 'u8' ? Uint8Array : D extends 'i16le' ? Int16Array : D extends 'i32le' ? Int32Array : D extends 'i64le' ? BigInt64Array : D extends 'f32le' ? Float32Array : D extends 'f64le' ? Float64Array : never;
+
+// @public
+export interface VoiceCollectParams {
+    id: number;
+}
+
+// @public
+export interface VoiceCollectResult {
+    collected: boolean;
+    id: number;
+    name: string;
+}
+
+// @public
+export interface VoiceCommunityListParams {
+    isMyCollection?: boolean | null;
+    keyword?: string | null;
+    language?: string | null;
+    page: number;
+    tags?: string[] | null;
+}
+
+// @public
+export interface VoiceCommunityListResult {
+    count?: number;
+    error?: string;
+    page: number;
+    voices: {
+        group: string;
+        id: number;
+        isCollected?: boolean;
+        name: string;
+        nativeLanguage: string;
+        routerId: number;
+        routerName: string;
+        supportedLanguages: string[];
+        tags: string[];
+    }[];
+}
+
+// @public
+export interface VoiceCommunityPagesParams {
+    isMyCollection?: boolean | null;
+    keyword?: string | null;
+    language?: string | null;
+    tags?: string[] | null;
+}
+
+// @public
+export interface VoiceCommunityPagesResult {
+    pageSize: number;
+    totalPages: number;
+}
+
+// @public
+export interface VoiceListParams {
+    category?: string | null;
+    keyword?: string | null;
+    language?: string | null;
+    tags?: string[] | null;
+    type: string;
+}
+
+// @public
+export interface VoiceListResult {
+    count: number;
+    soundSources: {
+        category?: string;
+        categoryId?: number;
+        group?: string;
+        id: number;
+        isCollected?: boolean;
+        memberCount?: number;
+        name: string;
+        nativeLanguage?: string;
+        routerId?: number;
+        routerName?: string;
+        supportedLanguages?: string[];
+        tags: string[];
+        type?: string;
+    }[];
+    type: string;
+}
+
+// @public
+export interface VoiceLoadParams {
+    group?: string | null;
+    id: number;
+    routerId?: number | null;
+    soundSourceType: string;
+    trackIndex: number;
+}
+
+// @public
+export interface VoiceLoadResult {
+    id: number;
+    name: string;
+    soundSourceType: string;
+    trackIndex: number;
+}
+
+// @public
+export interface VoiceOperations {
+    collect(params: VoiceCollectParams, options?: MutatingCallOptions): Promise<VoiceCollectResult>;
+    communityList(params: VoiceCommunityListParams, options?: CallOptions): Promise<VoiceCommunityListResult>;
+    communityPages(params: VoiceCommunityPagesParams, options?: CallOptions): Promise<VoiceCommunityPagesResult>;
+    list(params: VoiceListParams, options?: CallOptions): Promise<VoiceListResult>;
+    load(params: VoiceLoadParams, options?: MutatingCallOptions): Promise<VoiceLoadResult>;
+    tags(params: VoiceTagsParams, options?: CallOptions): Promise<VoiceTagsResult>;
+    unload(params: VoiceUnloadParams, options?: MutatingCallOptions): Promise<VoiceUnloadResult>;
+}
+
+// @public
+export interface VoiceTagsParams {
+    type: string;
+}
+
+// @public
+export interface VoiceTagsResult {
+    categories?: {
+        id: number;
+        name: string;
+    }[];
+    languages?: {
+        code: string;
+        name: string;
+    }[];
+    note?: string;
+    tagGroups?: unknown[];
+}
+
+// @public
+export interface VoiceUnloadParams {
+    trackIndex: number;
+}
+
+// @public
+export interface VoiceUnloadResult {
+    newType: string;
+    trackIndex: number;
+    trackName: string;
+}
 
 ```

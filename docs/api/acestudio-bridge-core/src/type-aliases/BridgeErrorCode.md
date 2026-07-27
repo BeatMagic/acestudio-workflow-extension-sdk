@@ -1,0 +1,46 @@
+# Type Alias: BridgeErrorCode
+
+```ts
+type BridgeErrorCode = 
+  | "ALREADY_RECORDING"
+  | "BAD_ARGS"
+  | "BRIDGE_UNREACHABLE"
+  | "CAPABILITY_DENIED"
+  | "CAPABILITY_OUT_OF_SURFACE"
+  | "CHAIN_NOT_GROWN"
+  | "CREATE_TIMEOUT"
+  | "EDITOR_NOT_READY"
+  | "EDIT_TIMEOUT"
+  | "EXPORT_IN_PROGRESS"
+  | "EXPORT_START_FAILED"
+  | "FLUSH_TIMEOUT"
+  | "GESTURE_HELD"
+  | "HANDLER_FAILED"
+  | "INSERT_FAILED"
+  | "INVALID_ARG"
+  | "IO_ERROR"
+  | "JOB_NOT_CANCELLABLE"
+  | "NOT_FOUND"
+  | "NO_GESTURE"
+  | "NO_MASTER_CHAIN"
+  | "NO_PATTERN_EDIT_OPEN"
+  | "NO_PROJECT"
+  | "NO_PROJECT_OPEN"
+  | "NO_SCENE"
+  | "NO_STATE"
+  | "NO_WINDOW"
+  | "PLAYBACK_START_FAILED"
+  | "RECORD_START_FAILED"
+  | "SCENARIO_FAILED"
+  | "SESSION_INVALID"
+  | "STALE_WRITE"
+  | "TIMEOUT"
+  | "TIME_UNIT_REQUIRED"
+  | "UNAVAILABLE"
+  | "UNKNOWN_CAPABILITY"
+  | "UNKNOWN_COMMAND"
+  | "UNKNOWN_SCENARIO"
+  | "USER_BUSY";
+```
+
+Every canonical error code, as a string-literal union. `BridgeError.code` narrows against it, so error handling is exhaustiveness-checked by the compiler. Codes are a contract; the message beside one is not.

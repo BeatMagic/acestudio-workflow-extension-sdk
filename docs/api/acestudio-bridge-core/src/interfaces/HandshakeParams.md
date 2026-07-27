@@ -33,7 +33,6 @@ a different major fails the handshake.
 optional requestedCapabilities?: string[];
 ```
 
-Capability names the peer asks for — profiles and/or tokens, resolved by
-the registry. A host that grants a whole surface ignores them, and the
-extension host derives an extension's grant from the consent record
-captured at install rather than from anything asked for at runtime.
+Capability names the peer asks for — profiles and/or tokens. What is
+actually granted is the host's decision, and may be narrower or wider than
+what was asked for: read `grantedTokens` from the result, never this list.

@@ -5,7 +5,67 @@
 ```ts
 
 // @public
+export type AnyBridgeErrorCode = BridgeErrorCode | SdkErrorCode;
+
+// @public
+export interface BridgeConnection {
+    close(): void;
+    readonly grantedTokens: readonly string[];
+    onClose(listener: () => void): Unsubscribe;
+    onShutdown(listener: (params: ShutdownParams) => void): Unsubscribe;
+    readonly peer: BridgePeer;
+    readonly protocolVersion: number;
+    readonly sessionId: string;
+}
+
+// @public
+export class BridgeError<C extends AnyBridgeErrorCode = AnyBridgeErrorCode> extends Error {
+    constructor(init: BridgeErrorInit<C>);
+    readonly code: C;
+    readonly details: DetailsFor<C>;
+    readonly hint?: string;
+}
+
+// @public
 export type BridgeErrorCode = 'ALREADY_RECORDING' | 'BAD_ARGS' | 'BRIDGE_UNREACHABLE' | 'CAPABILITY_DENIED' | 'CAPABILITY_OUT_OF_SURFACE' | 'CHAIN_NOT_GROWN' | 'CREATE_TIMEOUT' | 'EDITOR_NOT_READY' | 'EDIT_TIMEOUT' | 'EXPORT_IN_PROGRESS' | 'EXPORT_START_FAILED' | 'FLUSH_TIMEOUT' | 'GESTURE_HELD' | 'HANDLER_FAILED' | 'INSERT_FAILED' | 'INVALID_ARG' | 'IO_ERROR' | 'JOB_NOT_CANCELLABLE' | 'NOT_FOUND' | 'NO_GESTURE' | 'NO_MASTER_CHAIN' | 'NO_PATTERN_EDIT_OPEN' | 'NO_PROJECT' | 'NO_PROJECT_OPEN' | 'NO_SCENE' | 'NO_STATE' | 'NO_WINDOW' | 'PLAYBACK_START_FAILED' | 'RECORD_START_FAILED' | 'SCENARIO_FAILED' | 'SESSION_INVALID' | 'STALE_WRITE' | 'TIMEOUT' | 'TIME_UNIT_REQUIRED' | 'UNAVAILABLE' | 'UNKNOWN_CAPABILITY' | 'UNKNOWN_COMMAND' | 'UNKNOWN_SCENARIO' | 'USER_BUSY';
+
+// @public
+export interface BridgeErrorDetails {
+    // (undocumented)
+    PROTOCOL_VERSION_MISMATCH: {
+        expected: number;
+        actual: number;
+    };
+    // (undocumented)
+    SURFACE_VERSION_MISMATCH: {
+        expected: string;
+        actual: string;
+    };
+}
+
+// @public
+export interface BridgeErrorInit<C extends AnyBridgeErrorCode = AnyBridgeErrorCode> {
+    cause?: unknown;
+    // (undocumented)
+    code: C;
+    details?: DetailsFor<C>;
+    hint?: string;
+    // (undocumented)
+    message: string;
+}
+
+// @public
+export class BridgePeer {
+    constructor(transport: Transport);
+    close(): void;
+    get isClosed(): boolean;
+    notify(method: string, params?: unknown): void;
+    onClose(listener: () => void): Unsubscribe;
+    request<T>(method: string, params?: unknown, options?: RequestOptions): Promise<T>;
+    setRequestHandler<P, R>(method: string, handler: (params: P) => R | Promise<R>): void;
+    subscribe<T = unknown>(method: string, listener: (params: T) => void): Unsubscribe;
+    withDeadline<T>(options: RequestOptions, call: () => Promise<T>): Promise<T>;
+}
 
 // @public
 export const BULK_PARAM_FIELDS: Readonly<Record<string, readonly BulkFieldDescriptor[]>>;
@@ -36,7 +96,7 @@ export interface CallOptions {
 }
 
 // @public
-export type CapabilityToken = 'caret.read' | 'caret.write' | 'chord.read' | 'chord.write' | 'clip.read' | 'clip.write' | 'device.read' | 'device.write' | 'editor.read' | 'editor.write' | 'export.invoke' | 'fx.read' | 'fx.write' | 'generative.add-layer' | 'generative.enhance' | 'generative.retake' | 'generative.seed-audio' | 'generative.song' | 'generative.sound-effects' | 'generative.stem-split' | 'generative.text2sample' | 'generative.vocal2midi' | 'generative.voice-change' | 'history.control' | 'history.read' | 'import.invoke' | 'job.control' | 'job.read' | 'lyric.read' | 'lyric.write' | 'note.read' | 'note.write' | 'project.lifecycle' | 'project.read' | 'recording.control' | 'selection.read' | 'selection.write' | 'tempo.analyze' | 'tempo.applyV2' | 'tempo.read' | 'tempo.write' | 'timesig.read' | 'timesig.write' | 'track.read' | 'track.write' | 'transport.control' | 'transport.state' | 'ui.view' | 'vocalparam.read' | 'vocalparam.write' | 'voice.read' | 'voice.write' | 'workflow.dev' | 'workflow.ui';
+export type CapabilityToken = 'caret.read' | 'caret.write' | 'chord.read' | 'chord.write' | 'clip.read' | 'clip.write' | 'device.read' | 'device.write' | 'editor.read' | 'editor.write' | 'export.invoke' | 'fx.read' | 'fx.write' | 'generative.add-layer' | 'generative.enhance' | 'generative.retake' | 'generative.seed-audio' | 'generative.song' | 'generative.sound-effects' | 'generative.stem-split' | 'generative.text2sample' | 'generative.vocal2midi' | 'generative.voice-change' | 'history.control' | 'history.read' | 'import.invoke' | 'job.control' | 'job.read' | 'lyric.read' | 'lyric.write' | 'note.read' | 'note.write' | 'project.lifecycle' | 'project.read' | 'recording.control' | 'selection.read' | 'selection.write' | 'session.handshake' | 'session.ping' | 'session.shutdown' | 'tempo.analyze' | 'tempo.applyV2' | 'tempo.read' | 'tempo.write' | 'timesig.read' | 'timesig.write' | 'track.read' | 'track.write' | 'transport.control' | 'transport.state' | 'ui.view' | 'vocalparam.read' | 'vocalparam.write' | 'voice.read' | 'voice.write' | 'workflow.dev' | 'workflow.ui';
 
 // @public
 export interface CaretGetParams {
@@ -236,6 +296,18 @@ export interface ClipOperations {
 }
 
 // @public
+export function connect(options: ConnectOptions): Promise<BridgeConnection>;
+
+// @public
+export interface ConnectOptions {
+    authToken: string;
+    requestedCapabilities?: readonly string[];
+    signal?: AbortSignal;
+    timeoutMs?: number;
+    transport: Transport;
+}
+
+// @public
 export interface ConvertEditorToGlobalParams {
     editorTick: number;
 }
@@ -310,6 +382,12 @@ export interface ConvertTimeToTickParams {
 export interface ConvertTimeToTickResult {
     tick: number;
 }
+
+// @public
+export function createTransportPair(): TransportPair;
+
+// @public
+export type DetailsFor<C extends AnyBridgeErrorCode> = C extends keyof BridgeErrorDetails ? BridgeErrorDetails[C] : Record<string, unknown>;
 
 // @public
 export interface DeviceCurrentResult {
@@ -480,12 +558,40 @@ export interface EditorTickRangeResult {
 }
 
 // @public
+export function encodeFrame(message: string): Buffer;
+
+// @public
 export const FIELD_CAPABILITIES: Readonly<Record<string, Readonly<Record<string, CapabilityToken>>>>;
 
 // @public
 export type Fingerprint = string & {
     readonly __fingerprint: unique symbol;
 };
+
+// @public
+export class FrameDecoder {
+    push(chunk: Buffer): string[];
+}
+
+// @public
+export interface HandshakeParams {
+    authToken: string;
+    protocolVersion: number;
+    requestedCapabilities?: string[];
+}
+
+// @public
+export interface HandshakeResult {
+    acceptedProtocolVersion: number;
+    grantedTokens: string[];
+    sessionId: string;
+}
+
+// @public
+export function isBridgeError(value: unknown): value is BridgeError;
+
+// @public
+export function isCode<C extends AnyBridgeErrorCode>(value: unknown, code: C): value is BridgeError<C>;
 
 // @public
 export interface JobCancelParams {
@@ -613,6 +719,45 @@ export interface JobWaitResult {
 }
 
 // @public
+export interface JsonRpcFault {
+    // (undocumented)
+    code: number;
+    // (undocumented)
+    data?: unknown;
+    // (undocumented)
+    message: string;
+}
+
+// @public
+export interface JsonRpcMessage {
+    // (undocumented)
+    error?: JsonRpcFault;
+    // (undocumented)
+    id?: number;
+    // (undocumented)
+    jsonrpc?: string;
+    // (undocumented)
+    method?: string;
+    // (undocumented)
+    params?: unknown;
+    // (undocumented)
+    result?: unknown;
+}
+
+// @public
+export class LocalSocketTransport implements Transport {
+    // (undocumented)
+    close(): void;
+    static connect(socketPath: string): Promise<LocalSocketTransport>;
+    // (undocumented)
+    onClose(handler: () => void): void;
+    // (undocumented)
+    onMessage(handler: (message: string) => void): void;
+    // (undocumented)
+    send(message: string): void;
+}
+
+// @public
 export interface MixerGetResult {
     animating: boolean;
     visible: boolean;
@@ -645,7 +790,14 @@ export interface OperationDescriptor {
 export const OPERATIONS: readonly OperationDescriptor[];
 
 // @public
-export const packageName = "@timedomain/acestudio-bridge-core";
+export interface PingParams {
+    nonce: string;
+}
+
+// @public
+export interface PingResult {
+    nonce: string;
+}
 
 // @public
 export interface ProjectInfoResult {
@@ -665,6 +817,9 @@ export interface ProjectOperations {
 export interface ProjectSynthesisStatusResult {
     isSynthesizing: boolean;
 }
+
+// @public
+export const PROTOCOL_VERSION = 1;
 
 // @public
 export interface PublicBindings {
@@ -701,7 +856,29 @@ export interface PublicBindings {
 }
 
 // @public
+export type RequestHandler = (params: unknown) => unknown;
+
+// @public
+export interface RequestOptions {
+    signal?: AbortSignal;
+    timeoutMs?: number;
+}
+
+// @public
 export const REQUIRED_TOKENS: Readonly<Record<string, CapabilityToken>>;
+
+// @public
+export type SdkErrorCode =
+/** The transport never opened, or dropped with work in flight. */
+"BRIDGE_UNREACHABLE"
+/** The host refused the handshake, or answered something unreadable. */
+| "HANDSHAKE_FAILED"
+/** The host speaks a different major of the bridge wire itself. */
+| "PROTOCOL_VERSION_MISMATCH"
+/** The host's contract surface is a different major than the bindings'. */
+| "SURFACE_VERSION_MISMATCH"
+/** A local deadline expired, or the caller's `AbortSignal` fired. */
+| "TIMEOUT";
 
 // @public
 export interface SelectionGetParams {
@@ -796,6 +973,40 @@ export interface SelectionSetResult {
         begin: number;
         end: number;
     };
+}
+
+// @public (undocumented)
+export const SESSION_CAPABILITY_TOKENS: readonly SessionCapability[];
+
+// @public (undocumented)
+export const SESSION_METHOD_CAPABILITIES: Readonly<Record<string, SessionCapability>>;
+
+// @public
+export type SessionCapability = 'session.handshake' | 'session.ping' | 'session.shutdown';
+
+// @public (undocumented)
+export class SessionClient {
+    constructor(peer: SessionPeer);
+    onSessionShutdown(callback: (event: ShutdownParams) => void): Unsubscribe;
+    sessionHandshake(params: HandshakeParams): Promise<HandshakeResult>;
+}
+
+// @public (undocumented)
+export interface SessionPeer {
+    // (undocumented)
+    notify(method: string, params?: unknown): void;
+    // (undocumented)
+    request<T>(method: string, params?: unknown): Promise<T>;
+    // (undocumented)
+    setRequestHandler<P, R>(method: string, handler: (params: P) => Promise<R> | R): void;
+    // (undocumented)
+    subscribe<T>(method: string, callback: (event: T) => void): Unsubscribe;
+}
+
+// @public
+export interface ShutdownParams {
+    graceMs: number;
+    reason: string;
 }
 
 // @public
@@ -1021,6 +1232,14 @@ export interface TrackSingerRecipeResult {
 }
 
 // @public
+export interface Transport {
+    close(): void;
+    onClose(handler: () => void): void;
+    onMessage(handler: (message: string) => void): void;
+    send(message: string): void;
+}
+
+// @public
 export interface TransportLoopResult {
     active: boolean;
     endTick: number;
@@ -1047,6 +1266,12 @@ export interface TransportOperations {
 }
 
 // @public
+export interface TransportPair {
+    client: Transport;
+    host: Transport;
+}
+
+// @public
 export interface TransportSeekParams {
     time: number;
 }
@@ -1066,6 +1291,9 @@ export interface TransportStateResult {
 
 // @public
 export type TypedArrayFor<D extends Dtype> = D extends 'u8' ? Uint8Array : D extends 'i16le' ? Int16Array : D extends 'i32le' ? Int32Array : D extends 'i64le' ? BigInt64Array : D extends 'f32le' ? Float32Array : D extends 'f64le' ? Float64Array : never;
+
+// @public
+export type Unsubscribe = () => void;
 
 // @public
 export interface VoiceCollectParams {

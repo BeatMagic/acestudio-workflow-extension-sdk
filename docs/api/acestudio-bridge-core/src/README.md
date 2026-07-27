@@ -4,11 +4,24 @@ The connection core for programming against a running ACE Studio.
 
 ## Remarks
 
-This is the package skeleton; the public API is introduced in subsequent
-releases.
+[connect](functions/connect.md) runs the canonical capability handshake over a pluggable
+[Transport](interfaces/Transport.md) and hands back a granted, session-established
+[BridgeConnection](interfaces/BridgeConnection.md). Anything that can be refused is refused as a
+[BridgeError](classes/BridgeError.md).
+
+## Classes
+
+- [BridgeError](classes/BridgeError.md)
+- [BridgePeer](classes/BridgePeer.md)
+- [FrameDecoder](classes/FrameDecoder.md)
+- [LocalSocketTransport](classes/LocalSocketTransport.md)
+- [SessionClient](classes/SessionClient.md)
 
 ## Interfaces
 
+- [BridgeConnection](interfaces/BridgeConnection.md)
+- [BridgeErrorDetails](interfaces/BridgeErrorDetails.md)
+- [BridgeErrorInit](interfaces/BridgeErrorInit.md)
 - [BulkBlob](interfaces/BulkBlob.md)
 - [BulkFieldDescriptor](interfaces/BulkFieldDescriptor.md)
 - [CallOptions](interfaces/CallOptions.md)
@@ -31,6 +44,7 @@ releases.
 - [ClipNoteContentParams](interfaces/ClipNoteContentParams.md)
 - [ClipNoteContentResult](interfaces/ClipNoteContentResult.md)
 - [ClipOperations](interfaces/ClipOperations.md)
+- [ConnectOptions](interfaces/ConnectOptions.md)
 - [ConvertEditorToGlobalParams](interfaces/ConvertEditorToGlobalParams.md)
 - [ConvertEditorToGlobalResult](interfaces/ConvertEditorToGlobalResult.md)
 - [ConvertGlobalToEditorParams](interfaces/ConvertGlobalToEditorParams.md)
@@ -57,6 +71,8 @@ releases.
 - [EditorOperations](interfaces/EditorOperations.md)
 - [EditorStatusResult](interfaces/EditorStatusResult.md)
 - [EditorTickRangeResult](interfaces/EditorTickRangeResult.md)
+- [HandshakeParams](interfaces/HandshakeParams.md)
+- [HandshakeResult](interfaces/HandshakeResult.md)
 - [JobCancelParams](interfaces/JobCancelParams.md)
 - [JobDiscardResultParams](interfaces/JobDiscardResultParams.md)
 - [JobGetParams](interfaces/JobGetParams.md)
@@ -70,19 +86,26 @@ releases.
 - [JobResultsResult](interfaces/JobResultsResult.md)
 - [JobWaitParams](interfaces/JobWaitParams.md)
 - [JobWaitResult](interfaces/JobWaitResult.md)
+- [JsonRpcFault](interfaces/JsonRpcFault.md)
+- [JsonRpcMessage](interfaces/JsonRpcMessage.md)
 - [MixerGetResult](interfaces/MixerGetResult.md)
 - [MixerOperations](interfaces/MixerOperations.md)
 - [MutatingCallOptions](interfaces/MutatingCallOptions.md)
 - [OperationDescriptor](interfaces/OperationDescriptor.md)
+- [PingParams](interfaces/PingParams.md)
+- [PingResult](interfaces/PingResult.md)
 - [ProjectInfoResult](interfaces/ProjectInfoResult.md)
 - [ProjectOperations](interfaces/ProjectOperations.md)
 - [ProjectSynthesisStatusResult](interfaces/ProjectSynthesisStatusResult.md)
 - [PublicBindings](interfaces/PublicBindings.md)
+- [RequestOptions](interfaces/RequestOptions.md)
 - [SelectionGetParams](interfaces/SelectionGetParams.md)
 - [SelectionGetResult](interfaces/SelectionGetResult.md)
 - [SelectionOperations](interfaces/SelectionOperations.md)
 - [SelectionSetParams](interfaces/SelectionSetParams.md)
 - [SelectionSetResult](interfaces/SelectionSetResult.md)
+- [SessionPeer](interfaces/SessionPeer.md)
+- [ShutdownParams](interfaces/ShutdownParams.md)
 - [SpecialTracksGetResult](interfaces/SpecialTracksGetResult.md)
 - [SpecialTracksHideParams](interfaces/SpecialTracksHideParams.md)
 - [SpecialTracksOperations](interfaces/SpecialTracksOperations.md)
@@ -102,9 +125,11 @@ releases.
 - [TrackSetRecordParams](interfaces/TrackSetRecordParams.md)
 - [TrackSingerRecipeParams](interfaces/TrackSingerRecipeParams.md)
 - [TrackSingerRecipeResult](interfaces/TrackSingerRecipeResult.md)
+- [Transport](interfaces/Transport.md)
 - [TransportLoopResult](interfaces/TransportLoopResult.md)
 - [TransportMetronomeParams](interfaces/TransportMetronomeParams.md)
 - [TransportOperations](interfaces/TransportOperations.md)
+- [TransportPair](interfaces/TransportPair.md)
 - [TransportSeekParams](interfaces/TransportSeekParams.md)
 - [TransportSetLoopParams](interfaces/TransportSetLoopParams.md)
 - [TransportStateResult](interfaces/TransportStateResult.md)
@@ -126,11 +151,17 @@ releases.
 
 ## Type Aliases
 
+- [AnyBridgeErrorCode](type-aliases/AnyBridgeErrorCode.md)
 - [BridgeErrorCode](type-aliases/BridgeErrorCode.md)
 - [CapabilityToken](type-aliases/CapabilityToken.md)
+- [DetailsFor](type-aliases/DetailsFor.md)
 - [Dtype](type-aliases/Dtype.md)
 - [Fingerprint](type-aliases/Fingerprint.md)
+- [RequestHandler](type-aliases/RequestHandler.md)
+- [SdkErrorCode](type-aliases/SdkErrorCode.md)
+- [SessionCapability](type-aliases/SessionCapability.md)
 - [TypedArrayFor](type-aliases/TypedArrayFor.md)
+- [Unsubscribe](type-aliases/Unsubscribe.md)
 
 ## Variables
 
@@ -139,6 +170,16 @@ releases.
 - [DTYPE\_BYTES](variables/DTYPE_BYTES.md)
 - [FIELD\_CAPABILITIES](variables/FIELD_CAPABILITIES.md)
 - [OPERATIONS](variables/OPERATIONS.md)
-- [packageName](variables/packageName.md)
+- [PROTOCOL\_VERSION](variables/PROTOCOL_VERSION.md)
 - [REQUIRED\_TOKENS](variables/REQUIRED_TOKENS.md)
+- [SESSION\_CAPABILITY\_TOKENS](variables/SESSION_CAPABILITY_TOKENS.md)
+- [SESSION\_METHOD\_CAPABILITIES](variables/SESSION_METHOD_CAPABILITIES.md)
 - [SURFACE\_VERSION](variables/SURFACE_VERSION.md)
+
+## Functions
+
+- [connect](functions/connect.md)
+- [createTransportPair](functions/createTransportPair.md)
+- [encodeFrame](functions/encodeFrame.md)
+- [isBridgeError](functions/isBridgeError.md)
+- [isCode](functions/isCode.md)

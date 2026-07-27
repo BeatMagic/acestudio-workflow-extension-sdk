@@ -1,0 +1,55 @@
+# Interface: ConnectOptions
+
+What [connect](../functions/connect.md) needs to open a session.
+
+## Properties
+
+### authToken
+
+```ts
+authToken: string;
+```
+
+The one-time session token the host minted for this process.
+
+***
+
+### requestedCapabilities?
+
+```ts
+optional requestedCapabilities?: readonly string[];
+```
+
+Capability names to request. The extension host ignores them — an
+extension's grant is the consent record from install — so this is for the
+drivers that do resolve a request against the registry.
+
+***
+
+### signal?
+
+```ts
+optional signal?: AbortSignal;
+```
+
+Abort the handshake.
+
+***
+
+### timeoutMs?
+
+```ts
+optional timeoutMs?: number;
+```
+
+Deadline for the handshake, in milliseconds.
+
+***
+
+### transport
+
+```ts
+transport: Transport;
+```
+
+The message port to speak over.

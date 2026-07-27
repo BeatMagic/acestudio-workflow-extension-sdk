@@ -105,7 +105,15 @@ describe("LocalSocketTransport", () => {
       socket.on("data", (chunk: Buffer) => socket.write(chunk));
     });
     await new Promise<void>((resolve) => server.listen(socketPath, resolve));
+    let stopped = false;
     const stop = async (): Promise<void> => {
+      // A test that stops the server itself leaves the cleanup below calling this a
+      // second time. Guarded outright, rather than resting on close() reporting
+      // ERR_SERVER_NOT_RUNNING to a callback that ignores its argument.
+      if (stopped) {
+        return;
+      }
+      stopped = true;
       // close() only stops new connections; the client sees nothing until the
       // socket it is actually holding goes away too.
       for (const socket of accepted) {

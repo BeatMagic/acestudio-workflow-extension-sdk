@@ -771,7 +771,20 @@ export interface EditorAddNotesParams {
      *
      * On the CLI, pass as a JSON string: `--notes '[\{"pos":0,"dur":480,"pitch":60\}]'`
      */
-    notes: unknown;
+    notes: ({
+        /** Articulation for Instrument notes (optional). Trimmed and lowercased before validation. */
+        articulation?: string | null;
+        /** Duration in ticks. Must be \> 0. */
+        dur: number;
+        /** [Per-note mode] Language code for this note: `CHN`, `JPN`, `ENG`, `SPA`, or `KOR`. Defaults to the track's default language. */
+        language?: string | null;
+        /** [Per-note mode] Lyric for Sing notes. Use `"-"` for tenuto (extends the previous syllable). Mutually exclusive with top-level `lyric_sentence`. */
+        lyric?: string | null;
+        /** MIDI pitch (0-127). */
+        pitch: number;
+        /** Position in local ticks (relative to the editor's `tickBegin`). */
+        pos: number;
+    })[];
     /** Tick offset applied to the marker-line position before placing notes. Default: 0. A positive value shifts notes to the right. */
     offset?: number | null;
 }
@@ -1338,9 +1351,15 @@ export interface SelectionSetParams {
     /** [editor, UUID form] Selection mode: `replace` or `modify`. */
     mode?: string | null;
     /** [editor, UUID modify form] Notes to deselect, as a JSON array of `\{uuid\}` objects. Ignored in replace mode. */
-    notesToDeselect?: unknown;
+    notesToDeselect?: {
+        /** Note UUID. */
+        uuid: string;
+    }[] | null;
     /** [editor, UUID form] Notes to select, as a JSON array of `\{uuid\}` objects. */
-    notesToSelect?: unknown;
+    notesToSelect?: {
+        /** Note UUID. */
+        uuid: string;
+    }[] | null;
     /** [editor] Inclusive start of the selection range, editor-local. Ticks (`480t`) or a position resolved into the clip frame. See `help time-values`. */
     rangeBegin?: number | null;
     /** [editor] Exclusive end of the selection range, editor-local. Must be greater than `--range-begin`. See `help time-values`. */
@@ -1354,7 +1373,11 @@ export interface SelectionSetParams {
      *
      * Example: `[\{"trackIndex": 0\}, \{"trackUuid": "\{abc-...\}"\}]`
      */
-    tracks?: unknown;
+    tracks?: ({
+        trackIndex: number;
+    } | {
+        trackUuid: string;
+    })[] | null;
     /** [arrangement] Track index range to select, as `\{"begin": \<idx\>, "end": \<idx\>\}` (0-based; negative addresses special tracks). */
     verticalSelection?: {
         /** Inclusive start of the range (ticks for horizontal; track index for vertical; can be negative for special tracks). */
@@ -1497,7 +1520,14 @@ export interface TempoGetResult {
 /** Arguments for `tempo set`. */
 export interface TempoSetParams {
     /** JSON array of tempo points, e.g. `[\{"pos":0,"value":120\}]`. Each point: `pos` (ticks \>= 0), `value` (BPM 1-1000), `bend` (optional, default 0.0). Points must be sorted by `pos` ascending with no duplicates. */
-    points: unknown;
+    points: {
+        /** Curve bend, -1.0 to 1.0. Defaults to 0.0 (a straight segment). */
+        bend?: number | null;
+        /** Position in ticks. Must be \>= 0. */
+        pos: number;
+        /** Tempo in BPM, 1-1000. */
+        value: number;
+    }[];
 }
 
 /** The `tempo` operations, mirroring the canonical operation tree 1:1. */
@@ -1537,7 +1567,14 @@ export interface TimesigGetResult {
 /** Arguments for `timesig set`. */
 export interface TimesigSetParams {
     /** JSON array of time-signature entries, e.g. `[\{"barPos":0,"numerator":4,"denominator":4\}]`. Each entry: `barPos` (bar \>= 0), `numerator` (2-8), `denominator` (2, 4, 8, 16, or 32). Entries must be sorted by `barPos` ascending with no duplicates. */
-    signatures: unknown;
+    signatures: {
+        /** Bar position, 0-based. Must be \>= 0. */
+        barPos: number;
+        /** Beat unit: 2, 4, 8, 16, or 32. */
+        denominator: number;
+        /** Beats per bar, 2-8. */
+        numerator: number;
+    }[];
 }
 
 /** The `timesig` operations, mirroring the canonical operation tree 1:1. */

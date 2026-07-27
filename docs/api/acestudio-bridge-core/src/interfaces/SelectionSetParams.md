@@ -63,7 +63,7 @@ optional mode?: string | null;
 ### notesToDeselect?
 
 ```ts
-optional notesToDeselect?: unknown;
+optional notesToDeselect?: object[] | null;
 ```
 
 [editor, UUID modify form] Notes to deselect, as a JSON array of `\{uuid\}` objects. Ignored in replace mode.
@@ -73,7 +73,7 @@ optional notesToDeselect?: unknown;
 ### notesToSelect?
 
 ```ts
-optional notesToSelect?: unknown;
+optional notesToSelect?: object[] | null;
 ```
 
 [editor, UUID form] Notes to select, as a JSON array of `\{uuid\}` objects.
@@ -123,7 +123,15 @@ optional selectNotes?: boolean | null;
 ### tracks?
 
 ```ts
-optional tracks?: unknown;
+optional tracks?: 
+  | (
+  | {
+  trackIndex: number;
+}
+  | {
+  trackUuid: string;
+})[]
+  | null;
 ```
 
 [arrangement] Discrete set of tracks to select, as a JSON array of identifier objects; each must have at least `trackIndex` or `trackUuid`. An empty array clears the track selection. Passing this selects that set instead of an area range.

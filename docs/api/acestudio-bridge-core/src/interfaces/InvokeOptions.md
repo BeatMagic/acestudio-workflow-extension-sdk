@@ -2,6 +2,10 @@
 
 Options for a raw [BridgeConnection.invoke](BridgeConnection.md#invoke) call.
 
+## Extends
+
+- [`RequestOptions`](RequestOptions.md)
+
 ## Properties
 
 ### signal?
@@ -12,6 +16,10 @@ optional signal?: AbortSignal;
 
 Abort the local wait. The host-side work is unaffected.
 
+#### Inherited from
+
+[`RequestOptions`](RequestOptions.md).[`signal`](RequestOptions.md#signal)
+
 ***
 
 ### timeoutMs?
@@ -21,6 +29,10 @@ optional timeoutMs?: number;
 ```
 
 Local deadline in milliseconds. The host-side work is unaffected.
+
+#### Inherited from
+
+[`RequestOptions`](RequestOptions.md).[`timeoutMs`](RequestOptions.md#timeoutms)
 
 ***
 

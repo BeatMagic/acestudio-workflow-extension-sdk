@@ -4,7 +4,7 @@
  * ACE Studio's bridge server speaks.
  */
 
-import * as net from "node:net";
+import { createConnection, type Socket } from "node:net";
 import { BridgeError } from "./errors.js";
 import type { Transport } from "./transport.js";
 
@@ -69,12 +69,12 @@ export class FrameDecoder {
  * @public
  */
 export class LocalSocketTransport implements Transport {
-  private readonly socket: net.Socket;
+  private readonly socket: Socket;
   private readonly decoder = new FrameDecoder();
   private messageHandler: ((message: string) => void) | undefined;
   private closeHandler: (() => void) | undefined;
 
-  private constructor(socket: net.Socket) {
+  private constructor(socket: Socket) {
     this.socket = socket;
     socket.on("data", (chunk: Buffer) => {
       let messages: string[];
@@ -109,7 +109,7 @@ export class LocalSocketTransport implements Transport {
    */
   static connect(socketPath: string): Promise<LocalSocketTransport> {
     return new Promise<LocalSocketTransport>((resolve, reject) => {
-      const socket = net.createConnection(socketPath);
+      const socket = createConnection(socketPath);
       const onError = (cause: Error): void => {
         socket.removeListener("connect", onConnect);
         reject(

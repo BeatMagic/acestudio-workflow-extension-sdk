@@ -8,7 +8,11 @@
  * ships {@link LocalSocketTransport}; a browser-side consumer brings its own.
  */
 
-/** Cancels a registration, and is safe to call more than once. */
+/**
+ * Cancels a registration, and is safe to call more than once.
+ *
+ * @public
+ */
 export type Unsubscribe = () => void;
 
 /**
@@ -28,7 +32,11 @@ export interface Transport {
   close(): void;
 }
 
-/** The two ends of an in-memory transport pair. */
+/**
+ * The two ends of an in-memory transport pair.
+ *
+ * @public
+ */
 export interface TransportPair {
   /** The end a `connect()` call drives. */
   client: Transport;

@@ -11,9 +11,9 @@
 
 import { BridgeError } from "./errors.js";
 import { SURFACE_VERSION } from "./generated/bindings.js";
-import { BridgePeer } from "./peer.js";
+import { BridgePeer, type RequestOptions } from "./peer.js";
 import {
-  method,
+  BRIDGE_METHODS,
   PROTOCOL_VERSION,
   type CommandResultEnvelope,
   type HelloParams,
@@ -53,11 +53,7 @@ export interface ConnectOptions {
  *
  * @public
  */
-export interface InvokeOptions {
-  /** Local deadline in milliseconds. The host-side work is unaffected. */
-  timeoutMs?: number;
-  /** Abort the local wait. The host-side work is unaffected. */
-  signal?: AbortSignal;
+export interface InvokeOptions extends RequestOptions {
   /**
    * Wait up to this many milliseconds for the user to finish an edit gesture
    * before failing `USER_BUSY`. Omitting it fails fast.
@@ -75,7 +71,10 @@ export interface BridgeConnection {
   readonly sessionId: string;
   /** The session's grant, as flat canonical token names. */
   readonly grantedTokens: readonly string[];
-  /** The bridge protocol version the host accepted. */
+  /**
+   * The bridge protocol version the host accepted. Informational: ACE Studio
+   * does not gate the session on it, so neither does this SDK.
+   */
   readonly protocolVersion: number;
   /** The host's contract surface version, or `""` if it reported none. */
   readonly surfaceVersion: string;
@@ -88,7 +87,9 @@ export interface BridgeConnection {
   readonly peer: BridgePeer;
   /**
    * Invoke one catalog operation by canonical path, unwrapping the
-   * command-result envelope.
+   * command-result envelope down to its `data`. Call `bridge.invokeCommand`
+   * through {@link BridgeConnection.peer} instead to read the whole envelope,
+   * warnings included.
    *
    * @throws BridgeError carrying the host's code when the operation is refused.
    */
@@ -114,7 +115,10 @@ export async function connect(options: ConnectOptions): Promise<BridgeConnection
   const peer = new BridgePeer(options.transport);
   // Served before the handshake goes out: a host is free to probe liveness
   // from the moment it has a peer to probe.
-  peer.serve(method.ping, (params) => ({ nonce: (params as PingPayload | undefined)?.nonce ?? "" }) satisfies PingPayload);
+  peer.serve(
+    BRIDGE_METHODS.ping,
+    (params) => ({ nonce: (params as PingPayload | undefined)?.nonce ?? "" }) satisfies PingPayload,
+  );
 
   const hello: HelloParams = {
     token: options.authToken,
@@ -124,25 +128,50 @@ export async function connect(options: ConnectOptions): Promise<BridgeConnection
     requestedCapabilities: options.requestedCapabilities,
   };
 
-  let result: HelloResult;
   try {
-    result = await peer.request<HelloResult>(method.hello, hello, {
+    const answer = await peer.request<unknown>(BRIDGE_METHODS.hello, hello, {
       timeoutMs: options.timeoutMs ?? DEFAULT_HANDSHAKE_TIMEOUT_MS,
       signal: options.signal,
     });
+    const result = readHelloResult(answer);
+    const surfaceVersion = result.surfaceVersion ?? "";
+    const mismatch = majorMismatch(surfaceVersion);
+    if (mismatch !== undefined) {
+      throw mismatch;
+    }
+    return new Connection(peer, result, surfaceVersion);
   } catch (cause) {
     peer.close();
     throw handshakeFailure(cause);
   }
+}
 
-  const surfaceVersion = result.surfaceVersion ?? "";
-  const mismatch = majorMismatch(surfaceVersion);
-  if (mismatch !== undefined) {
-    peer.close();
-    throw mismatch;
+/**
+ * Read the host's answer as a handshake response. A peer that cannot even
+ * name the session it just granted is not one to start calling, so an
+ * unreadable answer fails the connect rather than surfacing later as a
+ * missing field.
+ */
+function readHelloResult(answer: unknown): HelloResult {
+  const result = answer as Partial<HelloResult> | null | undefined;
+  if (
+    typeof result?.sessionId !== "string" ||
+    !Array.isArray(result.grantedCapabilities) ||
+    result.grantedCapabilities.some((token) => typeof token !== "string")
+  ) {
+    throw new BridgeError({
+      code: "HANDSHAKE_FAILED",
+      message: "The ACE Studio bridge answered the handshake with no session id or granted-capability list.",
+      hint: "the peer on the other end may not be an ACE Studio bridge, or may speak a different protocol",
+    });
   }
-
-  return new Connection(peer, result, surfaceVersion);
+  return {
+    appVersion: typeof result.appVersion === "string" ? result.appVersion : "",
+    protocolVersion: typeof result.protocolVersion === "number" ? result.protocolVersion : 0,
+    surfaceVersion: typeof result.surfaceVersion === "string" ? result.surfaceVersion : "",
+    grantedCapabilities: result.grantedCapabilities,
+    sessionId: result.sessionId,
+  };
 }
 
 /** The live session {@link connect} hands back. */
@@ -165,7 +194,7 @@ class Connection implements BridgeConnection {
 
   async invoke<T = unknown>(path: string, args: Record<string, unknown> = {}, options: InvokeOptions = {}): Promise<T> {
     const envelope = await this.peer.request<CommandResultEnvelope<T>>(
-      method.invokeCommand,
+      BRIDGE_METHODS.invokeCommand,
       { path, arguments: args, waitTimeoutMs: options.waitBusy },
       { timeoutMs: options.timeoutMs, signal: options.signal },
     );
@@ -185,12 +214,18 @@ class Connection implements BridgeConnection {
 }
 
 /**
- * Shape whatever went wrong during the handshake. A transport drop or an
- * expired deadline already says exactly what happened, so those pass through
- * with their own codes; anything else is the host refusing us.
+ * Codes that already say exactly what went wrong during a handshake, and so
+ * travel out of {@link connect} unchanged.
+ */
+const HANDSHAKE_PASSTHROUGH = new Set(["BRIDGE_UNREACHABLE", "TIMEOUT", "SURFACE_VERSION_MISMATCH", "HANDSHAKE_FAILED"]);
+
+/**
+ * Shape whatever went wrong during the handshake. Anything without a code of
+ * its own — a JSON-RPC fault from the host, most of all — is the host refusing
+ * us.
  */
 function handshakeFailure(cause: unknown): BridgeError {
-  if (cause instanceof BridgeError && (cause.code === "BRIDGE_UNREACHABLE" || cause.code === "TIMEOUT")) {
+  if (cause instanceof BridgeError && HANDSHAKE_PASSTHROUGH.has(cause.code)) {
     return cause;
   }
   return new BridgeError({
@@ -210,8 +245,8 @@ function majorMismatch(hostVersion: string): BridgeError | undefined {
   if (hostVersion === "") {
     return undefined;
   }
-  const hostMajor = hostVersion.split(".")[0];
-  const bindingsMajor = SURFACE_VERSION.split(".")[0];
+  const hostMajor = Number(hostVersion.split(".")[0]);
+  const bindingsMajor = Number(SURFACE_VERSION.split(".")[0]);
   if (hostMajor === bindingsMajor) {
     return undefined;
   }
@@ -221,8 +256,9 @@ function majorMismatch(hostVersion: string): BridgeError | undefined {
       `This SDK speaks ACE Studio surface ${SURFACE_VERSION}, but the connected Studio speaks ${hostVersion} — ` +
       "a different major, so the two contracts are not compatible.",
     details: { expected: SURFACE_VERSION, actual: hostVersion },
-    hint:
-      Number(hostMajor) > Number(bindingsMajor)
+    hint: Number.isNaN(hostMajor)
+      ? "the host reported a surface version this SDK cannot read"
+      : hostMajor > bindingsMajor
         ? "update this SDK to a release built for the newer surface"
         : "update ACE Studio, or install a release of this SDK built for the older surface",
   });

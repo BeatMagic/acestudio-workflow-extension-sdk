@@ -5,8 +5,8 @@
  * The handshake carries the canonical capability payload — protocol version,
  * auth token and requested capability names in; accepted version, granted
  * flat token names and a session id out (ADR 0093 §4). The *field set* is
- * fixed by that payload; the spelling below is ACE Studio's, mapped from its
- * Remote Control bridge, so nothing here is invented for the SDK.
+ * fixed by that payload and the spelling below is ACE Studio's, taken from
+ * its Remote Control bridge, so neither is the SDK's to choose.
  */
 
 /**
@@ -23,14 +23,45 @@ export const PROTOCOL_VERSION = 5;
  *
  * @public
  */
-export const method = {
+export const BRIDGE_METHODS = {
   /** Opens the session and carries the canonical handshake payload. */
   hello: "bridge.hello",
-  /** Liveness echo, served by the SDK on the host's behalf. */
+  /**
+   * Liveness echo, served by the SDK on the host's behalf. The `{nonce}`
+   * payload is the canonical one; the name takes this driver's prefix, and is
+   * the one shape here that no shipped ACE Studio driver spells yet.
+   */
   ping: "bridge.ping",
   /** Invokes one catalog operation by canonical path. */
   invokeCommand: "bridge.invokeCommand",
 } as const;
+
+/**
+ * The error object a JSON-RPC peer answers with in place of a result.
+ *
+ * @public
+ */
+export interface JsonRpcFault {
+  code: number;
+  message: string;
+  data?: unknown;
+}
+
+/**
+ * A JSON-RPC 2.0 message as it arrives, before it is classified: a request
+ * has `method` and `id`, a notification `method` alone, a response `id` with
+ * `result` or `error`.
+ *
+ * @public
+ */
+export interface JsonRpcMessage {
+  jsonrpc?: string;
+  id?: number;
+  method?: string;
+  params?: unknown;
+  result?: unknown;
+  error?: JsonRpcFault;
+}
 
 /**
  * The handshake request. `token` is the session-token primitive the host

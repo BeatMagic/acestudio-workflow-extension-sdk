@@ -10,9 +10,14 @@
  */
 
 import { BridgeError } from "./errors.js";
+import type { JsonRpcFault, JsonRpcMessage } from "./protocol.js";
 import type { Transport, Unsubscribe } from "./transport.js";
 
-/** Bounds one outbound call. */
+/**
+ * Bounds one outbound call.
+ *
+ * @public
+ */
 export interface RequestOptions {
   /** Local deadline in milliseconds. The host-side work is unaffected. */
   timeoutMs?: number;
@@ -20,18 +25,18 @@ export interface RequestOptions {
   signal?: AbortSignal;
 }
 
-/** A handler served for one inbound method. */
+/**
+ * A handler served for one inbound method.
+ *
+ * @public
+ */
 export type RequestHandler = (params: unknown) => unknown;
-
-/** The JSON-RPC error object, as it appears on the wire. */
-interface JsonRpcFault {
-  code: number;
-  message: string;
-  data?: unknown;
-}
 
 /** JSON-RPC's own code for a method the peer does not serve. */
 const METHOD_NOT_FOUND = -32601;
+
+/** JSON-RPC's own code for a handler that threw. */
+const INTERNAL_ERROR = -32603;
 
 /** One outbound call still waiting for its answer. */
 interface Pending {
@@ -156,9 +161,9 @@ export class BridgePeer {
   }
 
   private receive(message: string): void {
-    let parsed: { id?: number; method?: string; params?: unknown; result?: unknown; error?: JsonRpcFault };
+    let parsed: JsonRpcMessage;
     try {
-      parsed = JSON.parse(message) as typeof parsed;
+      parsed = JSON.parse(message) as JsonRpcMessage;
     } catch {
       return; // Not JSON: there is no id to answer against, so drop it.
     }
@@ -198,7 +203,7 @@ export class BridgePeer {
     try {
       this.send({ jsonrpc: "2.0", id, result: (await handler(params)) ?? null });
     } catch (cause) {
-      const fault: JsonRpcFault = { code: -32603, message: (cause as Error)?.message ?? String(cause) };
+      const fault: JsonRpcFault = { code: INTERNAL_ERROR, message: (cause as Error)?.message ?? String(cause) };
       this.send({ jsonrpc: "2.0", id, error: fault });
     }
   }

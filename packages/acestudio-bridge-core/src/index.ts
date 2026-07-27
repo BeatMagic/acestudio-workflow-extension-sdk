@@ -17,7 +17,7 @@ export type { AnyBridgeErrorCode, BridgeErrorDetails, BridgeErrorInit, DetailsFo
 export { encodeFrame, FrameDecoder, LocalSocketTransport } from "./local-socket.js";
 export { BridgePeer } from "./peer.js";
 export type { RequestHandler, RequestOptions } from "./peer.js";
-export { method, PROTOCOL_VERSION } from "./protocol.js";
+export { BRIDGE_METHODS, PROTOCOL_VERSION } from "./protocol.js";
 export type {
   CommandErrorPayload,
   CommandResultEnvelope,
@@ -25,6 +25,8 @@ export type {
   HelloParams,
   HelloResult,
   InvokeCommandParams,
+  JsonRpcFault,
+  JsonRpcMessage,
   PingPayload,
 } from "./protocol.js";
 export { createTransportPair } from "./transport.js";

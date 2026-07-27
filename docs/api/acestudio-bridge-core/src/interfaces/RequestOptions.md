@@ -2,6 +2,10 @@
 
 Bounds one outbound call.
 
+## Extended by
+
+- [`InvokeOptions`](InvokeOptions.md)
+
 ## Properties
 
 ### signal?

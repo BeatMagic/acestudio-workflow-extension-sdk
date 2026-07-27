@@ -41,7 +41,8 @@ the escape hatch for a call the bindings do not cover.
 readonly protocolVersion: number;
 ```
 
-The bridge protocol version the host accepted.
+The bridge protocol version the host accepted. Informational: ACE Studio
+does not gate the session on it, so neither does this SDK.
 
 ***
 
@@ -89,7 +90,9 @@ options?): Promise<T>;
 ```
 
 Invoke one catalog operation by canonical path, unwrapping the
-command-result envelope.
+command-result envelope down to its `data`. Call `bridge.invokeCommand`
+through [BridgeConnection.peer](#peer) instead to read the whole envelope,
+warnings included.
 
 #### Type Parameters
 

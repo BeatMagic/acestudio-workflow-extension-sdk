@@ -90,6 +90,8 @@ The connection core for programming against a running ACE Studio.
 - [JobResultsResult](interfaces/JobResultsResult.md)
 - [JobWaitParams](interfaces/JobWaitParams.md)
 - [JobWaitResult](interfaces/JobWaitResult.md)
+- [JsonRpcFault](interfaces/JsonRpcFault.md)
+- [JsonRpcMessage](interfaces/JsonRpcMessage.md)
 - [MixerGetResult](interfaces/MixerGetResult.md)
 - [MixerOperations](interfaces/MixerOperations.md)
 - [MutatingCallOptions](interfaces/MutatingCallOptions.md)
@@ -163,11 +165,11 @@ The connection core for programming against a running ACE Studio.
 
 ## Variables
 
+- [BRIDGE\_METHODS](variables/BRIDGE_METHODS.md)
 - [BULK\_PARAM\_FIELDS](variables/BULK_PARAM_FIELDS.md)
 - [BULK\_RESULT\_FIELDS](variables/BULK_RESULT_FIELDS.md)
 - [DTYPE\_BYTES](variables/DTYPE_BYTES.md)
 - [FIELD\_CAPABILITIES](variables/FIELD_CAPABILITIES.md)
-- [method](variables/method.md)
 - [OPERATIONS](variables/OPERATIONS.md)
 - [PROTOCOL\_VERSION](variables/PROTOCOL_VERSION.md)
 - [REQUIRED\_TOKENS](variables/REQUIRED_TOKENS.md)

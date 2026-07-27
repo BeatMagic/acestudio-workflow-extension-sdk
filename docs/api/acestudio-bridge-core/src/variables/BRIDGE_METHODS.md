@@ -1,7 +1,7 @@
-# Variable: method
+# Variable: BRIDGE\_METHODS
 
 ```ts
-const method: {
+const BRIDGE_METHODS: {
   hello: "bridge.hello";
   invokeCommand: "bridge.invokeCommand";
   ping: "bridge.ping";
@@ -35,4 +35,6 @@ Invokes one catalog operation by canonical path.
 readonly ping: "bridge.ping" = "bridge.ping";
 ```
 
-Liveness echo, served by the SDK on the host's behalf.
+Liveness echo, served by the SDK on the host's behalf. The `{nonce}`
+payload is the canonical one; the name takes this driver's prefix, and is
+the one shape here that no shipped ACE Studio driver spells yet.

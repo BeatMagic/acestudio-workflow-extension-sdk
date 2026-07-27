@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
+  BRIDGE_METHODS,
   connect,
   createTransportPair,
   isBridgeError,
   isCode,
   SURFACE_VERSION,
   type BridgeConnection,
+  type CommandResultEnvelope,
+  type Transport,
 } from "@timedomain/acestudio-bridge-core";
-import { fail, ok, ScriptedHostPeer, type ScriptedHostOptions } from "./support/host-peer";
+import { fail, ok, ScriptedHostPeer, type ScriptedHostOptions } from "./support/host-peer.js";
 
 /** Stand up a scripted host and connect to it over an in-memory transport pair. */
 async function connectToScriptedHost(
@@ -89,6 +92,34 @@ describe("connect", () => {
 
     expect(isCode(error, "HANDSHAKE_FAILED")).toBe(true);
     expect(String(error)).toContain("unauthorized");
+  });
+
+  it("fails the handshake when the host's answer is not a handshake response", async () => {
+    const { client, host: hostTransport } = createTransportPair();
+    new ScriptedHostPeer(hostTransport, { helloResult: { appVersion: "3.0.0" } });
+
+    const error = await connect({ transport: client, authToken: "t" }).catch((reason: unknown) => reason);
+
+    expect(isCode(error, "HANDSHAKE_FAILED")).toBe(true);
+  });
+
+  it("closes the transport when the handshake fails", async () => {
+    const { client, host: hostTransport } = createTransportPair();
+    new ScriptedHostPeer(hostTransport, { surfaceVersion: "3.0" });
+    let closes = 0;
+    const watched: Transport = {
+      send: (message) => client.send(message),
+      onMessage: (handler) => client.onMessage(handler),
+      onClose: (handler) => client.onClose(handler),
+      close: () => {
+        closes++;
+        client.close();
+      },
+    };
+
+    await connect({ transport: watched, authToken: "t" }).catch(() => undefined);
+
+    expect(closes).toBe(1);
   });
 
   it("fails the handshake when the transport drops before the response", async () => {
@@ -202,4 +233,56 @@ describe("invoke", () => {
     expect(isCode(error, "TIMEOUT")).toBe(true);
     connection.close();
   });
+
+  it("leaves warnings on the envelope for a caller that reads it whole", async () => {
+    const { connection } = await connectToScriptedHost({
+      commands: { "tempo set": () => ok({ bpm: 120 }, [{ code: "TEMPO_CLAMPED", hint: "clamped to the project range" }]) },
+    });
+
+    const envelope = await connection.peer.request<CommandResultEnvelope<{ bpm: number }>>(
+      BRIDGE_METHODS.invokeCommand,
+      { path: "tempo set", arguments: { bpm: 999 } },
+    );
+
+    expect(envelope.data).toEqual({ bpm: 120 });
+    expect(envelope.warnings).toEqual([{ code: "TEMPO_CLAMPED", hint: "clamped to the project range" }]);
+    connection.close();
+  });
 });
+
+describe("peer notifications", () => {
+  it("fans a host notification out to every subscriber, until it unsubscribes", async () => {
+    const { connection, host } = await connectToScriptedHost();
+    const first: unknown[] = [];
+    const second: unknown[] = [];
+    connection.peer.subscribe("bridge.event", (params) => first.push(params));
+    const stop = connection.peer.subscribe("bridge.event", (params) => second.push(params));
+
+    host.emit("bridge.event", { channel: "track", revision: 7 });
+    await settle();
+    stop();
+    host.emit("bridge.event", { channel: "track", revision: 8 });
+    await settle();
+
+    expect(first).toEqual([
+      { channel: "track", revision: 7 },
+      { channel: "track", revision: 8 },
+    ]);
+    expect(second).toEqual([{ channel: "track", revision: 7 }]);
+    connection.close();
+  });
+
+  it("answers an unserved method with the JSON-RPC method-not-found fault", async () => {
+    const { connection, host } = await connectToScriptedHost();
+
+    const fault = await host.request("bridge.nothingServesThis").catch((reason: unknown) => reason);
+
+    expect(fault).toMatchObject({ code: -32601 });
+    connection.close();
+  });
+});
+
+/** Let the in-memory transport's queued deliveries run. */
+function settle(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}

@@ -2,29 +2,31 @@
  * A scripted stand-in for the ACE Studio side of the bridge.
  *
  * Speaks the canonical handshake payload (ADR 0093 §4) and the command-result
- * envelope in ACE Studio's spelling, so a test drives the real SDK stack over
- * the transport seam without a Studio process. Every bridge-core slice tests
- * against this peer, which is why its wire shapes are imported from
- * `protocol.ts` rather than restated here.
+ * envelope in ACE Studio's spelling, so a test can drive the real SDK stack
+ * over the transport seam without a Studio process. Its wire shapes come from
+ * the package's own `protocol` module rather than being restated here, so the
+ * peer cannot drift from the contract it stands in for.
  */
 
 import {
-  method,
+  BRIDGE_METHODS,
   PROTOCOL_VERSION,
   type CommandErrorPayload,
   type CommandResultEnvelope,
   type CommandWarning,
   type HelloParams,
   type HelloResult,
+  type JsonRpcFault,
+  type JsonRpcMessage,
   type PingPayload,
   type Transport,
 } from "@timedomain/acestudio-bridge-core";
 
-/** A JSON-RPC error the host answers with instead of a result. */
-export interface JsonRpcFault {
-  code: number;
-  message: string;
-  data?: unknown;
+/** One `bridge.invokeCommand` the host received. */
+export interface InvokeRecord {
+  path: string;
+  arguments: Record<string, unknown>;
+  waitTimeoutMs?: number;
 }
 
 /** Everything the script can decide about how the host behaves. */
@@ -41,18 +43,10 @@ export interface ScriptedHostOptions {
    * predating the field.
    */
   surfaceVersion?: string;
+  /** Answer the handshake with this instead of a well-formed response. */
+  helloResult?: unknown;
   /** Handlers for `bridge.invokeCommand`, keyed by canonical operation path. */
-  commands?: Record<
-    string,
-    (args: Record<string, unknown>, params: InvokeRecord) => CommandResultEnvelope | Promise<CommandResultEnvelope>
-  >;
-}
-
-/** One `bridge.invokeCommand` the host received. */
-export interface InvokeRecord {
-  path: string;
-  arguments: Record<string, unknown>;
-  waitTimeoutMs?: number;
+  commands?: Record<string, (invocation: InvokeRecord) => CommandResultEnvelope | Promise<CommandResultEnvelope>>;
 }
 
 /** Build a success envelope. */
@@ -113,7 +107,7 @@ export class ScriptedHostPeer {
 
   /** Probe the peer's liveness echo and resolve with the nonce it returned. */
   async ping(nonce: string): Promise<string> {
-    const result = (await this.request(method.ping, { nonce } satisfies PingPayload)) as PingPayload;
+    const result = (await this.request(BRIDGE_METHODS.ping, { nonce } satisfies PingPayload)) as PingPayload;
     return result.nonce;
   }
 
@@ -132,52 +126,57 @@ export class ScriptedHostPeer {
   }
 
   private async receive(message: string): Promise<void> {
-    const parsed = JSON.parse(message) as {
-      id?: number;
-      method?: string;
-      params?: unknown;
-      result?: unknown;
-      error?: JsonRpcFault;
-    };
+    const parsed = JSON.parse(message) as JsonRpcMessage;
 
     if (parsed.method === undefined) {
-      const waiter = parsed.id === undefined ? undefined : this.pending.get(parsed.id);
-      if (waiter !== undefined && parsed.id !== undefined) {
-        this.pending.delete(parsed.id);
-        if (parsed.error !== undefined) {
-          waiter.reject(parsed.error);
-        } else {
-          waiter.resolve(parsed.result);
-        }
-      }
+      this.settle(parsed);
       return;
     }
-
     if (parsed.id === undefined) {
       return; // A notification from the peer; nothing here consumes one yet.
     }
 
+    const id = parsed.id;
     try {
-      this.reply(parsed.id, await this.dispatch(parsed.method, parsed.params));
+      this.send({ jsonrpc: "2.0", id, result: (await this.dispatch(parsed.method, parsed.params)) ?? null });
     } catch (error) {
-      this.replyError(parsed.id, error);
+      this.send({ jsonrpc: "2.0", id, error: toFault(error) });
+    }
+  }
+
+  private settle(parsed: JsonRpcMessage): void {
+    if (parsed.id === undefined) {
+      return;
+    }
+    const waiter = this.pending.get(parsed.id);
+    if (waiter === undefined) {
+      return;
+    }
+    this.pending.delete(parsed.id);
+    if (parsed.error !== undefined) {
+      waiter.reject(parsed.error);
+    } else {
+      waiter.resolve(parsed.result);
     }
   }
 
   private async dispatch(target: string, params: unknown): Promise<unknown> {
-    if (target === method.hello) {
+    if (target === BRIDGE_METHODS.hello) {
       return this.handleHello(params as HelloParams);
     }
-    if (target === method.invokeCommand) {
+    if (target === BRIDGE_METHODS.invokeCommand) {
       return this.handleInvoke(params as InvokeRecord);
     }
     throw { code: -32601, message: `method not found: ${target}` } satisfies JsonRpcFault;
   }
 
-  private handleHello(params: HelloParams): HelloResult {
+  private handleHello(params: HelloParams): unknown {
     this.announceHello(params);
     if (this.options.authToken !== undefined && params.token !== this.options.authToken) {
       throw { code: -32001, message: "unauthorized" } satisfies JsonRpcFault;
+    }
+    if (this.options.helloResult !== undefined) {
+      return this.options.helloResult;
     }
     return {
       appVersion: this.options.appVersion ?? "3.0.0",
@@ -185,7 +184,7 @@ export class ScriptedHostPeer {
       surfaceVersion: this.options.surfaceVersion ?? "2.0",
       grantedCapabilities: this.options.grantedTokens ?? [],
       sessionId: this.options.sessionId ?? "session-1",
-    };
+    } satisfies HelloResult;
   }
 
   private async handleInvoke(params: InvokeRecord): Promise<CommandResultEnvelope> {
@@ -194,23 +193,18 @@ export class ScriptedHostPeer {
     if (handler === undefined) {
       return fail("UNKNOWN_COMMAND", `no scripted handler for '${params.path}'`);
     }
-    return handler(params.arguments, params);
+    return handler(params);
   }
 
-  private reply(id: number, result: unknown): void {
-    this.send({ jsonrpc: "2.0", id, result: result ?? null });
-  }
-
-  private replyError(id: number, error: unknown): void {
-    const thrown = error as Partial<JsonRpcFault> & { message?: string };
-    const fault: JsonRpcFault =
-      typeof thrown?.code === "number"
-        ? (thrown as JsonRpcFault)
-        : { code: -32603, message: thrown?.message ?? String(error) };
-    this.send({ jsonrpc: "2.0", id, error: fault });
-  }
-
-  private send(message: unknown): void {
+  private send(message: JsonRpcMessage): void {
     this.transport.send(JSON.stringify(message));
   }
+}
+
+/** Shape whatever a handler threw as a JSON-RPC error object. */
+function toFault(error: unknown): JsonRpcFault {
+  const thrown = error as Partial<JsonRpcFault> & { message?: string };
+  return typeof thrown?.code === "number"
+    ? (thrown as JsonRpcFault)
+    : { code: -32603, message: thrown?.message ?? String(error) };
 }

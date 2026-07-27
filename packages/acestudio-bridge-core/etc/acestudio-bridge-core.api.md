@@ -8,6 +8,13 @@
 export type AnyBridgeErrorCode = BridgeErrorCode | SdkErrorCode;
 
 // @public
+export const BRIDGE_METHODS: {
+    readonly hello: "bridge.hello";
+    readonly ping: "bridge.ping";
+    readonly invokeCommand: "bridge.invokeCommand";
+};
+
+// @public
 export interface BridgeConnection {
     readonly appVersion: string;
     close(): void;
@@ -636,9 +643,7 @@ export interface InvokeCommandParams {
 }
 
 // @public
-export interface InvokeOptions {
-    signal?: AbortSignal;
-    timeoutMs?: number;
+export interface InvokeOptions extends RequestOptions {
     waitBusy?: number;
 }
 
@@ -774,6 +779,32 @@ export interface JobWaitResult {
 }
 
 // @public
+export interface JsonRpcFault {
+    // (undocumented)
+    code: number;
+    // (undocumented)
+    data?: unknown;
+    // (undocumented)
+    message: string;
+}
+
+// @public
+export interface JsonRpcMessage {
+    // (undocumented)
+    error?: JsonRpcFault;
+    // (undocumented)
+    id?: number;
+    // (undocumented)
+    jsonrpc?: string;
+    // (undocumented)
+    method?: string;
+    // (undocumented)
+    params?: unknown;
+    // (undocumented)
+    result?: unknown;
+}
+
+// @public
 export class LocalSocketTransport implements Transport {
     // (undocumented)
     close(): void;
@@ -785,13 +816,6 @@ export class LocalSocketTransport implements Transport {
     // (undocumented)
     send(message: string): void;
 }
-
-// @public
-export const method: {
-    readonly hello: "bridge.hello";
-    readonly ping: "bridge.ping";
-    readonly invokeCommand: "bridge.invokeCommand";
-};
 
 // @public
 export interface MixerGetResult {

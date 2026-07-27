@@ -15,6 +15,7 @@ The connection core for programming against a running ACE Studio.
 - [BridgePeer](classes/BridgePeer.md)
 - [FrameDecoder](classes/FrameDecoder.md)
 - [LocalSocketTransport](classes/LocalSocketTransport.md)
+- [SessionClient](classes/SessionClient.md)
 
 ## Interfaces
 
@@ -43,9 +44,6 @@ The connection core for programming against a running ACE Studio.
 - [ClipNoteContentParams](interfaces/ClipNoteContentParams.md)
 - [ClipNoteContentResult](interfaces/ClipNoteContentResult.md)
 - [ClipOperations](interfaces/ClipOperations.md)
-- [CommandErrorPayload](interfaces/CommandErrorPayload.md)
-- [CommandResultEnvelope](interfaces/CommandResultEnvelope.md)
-- [CommandWarning](interfaces/CommandWarning.md)
 - [ConnectOptions](interfaces/ConnectOptions.md)
 - [ConvertEditorToGlobalParams](interfaces/ConvertEditorToGlobalParams.md)
 - [ConvertEditorToGlobalResult](interfaces/ConvertEditorToGlobalResult.md)
@@ -73,10 +71,8 @@ The connection core for programming against a running ACE Studio.
 - [EditorOperations](interfaces/EditorOperations.md)
 - [EditorStatusResult](interfaces/EditorStatusResult.md)
 - [EditorTickRangeResult](interfaces/EditorTickRangeResult.md)
-- [HelloParams](interfaces/HelloParams.md)
-- [HelloResult](interfaces/HelloResult.md)
-- [InvokeCommandParams](interfaces/InvokeCommandParams.md)
-- [InvokeOptions](interfaces/InvokeOptions.md)
+- [HandshakeParams](interfaces/HandshakeParams.md)
+- [HandshakeResult](interfaces/HandshakeResult.md)
 - [JobCancelParams](interfaces/JobCancelParams.md)
 - [JobDiscardResultParams](interfaces/JobDiscardResultParams.md)
 - [JobGetParams](interfaces/JobGetParams.md)
@@ -96,7 +92,8 @@ The connection core for programming against a running ACE Studio.
 - [MixerOperations](interfaces/MixerOperations.md)
 - [MutatingCallOptions](interfaces/MutatingCallOptions.md)
 - [OperationDescriptor](interfaces/OperationDescriptor.md)
-- [PingPayload](interfaces/PingPayload.md)
+- [PingParams](interfaces/PingParams.md)
+- [PingResult](interfaces/PingResult.md)
 - [ProjectInfoResult](interfaces/ProjectInfoResult.md)
 - [ProjectOperations](interfaces/ProjectOperations.md)
 - [ProjectSynthesisStatusResult](interfaces/ProjectSynthesisStatusResult.md)
@@ -107,6 +104,8 @@ The connection core for programming against a running ACE Studio.
 - [SelectionOperations](interfaces/SelectionOperations.md)
 - [SelectionSetParams](interfaces/SelectionSetParams.md)
 - [SelectionSetResult](interfaces/SelectionSetResult.md)
+- [SessionPeer](interfaces/SessionPeer.md)
+- [ShutdownParams](interfaces/ShutdownParams.md)
 - [SpecialTracksGetResult](interfaces/SpecialTracksGetResult.md)
 - [SpecialTracksHideParams](interfaces/SpecialTracksHideParams.md)
 - [SpecialTracksOperations](interfaces/SpecialTracksOperations.md)
@@ -160,12 +159,12 @@ The connection core for programming against a running ACE Studio.
 - [Fingerprint](type-aliases/Fingerprint.md)
 - [RequestHandler](type-aliases/RequestHandler.md)
 - [SdkErrorCode](type-aliases/SdkErrorCode.md)
+- [SessionCapability](type-aliases/SessionCapability.md)
 - [TypedArrayFor](type-aliases/TypedArrayFor.md)
 - [Unsubscribe](type-aliases/Unsubscribe.md)
 
 ## Variables
 
-- [BRIDGE\_METHODS](variables/BRIDGE_METHODS.md)
 - [BULK\_PARAM\_FIELDS](variables/BULK_PARAM_FIELDS.md)
 - [BULK\_RESULT\_FIELDS](variables/BULK_RESULT_FIELDS.md)
 - [DTYPE\_BYTES](variables/DTYPE_BYTES.md)
@@ -173,6 +172,8 @@ The connection core for programming against a running ACE Studio.
 - [OPERATIONS](variables/OPERATIONS.md)
 - [PROTOCOL\_VERSION](variables/PROTOCOL_VERSION.md)
 - [REQUIRED\_TOKENS](variables/REQUIRED_TOKENS.md)
+- [SESSION\_CAPABILITY\_TOKENS](variables/SESSION_CAPABILITY_TOKENS.md)
+- [SESSION\_METHOD\_CAPABILITIES](variables/SESSION_METHOD_CAPABILITIES.md)
 - [SURFACE\_VERSION](variables/SURFACE_VERSION.md)
 
 ## Functions

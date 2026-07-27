@@ -1,6 +1,7 @@
 # Interface: JsonRpcFault
 
-The error object a JSON-RPC peer answers with in place of a result.
+The error object a JSON-RPC peer answers with in place of a result. The host
+puts the canonical error code on `data.code`.
 
 ## Properties
 

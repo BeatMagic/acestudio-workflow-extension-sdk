@@ -1,93 +1,62 @@
 /**
  * A scripted stand-in for the ACE Studio side of the bridge.
  *
- * Speaks the canonical handshake payload (ADR 0093 §4) and the command-result
- * envelope in ACE Studio's spelling, so a test can drive the real SDK stack
- * over the transport seam without a Studio process. Its wire shapes come from
- * the package's own `protocol` module rather than being restated here, so the
- * peer cannot drift from the contract it stands in for.
+ * Plays the host half of the generated session surface: serves
+ * `session.handshake`, calls `session.ping`, and emits `session.shutdown`. The
+ * payload types come from the generated module, so a schema change breaks this
+ * peer at compile time rather than letting the tests drift away from the wire.
+ * The method names are literals — the host spells them, and `HOST_METHODS` is
+ * asserted against the generated map in wire.test.ts.
  */
 
 import {
-  BRIDGE_METHODS,
   PROTOCOL_VERSION,
-  type CommandErrorPayload,
-  type CommandResultEnvelope,
-  type CommandWarning,
-  type HelloParams,
-  type HelloResult,
+  type HandshakeParams,
+  type HandshakeResult,
   type JsonRpcFault,
   type JsonRpcMessage,
-  type PingPayload,
+  type PingParams,
+  type PingResult,
+  type ShutdownParams,
   type Transport,
 } from "@timedomain/acestudio-bridge-core";
 
-/** One `bridge.invokeCommand` the host received. */
-export interface InvokeRecord {
-  path: string;
-  arguments: Record<string, unknown>;
-  waitTimeoutMs?: number;
-}
+/** The wire names the host side of the session surface uses. */
+export const HOST_METHODS = {
+  handshake: "session.handshake",
+  ping: "session.ping",
+  shutdown: "session.shutdown",
+} as const;
 
 /** Everything the script can decide about how the host behaves. */
 export interface ScriptedHostOptions {
-  /** Refuse `bridge.hello` unless the peer presents this token. */
+  /** Refuse the handshake unless the peer presents this token. */
   authToken?: string;
   /** Flat canonical token names to grant. */
   grantedTokens?: readonly string[];
   sessionId?: string;
-  appVersion?: string;
-  protocolVersion?: number;
-  /**
-   * The `major.minor` contract surface version to report. `""` models a host
-   * predating the field.
-   */
-  surfaceVersion?: string;
+  /** The protocol version to report as accepted. */
+  acceptedProtocolVersion?: number;
   /** Answer the handshake with this instead of a well-formed response. */
-  helloResult?: unknown;
-  /** Handlers for `bridge.invokeCommand`, keyed by canonical operation path. */
-  commands?: Record<string, (invocation: InvokeRecord) => CommandResultEnvelope | Promise<CommandResultEnvelope>>;
-}
-
-/** Build a success envelope. */
-export function ok<T>(data: T, warnings?: readonly CommandWarning[]): CommandResultEnvelope<T> {
-  return warnings === undefined ? { data } : { data, warnings };
-}
-
-/** Build a refusal envelope. */
-export function fail(
-  code: string,
-  message: string,
-  extra?: { details?: Record<string, unknown>; hint?: string },
-): CommandResultEnvelope<never> {
-  const error: CommandErrorPayload = { code, message };
-  if (extra?.details !== undefined) {
-    error.details = extra.details;
-  }
-  if (extra?.hint !== undefined) {
-    error.hint = extra.hint;
-  }
-  return { error };
+  handshakeResult?: unknown;
 }
 
 /** The host end of a scripted session. */
 export class ScriptedHostPeer {
   /** Resolves with the handshake request the peer sent. */
-  readonly hello: Promise<HelloParams>;
-  /** Every `bridge.invokeCommand` received, in order. */
-  readonly invocations: InvokeRecord[] = [];
+  readonly handshake: Promise<HandshakeParams>;
 
   private readonly transport: Transport;
   private readonly options: ScriptedHostOptions;
   private readonly pending = new Map<number, { resolve: (value: unknown) => void; reject: (reason: unknown) => void }>();
-  private announceHello!: (params: HelloParams) => void;
+  private announceHandshake!: (params: HandshakeParams) => void;
   private nextId = 1;
 
   constructor(transport: Transport, options: ScriptedHostOptions = {}) {
     this.transport = transport;
     this.options = options;
-    this.hello = new Promise<HelloParams>((resolve) => {
-      this.announceHello = resolve;
+    this.handshake = new Promise<HandshakeParams>((resolve) => {
+      this.announceHandshake = resolve;
     });
     transport.onMessage((message) => {
       void this.receive(message);
@@ -100,15 +69,15 @@ export class ScriptedHostPeer {
     });
   }
 
-  /** Push a notification to the connected peer. */
-  emit(notification: string, params?: unknown): void {
-    this.send({ jsonrpc: "2.0", method: notification, params });
-  }
-
   /** Probe the peer's liveness echo and resolve with the nonce it returned. */
   async ping(nonce: string): Promise<string> {
-    const result = (await this.request(BRIDGE_METHODS.ping, { nonce } satisfies PingPayload)) as PingPayload;
+    const result = (await this.request(HOST_METHODS.ping, { nonce } satisfies PingParams)) as PingResult;
     return result.nonce;
+  }
+
+  /** Open the shutdown grace window, as the host's stop routine does. */
+  notifyShutdown(params: ShutdownParams): void {
+    this.send({ jsonrpc: "2.0", method: HOST_METHODS.shutdown, params });
   }
 
   /** Call a method on the connected peer. */
@@ -161,39 +130,30 @@ export class ScriptedHostPeer {
   }
 
   private async dispatch(target: string, params: unknown): Promise<unknown> {
-    if (target === BRIDGE_METHODS.hello) {
-      return this.handleHello(params as HelloParams);
-    }
-    if (target === BRIDGE_METHODS.invokeCommand) {
-      return this.handleInvoke(params as InvokeRecord);
+    if (target === HOST_METHODS.handshake) {
+      return this.handleHandshake(params as HandshakeParams);
     }
     throw { code: -32601, message: `method not found: ${target}` } satisfies JsonRpcFault;
   }
 
-  private handleHello(params: HelloParams): unknown {
-    this.announceHello(params);
-    if (this.options.authToken !== undefined && params.token !== this.options.authToken) {
-      throw { code: -32001, message: "unauthorized" } satisfies JsonRpcFault;
+  private handleHandshake(params: HandshakeParams): unknown {
+    this.announceHandshake(params);
+    if (this.options.authToken !== undefined && params.authToken !== this.options.authToken) {
+      // The canonical code rides on data.code, as the host's own gate does.
+      throw {
+        code: -32001,
+        message: "unauthorized",
+        data: { code: "SESSION_INVALID" },
+      } satisfies JsonRpcFault;
     }
-    if (this.options.helloResult !== undefined) {
-      return this.options.helloResult;
+    if (this.options.handshakeResult !== undefined) {
+      return this.options.handshakeResult;
     }
     return {
-      appVersion: this.options.appVersion ?? "3.0.0",
-      protocolVersion: this.options.protocolVersion ?? PROTOCOL_VERSION,
-      surfaceVersion: this.options.surfaceVersion ?? "2.0",
-      grantedCapabilities: this.options.grantedTokens ?? [],
+      acceptedProtocolVersion: this.options.acceptedProtocolVersion ?? PROTOCOL_VERSION,
+      grantedTokens: [...(this.options.grantedTokens ?? [])],
       sessionId: this.options.sessionId ?? "session-1",
-    } satisfies HelloResult;
-  }
-
-  private async handleInvoke(params: InvokeRecord): Promise<CommandResultEnvelope> {
-    this.invocations.push(params);
-    const handler = this.options.commands?.[params.path];
-    if (handler === undefined) {
-      return fail("UNKNOWN_COMMAND", `no scripted handler for '${params.path}'`);
-    }
-    return handler(params);
+    } satisfies HandshakeResult;
   }
 
   private send(message: JsonRpcMessage): void {

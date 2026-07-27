@@ -6,6 +6,33 @@ become a contract.
 
 ## Properties
 
+### PROTOCOL\_VERSION\_MISMATCH
+
+```ts
+PROTOCOL_VERSION_MISMATCH: {
+  actual: number;
+  expected: number;
+};
+```
+
+#### actual
+
+```ts
+actual: number;
+```
+
+The version the host said it accepted.
+
+#### expected
+
+```ts
+expected: number;
+```
+
+The bridge protocol version this SDK speaks.
+
+***
+
 ### SURFACE\_VERSION\_MISMATCH
 
 ```ts

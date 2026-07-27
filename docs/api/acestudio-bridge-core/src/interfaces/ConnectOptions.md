@@ -10,17 +10,7 @@ What [connect](../functions/connect.md) needs to open a session.
 authToken: string;
 ```
 
-The session token the host minted for this peer.
-
-***
-
-### clientVersion?
-
-```ts
-optional clientVersion?: string;
-```
-
-Version of the connecting consumer, for the host's logs.
+The one-time session token the host minted for this process.
 
 ***
 
@@ -30,8 +20,9 @@ Version of the connecting consumer, for the host's logs.
 optional requestedCapabilities?: readonly string[];
 ```
 
-Capability names to request — profiles, tokens, or both; the registry
-resolves which. A host that grants a whole surface ignores them.
+Capability names to request. The extension host ignores them — an
+extension's grant is the consent record from install — so this is for the
+drivers that do resolve a request against the registry.
 
 ***
 

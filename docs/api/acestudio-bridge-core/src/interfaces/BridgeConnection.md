@@ -4,16 +4,6 @@ An open, granted session against a running ACE Studio.
 
 ## Properties
 
-### appVersion
-
-```ts
-readonly appVersion: string;
-```
-
-The version of ACE Studio on the other end.
-
-***
-
 ### grantedTokens
 
 ```ts
@@ -30,8 +20,8 @@ The session's grant, as flat canonical token names.
 readonly peer: BridgePeer;
 ```
 
-The JSON-RPC peer underneath. The generated bindings ride it, and it stays
-the escape hatch for a call the bindings do not cover.
+The JSON-RPC peer underneath: the generated bindings ride it, and it is how
+to call or subscribe to anything they do not cover.
 
 ***
 
@@ -41,8 +31,8 @@ the escape hatch for a call the bindings do not cover.
 readonly protocolVersion: number;
 ```
 
-The bridge protocol version the host accepted. Informational: ACE Studio
-does not gate the session on it, so neither does this SDK.
+The bridge protocol version the host accepted. Informational: it matched
+ours or [connect](../functions/connect.md) would have refused the session.
 
 ***
 
@@ -53,16 +43,6 @@ readonly sessionId: string;
 ```
 
 The session id the host minted.
-
-***
-
-### surfaceVersion
-
-```ts
-readonly surfaceVersion: string;
-```
-
-The host's contract surface version, or `""` if it reported none.
 
 ## Methods
 
@@ -80,50 +60,6 @@ Close the connection, failing every call in flight.
 
 ***
 
-### invoke()
-
-```ts
-invoke<T>(
-   path, 
-   args?, 
-options?): Promise<T>;
-```
-
-Invoke one catalog operation by canonical path, unwrapping the
-command-result envelope down to its `data`. Call `bridge.invokeCommand`
-through [BridgeConnection.peer](#peer) instead to read the whole envelope,
-warnings included.
-
-#### Type Parameters
-
-##### T
-
-`T` = `unknown`
-
-#### Parameters
-
-##### path
-
-`string`
-
-##### args?
-
-`Record`\<`string`, `unknown`\>
-
-##### options?
-
-[`InvokeOptions`](InvokeOptions.md)
-
-#### Returns
-
-`Promise`\<`T`\>
-
-#### Throws
-
-BridgeError carrying the host's code when the operation is refused.
-
-***
-
 ### onClose()
 
 ```ts
@@ -137,6 +73,28 @@ Listen for the connection dropping.
 ##### listener
 
 () => `void`
+
+#### Returns
+
+[`Unsubscribe`](../type-aliases/Unsubscribe.md)
+
+***
+
+### onShutdown()
+
+```ts
+onShutdown(listener): Unsubscribe;
+```
+
+Called when the host announces it is stopping this peer, ahead of its
+grace window. Running `deactivate` and exiting in time is the extension
+layer's job; core only surfaces the notice.
+
+#### Parameters
+
+##### listener
+
+(`params`) => `void`
 
 #### Returns
 

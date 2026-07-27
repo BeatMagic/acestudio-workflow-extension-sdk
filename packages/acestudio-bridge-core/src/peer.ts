@@ -119,26 +119,64 @@ export class BridgePeer {
     });
   }
 
+  /**
+   * Bound a call the generated bindings make. Their peer interface takes no
+   * options — the schema describes the wire, not the caller's patience — so a
+   * deadline wraps the call from outside instead.
+   *
+   * @throws BridgeError with code `TIMEOUT` if the deadline expires or the
+   * signal fires. The host-side work is unaffected either way.
+   */
+  async withDeadline<T>(options: RequestOptions, call: () => Promise<T>): Promise<T> {
+    if (options.timeoutMs === undefined && options.signal === undefined) {
+      return call();
+    }
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const expiry = new Promise<never>((_resolve, reject) => {
+      const abort = (): void => reject(this.timedOut("the call", options));
+      if (options.signal?.aborted === true) {
+        abort();
+        return;
+      }
+      options.signal?.addEventListener("abort", abort, { once: true });
+      if (options.timeoutMs !== undefined) {
+        timer = setTimeout(abort, options.timeoutMs);
+        timer.unref?.();
+      }
+    });
+    try {
+      return await Promise.race([call(), expiry]);
+    } finally {
+      if (timer !== undefined) {
+        clearTimeout(timer);
+      }
+    }
+  }
+
   /** Send a notification — no id, no answer. */
   notify(method: string, params?: unknown): void {
     this.send({ jsonrpc: "2.0", method, params });
   }
 
-  /** Serve a method the other side may call. One handler per method. */
-  serve(method: string, handler: RequestHandler): void {
-    this.handlers.set(method, handler);
+  /**
+   * Serve a method the other side may call. One handler per method. The name is
+   * the one the generated bindings' peer interface expects.
+   */
+  setRequestHandler<P, R>(method: string, handler: (params: P) => R | Promise<R>): void {
+    this.handlers.set(method, handler as RequestHandler);
   }
 
   /** Listen for one notification method. */
-  subscribe(method: string, listener: (params: unknown) => void): Unsubscribe {
+  subscribe<T = unknown>(method: string, listener: (params: T) => void): Unsubscribe {
     let listeners = this.subscribers.get(method);
     if (listeners === undefined) {
       listeners = new Set();
       this.subscribers.set(method, listeners);
     }
-    listeners.add(listener);
+    const erased = listener as (params: unknown) => void;
+    listeners.add(erased);
     return () => {
-      listeners.delete(listener);
+      listeners.delete(erased);
     };
   }
 

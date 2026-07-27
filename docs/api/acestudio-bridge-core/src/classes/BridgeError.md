@@ -220,28 +220,6 @@ Error.captureStackTrace
 
 ***
 
-### fromCommandError()
-
-```ts
-static fromCommandError(error): BridgeError;
-```
-
-Lift a command-result envelope's `error` into a BridgeError. The
-envelope's code is trusted as-is: a host that mints a code this SDK's
-bindings predate must still surface it, not be flattened to `UNKNOWN`.
-
-#### Parameters
-
-##### error
-
-[`CommandErrorPayload`](../interfaces/CommandErrorPayload.md)
-
-#### Returns
-
-`BridgeError`
-
-***
-
 ### prepareStackTrace()
 
 ```ts

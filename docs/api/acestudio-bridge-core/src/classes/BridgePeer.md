@@ -138,13 +138,24 @@ first, or `TIMEOUT` if the deadline expires or the signal fires.
 
 ***
 
-### serve()
+### setRequestHandler()
 
 ```ts
-serve(method, handler): void;
+setRequestHandler<P, R>(method, handler): void;
 ```
 
-Serve a method the other side may call. One handler per method.
+Serve a method the other side may call. One handler per method. The name is
+the one the generated bindings' peer interface expects.
+
+#### Type Parameters
+
+##### P
+
+`P`
+
+##### R
+
+`R`
 
 #### Parameters
 
@@ -154,7 +165,7 @@ Serve a method the other side may call. One handler per method.
 
 ##### handler
 
-[`RequestHandler`](../type-aliases/RequestHandler.md)
+(`params`) => `R` \| `Promise`\<`R`\>
 
 #### Returns
 
@@ -165,10 +176,16 @@ Serve a method the other side may call. One handler per method.
 ### subscribe()
 
 ```ts
-subscribe(method, listener): Unsubscribe;
+subscribe<T>(method, listener): Unsubscribe;
 ```
 
 Listen for one notification method.
+
+#### Type Parameters
+
+##### T
+
+`T` = `unknown`
 
 #### Parameters
 
@@ -183,3 +200,40 @@ Listen for one notification method.
 #### Returns
 
 [`Unsubscribe`](../type-aliases/Unsubscribe.md)
+
+***
+
+### withDeadline()
+
+```ts
+withDeadline<T>(options, call): Promise<T>;
+```
+
+Bound a call the generated bindings make. Their peer interface takes no
+options — the schema describes the wire, not the caller's patience — so a
+deadline wraps the call from outside instead.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+#### Parameters
+
+##### options
+
+[`RequestOptions`](../interfaces/RequestOptions.md)
+
+##### call
+
+() => `Promise`\<`T`\>
+
+#### Returns
+
+`Promise`\<`T`\>
+
+#### Throws
+
+BridgeError with code `TIMEOUT` if the deadline expires or the
+signal fires. The host-side work is unaffected either way.

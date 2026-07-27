@@ -1,7 +1,7 @@
 # Interface: JsonRpcMessage
 
-A JSON-RPC 2.0 message as it arrives, before it is classified: a request
-has `method` and `id`, a notification `method` alone, a response `id` with
+A JSON-RPC 2.0 message as it arrives, before it is classified: a request has
+`method` and `id`, a notification `method` alone, a response `id` with
 `result` or `error`.
 
 ## Properties

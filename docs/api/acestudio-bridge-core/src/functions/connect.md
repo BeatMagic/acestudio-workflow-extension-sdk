@@ -20,6 +20,5 @@ over `transport` and resolve once the host has granted a session.
 ## Throws
 
 BridgeError with code `HANDSHAKE_FAILED` if the host refuses,
-`SURFACE_VERSION_MISMATCH` if its contract surface is a different major than
-these bindings', `BRIDGE_UNREACHABLE` if the transport drops, or `TIMEOUT`
-if the handshake outruns its deadline.
+`PROTOCOL_VERSION_MISMATCH` on a wire-major skew, `BRIDGE_UNREACHABLE` if the
+transport drops, or `TIMEOUT` if the handshake outruns its deadline.

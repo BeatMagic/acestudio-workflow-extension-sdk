@@ -8,23 +8,14 @@
 export type AnyBridgeErrorCode = BridgeErrorCode | SdkErrorCode;
 
 // @public
-export const BRIDGE_METHODS: {
-    readonly hello: "bridge.hello";
-    readonly ping: "bridge.ping";
-    readonly invokeCommand: "bridge.invokeCommand";
-};
-
-// @public
 export interface BridgeConnection {
-    readonly appVersion: string;
     close(): void;
     readonly grantedTokens: readonly string[];
-    invoke<T = unknown>(path: string, args?: Record<string, unknown>, options?: InvokeOptions): Promise<T>;
     onClose(listener: () => void): Unsubscribe;
+    onShutdown(listener: (params: ShutdownParams) => void): Unsubscribe;
     readonly peer: BridgePeer;
     readonly protocolVersion: number;
     readonly sessionId: string;
-    readonly surfaceVersion: string;
 }
 
 // @public
@@ -32,7 +23,6 @@ export class BridgeError<C extends AnyBridgeErrorCode = AnyBridgeErrorCode> exte
     constructor(init: BridgeErrorInit<C>);
     readonly code: C;
     readonly details: DetailsFor<C>;
-    static fromCommandError(error: CommandErrorPayload): BridgeError;
     readonly hint?: string;
 }
 
@@ -41,6 +31,11 @@ export type BridgeErrorCode = 'ALREADY_RECORDING' | 'BAD_ARGS' | 'BRIDGE_UNREACH
 
 // @public
 export interface BridgeErrorDetails {
+    // (undocumented)
+    PROTOCOL_VERSION_MISMATCH: {
+        expected: number;
+        actual: number;
+    };
     // (undocumented)
     SURFACE_VERSION_MISMATCH: {
         expected: string;
@@ -67,8 +62,9 @@ export class BridgePeer {
     notify(method: string, params?: unknown): void;
     onClose(listener: () => void): Unsubscribe;
     request<T>(method: string, params?: unknown, options?: RequestOptions): Promise<T>;
-    serve(method: string, handler: RequestHandler): void;
-    subscribe(method: string, listener: (params: unknown) => void): Unsubscribe;
+    setRequestHandler<P, R>(method: string, handler: (params: P) => R | Promise<R>): void;
+    subscribe<T = unknown>(method: string, listener: (params: T) => void): Unsubscribe;
+    withDeadline<T>(options: RequestOptions, call: () => Promise<T>): Promise<T>;
 }
 
 // @public
@@ -300,42 +296,11 @@ export interface ClipOperations {
 }
 
 // @public
-export interface CommandErrorPayload {
-    // (undocumented)
-    code: string;
-    // (undocumented)
-    details?: Record<string, unknown>;
-    // (undocumented)
-    hint?: string;
-    // (undocumented)
-    message: string;
-}
-
-// @public
-export interface CommandResultEnvelope<T = unknown> {
-    // (undocumented)
-    data?: T;
-    // (undocumented)
-    error?: CommandErrorPayload;
-    // (undocumented)
-    warnings?: readonly CommandWarning[];
-}
-
-// @public
-export interface CommandWarning {
-    // (undocumented)
-    code: string;
-    // (undocumented)
-    hint?: string;
-}
-
-// @public
 export function connect(options: ConnectOptions): Promise<BridgeConnection>;
 
 // @public
 export interface ConnectOptions {
     authToken: string;
-    clientVersion?: string;
     requestedCapabilities?: readonly string[];
     signal?: AbortSignal;
     timeoutMs?: number;
@@ -609,42 +574,17 @@ export class FrameDecoder {
 }
 
 // @public
-export interface HelloParams {
-    pid: number;
-    // (undocumented)
+export interface HandshakeParams {
+    authToken: string;
     protocolVersion: number;
-    // (undocumented)
-    requestedCapabilities?: readonly string[];
-    sdkVersion: string;
-    // (undocumented)
-    token: string;
+    requestedCapabilities?: string[];
 }
 
 // @public
-export interface HelloResult {
-    // (undocumented)
-    appVersion: string;
-    // (undocumented)
-    grantedCapabilities: readonly string[];
-    // (undocumented)
-    protocolVersion: number;
-    // (undocumented)
+export interface HandshakeResult {
+    acceptedProtocolVersion: number;
+    grantedTokens: string[];
     sessionId: string;
-    surfaceVersion?: string;
-}
-
-// @public
-export interface InvokeCommandParams {
-    // (undocumented)
-    arguments: Record<string, unknown>;
-    // (undocumented)
-    path: string;
-    waitTimeoutMs?: number;
-}
-
-// @public
-export interface InvokeOptions extends RequestOptions {
-    waitBusy?: number;
 }
 
 // @public
@@ -850,8 +790,12 @@ export interface OperationDescriptor {
 export const OPERATIONS: readonly OperationDescriptor[];
 
 // @public
-export interface PingPayload {
-    // (undocumented)
+export interface PingParams {
+    nonce: string;
+}
+
+// @public
+export interface PingResult {
     nonce: string;
 }
 
@@ -875,7 +819,7 @@ export interface ProjectSynthesisStatusResult {
 }
 
 // @public
-export const PROTOCOL_VERSION = 5;
+export const PROTOCOL_VERSION = 1;
 
 // @public
 export interface PublicBindings {
@@ -929,6 +873,8 @@ export type SdkErrorCode =
 "BRIDGE_UNREACHABLE"
 /** The host refused the handshake, or answered something unreadable. */
 | "HANDSHAKE_FAILED"
+/** The host speaks a different major of the bridge wire itself. */
+| "PROTOCOL_VERSION_MISMATCH"
 /** The host's contract surface is a different major than the bindings'. */
 | "SURFACE_VERSION_MISMATCH"
 /** A local deadline expired, or the caller's `AbortSignal` fired. */
@@ -1027,6 +973,40 @@ export interface SelectionSetResult {
         begin: number;
         end: number;
     };
+}
+
+// @public (undocumented)
+export const SESSION_CAPABILITY_TOKENS: readonly SessionCapability[];
+
+// @public (undocumented)
+export const SESSION_METHOD_CAPABILITIES: Readonly<Record<string, SessionCapability>>;
+
+// @public
+export type SessionCapability = 'session.handshake' | 'session.ping' | 'session.shutdown';
+
+// @public (undocumented)
+export class SessionClient {
+    constructor(peer: SessionPeer);
+    onSessionShutdown(callback: (event: ShutdownParams) => void): Unsubscribe;
+    sessionHandshake(params: HandshakeParams): Promise<HandshakeResult>;
+}
+
+// @public (undocumented)
+export interface SessionPeer {
+    // (undocumented)
+    notify(method: string, params?: unknown): void;
+    // (undocumented)
+    request<T>(method: string, params?: unknown): Promise<T>;
+    // (undocumented)
+    setRequestHandler<P, R>(method: string, handler: (params: P) => Promise<R> | R): void;
+    // (undocumented)
+    subscribe<T>(method: string, callback: (event: T) => void): Unsubscribe;
+}
+
+// @public
+export interface ShutdownParams {
+    graceMs: number;
+    reason: string;
 }
 
 // @public

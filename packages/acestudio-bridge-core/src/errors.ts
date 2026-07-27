@@ -2,15 +2,14 @@
  * One error class for everything the bridge can refuse.
  *
  * @remarks
- * Server envelopes, the pre-wire capability guard, and the SDK's own failures
- * all arrive as a {@link BridgeError}. `code` is what you branch on — a string
+ * Host refusals, the pre-wire capability guard, and the SDK's own failures all
+ * arrive as a {@link BridgeError}. `code` is what you branch on — a string
  * literal union, so a `switch` over it is exhaustiveness-checked — and `hint`
  * and `details` ride along. There is no subclass per code: narrowing `code`
  * with {@link isCode} does the job a subclass would.
  */
 
 import type { BridgeErrorCode } from "./generated/bindings.js";
-import type { CommandErrorPayload } from "./protocol.js";
 
 /**
  * Codes the SDK raises on its own, without a host answer to quote. They are
@@ -24,6 +23,8 @@ export type SdkErrorCode =
   | "BRIDGE_UNREACHABLE"
   /** The host refused the handshake, or answered something unreadable. */
   | "HANDSHAKE_FAILED"
+  /** The host speaks a different major of the bridge wire itself. */
+  | "PROTOCOL_VERSION_MISMATCH"
   /** The host's contract surface is a different major than the bindings'. */
   | "SURFACE_VERSION_MISMATCH"
   /** A local deadline expired, or the caller's `AbortSignal` fired. */
@@ -45,6 +46,12 @@ export type AnyBridgeErrorCode = BridgeErrorCode | SdkErrorCode;
  * @public
  */
 export interface BridgeErrorDetails {
+  PROTOCOL_VERSION_MISMATCH: {
+    /** The bridge protocol version this SDK speaks. */
+    expected: number;
+    /** The version the host said it accepted. */
+    actual: number;
+  };
   SURFACE_VERSION_MISMATCH: {
     /** The surface version the bindings were generated from. */
     expected: string;
@@ -100,20 +107,6 @@ export class BridgeError<C extends AnyBridgeErrorCode = AnyBridgeErrorCode> exte
     if (init.hint !== undefined) {
       this.hint = init.hint;
     }
-  }
-
-  /**
-   * Lift a command-result envelope's `error` into a {@link BridgeError}. The
-   * envelope's code is trusted as-is: a host that mints a code this SDK's
-   * bindings predate must still surface it, not be flattened to `UNKNOWN`.
-   */
-  static fromCommandError(error: CommandErrorPayload): BridgeError {
-    return new BridgeError({
-      code: error.code as AnyBridgeErrorCode,
-      message: error.message,
-      details: error.details,
-      hint: error.hint,
-    });
   }
 }
 

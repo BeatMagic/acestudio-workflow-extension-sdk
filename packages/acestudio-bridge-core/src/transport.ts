@@ -8,12 +8,8 @@
  * ships {@link LocalSocketTransport}; a browser-side consumer brings its own.
  */
 
-/**
- * Cancels a registration, and is safe to call more than once.
- *
- * @public
- */
-export type Unsubscribe = () => void;
+// Declared where the generated bindings import it from.
+export type { Unsubscribe } from "./types-runtime.js";
 
 /**
  * A bidirectional message port. Each side owns one, so the message and close

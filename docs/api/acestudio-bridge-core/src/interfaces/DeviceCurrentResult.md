@@ -17,7 +17,10 @@ Active audio device type/backend (e.g. CoreAudio, ASIO, Windows Audio).
 ### input
 
 ```ts
-input: object;
+input: {
+  availableChannels: string[];
+  deviceName: string;
+};
 ```
 
 Selected input device and its channels.
@@ -43,7 +46,12 @@ Name of the selected input device.
 ### output
 
 ```ts
-output: object;
+output: {
+  availableChannelPairs: string[];
+  currentChannelPair?: string;
+  currentChannelPairIndex: number;
+  deviceName: string;
+};
 ```
 
 Selected output device and its channel-pair state.
@@ -85,7 +93,10 @@ Name of the selected output device.
 ### properties
 
 ```ts
-properties: object;
+properties: {
+  bufferSize: number;
+  sampleRate: number;
+};
 ```
 
 Current device properties.

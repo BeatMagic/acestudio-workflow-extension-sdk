@@ -37,7 +37,15 @@ UUID of the moved clip, with braces.
 ### geometry
 
 ```ts
-geometry: object;
+geometry: {
+  clipBegin: number;
+  clipDur: number;
+  clipEnd: number;
+  clipPos: number;
+  dur: number;
+  end: number;
+  pos: number;
+};
 ```
 
 Updated clip geometry, always in ticks.

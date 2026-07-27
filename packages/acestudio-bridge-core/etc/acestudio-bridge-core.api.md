@@ -366,7 +366,14 @@ export const DTYPE_BYTES: Readonly<Record<Dtype, number>>;
 export interface EditorAddNotesParams {
     language?: string | null;
     lyric_sentence?: string | null;
-    notes: unknown;
+    notes: ({
+        articulation?: string | null;
+        dur: number;
+        language?: string | null;
+        lyric?: string | null;
+        pitch: number;
+        pos: number;
+    })[];
     offset?: number | null;
 }
 
@@ -742,13 +749,21 @@ export interface SelectionSetParams {
         end: number;
     } | null;
     mode?: string | null;
-    notesToDeselect?: unknown;
-    notesToSelect?: unknown;
+    notesToDeselect?: {
+        uuid: string;
+    }[] | null;
+    notesToSelect?: {
+        uuid: string;
+    }[] | null;
     rangeBegin?: number | null;
     rangeEnd?: number | null;
     scope: string;
     selectNotes?: boolean | null;
-    tracks?: unknown;
+    tracks?: ({
+        trackIndex: number;
+    } | {
+        trackUuid: string;
+    })[] | null;
     verticalSelection?: {
         begin: number;
         end: number;
@@ -833,7 +848,11 @@ export interface TempoOperations {
 
 // @public
 export interface TempoSetParams {
-    points: unknown;
+    points: {
+        bend?: number | null;
+        pos: number;
+        value: number;
+    }[];
 }
 
 // @public
@@ -854,7 +873,11 @@ export interface TimesigOperations {
 
 // @public
 export interface TimesigSetParams {
-    signatures: unknown;
+    signatures: {
+        barPos: number;
+        denominator: number;
+        numerator: number;
+    }[];
 }
 
 // @public

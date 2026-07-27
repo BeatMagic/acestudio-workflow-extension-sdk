@@ -7,7 +7,10 @@ Success payload of `special-tracks get`.
 ### chord
 
 ```ts
-chord: object;
+chord: {
+  animating: boolean;
+  visible: boolean;
+};
 ```
 
 Visibility state of the chord progression track.
@@ -33,7 +36,10 @@ Whether the track is currently shown.
 ### tempo\_and\_timesig
 
 ```ts
-tempo_and_timesig: object;
+tempo_and_timesig: {
+  animating: boolean;
+  visible: boolean;
+};
 ```
 
 Visibility state of the combined tempo and time-signature tracks (toggled together in the UI).

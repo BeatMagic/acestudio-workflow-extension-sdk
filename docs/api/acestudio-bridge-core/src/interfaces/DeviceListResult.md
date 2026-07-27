@@ -47,7 +47,10 @@ The currently selected audio backend.
 ### inputDevices
 
 ```ts
-inputDevices: object;
+inputDevices: {
+  currentDevice: string;
+  devices: string[];
+};
 ```
 
 Available input devices under the current device type.
@@ -73,7 +76,10 @@ All input device names; may be empty.
 ### midiInputDevices
 
 ```ts
-midiInputDevices: object[];
+midiInputDevices: {
+  availableChannels: number;
+  deviceName: string;
+}[];
 ```
 
 MIDI input device descriptors; empty when no devices are detected.
@@ -99,7 +105,10 @@ Device display name as reported by the OS.
 ### outputDevices
 
 ```ts
-outputDevices: object;
+outputDevices: {
+  currentDevice: string;
+  devices: string[];
+};
 ```
 
 Available output devices under the current device type.

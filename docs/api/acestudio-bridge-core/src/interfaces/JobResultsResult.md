@@ -7,7 +7,10 @@ Success payload of `job results`.
 ### results
 
 ```ts
-results: object[];
+results: {
+  id: string;
+  state: "failed" | "pending" | "streaming" | "settled";
+}[];
 ```
 
 The job's result children.

@@ -7,7 +7,10 @@ Success payload of `voice tags`.
 ### categories?
 
 ```ts
-optional categories?: object[];
+optional categories?: {
+  id: number;
+  name: string;
+}[];
 ```
 
 Instrument categories. Present for type 'instrument'.
@@ -33,7 +36,10 @@ Category name, e.g. 'Piano'.
 ### languages?
 
 ```ts
-optional languages?: object[];
+optional languages?: {
+  code: string;
+  name: string;
+}[];
 ```
 
 Supported synthesis languages. Present for type 'voice'.

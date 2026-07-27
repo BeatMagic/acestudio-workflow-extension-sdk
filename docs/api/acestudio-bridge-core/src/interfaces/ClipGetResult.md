@@ -57,7 +57,15 @@ Whether the clip is enabled (audible).
 ### geometry
 
 ```ts
-geometry: object;
+geometry: {
+  clipBegin: number;
+  clipDur: number;
+  clipEnd: number;
+  clipPos: number;
+  dur: number;
+  end: number;
+  pos: number;
+};
 ```
 
 Clip geometry in the unit reported by usedTimeUnit: integer ticks or fractional seconds.

@@ -17,7 +17,15 @@ Number of clips returned.
 ### clips
 
 ```ts
-clips: object[];
+clips: {
+  clipBegin: number;
+  clipColor: string;
+  clipEnd: number;
+  clipName: string;
+  clipType: string;
+  clipUuid: string;
+  noteCount?: number;
+}[];
 ```
 
 Clips on the track, in track order.

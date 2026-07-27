@@ -17,7 +17,14 @@ True when the singer is a voice blend rather than a vanilla singer.
 ### router
 
 ```ts
-router: object;
+router: {
+  id: number;
+  isSingingMamba: boolean;
+  isTimbreOnly: boolean;
+  name: string;
+  supportedLanguages: string[];
+  version: number;
+};
 ```
 
 Synthesis model (router) the singer runs on.
@@ -95,7 +102,14 @@ Number of entries in seeds (convenience field).
 ### seeds
 
 ```ts
-seeds: object[];
+seeds: {
+  code: number;
+  labels: string[];
+  lock: boolean;
+  name: string;
+  style?: number;
+  timbre: number;
+}[];
 ```
 
 Seed composition of the blend.
@@ -163,7 +177,10 @@ Display name of the singer.
 ### vocalControls?
 
 ```ts
-optional vocalControls?: object[];
+optional vocalControls?: {
+  defaultValue: number | null;
+  name: string;
+}[];
 ```
 
 Available vocal controls. SingingMamba models only.

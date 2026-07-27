@@ -7,7 +7,11 @@ Success payload of `clip note-content`.
 ### filteredRange?
 
 ```ts
-optional filteredRange?: object;
+optional filteredRange?: {
+  begin: number;
+  end: number;
+  scope: string;
+};
 ```
 
 Actual tick range used for filtering. Present only when rangeBegin and/or rangeEnd was supplied.
@@ -51,7 +55,19 @@ Number of notes returned.
 ### notes
 
 ```ts
-notes: object[];
+notes: {
+  articulation?: string;
+  dur: number;
+  endPos: number;
+  headConsonants?: number[];
+  language?: string;
+  lyric?: string;
+  noteUuid: string;
+  pitch: number;
+  pos: number;
+  syllable?: string;
+  tailConsonants?: number[];
+}[];
 ```
 
 Notes overlapping the filter range, in pattern order.

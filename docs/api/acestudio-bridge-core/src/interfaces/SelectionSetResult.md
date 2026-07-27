@@ -17,7 +17,10 @@ Clip type of the active editor (editor scope).
 ### horizontalSelection?
 
 ```ts
-optional horizontalSelection?: object;
+optional horizontalSelection?: {
+  begin: number;
+  end: number;
+};
 ```
 
 #### begin
@@ -111,7 +114,10 @@ Total notes selected after the operation (editor scope, UUID mode).
 ### selectionRange?
 
 ```ts
-optional selectionRange?: object;
+optional selectionRange?: {
+  begin: number;
+  end: number;
+};
 ```
 
 #### begin
@@ -145,7 +151,10 @@ True on success (editor scope).
 ### verticalSelection?
 
 ```ts
-optional verticalSelection?: object;
+optional verticalSelection?: {
+  begin: number;
+  end: number;
+};
 ```
 
 #### begin

@@ -7,7 +7,22 @@ Success payload of `job list`.
 ### jobs
 
 ```ts
-jobs: object[];
+jobs: {
+  cancelable: boolean;
+  delivery: "direct" | "staged";
+  hasProgress: boolean;
+  id: string;
+  jobClass: string;
+  launcher: "ui" | "cli" | "extension" | "agent";
+  launcherLabel: string;
+  lifecycle: "queued" | "running" | "succeeded" | "failed" | "cancelled";
+  progress?: number;
+  results: {
+     id: string;
+     state: "failed" | "pending" | "streaming" | "settled";
+  }[];
+  streamingCapable: boolean;
+}[];
 ```
 
 The current project session's jobs, newest last.
@@ -87,7 +102,10 @@ Progress fraction 0..1; present only for classes that declare progress.
 #### results
 
 ```ts
-results: object[];
+results: {
+  id: string;
+  state: "failed" | "pending" | "streaming" | "settled";
+}[];
 ```
 
 The job's 0..N result children, each settling on its own.

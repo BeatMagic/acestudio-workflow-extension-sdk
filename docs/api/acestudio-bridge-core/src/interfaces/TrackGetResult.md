@@ -37,7 +37,12 @@ Default lyric language. Sing tracks only.
 ### mixer
 
 ```ts
-mixer: object;
+mixer: {
+  gain: number;
+  mute: boolean;
+  pan: number;
+  solo: boolean;
+};
 ```
 
 Mixer settings.
@@ -89,7 +94,17 @@ Name the user explicitly set; empty string when using the default fallback.
 ### recordInput
 
 ```ts
-recordInput: object;
+recordInput: {
+  inputChannelIndex?: number;
+  listen: boolean;
+  midiInput?: {
+     channel?: number;
+     deviceName?: string;
+     sourceType: string;
+  };
+  record: boolean;
+  recordMode?: string;
+};
 ```
 
 Record-input configuration.
@@ -113,7 +128,11 @@ Whether input monitoring is enabled.
 #### midiInput?
 
 ```ts
-optional midiInput?: object;
+optional midiInput?: {
+  channel?: number;
+  deviceName?: string;
+  sourceType: string;
+};
 ```
 
 MIDI input source. Note tracks only.
@@ -163,7 +182,29 @@ MIDI record mode: monophonic or polyphonic. Sing tracks only.
 ### soundSourceInfo?
 
 ```ts
-optional soundSourceInfo?: object;
+optional soundSourceInfo?: {
+  category?: string;
+  hasSource?: boolean;
+  isVoiceBlend?: boolean;
+  members?: {
+     category?: string;
+     gain: number;
+     isVoiceBlend?: boolean;
+     mute: boolean;
+     name: string;
+     nativeLanguage?: string;
+     supportedLanguages?: string[];
+  }[];
+  metadata?: {
+     memberCount?: number;
+     offset?: number;
+     spread?: number;
+  };
+  name?: string;
+  nativeLanguage?: string;
+  supportedLanguages?: string[];
+  type?: string;
+};
 ```
 
 Sound-source detail. Note tracks only (omitted for Audio); shape varies with track type and choir/ensemble mode.
@@ -195,7 +236,15 @@ True when the singer is a voice blend rather than a vanilla singer. Singer mode 
 #### members?
 
 ```ts
-optional members?: object[];
+optional members?: {
+  category?: string;
+  gain: number;
+  isVoiceBlend?: boolean;
+  mute: boolean;
+  name: string;
+  nativeLanguage?: string;
+  supportedLanguages?: string[];
+}[];
 ```
 
 Per-member detail. Choir/ensemble modes only.
@@ -203,7 +252,11 @@ Per-member detail. Choir/ensemble modes only.
 #### metadata?
 
 ```ts
-optional metadata?: object;
+optional metadata?: {
+  memberCount?: number;
+  offset?: number;
+  spread?: number;
+};
 ```
 
 Group-level settings. Choir/ensemble modes only.

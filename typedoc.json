@@ -1,6 +1,8 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "plugin": ["typedoc-plugin-markdown"],
+  "plugin": [
+    "typedoc-plugin-markdown"
+  ],
   "entryPoints": [
     "packages/acestudio-bridge-core/src/index.ts",
     "packages/acestudio-extension-sdk/src/index.ts",
@@ -13,5 +15,6 @@
   "hidePageHeader": true,
   "hideBreadcrumbs": true,
   "useCodeBlocks": true,
-  "disableSources": true
+  "disableSources": true,
+  "expandObjects": true
 }

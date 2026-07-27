@@ -17,7 +17,21 @@ Number of sound sources returned.
 ### soundSources
 
 ```ts
-soundSources: object[];
+soundSources: {
+  category?: string;
+  categoryId?: number;
+  group?: string;
+  id: number;
+  isCollected?: boolean;
+  memberCount?: number;
+  name: string;
+  nativeLanguage?: string;
+  routerId?: number;
+  routerName?: string;
+  supportedLanguages?: string[];
+  tags: string[];
+  type?: string;
+}[];
 ```
 
 Matching sound sources. Item shape depends on the queried type; only id, name, and tags are common to all types.

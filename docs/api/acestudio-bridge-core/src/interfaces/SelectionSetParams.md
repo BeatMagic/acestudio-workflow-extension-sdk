@@ -63,7 +63,11 @@ optional mode?: string | null;
 ### notesToDeselect?
 
 ```ts
-optional notesToDeselect?: object[] | null;
+optional notesToDeselect?: 
+  | {
+  uuid: string;
+}[]
+  | null;
 ```
 
 [editor, UUID modify form] Notes to deselect, as a JSON array of `\{uuid\}` objects. Ignored in replace mode.
@@ -73,7 +77,11 @@ optional notesToDeselect?: object[] | null;
 ### notesToSelect?
 
 ```ts
-optional notesToSelect?: object[] | null;
+optional notesToSelect?: 
+  | {
+  uuid: string;
+}[]
+  | null;
 ```
 
 [editor, UUID form] Notes to select, as a JSON array of `\{uuid\}` objects.

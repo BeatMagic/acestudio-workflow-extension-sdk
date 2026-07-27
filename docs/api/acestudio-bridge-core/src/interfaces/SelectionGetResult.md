@@ -27,7 +27,10 @@ Whether anything is selected (editor scope). Always false for the audio editor.
 ### horizontalSelection?
 
 ```ts
-optional horizontalSelection?: object;
+optional horizontalSelection?: {
+  begin: number;
+  end: number;
+};
 ```
 
 Selected time range on the timeline (arrangement scope).
@@ -63,7 +66,13 @@ True when the selection is a zero-width vertical line (caret) rather than an are
 ### notes?
 
 ```ts
-optional notes?: object[];
+optional notes?: {
+  dur: number;
+  endPos: number;
+  noteUuid: string;
+  pitch: number;
+  pos: number;
+}[];
 ```
 
 Selected notes (editor scope). Present only for note editors with a selection.
@@ -123,7 +132,10 @@ Number of selected track ids (arrangement scope; may exceed selectedTracks lengt
 ### selectedTracks?
 
 ```ts
-optional selectedTracks?: object[];
+optional selectedTracks?: {
+  trackIndex: number;
+  trackUuid: string;
+}[];
 ```
 
 Discrete set of selected tracks, in selection order (arrangement scope). Distinct from verticalSelection's contiguous index range.
@@ -159,7 +171,10 @@ Number of selected notes (editor scope); 0 or 1 for the chord editor.
 ### verticalSelection?
 
 ```ts
-optional verticalSelection?: object;
+optional verticalSelection?: {
+  begin: number;
+  end: number;
+};
 ```
 
 Selected track index range (arrangement scope).

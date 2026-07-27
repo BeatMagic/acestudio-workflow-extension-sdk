@@ -7,7 +7,11 @@ Success payload of `clip lyrics`.
 ### filteredRange?
 
 ```ts
-optional filteredRange?: object;
+optional filteredRange?: {
+  begin: number;
+  end: number;
+  scope: string;
+};
 ```
 
 Actual tick range used for filtering. Present only when rangeBegin and/or rangeEnd was supplied.
@@ -51,7 +55,11 @@ Number of sentences returned.
 ### sentences
 
 ```ts
-sentences: object[];
+sentences: {
+  lyric: string;
+  sentenceBegin: number;
+  sentenceEnd: number;
+}[];
 ```
 
 Lyric sentences overlapping the filter range.

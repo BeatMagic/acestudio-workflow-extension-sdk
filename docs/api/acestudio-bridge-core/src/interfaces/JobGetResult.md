@@ -97,7 +97,10 @@ Progress fraction 0..1; present only for classes that declare progress.
 ### results
 
 ```ts
-results: object[];
+results: {
+  id: string;
+  state: "failed" | "pending" | "streaming" | "settled";
+}[];
 ```
 
 The job's 0..N result children, each settling on its own.

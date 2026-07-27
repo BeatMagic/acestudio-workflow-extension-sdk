@@ -37,7 +37,17 @@ The requested page number, echoed back (0-based).
 ### voices
 
 ```ts
-voices: object[];
+voices: {
+  group: string;
+  id: number;
+  isCollected?: boolean;
+  name: string;
+  nativeLanguage: string;
+  routerId: number;
+  routerName: string;
+  supportedLanguages: string[];
+  tags: string[];
+}[];
 ```
 
 Community voices on this page (up to 30). Empty on fetch timeout.

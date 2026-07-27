@@ -7,7 +7,10 @@ Success payload of `editor get-content`.
 ### actualRange
 
 ```ts
-actualRange: object;
+actualRange: {
+  begin: number;
+  end: number;
+};
 ```
 
 The tick range that was actually queried.
@@ -43,7 +46,19 @@ Number of chords returned. Present for the chord editor only.
 ### chords?
 
 ```ts
-optional chords?: object[];
+optional chords?: {
+  addeds: string[];
+  basicKeys: number[];
+  bass: string;
+  dur: number;
+  endPos: number;
+  isSelected: boolean;
+  keys: number[];
+  pos: number;
+  root: string;
+  type: string;
+  viewName: string;
+}[];
 ```
 
 Chords overlapping the range. Present for the chord editor only.
@@ -151,7 +166,19 @@ Number of notes returned. Present for note editors only.
 ### notes?
 
 ```ts
-optional notes?: object[];
+optional notes?: {
+  articulation?: string;
+  dur: number;
+  endPos: number;
+  headConsonants?: number[];
+  isSelected: boolean;
+  language?: string;
+  lyric?: string;
+  pitch: number;
+  pos: number;
+  syllable?: string;
+  tailConsonants?: number[];
+}[];
 ```
 
 Notes overlapping the range. Present for note editors (Sing/Instrument/GenericMidi); absent for the chord editor.

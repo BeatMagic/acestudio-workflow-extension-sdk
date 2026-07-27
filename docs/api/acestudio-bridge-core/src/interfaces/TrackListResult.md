@@ -17,7 +17,14 @@ Number of content (non-empty-slot) tracks in the project; the length of `tracks`
 ### tracks
 
 ```ts
-tracks: object[];
+tracks: {
+  clipCount: number;
+  soundSourceName?: string;
+  trackIndex: number;
+  trackName: string;
+  trackType: string;
+  trackUuid: string;
+}[];
 ```
 
 All content tracks, in arrangement order.

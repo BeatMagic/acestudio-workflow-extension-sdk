@@ -27,7 +27,14 @@ optional lyric_sentence?: string | null;
 ### notes
 
 ```ts
-notes: object[];
+notes: {
+  articulation?: string | null;
+  dur: number;
+  language?: string | null;
+  lyric?: string | null;
+  pitch: number;
+  pos: number;
+}[];
 ```
 
 Array of note objects. Required and non-empty. Each note must have `pos`, `dur`, and `pitch`. Lyric fields depend on the editor type and mode - see `editor add-notes` documentation for Sing vs Instrument vs GenericMidi.

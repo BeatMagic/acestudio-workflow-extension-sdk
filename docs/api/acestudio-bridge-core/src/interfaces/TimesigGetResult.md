@@ -17,7 +17,11 @@ Number of entries in signatures (convenience field).
 ### signatures
 
 ```ts
-signatures: object[];
+signatures: {
+  barPos: number;
+  denominator: number;
+  numerator: number;
+}[];
 ```
 
 All time-signature entries, in ascending barPos order.

@@ -17,7 +17,11 @@ Number of entries in points (convenience field).
 ### points
 
 ```ts
-points: object[];
+points: {
+  bend: number;
+  pos: number;
+  value: number;
+}[];
 ```
 
 All tempo automation points, in ascending pos order.

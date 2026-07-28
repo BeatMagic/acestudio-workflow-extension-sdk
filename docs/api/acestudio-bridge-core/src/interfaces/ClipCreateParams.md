@@ -1,6 +1,6 @@
-# Interface: ClipAddParams
+# Interface: ClipCreateParams
 
-Arguments for `clip add`.
+Arguments for `clip create`.
 
 ## Properties
 
@@ -21,6 +21,27 @@ optional name?: string | null;
 ```
 
 Optional custom name. Omit to let ACE Studio auto-generate a name.
+
+***
+
+### notes?
+
+```ts
+optional notes?: 
+  | {
+  articulation?: string | null;
+  dur: number;
+  language?: string | null;
+  lyric?: string | null;
+  pitch: number;
+  pos: number;
+}[]
+  | null;
+```
+
+Initial notes, as a JSON array in clip-local ticks — the same shape `note add` takes. Omit to create an empty clip.
+
+Example: `--notes '[\{"pos":0,"dur":480,"pitch":60,"lyric":"la"\}]'`
 
 ***
 
@@ -50,4 +71,4 @@ Target track index (0-based). Empty tracks are automatically converted to the ap
 type: string;
 ```
 
-Clip type: `sing`, `instrument`, or `genericmidi`.
+Clip type: `sing`, `instrument`, or `genericMidi` — the same spellings `clipType` is reported in. Matched case-insensitively.

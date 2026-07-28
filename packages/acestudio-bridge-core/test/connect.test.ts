@@ -1,6 +1,7 @@
 import { getEventListeners } from "node:events";
 import { describe, expect, it } from "vitest";
 import {
+  CHANGE_METHOD_CAPABILITIES,
   connect,
   createTransportPair,
   isBridgeError,
@@ -31,7 +32,16 @@ describe("the session wire", () => {
   it("is the one the schema declares", () => {
     // The harness spells the host's method names by hand, as the host does.
     // This is what keeps that spelling from drifting from the generated surface.
-    expect(Object.keys(SESSION_METHOD_CAPABILITIES).sort()).toEqual([...Object.values(HOST_METHODS)].sort());
+    const { changed, ...session } = HOST_METHODS;
+    expect(Object.keys(SESSION_METHOD_CAPABILITIES).sort()).toEqual([...Object.values(session)].sort());
+
+    // The change notification cannot be checked the same way: it is payload-gated,
+    // so there is no capability row anywhere to compare its name against. What pins
+    // its spelling is the delivery round trip in bindings.test.ts — the harness
+    // sends this name and the generated client subscribes to its own, so a
+    // disagreement is a change that never arrives.
+    expect(Object.keys(CHANGE_METHOD_CAPABILITIES)).toEqual([]);
+    expect(changed).toBe("state.changed");
   });
 });
 
@@ -47,7 +57,7 @@ describe("connect", () => {
     expect(request.protocolVersion).toBe(PROTOCOL_VERSION);
 
     expect(connection.sessionId).toBe("session-42");
-    expect(connection.grantedTokens).toEqual(["track.read", "track.write"]);
+    expect(connection.grant.provenance.granted).toEqual(["track.read", "track.write"]);
     expect(connection.protocolVersion).toBe(PROTOCOL_VERSION);
     connection.close();
   });

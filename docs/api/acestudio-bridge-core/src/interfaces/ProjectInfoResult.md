@@ -10,7 +10,7 @@ Success payload of `project info`.
 duration: number;
 ```
 
-Arrangement canvas length in project ticks.
+Arrangement length in project ticks.
 
 ***
 

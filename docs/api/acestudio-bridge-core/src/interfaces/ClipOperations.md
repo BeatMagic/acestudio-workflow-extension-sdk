@@ -4,32 +4,6 @@ The `clip` operations, mirroring the canonical operation tree 1:1.
 
 ## Methods
 
-### add()
-
-```ts
-add(params, options?): Promise<ClipAddResult>;
-```
-
-Place a new empty note clip on a track at a given position.
-
-Requires the `clip.write` capability.
-
-#### Parameters
-
-##### params
-
-[`ClipAddParams`](ClipAddParams.md)
-
-##### options?
-
-[`MutatingCallOptions`](MutatingCallOptions.md)
-
-#### Returns
-
-`Promise`\<[`ClipAddResult`](ClipAddResult.md)\>
-
-***
-
 ### audioContent()
 
 ```ts
@@ -53,6 +27,32 @@ Requires the `clip.read` capability.
 #### Returns
 
 `Promise`\<[`ClipAudioContentResult`](ClipAudioContentResult.md)\>
+
+***
+
+### create()
+
+```ts
+create(params, options?): Promise<ClipCreateResult>;
+```
+
+Place a new note clip on a track, optionally with initial notes.
+
+Requires the `clip.write` capability.
+
+#### Parameters
+
+##### params
+
+[`ClipCreateParams`](ClipCreateParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`ClipCreateResult`](ClipCreateResult.md)\>
 
 ***
 
@@ -183,3 +183,29 @@ Requires the `clip.read` capability.
 #### Returns
 
 `Promise`\<[`ClipNoteContentResult`](ClipNoteContentResult.md)\>
+
+***
+
+### replaceContent()
+
+```ts
+replaceContent(params, options?): Promise<ClipReplaceContentResult>;
+```
+
+Replace a clip's notes wholesale with a new set.
+
+Requires the `clip.write` capability.
+
+#### Parameters
+
+##### params
+
+[`ClipReplaceContentParams`](ClipReplaceContentParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`ClipReplaceContentResult`](ClipReplaceContentResult.md)\>

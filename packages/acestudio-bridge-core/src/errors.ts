@@ -46,6 +46,19 @@ export type AnyBridgeErrorCode = BridgeErrorCode | SdkErrorCode;
  * @public
  */
 export interface BridgeErrorDetails {
+  CAPABILITY_DENIED: {
+    /**
+     * The tokens the session's grant is short of. Always populated — a refused
+     * call names the one token it needed, and `connection.require()` names every
+     * token it asked for and did not get.
+     */
+    missing: readonly string[];
+    /**
+     * The single token a refused operation required, as the host spells it in
+     * `details.token`. Absent when the refusal was not about one operation.
+     */
+    token?: string;
+  };
   PROTOCOL_VERSION_MISMATCH: {
     /** The bridge protocol version this SDK speaks. */
     expected: number;

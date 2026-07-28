@@ -9,12 +9,18 @@ export type AnyBridgeErrorCode = BridgeErrorCode | SdkErrorCode;
 
 // @public
 export interface BridgeConnection {
+    readonly client: PublicBindings;
     close(): void;
-    readonly grantedTokens: readonly string[];
+    readonly grant: Grant;
     onClose(listener: () => void): Unsubscribe;
     onShutdown(listener: (params: ShutdownParams) => void): Unsubscribe;
+    onWarning(listener: (warning: OperationWarning) => void): Unsubscribe;
     readonly peer: BridgePeer;
     readonly protocolVersion: number;
+    require(...tokens: CapabilityToken[]): void;
+    scoped<P extends ProfileName>(profile: P): ProfileScopedBindings<P>;
+    // (undocumented)
+    scoped<T extends CapabilityToken>(...tokens: T[]): ScopedBindings<T>;
     readonly sessionId: string;
 }
 
@@ -27,10 +33,15 @@ export class BridgeError<C extends AnyBridgeErrorCode = AnyBridgeErrorCode> exte
 }
 
 // @public
-export type BridgeErrorCode = 'ALREADY_RECORDING' | 'BAD_ARGS' | 'BRIDGE_UNREACHABLE' | 'CAPABILITY_DENIED' | 'CAPABILITY_OUT_OF_SURFACE' | 'CHAIN_NOT_GROWN' | 'CREATE_TIMEOUT' | 'EDITOR_NOT_READY' | 'EDIT_TIMEOUT' | 'EXPORT_IN_PROGRESS' | 'EXPORT_START_FAILED' | 'FLUSH_TIMEOUT' | 'GESTURE_HELD' | 'HANDLER_FAILED' | 'INSERT_FAILED' | 'INVALID_ARG' | 'IO_ERROR' | 'JOB_NOT_CANCELLABLE' | 'NOT_FOUND' | 'NO_GESTURE' | 'NO_MASTER_CHAIN' | 'NO_PATTERN_EDIT_OPEN' | 'NO_PROJECT' | 'NO_PROJECT_OPEN' | 'NO_SCENE' | 'NO_STATE' | 'NO_WINDOW' | 'PLAYBACK_START_FAILED' | 'RECORD_START_FAILED' | 'SCENARIO_FAILED' | 'SESSION_INVALID' | 'STALE_WRITE' | 'TIMEOUT' | 'TIME_UNIT_REQUIRED' | 'UNAVAILABLE' | 'UNKNOWN_CAPABILITY' | 'UNKNOWN_COMMAND' | 'UNKNOWN_SCENARIO' | 'USER_BUSY';
+export type BridgeErrorCode = 'ALREADY_RECORDING' | 'BAD_ARGS' | 'BRIDGE_UNREACHABLE' | 'CAPABILITY_DENIED' | 'CAPABILITY_OUT_OF_SURFACE' | 'CHAIN_NOT_GROWN' | 'CREATE_TIMEOUT' | 'EDITOR_NOT_READY' | 'EDIT_TIMEOUT' | 'EXPORT_IN_PROGRESS' | 'EXPORT_START_FAILED' | 'FLUSH_TIMEOUT' | 'GESTURE_HELD' | 'HANDLER_FAILED' | 'INSERT_FAILED' | 'INVALID_ARG' | 'IO_ERROR' | 'JOB_NOT_CANCELLABLE' | 'NOTE_OVERLAP' | 'NOT_FOUND' | 'NO_GESTURE' | 'NO_MASTER_CHAIN' | 'NO_PATTERN_EDIT_OPEN' | 'NO_PROJECT' | 'NO_PROJECT_OPEN' | 'NO_SCENE' | 'NO_STATE' | 'NO_WINDOW' | 'PLAYBACK_START_FAILED' | 'RECORD_START_FAILED' | 'SCENARIO_FAILED' | 'SESSION_INVALID' | 'STALE_WRITE' | 'TIMEOUT' | 'TIME_UNIT_REQUIRED' | 'UNAVAILABLE' | 'UNKNOWN_CAPABILITY' | 'UNKNOWN_COMMAND' | 'UNKNOWN_SCENARIO' | 'USER_BUSY';
 
 // @public
 export interface BridgeErrorDetails {
+    // (undocumented)
+    CAPABILITY_DENIED: {
+        missing: readonly string[];
+        token?: string;
+    };
     // (undocumented)
     PROTOCOL_VERSION_MISMATCH: {
         expected: number;
@@ -68,10 +79,10 @@ export class BridgePeer {
 }
 
 // @public
-export const BULK_PARAM_FIELDS: Readonly<Record<string, readonly BulkFieldDescriptor[]>>;
+export const BULK_PARAM_FIELDS: {};
 
 // @public
-export const BULK_RESULT_FIELDS: Readonly<Record<string, readonly BulkFieldDescriptor[]>>;
+export const BULK_RESULT_FIELDS: {};
 
 // @public
 export interface BulkBlob<D extends Dtype = Dtype> {
@@ -94,6 +105,9 @@ export interface CallOptions {
     signal?: AbortSignal;
     timeoutMs?: number;
 }
+
+// @public
+export const CAPABILITY_TOKENS: readonly ["caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "fx.read", "fx.write", "generative.add-layer", "generative.enhance", "generative.retake", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "session.handshake", "session.ping", "session.shutdown", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.read", "track.write", "transport.control", "transport.state", "ui.view", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write", "workflow.dev", "workflow.ui"];
 
 // @public
 export type CapabilityToken = 'caret.read' | 'caret.write' | 'chord.read' | 'chord.write' | 'clip.read' | 'clip.write' | 'device.read' | 'device.write' | 'editor.read' | 'editor.write' | 'export.invoke' | 'fx.read' | 'fx.write' | 'generative.add-layer' | 'generative.enhance' | 'generative.retake' | 'generative.seed-audio' | 'generative.song' | 'generative.sound-effects' | 'generative.stem-split' | 'generative.text2sample' | 'generative.vocal2midi' | 'generative.voice-change' | 'history.control' | 'history.read' | 'import.invoke' | 'job.control' | 'job.read' | 'lyric.read' | 'lyric.write' | 'note.read' | 'note.write' | 'project.lifecycle' | 'project.read' | 'recording.control' | 'selection.read' | 'selection.write' | 'session.handshake' | 'session.ping' | 'session.shutdown' | 'tempo.analyze' | 'tempo.applyV2' | 'tempo.read' | 'tempo.write' | 'timesig.read' | 'timesig.write' | 'track.read' | 'track.write' | 'transport.control' | 'transport.state' | 'ui.view' | 'vocalparam.read' | 'vocalparam.write' | 'voice.read' | 'voice.write' | 'workflow.dev' | 'workflow.ui';
@@ -127,22 +141,53 @@ export interface CaretSetParams {
     trackIndex?: number | null;
 }
 
+// @public (undocumented)
+export const CHANGE_CAPABILITY_TOKENS: readonly ChangeCapability[];
+
+// @public (undocumented)
+export const CHANGE_METHOD_CAPABILITIES: Readonly<Record<string, ChangeCapability>>;
+
 // @public
-export interface ClipAddParams {
-    dur: number;
-    name?: string | null;
-    pos: number;
-    trackIndex: number;
-    type: string;
+export type ChangeCapability = never;
+
+// @public (undocumented)
+export class ChangeClient {
+    constructor(peer: ChangePeer);
+    onStateChanged(callback: (event: ChangedParams) => void): Unsubscribe;
 }
 
 // @public
-export interface ClipAddResult {
-    clipBegin: number;
-    clipEnd: number;
-    clipName: string;
-    clipType: string;
-    trackName: string;
+export interface ChangedParams {
+    changes: string[];
+    channel: string;
+    revision: number;
+}
+
+// @public
+export interface ChangeEvent {
+    readonly changes: readonly string[];
+    readonly channel: string;
+    readonly revision: number;
+}
+
+// @public (undocumented)
+export interface ChangePeer {
+    // (undocumented)
+    notify(method: string, params?: unknown): void;
+    // (undocumented)
+    request<T>(method: string, params?: unknown): Promise<T>;
+    // (undocumented)
+    setRequestHandler<P, R>(method: string, handler: (params: P) => Promise<R> | R): void;
+    // (undocumented)
+    subscribe<T>(method: string, callback: (event: T) => void): Unsubscribe;
+}
+
+// @public
+export interface ChannelDescriptor {
+    readonly capability: string;
+    readonly channel: string;
+    readonly domain: string;
+    readonly method: string;
 }
 
 // @public
@@ -155,6 +200,35 @@ export interface ClipAudioContentParams {
 export interface ClipAudioContentResult {
     audioFileName: string;
     loadingState: string;
+}
+
+// @public
+export interface ClipCreateParams {
+    dur: number;
+    name?: string | null;
+    notes?: {
+        articulation?: string | null;
+        dur: number;
+        language?: string | null;
+        lyric?: string | null;
+        pitch: number;
+        pos: number;
+    }[] | null;
+    pos: number;
+    trackIndex: number;
+    type: string;
+}
+
+// @public
+export interface ClipCreateResult {
+    clipBegin: number;
+    clipEnd: number;
+    clipName: string;
+    clipType: string;
+    clipUuid: string;
+    noteCount: number;
+    noteUuids: string[];
+    trackName: string;
 }
 
 // @public
@@ -268,6 +342,7 @@ export interface ClipNoteContentResult {
         end: number;
         scope: string;
     };
+    fingerprint: Fingerprint;
     noteCount: number;
     notes: {
         articulation?: string;
@@ -286,13 +361,36 @@ export interface ClipNoteContentResult {
 
 // @public
 export interface ClipOperations {
-    add(params: ClipAddParams, options?: MutatingCallOptions): Promise<ClipAddResult>;
     audioContent(params: ClipAudioContentParams, options?: CallOptions): Promise<ClipAudioContentResult>;
+    create(params: ClipCreateParams, options?: MutatingCallOptions): Promise<ClipCreateResult>;
     get(params: ClipGetParams, options?: CallOptions): Promise<ClipGetResult>;
     list(params: ClipListParams, options?: CallOptions): Promise<ClipListResult>;
     lyrics(params: ClipLyricsParams, options?: CallOptions): Promise<ClipLyricsResult>;
     moveEdges(params: ClipMoveEdgesParams, options?: MutatingCallOptions): Promise<ClipMoveEdgesResult>;
     noteContent(params: ClipNoteContentParams, options?: CallOptions): Promise<ClipNoteContentResult>;
+    replaceContent(params: ClipReplaceContentParams, options?: MutatingCallOptions): Promise<ClipReplaceContentResult>;
+}
+
+// @public
+export interface ClipReplaceContentParams {
+    clipUuid: string;
+    notes: {
+        articulation?: string | null;
+        dur: number;
+        language?: string | null;
+        lyric?: string | null;
+        pitch: number;
+        pos: number;
+    }[];
+}
+
+// @public
+export interface ClipReplaceContentResult {
+    clipType: string;
+    clipUuid: string;
+    noteCount: number;
+    noteUuids: string[];
+    previousNoteCount: number;
 }
 
 // @public
@@ -435,30 +533,13 @@ export interface DeviceOperations {
 }
 
 // @public
+export const DRAFT_PROFILES: readonly ["surface.extension-sdk.v1"];
+
+// @public
 export type Dtype = 'u8' | 'i16le' | 'i32le' | 'i64le' | 'f32le' | 'f64le';
 
 // @public
 export const DTYPE_BYTES: Readonly<Record<Dtype, number>>;
-
-// @public
-export interface EditorAddNotesParams {
-    language?: string | null;
-    lyric_sentence?: string | null;
-    notes: ({
-        articulation?: string | null;
-        dur: number;
-        language?: string | null;
-        lyric?: string | null;
-        pitch: number;
-        pos: number;
-    })[];
-    offset?: number | null;
-}
-
-// @public
-export interface EditorAddNotesResult {
-    lyricsApplied?: string[];
-}
 
 // @public
 export interface EditorCurrentClipResult {
@@ -470,67 +551,13 @@ export interface EditorCurrentClipResult {
 }
 
 // @public
-export interface EditorDeleteSelectionResult {
-    deletedCount: number;
-    editorType: string;
-    success: boolean;
-}
-
-// @public
-export interface EditorGetContentParams {
-    range?: string | null;
-    rangeBegin?: number | null;
-    rangeEnd?: number | null;
-}
-
-// @public
-export interface EditorGetContentResult {
-    actualRange: {
-        begin: number;
-        end: number;
-    };
-    chordCount?: number;
-    chords?: {
-        addeds: string[];
-        basicKeys: number[];
-        bass: string;
-        dur: number;
-        endPos: number;
-        isSelected: boolean;
-        keys: number[];
-        pos: number;
-        root: string;
-        type: string;
-        viewName: string;
-    }[];
-    noteCount?: number;
-    notes?: {
-        articulation?: string;
-        dur: number;
-        endPos: number;
-        headConsonants?: number[];
-        isSelected: boolean;
-        language?: string;
-        lyric?: string;
-        pitch: number;
-        pos: number;
-        syllable?: string;
-        tailConsonants?: number[];
-    }[];
-    rangeType: string;
-}
-
-// @public
 export interface EditorOpenResult {
     wasAlreadyVisible: boolean;
 }
 
 // @public
 export interface EditorOperations {
-    addNotes(params: EditorAddNotesParams, options?: MutatingCallOptions): Promise<EditorAddNotesResult>;
     currentClip(options?: CallOptions): Promise<EditorCurrentClipResult>;
-    deleteSelection(options?: MutatingCallOptions): Promise<EditorDeleteSelectionResult>;
-    getContent(params: EditorGetContentParams, options?: CallOptions): Promise<EditorGetContentResult>;
     open(options?: MutatingCallOptions): Promise<EditorOpenResult>;
     status(options?: CallOptions): Promise<EditorStatusResult>;
     tickRange(options?: CallOptions): Promise<EditorTickRangeResult>;
@@ -561,7 +588,7 @@ export interface EditorTickRangeResult {
 export function encodeFrame(message: string): Buffer;
 
 // @public
-export const FIELD_CAPABILITIES: Readonly<Record<string, Readonly<Record<string, CapabilityToken>>>>;
+export const FIELD_CAPABILITIES: {};
 
 // @public
 export type Fingerprint = string & {
@@ -571,6 +598,22 @@ export type Fingerprint = string & {
 // @public
 export class FrameDecoder {
     push(chunk: Buffer): string[];
+}
+
+// @public
+export interface Grant {
+    has(token: CapabilityToken): boolean;
+    missing(profileOrTokens: ProfileName | readonly CapabilityToken[]): readonly CapabilityToken[];
+    readonly provenance: GrantProvenance;
+    readonly tokens: readonly CapabilityToken[];
+}
+
+// @public
+export interface GrantProvenance {
+    readonly granted: readonly string[];
+    readonly requested: readonly string[];
+    readonly sessionId: string;
+    readonly unrecognized: readonly string[];
 }
 
 // @public
@@ -585,6 +628,25 @@ export interface HandshakeResult {
     acceptedProtocolVersion: number;
     grantedTokens: string[];
     sessionId: string;
+}
+
+// @public
+export interface InvokeParams {
+    arguments: unknown;
+    path: string;
+    waitTimeoutMs?: number;
+}
+
+// @public
+export interface InvokeResult {
+    data: unknown;
+    warnings?: InvokeWarning[];
+}
+
+// @public
+export interface InvokeWarning {
+    code: string;
+    hint?: string;
 }
 
 // @public
@@ -658,6 +720,7 @@ export interface JobOperations {
     discardResult(params: JobDiscardResultParams, options?: MutatingCallOptions): Promise<void>;
     get(params: JobGetParams, options?: CallOptions): Promise<JobGetResult>;
     list(params: JobListParams, options?: CallOptions): Promise<JobListResult>;
+    onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
     place(params: JobPlaceParams, options?: MutatingCallOptions): Promise<JobPlaceResult>;
     results(params: JobResultsParams, options?: CallOptions): Promise<JobResultsResult>;
     wait(params: JobWaitParams, options?: CallOptions): Promise<JobWaitResult>;
@@ -777,17 +840,721 @@ export interface MutatingCallOptions extends CallOptions {
 }
 
 // @public
+export interface NoteAddParams {
+    clipUuid: string;
+    notes: {
+        articulation?: string | null;
+        dur: number;
+        language?: string | null;
+        lyric?: string | null;
+        pitch: number;
+        pos: number;
+    }[];
+}
+
+// @public
+export interface NoteAddResult {
+    addedCount: number;
+    clipType: string;
+    clipUuid: string;
+    noteCount: number;
+    noteUuids: string[];
+}
+
+// @public
+export interface NoteDeleteParams {
+    noteUuids: string[];
+}
+
+// @public
+export interface NoteDeleteResult {
+    clipUuid: string;
+    deletedCount: number;
+}
+
+// @public
+export interface NoteMoveParams {
+    moveEarlier?: number | null;
+    moveLater?: number | null;
+    noteUuids: string[];
+    pitch?: number | null;
+    pitchDelta?: number | null;
+    pos?: number | null;
+    posScope?: string | null;
+}
+
+// @public
+export interface NoteMoveResult {
+    clipUuid: string;
+    movedCount: number;
+    notes: {
+        dur: number;
+        endPos: number;
+        noteUuid: string;
+        pitch: number;
+        pos: number;
+    }[];
+}
+
+// @public
+export interface NoteOperations {
+    add(params: NoteAddParams, options?: MutatingCallOptions): Promise<NoteAddResult>;
+    delete(params: NoteDeleteParams, options?: MutatingCallOptions): Promise<NoteDeleteResult>;
+    move(params: NoteMoveParams, options?: MutatingCallOptions): Promise<NoteMoveResult>;
+    resize(params: NoteResizeParams, options?: MutatingCallOptions): Promise<NoteResizeResult>;
+    setLyric(params: NoteSetLyricParams, options?: MutatingCallOptions): Promise<NoteSetLyricResult>;
+}
+
+// @public
+export interface NoteResizeParams {
+    dur: number;
+    noteUuids: string[];
+}
+
+// @public
+export interface NoteResizeResult {
+    clipUuid: string;
+    notes: {
+        dur: number;
+        endPos: number;
+        noteUuid: string;
+        pitch: number;
+        pos: number;
+    }[];
+    resizedCount: number;
+}
+
+// @public
+export interface NoteSetLyricParams {
+    language?: string | null;
+    lyric?: string | null;
+    lyrics?: string[] | null;
+    noteUuids: string[];
+}
+
+// @public
+export interface NoteSetLyricResult {
+    notes: {
+        language: string;
+        lyric: string;
+        noteUuid: string;
+    }[];
+    updatedCount: number;
+}
+
+// @public
+export const NOTIFICATION_CHANNELS: readonly [{
+    readonly channel: "jobs";
+    readonly domain: "job";
+    readonly method: "onChanged";
+    readonly capability: "job.read";
+}];
+
+// @public (undocumented)
+export const OPERATION_CAPABILITY_TOKENS: readonly OperationCapability[];
+
+// @public (undocumented)
+export const OPERATION_METHOD_CAPABILITIES: Readonly<Record<string, OperationCapability>>;
+
+// @public
+export type OperationCapability = never;
+
+// @public (undocumented)
+export class OperationClient {
+    constructor(peer: OperationPeer);
+    operationInvoke(params: InvokeParams): Promise<InvokeResult>;
+}
+
+// @public
 export interface OperationDescriptor {
     readonly capability: string;
     readonly domain: string;
     readonly method: string;
     readonly mutating: boolean;
     readonly path: string;
+    readonly takesParams: boolean;
     readonly ungated: boolean;
 }
 
+// @public (undocumented)
+export interface OperationPeer {
+    // (undocumented)
+    notify(method: string, params?: unknown): void;
+    // (undocumented)
+    request<T>(method: string, params?: unknown): Promise<T>;
+    // (undocumented)
+    setRequestHandler<P, R>(method: string, handler: (params: P) => Promise<R> | R): void;
+    // (undocumented)
+    subscribe<T>(method: string, callback: (event: T) => void): Unsubscribe;
+}
+
 // @public
-export const OPERATIONS: readonly OperationDescriptor[];
+export const OPERATIONS: readonly [{
+    readonly path: "caret get";
+    readonly domain: "caret";
+    readonly method: "get";
+    readonly capability: "caret.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "caret set";
+    readonly domain: "caret";
+    readonly method: "set";
+    readonly capability: "caret.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "clip audio-content";
+    readonly domain: "clip";
+    readonly method: "audioContent";
+    readonly capability: "clip.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "clip create";
+    readonly domain: "clip";
+    readonly method: "create";
+    readonly capability: "clip.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "clip get";
+    readonly domain: "clip";
+    readonly method: "get";
+    readonly capability: "clip.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "clip list";
+    readonly domain: "clip";
+    readonly method: "list";
+    readonly capability: "clip.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "clip lyrics";
+    readonly domain: "clip";
+    readonly method: "lyrics";
+    readonly capability: "clip.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "clip move-edges";
+    readonly domain: "clip";
+    readonly method: "moveEdges";
+    readonly capability: "clip.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "clip note-content";
+    readonly domain: "clip";
+    readonly method: "noteContent";
+    readonly capability: "clip.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "clip replace-content";
+    readonly domain: "clip";
+    readonly method: "replaceContent";
+    readonly capability: "clip.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "convert editor-to-global";
+    readonly domain: "convert";
+    readonly method: "editorToGlobal";
+    readonly capability: "convert.editor-to-global";
+    readonly ungated: true;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "convert global-to-editor";
+    readonly domain: "convert";
+    readonly method: "globalToEditor";
+    readonly capability: "convert.global-to-editor";
+    readonly ungated: true;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "convert measure-to-tick";
+    readonly domain: "convert";
+    readonly method: "measureToTick";
+    readonly capability: "convert.measure-to-tick";
+    readonly ungated: true;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "convert tick-to-measure";
+    readonly domain: "convert";
+    readonly method: "tickToMeasure";
+    readonly capability: "convert.tick-to-measure";
+    readonly ungated: true;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "convert tick-to-time";
+    readonly domain: "convert";
+    readonly method: "tickToTime";
+    readonly capability: "convert.tick-to-time";
+    readonly ungated: true;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "convert time-to-tick";
+    readonly domain: "convert";
+    readonly method: "timeToTick";
+    readonly capability: "convert.time-to-tick";
+    readonly ungated: true;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "device current";
+    readonly domain: "device";
+    readonly method: "current";
+    readonly capability: "device.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "device list";
+    readonly domain: "device";
+    readonly method: "list";
+    readonly capability: "device.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "editor current-clip";
+    readonly domain: "editor";
+    readonly method: "currentClip";
+    readonly capability: "editor.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "editor open";
+    readonly domain: "editor";
+    readonly method: "open";
+    readonly capability: "editor.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: false;
+}, {
+    readonly path: "editor status";
+    readonly domain: "editor";
+    readonly method: "status";
+    readonly capability: "editor.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "editor tick-range";
+    readonly domain: "editor";
+    readonly method: "tickRange";
+    readonly capability: "editor.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "job cancel";
+    readonly domain: "job";
+    readonly method: "cancel";
+    readonly capability: "job.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "job discard-result";
+    readonly domain: "job";
+    readonly method: "discardResult";
+    readonly capability: "job.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "job get";
+    readonly domain: "job";
+    readonly method: "get";
+    readonly capability: "job.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "job list";
+    readonly domain: "job";
+    readonly method: "list";
+    readonly capability: "job.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "job place";
+    readonly domain: "job";
+    readonly method: "place";
+    readonly capability: "clip.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "job results";
+    readonly domain: "job";
+    readonly method: "results";
+    readonly capability: "job.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "job wait";
+    readonly domain: "job";
+    readonly method: "wait";
+    readonly capability: "job.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "mixer get";
+    readonly domain: "mixer";
+    readonly method: "get";
+    readonly capability: "ui.view";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "mixer hide";
+    readonly domain: "mixer";
+    readonly method: "hide";
+    readonly capability: "ui.view";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: false;
+}, {
+    readonly path: "mixer show";
+    readonly domain: "mixer";
+    readonly method: "show";
+    readonly capability: "ui.view";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: false;
+}, {
+    readonly path: "note add";
+    readonly domain: "note";
+    readonly method: "add";
+    readonly capability: "note.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "note delete";
+    readonly domain: "note";
+    readonly method: "delete";
+    readonly capability: "note.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "note move";
+    readonly domain: "note";
+    readonly method: "move";
+    readonly capability: "note.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "note resize";
+    readonly domain: "note";
+    readonly method: "resize";
+    readonly capability: "note.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "note set-lyric";
+    readonly domain: "note";
+    readonly method: "setLyric";
+    readonly capability: "note.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "project info";
+    readonly domain: "project";
+    readonly method: "info";
+    readonly capability: "project.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "project synthesis-status";
+    readonly domain: "project";
+    readonly method: "synthesisStatus";
+    readonly capability: "project.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "selection get";
+    readonly domain: "selection";
+    readonly method: "get";
+    readonly capability: "selection.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "selection set";
+    readonly domain: "selection";
+    readonly method: "set";
+    readonly capability: "selection.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "special-tracks get";
+    readonly domain: "special-tracks";
+    readonly method: "get";
+    readonly capability: "ui.view";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "special-tracks hide";
+    readonly domain: "special-tracks";
+    readonly method: "hide";
+    readonly capability: "ui.view";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "special-tracks show";
+    readonly domain: "special-tracks";
+    readonly method: "show";
+    readonly capability: "ui.view";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "tempo get";
+    readonly domain: "tempo";
+    readonly method: "get";
+    readonly capability: "tempo.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "tempo set";
+    readonly domain: "tempo";
+    readonly method: "set";
+    readonly capability: "tempo.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "timesig get";
+    readonly domain: "timesig";
+    readonly method: "get";
+    readonly capability: "timesig.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "timesig set";
+    readonly domain: "timesig";
+    readonly method: "set";
+    readonly capability: "timesig.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "track delete";
+    readonly domain: "track";
+    readonly method: "delete";
+    readonly capability: "track.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: false;
+}, {
+    readonly path: "track get";
+    readonly domain: "track";
+    readonly method: "get";
+    readonly capability: "track.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "track list";
+    readonly domain: "track";
+    readonly method: "list";
+    readonly capability: "track.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "track rename";
+    readonly domain: "track";
+    readonly method: "rename";
+    readonly capability: "track.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "track set";
+    readonly domain: "track";
+    readonly method: "set";
+    readonly capability: "track.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "track set-record";
+    readonly domain: "track";
+    readonly method: "setRecord";
+    readonly capability: "track.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "track singer-recipe";
+    readonly domain: "track";
+    readonly method: "singerRecipe";
+    readonly capability: "track.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "transport loop";
+    readonly domain: "transport";
+    readonly method: "loop";
+    readonly capability: "transport.state";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "transport metronome";
+    readonly domain: "transport";
+    readonly method: "metronome";
+    readonly capability: "transport.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "transport play";
+    readonly domain: "transport";
+    readonly method: "play";
+    readonly capability: "transport.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: false;
+}, {
+    readonly path: "transport seek";
+    readonly domain: "transport";
+    readonly method: "seek";
+    readonly capability: "transport.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "transport set-loop";
+    readonly domain: "transport";
+    readonly method: "setLoop";
+    readonly capability: "transport.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "transport state";
+    readonly domain: "transport";
+    readonly method: "state";
+    readonly capability: "transport.state";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "transport stop";
+    readonly domain: "transport";
+    readonly method: "stop";
+    readonly capability: "transport.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: false;
+}, {
+    readonly path: "transport toggle";
+    readonly domain: "transport";
+    readonly method: "toggle";
+    readonly capability: "transport.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: false;
+}, {
+    readonly path: "voice collect";
+    readonly domain: "voice";
+    readonly method: "collect";
+    readonly capability: "voice.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "voice community-list";
+    readonly domain: "voice";
+    readonly method: "communityList";
+    readonly capability: "voice.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "voice community-pages";
+    readonly domain: "voice";
+    readonly method: "communityPages";
+    readonly capability: "voice.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "voice list";
+    readonly domain: "voice";
+    readonly method: "list";
+    readonly capability: "voice.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "voice load";
+    readonly domain: "voice";
+    readonly method: "load";
+    readonly capability: "voice.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "voice tags";
+    readonly domain: "voice";
+    readonly method: "tags";
+    readonly capability: "voice.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "voice unload";
+    readonly domain: "voice";
+    readonly method: "unload";
+    readonly capability: "voice.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly takesParams: true;
+}];
+
+// @public
+export interface OperationWarning extends InvokeWarning {
+    readonly path: string;
+}
 
 // @public
 export interface PingParams {
@@ -798,6 +1565,21 @@ export interface PingParams {
 export interface PingResult {
     nonce: string;
 }
+
+// @public
+export type ProfileName = keyof typeof PROFILES;
+
+// @public
+export const PROFILES: {
+    readonly 'surface.cli-mcp.v1': readonly ["caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "fx.read", "fx.write", "generative.add-layer", "generative.enhance", "generative.retake", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.read", "track.write", "transport.control", "transport.state", "ui.view", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write"];
+    readonly 'surface.extension-sdk.v1': readonly ["session.handshake", "session.ping", "session.shutdown", "workflow.dev", "workflow.ui"];
+};
+
+// @public
+export type ProfileScopedBindings<P extends ProfileName> = ScopedBindings<ProfileTokens<P>>;
+
+// @public
+export type ProfileTokens<P extends ProfileName> = (typeof PROFILES)[P][number];
 
 // @public
 export interface ProjectInfoResult {
@@ -838,6 +1620,8 @@ export interface PublicBindings {
     // (undocumented)
     readonly mixer: MixerOperations;
     // (undocumented)
+    readonly note: NoteOperations;
+    // (undocumented)
     readonly project: ProjectOperations;
     // (undocumented)
     readonly selection: SelectionOperations;
@@ -865,7 +1649,83 @@ export interface RequestOptions {
 }
 
 // @public
-export const REQUIRED_TOKENS: Readonly<Record<string, CapabilityToken>>;
+export const REQUIRED_TOKENS: {
+    readonly 'caret get': "caret.read";
+    readonly 'caret set': "caret.write";
+    readonly 'clip audio-content': "clip.read";
+    readonly 'clip create': "clip.write";
+    readonly 'clip get': "clip.read";
+    readonly 'clip list': "clip.read";
+    readonly 'clip lyrics': "clip.read";
+    readonly 'clip move-edges': "clip.write";
+    readonly 'clip note-content': "clip.read";
+    readonly 'clip replace-content': "clip.write";
+    readonly 'device current': "device.read";
+    readonly 'device list': "device.read";
+    readonly 'editor current-clip': "editor.read";
+    readonly 'editor open': "editor.write";
+    readonly 'editor status': "editor.read";
+    readonly 'editor tick-range': "editor.read";
+    readonly 'job cancel': "job.control";
+    readonly 'job discard-result': "job.control";
+    readonly 'job get': "job.read";
+    readonly 'job list': "job.read";
+    readonly 'job place': "clip.write";
+    readonly 'job results': "job.read";
+    readonly 'job wait': "job.read";
+    readonly 'mixer get': "ui.view";
+    readonly 'mixer hide': "ui.view";
+    readonly 'mixer show': "ui.view";
+    readonly 'note add': "note.write";
+    readonly 'note delete': "note.write";
+    readonly 'note move': "note.write";
+    readonly 'note resize': "note.write";
+    readonly 'note set-lyric': "note.write";
+    readonly 'project info': "project.read";
+    readonly 'project synthesis-status': "project.read";
+    readonly 'selection get': "selection.read";
+    readonly 'selection set': "selection.write";
+    readonly 'special-tracks get': "ui.view";
+    readonly 'special-tracks hide': "ui.view";
+    readonly 'special-tracks show': "ui.view";
+    readonly 'tempo get': "tempo.read";
+    readonly 'tempo set': "tempo.write";
+    readonly 'timesig get': "timesig.read";
+    readonly 'timesig set': "timesig.write";
+    readonly 'track delete': "track.write";
+    readonly 'track get': "track.read";
+    readonly 'track list': "track.read";
+    readonly 'track rename': "track.write";
+    readonly 'track set': "track.write";
+    readonly 'track set-record': "track.write";
+    readonly 'track singer-recipe': "track.read";
+    readonly 'transport loop': "transport.state";
+    readonly 'transport metronome': "transport.control";
+    readonly 'transport play': "transport.control";
+    readonly 'transport seek': "transport.control";
+    readonly 'transport set-loop': "transport.control";
+    readonly 'transport state': "transport.state";
+    readonly 'transport stop': "transport.control";
+    readonly 'transport toggle': "transport.control";
+    readonly 'voice collect': "voice.write";
+    readonly 'voice community-list': "voice.read";
+    readonly 'voice community-pages': "voice.read";
+    readonly 'voice list': "voice.read";
+    readonly 'voice load': "voice.write";
+    readonly 'voice tags': "voice.read";
+    readonly 'voice unload': "voice.write";
+};
+
+// Warning: (ae-forgotten-export) The symbol "InDomain" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Camel" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "AtRoot" needs to be exported by the entry point index.d.ts
+//
+// @public
+export type ScopedBindings<T extends CapabilityToken> = {
+    readonly [D in InDomain<T>["domain"] as Camel<D>]: Camel<D> extends keyof PublicBindings ? Pick<PublicBindings[Camel<D>], Extract<InDomain<T>, {
+        domain: D;
+    }>["method"] & keyof PublicBindings[Camel<D>]> : never;
+} & Pick<PublicBindings, AtRoot<T>["method"] & keyof PublicBindings>;
 
 // @public
 export type SdkErrorCode =
@@ -1039,7 +1899,7 @@ export interface SpecialTracksShowParams {
 }
 
 // @public
-export const SURFACE_VERSION = "2.0";
+export const SURFACE_VERSION = "3.0";
 
 // @public
 export interface TempoGetResult {

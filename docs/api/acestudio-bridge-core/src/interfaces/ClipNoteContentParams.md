@@ -40,7 +40,7 @@ End of the time-range filter in ticks. Defaults to `clipEnd`.
 optional rangeScope?: string | null;
 ```
 
-Coordinate system for `rangeBegin`/`rangeEnd`. `project` (default) = global timeline; `canvas` = pattern-local coordinates.
+Coordinate system for `rangeBegin`/`rangeEnd`. `project` (default) = global timeline; `clip-local` = coordinates from the clip's own start.
 
 ***
 

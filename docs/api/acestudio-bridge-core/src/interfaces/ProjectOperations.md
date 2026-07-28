@@ -10,7 +10,7 @@ The `project` operations, mirroring the canonical operation tree 1:1.
 info(options?): Promise<ProjectInfoResult>;
 ```
 
-Read basic project metadata: name, saved/temp state, and canvas duration.
+Read basic project metadata: name, saved/temp state, and arrangement length.
 
 Requires the `project.read` capability.
 

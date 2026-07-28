@@ -54,6 +54,16 @@ Canonical path, exactly as the operation tree spells it.
 
 ***
 
+### takesParams
+
+```ts
+readonly takesParams: boolean;
+```
+
+True when the binding takes a params object. An operation with no arguments is emitted as `method(options?)` instead, so a runtime binding these methods by position has to read this or it will send the caller's options as the payload.
+
+***
+
 ### ungated
 
 ```ts

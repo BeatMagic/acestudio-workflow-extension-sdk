@@ -4,7 +4,7 @@
 type Unsubscribe = () => void;
 ```
 
-Cancels a registration, and is safe to call more than once.
+Stop listening. Calling it more than once is harmless; a subscription dropped this way never fires again, including for a notification already in flight.
 
 ## Returns
 

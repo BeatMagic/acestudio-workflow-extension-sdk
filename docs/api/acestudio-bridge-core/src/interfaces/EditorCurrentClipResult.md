@@ -30,7 +30,7 @@ Display name of the clip.
 clipType: string;
 ```
 
-Clip type: Sing, Instrument, GenericMidi, Audio, or Chord.
+Clip type: `sing`, `instrument`, `genericMidi`, `audio`, or `chord`.
 
 ***
 

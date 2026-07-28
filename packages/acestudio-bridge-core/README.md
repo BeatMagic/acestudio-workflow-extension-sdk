@@ -8,5 +8,7 @@ This is the layer beneath [`@timedomain/acestudio-extension-sdk`](../acestudio-e
 consumers that need the connection without the extension runtime depend on it
 directly.
 
-> **Status:** package skeleton. The public API is introduced in subsequent
-> releases.
+> **Status:** pre-release (`0.0.0`). `connect()`, the transport seam, the generated
+> domain bindings, grants, the pre-wire capability guard, and `BridgeError` are in
+> place; typed job handles, typed-array bulk data, and notification subscriptions
+> arrive in later slices. The API may still change before the first release.

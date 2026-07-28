@@ -38,7 +38,7 @@ Filter range end (exclusive), in ticks, in the coordinate system named by scope.
 scope: string;
 ```
 
-Coordinate system of begin/end: 'project' or 'canvas'.
+Coordinate system of begin/end: `project` or `clip-local`.
 
 ***
 
@@ -78,7 +78,7 @@ Merged lyric text for the sentence.
 sentenceBegin: number;
 ```
 
-Sentence start in canvas (pattern-local) ticks, regardless of rangeScope.
+Sentence start in clip-local ticks, regardless of rangeScope.
 
 #### sentenceEnd
 
@@ -86,4 +86,4 @@ Sentence start in canvas (pattern-local) ticks, regardless of rangeScope.
 sentenceEnd: number;
 ```
 
-Sentence end in canvas (pattern-local) ticks, regardless of rangeScope.
+Sentence end in clip-local ticks, regardless of rangeScope.

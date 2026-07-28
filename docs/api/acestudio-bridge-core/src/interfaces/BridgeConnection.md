@@ -4,13 +4,27 @@ An open, granted session against a running ACE Studio.
 
 ## Properties
 
-### grantedTokens
+### client
 
 ```ts
-readonly grantedTokens: readonly string[];
+readonly client: PublicBindings;
 ```
 
-The session's grant, as flat canonical token names.
+The typed operation surface: `client.track.list()`, `client.clip.create()` —
+the canonical operation tree, one method per operation. A call the grant
+cannot reach is refused here rather than on the wire.
+
+***
+
+### grant
+
+```ts
+readonly grant: Grant;
+```
+
+What this session may reach, settled at the handshake. Read `grant.tokens`
+to branch on it, `grant.missing(...)` to find out what a partial grant is
+short of, and `grant.provenance.granted` for the host's answer verbatim.
 
 ***
 
@@ -99,3 +113,118 @@ layer's job; core only surfaces the notice.
 #### Returns
 
 [`Unsubscribe`](../type-aliases/Unsubscribe.md)
+
+***
+
+### onWarning()
+
+```ts
+onWarning(listener): Unsubscribe;
+```
+
+Called for each advisory warning an operation comes back with (ADR 0083 §2),
+from any call on this connection. A warning never means the call failed — a
+refusal is a thrown [BridgeError](../classes/BridgeError.md) — so this is a separate channel
+rather than something folded into a return value.
+
+With no listener registered, warnings go to `console.warn` instead: Studio
+captures the extension's stdio (ADR 0091 §5), so an unobserved advisory is
+still recoverable from the log rather than dropped. Registering a listener
+takes that over completely.
+
+#### Parameters
+
+##### listener
+
+(`warning`) => `void`
+
+#### Returns
+
+[`Unsubscribe`](../type-aliases/Unsubscribe.md)
+
+***
+
+### require()
+
+```ts
+require(...tokens): void;
+```
+
+Assert this session reaches every one of `tokens`, so a consumer that
+cannot work without them fails at startup instead of part-way through.
+
+#### Parameters
+
+##### tokens
+
+...[`CapabilityToken`](../type-aliases/CapabilityToken.md)[]
+
+#### Returns
+
+`void`
+
+#### Throws
+
+BridgeError with code `CAPABILITY_DENIED`, naming every missing
+token — not just the first one found.
+
+***
+
+### scoped()
+
+#### Call Signature
+
+```ts
+scoped<P>(profile): ProfileScopedBindings<P>;
+```
+
+The same client, typed down to what a profile — or an explicit set of
+tokens — can reach. A compile-time view and nothing more: the object handed
+back is [BridgeConnection.client](#client) itself, so scoping costs no runtime
+machinery and cannot disagree with the guard that does the refusing.
+
+Nothing is checked at run time, here or by the returned client: an unknown
+profile name reaching this from untyped JavaScript yields the whole client
+rather than an error. Scoping is a view of *reach*, not a grant — the guard
+reads the grant, so a call outside the session's grant is still refused.
+
+Extensions rarely call this. Their manifest is the requested set, so the
+extension layer hands them a client already typed to it.
+
+##### Type Parameters
+
+###### P
+
+`P` *extends* `"surface.cli-mcp.v1"` \| `"surface.extension-sdk.v1"`
+
+##### Parameters
+
+###### profile
+
+`P`
+
+##### Returns
+
+[`ProfileScopedBindings`](../type-aliases/ProfileScopedBindings.md)\<`P`\>
+
+#### Call Signature
+
+```ts
+scoped<T>(...tokens): ScopedBindings<T>;
+```
+
+##### Type Parameters
+
+###### T
+
+`T` *extends* [`CapabilityToken`](../type-aliases/CapabilityToken.md)
+
+##### Parameters
+
+###### tokens
+
+...`T`[]
+
+##### Returns
+
+[`ScopedBindings`](../type-aliases/ScopedBindings.md)\<`T`\>

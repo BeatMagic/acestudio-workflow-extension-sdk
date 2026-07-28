@@ -38,7 +38,17 @@ Filter range end (exclusive), in ticks, in the coordinate system named by scope.
 scope: string;
 ```
 
-Coordinate system of begin/end: 'project' or 'canvas'.
+Coordinate system of begin/end: `project` or `clip-local`.
+
+***
+
+### fingerprint
+
+```ts
+fingerprint: Fingerprint;
+```
+
+Content fingerprint of the whole clip's note content (ADR 0088 §5). Carry it back as `--if-match` on `clip replace-content` or any `note` write to fail STALE_WRITE instead of overwriting edits made since this read. Always covers the full clip, even when the read was range-filtered.
 
 ***
 
@@ -94,7 +104,7 @@ Note duration in ticks.
 endPos: number;
 ```
 
-Note end in canvas ticks (pos + dur).
+Note end in clip-local ticks (pos + dur).
 
 #### headConsonants?
 
@@ -142,7 +152,7 @@ MIDI pitch number.
 pos: number;
 ```
 
-Note start in canvas (pattern-local) ticks.
+Note start in clip-local ticks.
 
 #### syllable?
 

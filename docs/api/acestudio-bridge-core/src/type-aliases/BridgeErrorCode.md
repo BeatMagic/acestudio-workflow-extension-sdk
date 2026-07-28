@@ -20,6 +20,7 @@ type BridgeErrorCode =
   | "INVALID_ARG"
   | "IO_ERROR"
   | "JOB_NOT_CANCELLABLE"
+  | "NOTE_OVERLAP"
   | "NOT_FOUND"
   | "NO_GESTURE"
   | "NO_MASTER_CHAIN"

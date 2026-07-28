@@ -1,18 +1,27 @@
 /**
  * A scripted stand-in for the ACE Studio side of the bridge.
  *
- * Plays the host half of the generated session surface: serves
- * `session.handshake`, calls `session.ping`, and emits `session.shutdown`. The
- * payload types come from the generated module, so a schema change breaks this
+ * Plays the host half of the generated surfaces: serves `session.handshake` and
+ * `operation.invoke`, calls `session.ping`, and emits `session.shutdown`. The
+ * payload types come from the generated modules, so a schema change breaks this
  * peer at compile time rather than letting the tests drift away from the wire.
  * The method names are literals — the host spells them, and `HOST_METHODS` is
- * asserted against the generated map in wire.test.ts.
+ * asserted against the generated maps in connect.test.ts.
+ *
+ * Its capability gate is a transcription of `CommandRegistry::capabilityDenial`,
+ * reading the same generated required-token table the Studio's own table is
+ * generated from. That is what makes it a fair witness for "the SDK's pre-wire
+ * refusal is the one the host would have sent".
  */
 
 import {
   PROTOCOL_VERSION,
+  REQUIRED_TOKENS,
   type HandshakeParams,
   type HandshakeResult,
+  type InvokeParams,
+  type InvokeResult,
+  type InvokeWarning,
   type JsonRpcFault,
   type JsonRpcMessage,
   type PingParams,
@@ -21,12 +30,23 @@ import {
   type Transport,
 } from "@timedomain/acestudio-bridge-core";
 
-/** The wire names the host side of the session surface uses. */
+/** The wire names the host side of the surfaces it serves uses. */
 export const HOST_METHODS = {
   handshake: "session.handshake",
   ping: "session.ping",
   shutdown: "session.shutdown",
 } as const;
+
+/** The operation-invocation verb, the one wire name every operation rides. */
+export const HOST_INVOKE = "operation.invoke";
+
+/** The JSON-RPC envelope code the extension bridge refuses a capability with. */
+export const CAPABILITY_DENIED_RPC_CODE = -32003;
+
+/** How the host answers one scripted operation. */
+export type ScriptedOperation =
+  | { data: unknown; warnings?: readonly InvokeWarning[] }
+  | { fault: JsonRpcFault };
 
 /** Everything the script can decide about how the host behaves. */
 export interface ScriptedHostOptions {
@@ -39,22 +59,33 @@ export interface ScriptedHostOptions {
   acceptedProtocolVersion?: number;
   /** Answer the handshake with this instead of a well-formed response. */
   handshakeResult?: unknown;
+  /**
+   * What each canonical operation path answers. A path with no entry answers
+   * `UNKNOWN_COMMAND`, as an unknown path does on the real wire.
+   */
+  operations?: Readonly<Record<string, ScriptedOperation>>;
 }
 
 /** The host end of a scripted session. */
 export class ScriptedHostPeer {
   /** Resolves with the handshake request the peer sent. */
   readonly handshake: Promise<HandshakeParams>;
+  /** Every invocation that reached the host, in order — including refused ones. */
+  readonly invocations: InvokeParams[] = [];
 
   private readonly transport: Transport;
   private readonly options: ScriptedHostOptions;
   private readonly pending = new Map<number, { resolve: (value: unknown) => void; reject: (reason: unknown) => void }>();
+  private readonly grantedTokens: ReadonlySet<string>;
   private announceHandshake!: (params: HandshakeParams) => void;
   private nextId = 1;
+  /** Set once a handshake succeeds: before that, nothing is authorized. */
+  private granted = false;
 
   constructor(transport: Transport, options: ScriptedHostOptions = {}) {
     this.transport = transport;
     this.options = options;
+    this.grantedTokens = new Set(options.grantedTokens ?? []);
     this.handshake = new Promise<HandshakeParams>((resolve) => {
       this.announceHandshake = resolve;
     });
@@ -133,7 +164,68 @@ export class ScriptedHostPeer {
     if (target === HOST_METHODS.handshake) {
       return this.handleHandshake(params as HandshakeParams);
     }
+    if (target === HOST_INVOKE) {
+      return this.handleInvoke(params as InvokeParams);
+    }
     throw { code: -32601, message: `method not found: ${target}` } satisfies JsonRpcFault;
+  }
+
+  /**
+   * Run the gated-invocation pipeline's first two steps (ADR 0093 §5) and answer
+   * from the script: session valid, then capability granted. A well-behaved SDK
+   * never reaches the second one — that is what `invocations` is recorded for.
+   */
+  private handleInvoke(params: InvokeParams): InvokeResult {
+    this.invocations.push(params);
+    if (!this.granted) {
+      throw {
+        code: -32001,
+        message: "no established extension session",
+        data: { code: "SESSION_INVALID" },
+      } satisfies JsonRpcFault;
+    }
+
+    const denial = this.capabilityDenial(params.path);
+    if (denial !== undefined) {
+      throw denial;
+    }
+
+    const scripted = this.options.operations?.[params.path];
+    if (scripted === undefined) {
+      throw {
+        code: -32004,
+        message: `unknown command: ${params.path}`,
+        data: { code: "UNKNOWN_COMMAND" },
+      } satisfies JsonRpcFault;
+    }
+    if ("fault" in scripted) {
+      throw scripted.fault;
+    }
+    return {
+      data: scripted.data,
+      ...(scripted.warnings === undefined ? {} : { warnings: [...scripted.warnings] }),
+    };
+  }
+
+  /**
+   * `CommandRegistry::capabilityDenial`, transcribed: the token comes from the
+   * generated table, an operation absent from it is ungated and passes, and the
+   * refusal carries the canonical code, `details.token`, and the same wording.
+   */
+  private capabilityDenial(path: string): JsonRpcFault | undefined {
+    const token = REQUIRED_TOKENS[path as keyof typeof REQUIRED_TOKENS] as string | undefined;
+    if (token === undefined || this.grantedTokens.has(token)) {
+      return undefined;
+    }
+    return {
+      code: CAPABILITY_DENIED_RPC_CODE,
+      message: `capability denied for command: ${path}`,
+      data: {
+        code: "CAPABILITY_DENIED",
+        details: { token },
+        hint: `missing capability token: ${token}`,
+      },
+    };
   }
 
   private handleHandshake(params: HandshakeParams): unknown {
@@ -149,6 +241,7 @@ export class ScriptedHostPeer {
     if (this.options.handshakeResult !== undefined) {
       return this.options.handshakeResult;
     }
+    this.granted = true;
     return {
       acceptedProtocolVersion: this.options.acceptedProtocolVersion ?? PROTOCOL_VERSION,
       grantedTokens: [...(this.options.grantedTokens ?? [])],

@@ -60,6 +60,14 @@ readonly mixer: MixerOperations;
 
 ***
 
+### note
+
+```ts
+readonly note: NoteOperations;
+```
+
+***
+
 ### project
 
 ```ts

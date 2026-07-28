@@ -4,6 +4,30 @@ An open, granted session against a running ACE Studio.
 
 ## Properties
 
+### client
+
+```ts
+readonly client: PublicBindings;
+```
+
+The typed operation surface: `client.track.list()`, `client.clip.create()` —
+the canonical operation tree, one method per operation. A call the grant
+cannot reach is refused here rather than on the wire.
+
+***
+
+### grant
+
+```ts
+readonly grant: Grant;
+```
+
+What this session may reach, settled at the handshake. Read `grant.tokens`
+to branch on it, `grant.missing(...)` to find out what a partial grant is
+short of.
+
+***
+
 ### grantedTokens
 
 ```ts
@@ -99,3 +123,85 @@ layer's job; core only surfaces the notice.
 #### Returns
 
 [`Unsubscribe`](../type-aliases/Unsubscribe.md)
+
+***
+
+### require()
+
+```ts
+require(...tokens): void;
+```
+
+Assert this session reaches every one of `tokens`, so a consumer that
+cannot work without them fails at startup instead of part-way through.
+
+#### Parameters
+
+##### tokens
+
+...[`CapabilityToken`](../type-aliases/CapabilityToken.md)[]
+
+#### Returns
+
+`void`
+
+#### Throws
+
+BridgeError with code `CAPABILITY_DENIED`, naming every missing
+token — not just the first one found.
+
+***
+
+### scoped()
+
+#### Call Signature
+
+```ts
+scoped<P>(profile): ProfileScopedBindings<P>;
+```
+
+The same client, typed down to what a profile — or an explicit set of
+tokens — can reach. A compile-time view and nothing more: the object handed
+back is [BridgeConnection.client](#client) itself, so scoping costs no runtime
+machinery and cannot disagree with the guard that does the refusing.
+
+Extensions rarely call this. Their manifest is the requested set, so the
+extension layer hands them a client already typed to it.
+
+##### Type Parameters
+
+###### P
+
+`P` *extends* `"surface.cli-mcp.v1"` \| `"surface.extension-sdk.v1"`
+
+##### Parameters
+
+###### profile
+
+`P`
+
+##### Returns
+
+[`ProfileScopedBindings`](../type-aliases/ProfileScopedBindings.md)\<`P`\>
+
+#### Call Signature
+
+```ts
+scoped<T>(...tokens): ScopedBindings<T>;
+```
+
+##### Type Parameters
+
+###### T
+
+`T` *extends* [`CapabilityToken`](../type-aliases/CapabilityToken.md)
+
+##### Parameters
+
+###### tokens
+
+...`T`[]
+
+##### Returns
+
+[`ScopedBindings`](../type-aliases/ScopedBindings.md)\<`T`\>

@@ -12,7 +12,9 @@
  * this file cannot disagree with the host about what the handshake looks like.
  */
 
+import { buildBindings } from "./bindings.js";
 import { BridgeError } from "./errors.js";
+import type { CapabilityToken, PublicBindings } from "./generated/bindings.js";
 import {
   SessionClient,
   type HandshakeParams,
@@ -21,8 +23,10 @@ import {
   type PingResult,
   type ShutdownParams,
 } from "./generated/Session.acerpc.js";
+import { createGrant, requireTokens, unrecognizedTokens, type Grant, type ProfileName } from "./grant.js";
 import { BridgePeer } from "./peer.js";
 import { PROTOCOL_VERSION } from "./protocol.js";
+import type { ProfileScopedBindings, ScopedBindings } from "./scoped.js";
 import type { Transport, Unsubscribe } from "./transport.js";
 
 /** How long the handshake waits for the host, when the caller sets no deadline. */
@@ -64,6 +68,18 @@ export interface BridgeConnection {
   /** The session's grant, as flat canonical token names. */
   readonly grantedTokens: readonly string[];
   /**
+   * What this session may reach, settled at the handshake. Read `grant.tokens`
+   * to branch on it, `grant.missing(...)` to find out what a partial grant is
+   * short of.
+   */
+  readonly grant: Grant;
+  /**
+   * The typed operation surface: `client.track.list()`, `client.clip.create()` —
+   * the canonical operation tree, one method per operation. A call the grant
+   * cannot reach is refused here rather than on the wire.
+   */
+  readonly client: PublicBindings;
+  /**
    * The bridge protocol version the host accepted. Informational: it matched
    * ours or {@link connect} would have refused the session.
    */
@@ -73,6 +89,25 @@ export interface BridgeConnection {
    * to call or subscribe to anything they do not cover.
    */
   readonly peer: BridgePeer;
+  /**
+   * Assert this session reaches every one of `tokens`, so a consumer that
+   * cannot work without them fails at startup instead of part-way through.
+   *
+   * @throws BridgeError with code `CAPABILITY_DENIED`, naming every missing
+   * token — not just the first one found.
+   */
+  require(...tokens: CapabilityToken[]): void;
+  /**
+   * The same client, typed down to what a profile — or an explicit set of
+   * tokens — can reach. A compile-time view and nothing more: the object handed
+   * back is {@link BridgeConnection.client} itself, so scoping costs no runtime
+   * machinery and cannot disagree with the guard that does the refusing.
+   *
+   * Extensions rarely call this. Their manifest is the requested set, so the
+   * extension layer hands them a client already typed to it.
+   */
+  scoped<P extends ProfileName>(profile: P): ProfileScopedBindings<P>;
+  scoped<T extends CapabilityToken>(...tokens: T[]): ScopedBindings<T>;
   /**
    * Called when the host announces it is stopping this peer, ahead of its
    * grace window. Running `deactivate` and exiting in time is the extension
@@ -124,7 +159,7 @@ export async function connect(options: ConnectOptions): Promise<BridgeConnection
     if (mismatch !== undefined) {
       throw mismatch;
     }
-    return new Connection(peer, client, result);
+    return new Connection(peer, client, result, options.requestedCapabilities ?? []);
   } catch (cause) {
     peer.close();
     throw handshakeFailure(cause);
@@ -137,19 +172,41 @@ class Connection implements BridgeConnection {
   readonly grantedTokens: readonly string[];
   readonly protocolVersion: number;
   readonly peer: BridgePeer;
+  readonly grant: Grant;
+  readonly client: PublicBindings;
 
-  private readonly client: SessionClient;
+  private readonly session: SessionClient;
 
-  constructor(peer: BridgePeer, client: SessionClient, result: HandshakeResult) {
+  constructor(peer: BridgePeer, session: SessionClient, result: HandshakeResult, requested: readonly string[]) {
     this.peer = peer;
-    this.client = client;
+    this.session = session;
     this.sessionId = result.sessionId;
     this.grantedTokens = Object.freeze([...result.grantedTokens]);
     this.protocolVersion = result.acceptedProtocolVersion;
+    this.grant = createGrant({
+      sessionId: result.sessionId,
+      requested: Object.freeze([...requested]),
+      granted: this.grantedTokens,
+      unrecognized: Object.freeze(unrecognizedTokens(result.grantedTokens)),
+    });
+    // The generated interface is what type-checks the callers; the runtime
+    // builds every method from one table row, so there is nothing per-method
+    // here for the compiler to check the construction against.
+    this.client = buildBindings(peer, this.grant) as unknown as PublicBindings;
+  }
+
+  require(...tokens: CapabilityToken[]): void {
+    requireTokens(this.grant, tokens);
+  }
+
+  // One implementation for both overloads: scoping is a type-level narrowing, so
+  // the arguments only ever decide what the *caller* sees.
+  scoped(): never {
+    return this.client as never;
   }
 
   onShutdown(listener: (params: ShutdownParams) => void): Unsubscribe {
-    return this.client.onSessionShutdown(listener);
+    return this.session.onSessionShutdown(listener);
   }
 
   onClose(listener: () => void): Unsubscribe {

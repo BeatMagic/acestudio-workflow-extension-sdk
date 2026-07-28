@@ -306,11 +306,36 @@ function faultToBridgeError(fault: JsonRpcFault): BridgeError {
   // A host that has a canonical code to give puts it in `data.code`; a bare
   // JSON-RPC fault is a protocol-level failure, which `HANDLER_FAILED` names.
   const data = fault.data as { code?: unknown; details?: Record<string, unknown>; hint?: string } | undefined;
-  const code = typeof data?.code === "string" ? data.code : "HANDLER_FAILED";
+  const named = typeof data?.code === "string";
+  const code = named ? (data.code as string) : "HANDLER_FAILED";
   return new BridgeError({
     code: code as BridgeError["code"],
     message: fault.message,
-    details: { ...data?.details, jsonRpcCode: fault.code },
+    // `details` is the code's declared shape when the code declares one, so the
+    // numeric envelope code is not mixed into it. It rides along only for a fault
+    // that named no canonical code, where it is the one diagnostic there is.
+    details: normalizeDetails(code, named ? data.details : { ...data?.details, jsonRpcCode: fault.code }),
     hint: data?.hint,
   });
+}
+
+/**
+ * Bring a host's details onto the shape the code declares.
+ *
+ * Only `CAPABILITY_DENIED` needs it: the host names the single token a refused
+ * operation required in `details.token`, while the SDK promises `details.missing`
+ * for every refusal — including `connection.require()`, which is about a set of
+ * tokens and no one operation. Filling `missing` here is what lets a caller ask
+ * one question of both, and is why a locally-guarded call and a host-refused one
+ * are the same error rather than two spellings of it.
+ */
+function normalizeDetails(code: string, details: Record<string, unknown> | undefined): Record<string, unknown> {
+  if (code !== "CAPABILITY_DENIED" || details === undefined) {
+    return details ?? {};
+  }
+  const token = details.token;
+  if (typeof token !== "string" || Array.isArray(details.missing)) {
+    return details;
+  }
+  return { ...details, missing: [token] };
 }

@@ -20,6 +20,9 @@ import {
   type InvokeParams,
   type TrackListResult,
 } from "@timedomain/acestudio-bridge-core";
+// Reached by path, not through the package entry: these are @internal helpers,
+// and the pre-wire guard has a half the generated table cannot exercise yet.
+import { domainKey, guardCall } from "../src/bindings.js";
 import { HOST_INVOKE, ScriptedHostPeer, type ScriptedHostOptions } from "./support/host-peer.js";
 
 async function connectToScriptedHost(
@@ -185,7 +188,7 @@ describe("the pre-wire guard", () => {
         continue;
       }
       const domain = (connection.client as unknown as Record<string, Record<string, () => Promise<unknown>>>)[
-        operation.domain.replace(/-([a-z])/g, (_m, c: string) => c.toUpperCase())
+        domainKey(operation.domain)
       ];
       await expect(domain[operation.method]()).rejects.toSatisfy((error: unknown) =>
         isCode(error, "CAPABILITY_DENIED"),
@@ -193,6 +196,92 @@ describe("the pre-wire guard", () => {
     }
     expect(host.invocations).toEqual([]);
     expect(Object.keys(REQUIRED_TOKENS).length).toBeGreaterThan(0);
+    connection.close();
+  });
+});
+
+describe("the pre-wire guard's field half", () => {
+  // ADR 0071 tier 2: a capability-gated *argument* is refused before the wire the
+  // same way an operation is. The generated `FIELD_CAPABILITIES` has no rows yet,
+  // so the guard is driven directly against a table that does — an unexercised
+  // gate is one nobody would notice failing the day rows appear.
+  const table = { "track rename": { systemSlot: "track.system" as CapabilityToken } };
+  const operation = { path: "track rename", ungated: false };
+
+  async function grantOf(tokens: readonly string[]) {
+    const { connection } = await connectToScriptedHost({ grantedTokens: tokens });
+    return connection.grant;
+  }
+
+  it("passes a call that leaves the gated field unset", async () => {
+    const grant = await grantOf(["track.write"]);
+    expect(guardCall(grant, operation, { trackIndex: 0 }, table)).toBeUndefined();
+  });
+
+  it("refuses a call that sets a gated field the grant cannot reach", async () => {
+    const grant = await grantOf(["track.write"]);
+    const denial = guardCall(grant, operation, { trackIndex: 0, systemSlot: "lead" }, table);
+    expect(isCode(denial, "CAPABILITY_DENIED")).toBe(true);
+    // The field is named, not just the operation: "track rename is denied" would
+    // send an author looking for the wrong missing capability.
+    expect(denial?.message).toContain("--systemSlot");
+    expect(denial?.details.missing).toEqual(["track.system"]);
+  });
+
+  it("passes the same call once the field's token is granted", async () => {
+    const grant = await grantOf(["track.write", "track.system"]);
+    expect(guardCall(grant, operation, { trackIndex: 0, systemSlot: "lead" }, table)).toBeUndefined();
+  });
+
+  it("refuses a gated operation with no row in the token table", async () => {
+    const grant = await grantOf(["track.write"]);
+    // Fails closed, as the host does for a command whose capability it cannot look
+    // up: an unreadable table is not a reason to try the call.
+    const denial = guardCall(grant, { path: "track invented", ungated: false }, {});
+    expect(isCode(denial, "CAPABILITY_DENIED")).toBe(true);
+    expect(denial?.details.missing).toEqual([]);
+  });
+});
+
+describe("a host fault becoming a BridgeError", () => {
+  it("keeps the canonical code's details to itself", async () => {
+    const { connection } = await connectToScriptedHost({
+      grantedTokens: ["track.write"],
+      operations: {
+        "track rename": {
+          fault: { code: -32050, message: "the user is editing", data: { code: "USER_BUSY", hint: "retry" } },
+        },
+      },
+    });
+
+    const error = await connection.client.track.rename({ trackIndex: 0, newName: "x" }).catch((e: unknown) => e);
+
+    if (!isBridgeError(error)) {
+      throw new Error("expected a BridgeError");
+    }
+    expect(error.code).toBe("USER_BUSY");
+    expect(error.hint).toBe("retry");
+    // A code that declares a details shape gets that shape and nothing else — the
+    // numeric envelope code is not contract and does not belong inside it.
+    expect(error.details).toEqual({});
+    connection.close();
+  });
+
+  it("keeps the numeric code when the host named none", async () => {
+    const { connection } = await connectToScriptedHost({
+      grantedTokens: ["track.write"],
+      operations: { "track rename": { fault: { code: -32603, message: "handler blew up" } } },
+    });
+
+    const error = await connection.client.track.rename({ trackIndex: 0, newName: "x" }).catch((e: unknown) => e);
+
+    if (!isBridgeError(error)) {
+      throw new Error("expected a BridgeError");
+    }
+    // Nothing canonical to report, so the envelope's own code is the only
+    // diagnostic there is — worth keeping precisely here.
+    expect(error.code).toBe("HANDLER_FAILED");
+    expect(error.details).toEqual({ jsonRpcCode: -32603 });
     connection.close();
   });
 });

@@ -12,7 +12,6 @@ export interface BridgeConnection {
     readonly client: PublicBindings;
     close(): void;
     readonly grant: Grant;
-    readonly grantedTokens: readonly string[];
     onClose(listener: () => void): Unsubscribe;
     onShutdown(listener: (params: ShutdownParams) => void): Unsubscribe;
     readonly peer: BridgePeer;
@@ -482,6 +481,9 @@ export interface DeviceOperations {
     current(options?: CallOptions): Promise<DeviceCurrentResult>;
     list(options?: CallOptions): Promise<DeviceListResult>;
 }
+
+// @public
+export const DRAFT_PROFILES: readonly ["surface.extension-sdk.v1"];
 
 // @public
 export type Dtype = 'u8' | 'i16le' | 'i32le' | 'i64le' | 'f32le' | 'f64le';

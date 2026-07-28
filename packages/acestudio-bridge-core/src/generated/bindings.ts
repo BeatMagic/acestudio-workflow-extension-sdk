@@ -122,7 +122,7 @@ export interface OperationDescriptor {
     readonly ungated: boolean;
     /** True when the operation accepts the mutating guardrail options. */
     readonly mutating: boolean;
-    /** True when the binding takes an arguments object. False for an operation with none, whose binding takes the options object as its *first* argument — which a runtime binding them has to know, or it sends one as the other. */
+    /** True when the binding takes a params object. An operation with no arguments is emitted as `method(options?)` instead, so a runtime binding these methods by position has to read this or it will send the caller's options as the payload. */
     readonly takesParams: boolean;
 }
 
@@ -2574,11 +2574,16 @@ export const REQUIRED_TOKENS = {
     'voice unload': 'voice.write',
 } as const satisfies Readonly<Record<string, CapabilityToken>>;
 
-/** Each published Capability Profile's transitive token expansion (ADR 0022): a named bundle a grant is measured against, rather than a set the consumer hand-lists. A profile is met when every token here is granted. The expansion is the registry's, so it moves with the registry — a profile still marked draft there may still be re-cut. */
+/** Each published Capability Profile's transitive token expansion (ADR 0093 §1): a named bundle a grant is measured against, rather than a set the consumer hand-lists. A profile is met when every token here is granted. The expansion is the registry's and moves with it, and a profile the registry still marks draft may yet be re-cut (ADR 0093 §6). */
 export const PROFILES = {
     'surface.cli-mcp.v1': ['caret.read', 'caret.write', 'chord.read', 'chord.write', 'clip.read', 'clip.write', 'device.read', 'device.write', 'editor.read', 'editor.write', 'export.invoke', 'fx.read', 'fx.write', 'generative.add-layer', 'generative.enhance', 'generative.retake', 'generative.seed-audio', 'generative.song', 'generative.sound-effects', 'generative.stem-split', 'generative.text2sample', 'generative.vocal2midi', 'generative.voice-change', 'history.control', 'history.read', 'import.invoke', 'job.control', 'job.read', 'lyric.read', 'lyric.write', 'note.read', 'note.write', 'project.lifecycle', 'project.read', 'recording.control', 'selection.read', 'selection.write', 'tempo.analyze', 'tempo.applyV2', 'tempo.read', 'tempo.write', 'timesig.read', 'timesig.write', 'track.read', 'track.write', 'transport.control', 'transport.state', 'ui.view', 'vocalparam.read', 'vocalparam.write', 'voice.read', 'voice.write'],
     'surface.extension-sdk.v1': ['session.handshake', 'session.ping', 'session.shutdown', 'workflow.dev', 'workflow.ui'],
 } as const satisfies Readonly<Record<string, readonly CapabilityToken[]>>;
+
+/** The profiles above the registry still marks draft (ADR 0093 §6): their expansions are exempt from the freeze snapshot, so one may be re-cut in a later release. Depending on a draft profile by name is allowed and this is how to know you are. */
+export const DRAFT_PROFILES = [
+    'surface.extension-sdk.v1',
+] as const satisfies readonly (keyof typeof PROFILES)[];
 
 /** Capability-gated arguments fields (ADR 0071): setting one on a session that did not negotiate its capability is refused before the wire. A field gated by a capability this artifact may not name is absent from the type above entirely, so it can never appear here. */
 export const FIELD_CAPABILITIES = {} as const satisfies Readonly<Record<string, Readonly<Record<string, CapabilityToken>>>>;

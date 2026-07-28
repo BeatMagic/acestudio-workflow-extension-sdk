@@ -74,29 +74,37 @@ export interface Grant {
   missing(profileOrTokens: ProfileName | readonly CapabilityToken[]): readonly CapabilityToken[];
 }
 
-/** Build the immutable grant a handshake result describes. */
-export function createGrant(provenance: GrantProvenance): Grant {
-  const granted = new Set(provenance.granted);
-  const tokens = Object.freeze(
-    provenance.granted.filter((name): name is CapabilityToken => !provenance.unrecognized.includes(name)).sort(),
-  );
+/**
+ * Build the immutable grant a handshake described.
+ *
+ * Which granted names this artifact cannot name is derived here rather than
+ * passed in: it is a function of the roster and the host's answer, and a caller
+ * that computed it differently would hand back a grant whose `tokens` and
+ * `provenance` disagreed.
+ *
+ * @internal
+ */
+export function createGrant(sessionId: string, requested: readonly string[], granted: readonly string[]): Grant {
+  const roster: ReadonlySet<string> = new Set(CAPABILITY_TOKENS);
+  const held = new Set(granted);
+  const tokens = Object.freeze([...held].filter((name): name is CapabilityToken => roster.has(name)).sort());
+  const provenance: GrantProvenance = Object.freeze({
+    sessionId,
+    requested: Object.freeze([...requested]),
+    granted: Object.freeze([...granted]),
+    unrecognized: Object.freeze(granted.filter((name) => !roster.has(name))),
+  });
   return Object.freeze({
     tokens,
-    provenance: Object.freeze(provenance),
-    has: (token: CapabilityToken) => granted.has(token),
+    provenance,
+    has: (token: CapabilityToken) => held.has(token),
     missing: (profileOrTokens: ProfileName | readonly CapabilityToken[]) =>
-      Object.freeze(resolveTokens(profileOrTokens).filter((token) => !granted.has(token)).sort()),
+      Object.freeze(
+        resolveTokens(profileOrTokens)
+          .filter((token) => !held.has(token))
+          .sort(),
+      ),
   });
-}
-
-/**
- * The granted names these bindings cannot name — a first-party token, or one
- * minted after this artifact was generated. Kept rather than dropped: the grant
- * is the host's answer, not this artifact's idea of what the host could say.
- */
-export function unrecognizedTokens(granted: readonly string[]): string[] {
-  const roster: ReadonlySet<string> = new Set(CAPABILITY_TOKENS);
-  return granted.filter((name) => !roster.has(name));
 }
 
 /**
@@ -106,6 +114,8 @@ export function unrecognizedTokens(granted: readonly string[]): string[] {
  * @throws BridgeError with code `CAPABILITY_DENIED`, naming every missing token
  * rather than the first — an extension whose manifest is short by three
  * capabilities should learn that once.
+ *
+ * @internal
  */
 export function requireTokens(grant: Grant, tokens: readonly CapabilityToken[]): void {
   const missing = grant.missing(tokens);
@@ -130,7 +140,7 @@ export function requireTokens(grant: Grant, tokens: readonly CapabilityToken[]):
  *
  * @internal
  */
-export function capabilityDenied(path: string, token: string): BridgeError {
+export function capabilityDenied(path: string, token: string): BridgeError<"CAPABILITY_DENIED"> {
   return new BridgeError({
     code: "CAPABILITY_DENIED",
     // `missing` beside `token` is what the wire-borne refusal is normalized to
@@ -138,6 +148,24 @@ export function capabilityDenied(path: string, token: string): BridgeError {
     message: `capability denied for command: ${path}`,
     details: { token, missing: [token] },
     hint: `missing capability token: ${token}`,
+  });
+}
+
+/**
+ * The refusal for a gated operation with no row in the required-token table.
+ * There is no token to name, so nothing can be checked — and the host answers the
+ * same way for a command whose capability it cannot look up. Failing closed on
+ * both sides means a table that lost a row costs a refusal, not an unguarded
+ * call.
+ *
+ * @internal
+ */
+export function missingCapabilityRow(path: string): BridgeError<"CAPABILITY_DENIED"> {
+  return new BridgeError({
+    code: "CAPABILITY_DENIED",
+    message: `command has no capability declaration: ${path}`,
+    details: { missing: [] },
+    hint: "these bindings declare no capability for this path; the guard fails closed",
   });
 }
 

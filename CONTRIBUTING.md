@@ -28,19 +28,23 @@ Signing and submission tooling:
 | `@timedomain/workflowext-signed-json`  | Signed-JSON primitives (Ed25519 over exact stored bytes) |
 | `@timedomain/workflowext-wire-schemas` | Versioned JSON Schemas for the wire formats              |
 
-`acestudio-bridge-core` carries the transport seam, `connect()`, and the error
-class; the domain bindings, grants, and jobs land on top of them. The extension
-SDK and the scaffolder are still skeletons — they build and are wired into the
-pipeline, but their public API is filled in by subsequent slices. All three are
-versioned `0.0.0` until their first release. The name `@timedomain/acestudio-sdk`
-is intentionally left unclaimed, reserved for a future umbrella package.
+`acestudio-bridge-core` carries the transport seam, `connect()`, the error class,
+the generated domain bindings with their grants and pre-wire capability guard, and
+the compile-time capability facade; typed job handles and typed-array bulk data
+land on top of them. The extension SDK and the scaffolder are still skeletons —
+they build and are wired into the pipeline, but their public API is filled in by
+subsequent slices. All three are versioned `0.0.0` until their first release. The
+name `@timedomain/acestudio-sdk` is intentionally left unclaimed, reserved for a
+future umbrella package.
 
 Bridge-core tests drive the real stack over an in-memory transport pair against
 `packages/acestudio-bridge-core/test/support/host-peer.ts` — a scripted stand-in
-for the Studio side, serving the session surface the schema declares: the
-handshake, the liveness ping, and the shutdown notice. It grows as the surface
-does; the operation-invocation envelope joins it when that surface is declared.
-Later slices test against the same peer rather than mocking the layer under test.
+for the Studio side, serving the surfaces the schemas declare: the handshake, the
+liveness ping, the shutdown notice, and `operation.invoke`. Its capability gate is
+a transcription of the Studio's, reading the same generated required-token table,
+so a refusal it composes is the one the real host would send. It grows as the
+surface does; later slices test against the same peer rather than mocking the
+layer under test.
 
 ## Development
 

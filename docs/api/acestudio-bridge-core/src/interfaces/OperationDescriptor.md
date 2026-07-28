@@ -60,7 +60,7 @@ Canonical path, exactly as the operation tree spells it.
 readonly takesParams: boolean;
 ```
 
-True when the binding takes an arguments object. False for an operation with none, whose binding takes the options object as its *first* argument — which a runtime binding them has to know, or it sends one as the other.
+True when the binding takes a params object. An operation with no arguments is emitted as `method(options?)` instead, so a runtime binding these methods by position has to read this or it will send the caller's options as the payload.
 
 ***
 

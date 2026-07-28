@@ -188,6 +188,7 @@ The connection core for programming against a running ACE Studio.
 - [BULK\_PARAM\_FIELDS](variables/BULK_PARAM_FIELDS.md)
 - [BULK\_RESULT\_FIELDS](variables/BULK_RESULT_FIELDS.md)
 - [CAPABILITY\_TOKENS](variables/CAPABILITY_TOKENS.md)
+- [DRAFT\_PROFILES](variables/DRAFT_PROFILES.md)
 - [DTYPE\_BYTES](variables/DTYPE_BYTES.md)
 - [FIELD\_CAPABILITIES](variables/FIELD_CAPABILITIES.md)
 - [OPERATION\_CAPABILITY\_TOKENS](variables/OPERATION_CAPABILITY_TOKENS.md)

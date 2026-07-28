@@ -47,7 +47,7 @@ describe("connect", () => {
     expect(request.protocolVersion).toBe(PROTOCOL_VERSION);
 
     expect(connection.sessionId).toBe("session-42");
-    expect(connection.grantedTokens).toEqual(["track.read", "track.write"]);
+    expect(connection.grant.provenance.granted).toEqual(["track.read", "track.write"]);
     expect(connection.protocolVersion).toBe(PROTOCOL_VERSION);
     connection.close();
   });

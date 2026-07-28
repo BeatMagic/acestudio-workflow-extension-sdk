@@ -23,7 +23,7 @@ import {
   type PingResult,
   type ShutdownParams,
 } from "./generated/Session.acerpc.js";
-import { createGrant, requireTokens, unrecognizedTokens, type Grant, type ProfileName } from "./grant.js";
+import { createGrant, requireTokens, type Grant, type ProfileName } from "./grant.js";
 import { BridgePeer } from "./peer.js";
 import { PROTOCOL_VERSION } from "./protocol.js";
 import type { ProfileScopedBindings, ScopedBindings } from "./scoped.js";
@@ -65,12 +65,10 @@ export interface ConnectOptions {
 export interface BridgeConnection {
   /** The session id the host minted. */
   readonly sessionId: string;
-  /** The session's grant, as flat canonical token names. */
-  readonly grantedTokens: readonly string[];
   /**
    * What this session may reach, settled at the handshake. Read `grant.tokens`
    * to branch on it, `grant.missing(...)` to find out what a partial grant is
-   * short of.
+   * short of, and `grant.provenance.granted` for the host's answer verbatim.
    */
   readonly grant: Grant;
   /**
@@ -102,6 +100,11 @@ export interface BridgeConnection {
    * tokens — can reach. A compile-time view and nothing more: the object handed
    * back is {@link BridgeConnection.client} itself, so scoping costs no runtime
    * machinery and cannot disagree with the guard that does the refusing.
+   *
+   * Nothing is checked at run time, here or by the returned client: an unknown
+   * profile name reaching this from untyped JavaScript yields the whole client
+   * rather than an error. Scoping is a view of *reach*, not a grant — the guard
+   * reads the grant, so a call outside the session's grant is still refused.
    *
    * Extensions rarely call this. Their manifest is the requested set, so the
    * extension layer hands them a client already typed to it.
@@ -169,7 +172,6 @@ export async function connect(options: ConnectOptions): Promise<BridgeConnection
 /** The live session {@link connect} hands back. */
 class Connection implements BridgeConnection {
   readonly sessionId: string;
-  readonly grantedTokens: readonly string[];
   readonly protocolVersion: number;
   readonly peer: BridgePeer;
   readonly grant: Grant;
@@ -181,14 +183,8 @@ class Connection implements BridgeConnection {
     this.peer = peer;
     this.session = session;
     this.sessionId = result.sessionId;
-    this.grantedTokens = Object.freeze([...result.grantedTokens]);
     this.protocolVersion = result.acceptedProtocolVersion;
-    this.grant = createGrant({
-      sessionId: result.sessionId,
-      requested: Object.freeze([...requested]),
-      granted: this.grantedTokens,
-      unrecognized: Object.freeze(unrecognizedTokens(result.grantedTokens)),
-    });
+    this.grant = createGrant(result.sessionId, requested, result.grantedTokens);
     // The generated interface is what type-checks the callers; the runtime
     // builds every method from one table row, so there is nothing per-method
     // here for the compiler to check the construction against.

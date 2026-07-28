@@ -7,7 +7,7 @@ const PROFILES: {
 };
 ```
 
-Each published Capability Profile's transitive token expansion (ADR 0022): a named bundle a grant is measured against, rather than a set the consumer hand-lists. A profile is met when every token here is granted. The expansion is the registry's, so it moves with the registry — a profile still marked draft there may still be re-cut.
+Each published Capability Profile's transitive token expansion (ADR 0093 §1): a named bundle a grant is measured against, rather than a set the consumer hand-lists. A profile is met when every token here is granted. The expansion is the registry's and moves with it, and a profile the registry still marks draft may yet be re-cut (ADR 0093 §6).
 
 ## Type Declaration
 

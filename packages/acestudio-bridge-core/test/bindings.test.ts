@@ -20,6 +20,7 @@ import {
   type CapabilityToken,
   type ChangeEvent,
   type InvokeParams,
+  type OperationWarning,
   type TrackListResult,
 } from "@timedomain/acestudio-bridge-core";
 // Reached by path, not through the package entry: these are @internal helpers,
@@ -116,18 +117,72 @@ describe("the operation surface", () => {
     connection.close();
   });
 
-  it("reports an operation's advisory warnings rather than dropping them", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const { connection } = await connectToScriptedHost({
+});
+
+describe("an operation's advisory warnings", () => {
+  const TRUNCATED = { code: "NAME_TRUNCATED", hint: "the name was too long" };
+
+  async function connectWithAWarningToRaise() {
+    return connectToScriptedHost({
       grantedTokens: ["track.write"],
-      operations: {
-        "track rename": { data: {}, warnings: [{ code: "NAME_TRUNCATED", hint: "the name was too long" }] },
-      },
+      operations: { "track rename": { data: {}, warnings: [TRUNCATED] } },
     });
+  }
+
+  it("reaches a listener, tagged with the call that raised it", async () => {
+    const { connection } = await connectWithAWarningToRaise();
+    const seen: OperationWarning[] = [];
+    connection.onWarning((warning) => seen.push(warning));
+
+    await connection.client.track.rename({ trackIndex: 0, newName: "x".repeat(500) });
+
+    // The path is what makes a warning actionable: a listener sees warnings from
+    // every call on the connection, and the code alone would not say which.
+    expect(seen).toEqual([{ ...TRUNCATED, path: "track rename" }]);
+    connection.close();
+  });
+
+  it("goes to the log when nobody is listening, rather than being dropped", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { connection } = await connectWithAWarningToRaise();
 
     await connection.client.track.rename({ trackIndex: 0, newName: "x".repeat(500) });
 
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("NAME_TRUNCATED"));
+    warn.mockRestore();
+    connection.close();
+  });
+
+  it("stops logging once a listener takes over, and resumes when it leaves", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { connection } = await connectWithAWarningToRaise();
+    const stop = connection.onWarning(() => {});
+
+    await connection.client.track.rename({ trackIndex: 0, newName: "a" });
+    expect(warn).not.toHaveBeenCalled();
+
+    // Unsubscribing puts the fallback back, rather than leaving the connection
+    // silently discarding advisories for the rest of the session.
+    stop();
+    await connection.client.track.rename({ trackIndex: 0, newName: "b" });
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("NAME_TRUNCATED"));
+
+    warn.mockRestore();
+    connection.close();
+  });
+
+  it("does not let a throwing listener fail the call it was reporting on", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { connection } = await connectWithAWarningToRaise();
+    connection.onWarning(() => {
+      throw new Error("listener bug");
+    });
+
+    // The operation already succeeded. Turning an advisory into a rejection would
+    // report a failure that did not happen.
+    await expect(connection.client.track.rename({ trackIndex: 0, newName: "a" })).resolves.toBeDefined();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("listener bug"));
+
     warn.mockRestore();
     connection.close();
   });

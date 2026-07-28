@@ -14,6 +14,7 @@ export interface BridgeConnection {
     readonly grant: Grant;
     onClose(listener: () => void): Unsubscribe;
     onShutdown(listener: (params: ShutdownParams) => void): Unsubscribe;
+    onWarning(listener: (warning: OperationWarning) => void): Unsubscribe;
     readonly peer: BridgePeer;
     readonly protocolVersion: number;
     require(...tokens: CapabilityToken[]): void;
@@ -1549,6 +1550,11 @@ export const OPERATIONS: readonly [{
     readonly mutating: true;
     readonly takesParams: true;
 }];
+
+// @public
+export interface OperationWarning extends InvokeWarning {
+    readonly path: string;
+}
 
 // @public
 export interface PingParams {

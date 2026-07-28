@@ -29,7 +29,7 @@ import {
   type Unsubscribe,
 } from "./generated/bindings.js";
 import { ChangeClient } from "./generated/Change.acerpc.js";
-import { OperationClient, type InvokeParams } from "./generated/Operation.acerpc.js";
+import { OperationClient, type InvokeParams, type InvokeWarning } from "./generated/Operation.acerpc.js";
 import type { BridgePeer } from "./peer.js";
 
 /**
@@ -49,6 +49,24 @@ const FINGERPRINT_ARG_KEY = "fingerprint";
 type BoundMethod = (...args: readonly unknown[]) => Promise<unknown>;
 
 /**
+ * An advisory fact about an operation that succeeded (ADR 0083 §2) — the wire
+ * warning plus the path that raised it, since a listener sees warnings from every
+ * call and the code alone would not say which one.
+ *
+ * It never means the work failed. A refusal is a {@link BridgeError}; this is the
+ * host mentioning something worth knowing on the way past.
+ *
+ * @public
+ */
+export interface OperationWarning extends InvokeWarning {
+  /** The canonical operation path whose call raised it. */
+  readonly path: string;
+}
+
+/** Where a binding hands the warnings a call came back with. */
+export type WarningSink = (warning: OperationWarning) => void;
+
+/**
  * Build the client the generated `PublicBindings` interface describes.
  *
  * The return type is deliberately loose here and asserted at the seam that hands
@@ -56,7 +74,7 @@ type BoundMethod = (...args: readonly unknown[]) => Promise<unknown>;
  * from a table row, so there is no per-method type for the compiler to check this
  * construction against; the generated interface is what checks the *callers*.
  */
-export function buildBindings(peer: BridgePeer, grant: Grant): Record<string, unknown> {
+export function buildBindings(peer: BridgePeer, grant: Grant, warn: WarningSink): Record<string, unknown> {
   const client = new OperationClient(peer);
   const root: Record<string, unknown> = {};
 
@@ -73,7 +91,9 @@ export function buildBindings(peer: BridgePeer, grant: Grant): Record<string, un
       const answer = await peer.withDeadline({ timeoutMs: options.timeoutMs, signal: options.signal }, () =>
         client.operationInvoke(invocation(operation.path, params, options)),
       );
-      reportWarnings(operation.path, answer.warnings);
+      for (const warning of answer.warnings ?? []) {
+        warn({ ...warning, path: operation.path });
+      }
       return answer.data;
     };
 
@@ -211,21 +231,6 @@ function invocation(path: string, params: unknown, options: MutatingCallOptions)
     arguments: options.ifMatch === undefined ? args : { ...args, [FINGERPRINT_ARG_KEY]: options.ifMatch },
     waitTimeoutMs: options.waitBusy,
   };
-}
-
-/**
- * Surface the advisory warnings an operation came back with (ADR 0083 §2).
- *
- * `console.warn` because that is the SDK's logging story — Studio captures the
- * extension's stdio (ADR 0091 §5) — and because the alternative is dropping
- * them: the binding's return type is the operation's payload, and where a
- * first-class warnings surface belongs is an open question, not something to
- * settle by silently discarding the field.
- */
-function reportWarnings(path: string, warnings: readonly { code: string; hint?: string }[] | undefined): void {
-  for (const warning of warnings ?? []) {
-    console.warn(`[ace-studio] ${path}: ${warning.code}${warning.hint === undefined ? "" : ` — ${warning.hint}`}`);
-  }
 }
 
 /**

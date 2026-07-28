@@ -112,6 +112,7 @@ The connection core for programming against a running ACE Studio.
 - [NoteSetLyricResult](interfaces/NoteSetLyricResult.md)
 - [OperationDescriptor](interfaces/OperationDescriptor.md)
 - [OperationPeer](interfaces/OperationPeer.md)
+- [OperationWarning](interfaces/OperationWarning.md)
 - [PingParams](interfaces/PingParams.md)
 - [PingResult](interfaces/PingResult.md)
 - [ProjectInfoResult](interfaces/ProjectInfoResult.md)

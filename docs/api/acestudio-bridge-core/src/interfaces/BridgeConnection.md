@@ -116,6 +116,34 @@ layer's job; core only surfaces the notice.
 
 ***
 
+### onWarning()
+
+```ts
+onWarning(listener): Unsubscribe;
+```
+
+Called for each advisory warning an operation comes back with (ADR 0083 §2),
+from any call on this connection. A warning never means the call failed — a
+refusal is a thrown [BridgeError](../classes/BridgeError.md) — so this is a separate channel
+rather than something folded into a return value.
+
+With no listener registered, warnings go to `console.warn` instead: Studio
+captures the extension's stdio (ADR 0091 §5), so an unobserved advisory is
+still recoverable from the log rather than dropped. Registering a listener
+takes that over completely.
+
+#### Parameters
+
+##### listener
+
+(`warning`) => `void`
+
+#### Returns
+
+[`Unsubscribe`](../type-aliases/Unsubscribe.md)
+
+***
+
 ### require()
 
 ```ts

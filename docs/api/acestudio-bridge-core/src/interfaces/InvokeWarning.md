@@ -4,6 +4,10 @@ An advisory fact about a completed operation (ADR 0083 §2): something worth
 telling the caller that did not stop the work. Mirrors the error envelope —
 a stable code, an optional hint — and is never stripped at the wire level.
 
+## Extended by
+
+- [`OperationWarning`](OperationWarning.md)
+
 ## Properties
 
 ### code

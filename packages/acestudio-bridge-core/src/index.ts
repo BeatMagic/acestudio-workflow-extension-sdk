@@ -10,6 +10,7 @@
  * @packageDocumentation
  */
 
+export type { OperationWarning } from "./bindings.js";
 export { connect } from "./connect.js";
 export type { BridgeConnection, ConnectOptions } from "./connect.js";
 export { BridgeError, isBridgeError, isCode } from "./errors.js";

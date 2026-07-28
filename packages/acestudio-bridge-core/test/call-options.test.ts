@@ -68,6 +68,12 @@ function optionsThatCompile(
   // @ts-expect-error -- the brand is what keeps it obtainable only from a read
   const forged: Fingerprint = "1:9f86d081884c7d65";
   void forged;
+
+  // `new` is a method, not a construct signature. Written bare in an interface it
+  // is the latter, which contributes no member at all — so this one line is the
+  // test: it did not compile until the emitter learned to quote the name, even
+  // though the runtime binding was there and callable the whole time.
+  void client.project.new({ discardChanges: true }, { waitBusy: 1_000 });
 }
 
 describe("the three option types", () => {

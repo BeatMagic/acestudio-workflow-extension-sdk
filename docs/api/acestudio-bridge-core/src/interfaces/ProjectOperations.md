@@ -2,32 +2,6 @@
 
 The `project` operations, mirroring the canonical operation tree 1:1.
 
-## Constructors
-
-### Constructor
-
-```ts
-new ProjectOperations(params, options?): Promise<ProjectNewResult>;
-```
-
-Reset to a fresh project, optionally from a song template.
-
-Requires the `project.lifecycle` capability.
-
-#### Parameters
-
-##### params
-
-[`ProjectNewParams`](ProjectNewParams.md)
-
-##### options?
-
-[`MutatingCallOptions`](MutatingCallOptions.md)
-
-#### Returns
-
-`Promise`\<[`ProjectNewResult`](ProjectNewResult.md)\>
-
 ## Methods
 
 ### collectSave()
@@ -97,6 +71,32 @@ Requires the `project.read` capability.
 #### Returns
 
 `Promise`\<[`ProjectInfoResult`](ProjectInfoResult.md)\>
+
+***
+
+### new()
+
+```ts
+new(params, options?): Promise<ProjectNewResult>;
+```
+
+Reset to a fresh project, optionally from a song template.
+
+Requires the `project.lifecycle` capability.
+
+#### Parameters
+
+##### params
+
+[`ProjectNewParams`](ProjectNewParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`ProjectNewResult`](ProjectNewResult.md)\>
 
 ***
 

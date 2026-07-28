@@ -1672,7 +1672,7 @@ export interface ProjectOperations {
      *
      * Requires the `project.lifecycle` capability.
      */
-    new(params: ProjectNewParams, options?: MutatingCallOptions): Promise<ProjectNewResult>;
+    'new'(params: ProjectNewParams, options?: MutatingCallOptions): Promise<ProjectNewResult>;
 
     /**
      * Open a project file, blocking until it is fully loaded.

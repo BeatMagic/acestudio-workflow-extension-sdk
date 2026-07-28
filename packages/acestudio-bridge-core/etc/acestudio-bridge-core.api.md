@@ -1802,10 +1802,10 @@ export interface ProjectOpenResult {
 
 // @public
 export interface ProjectOperations {
-    new (params: ProjectNewParams, options?: MutatingCallOptions): Promise<ProjectNewResult>;
     collectSave(params: ProjectCollectSaveParams, options?: MutatingCallOptions): Promise<ProjectCollectSaveResult>;
     dirty(options?: CallOptions): Promise<ProjectDirtyResult>;
     info(options?: CallOptions): Promise<ProjectInfoResult>;
+    'new'(params: ProjectNewParams, options?: MutatingCallOptions): Promise<ProjectNewResult>;
     open(params: ProjectOpenParams, options?: MutatingCallOptions): Promise<ProjectOpenResult>;
     recent(options?: CallOptions): Promise<ProjectRecentResult>;
     recentClear(options?: MutatingCallOptions): Promise<void>;

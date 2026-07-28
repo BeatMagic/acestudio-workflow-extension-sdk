@@ -33,7 +33,16 @@ const REQUIRED_TOKENS: {
   note move: "note.write";
   note resize: "note.write";
   note set-lyric: "note.write";
+  project collect-save: "project.lifecycle";
+  project dirty: "project.read";
   project info: "project.read";
+  project new: "project.lifecycle";
+  project open: "project.lifecycle";
+  project recent: "project.read";
+  project recent-clear: "project.lifecycle";
+  project save: "project.lifecycle";
+  project save-as: "project.lifecycle";
+  project save-template: "project.lifecycle";
   project synthesis-status: "project.read";
   selection get: "selection.read";
   selection set: "selection.write";
@@ -259,10 +268,64 @@ readonly note resize: "note.write" = 'note.write';
 readonly note set-lyric: "note.write" = 'note.write';
 ```
 
+### project collect-save
+
+```ts
+readonly project collect-save: "project.lifecycle" = 'project.lifecycle';
+```
+
+### project dirty
+
+```ts
+readonly project dirty: "project.read" = 'project.read';
+```
+
 ### project info
 
 ```ts
 readonly project info: "project.read" = 'project.read';
+```
+
+### project new
+
+```ts
+readonly project new: "project.lifecycle" = 'project.lifecycle';
+```
+
+### project open
+
+```ts
+readonly project open: "project.lifecycle" = 'project.lifecycle';
+```
+
+### project recent
+
+```ts
+readonly project recent: "project.read" = 'project.read';
+```
+
+### project recent-clear
+
+```ts
+readonly project recent-clear: "project.lifecycle" = 'project.lifecycle';
+```
+
+### project save
+
+```ts
+readonly project save: "project.lifecycle" = 'project.lifecycle';
+```
+
+### project save-as
+
+```ts
+readonly project save-as: "project.lifecycle" = 'project.lifecycle';
+```
+
+### project save-template
+
+```ts
+readonly project save-template: "project.lifecycle" = 'project.lifecycle';
 ```
 
 ### project synthesis-status

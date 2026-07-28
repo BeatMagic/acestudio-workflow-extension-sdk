@@ -118,7 +118,7 @@ Requires the `transport.control` capability.
 
 ##### options?
 
-[`MutatingCallOptions`](MutatingCallOptions.md)
+[`PreconditionCallOptions`](PreconditionCallOptions.md)
 
 #### Returns
 

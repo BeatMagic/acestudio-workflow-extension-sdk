@@ -82,12 +82,14 @@ describe("the operation surface", () => {
 
   it("carries a mutating call's guardrails where the host reads them", async () => {
     const { connection, host } = await connectToScriptedHost({
-      grantedTokens: ["track.write"],
-      operations: { "track rename": { data: {} } },
+      grantedTokens: ["transport.control"],
+      operations: { "transport set-loop": { data: {} } },
     });
 
-    await connection.client.track.rename(
-      { trackIndex: 0, newName: "Verse" },
+    // `transport set-loop` is one of the writes that actually check a
+    // fingerprint, so it is one of the few whose options carry `ifMatch` at all.
+    await connection.client.transport.setLoop(
+      { startTick: 0, endTick: 3_840 },
       // `ifMatch` is opaque, obtainable only from a read result — the cast is
       // this test standing in for that read.
       { waitBusy: 2_500, ifMatch: "fp-1" as never },
@@ -97,8 +99,8 @@ describe("the operation surface", () => {
     // under the reserved key (ADR 0088 §5). Getting these two the wrong way round
     // is exactly the mistake a scripted caller cannot see.
     expect(host.invocations[0]).toEqual({
-      path: "track rename",
-      arguments: { trackIndex: 0, newName: "Verse", fingerprint: "fp-1" },
+      path: "transport set-loop",
+      arguments: { startTick: 0, endTick: 3_840, fingerprint: "fp-1" },
       waitTimeoutMs: 2_500,
     } satisfies InvokeParams);
     connection.close();

@@ -4,6 +4,7 @@
 const OPERATIONS: readonly [{
   capability: "caret.read";
   domain: "caret";
+  fingerprintPrecondition: false;
   method: "get";
   mutating: false;
   path: "caret get";
@@ -12,6 +13,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "caret.write";
   domain: "caret";
+  fingerprintPrecondition: false;
   method: "set";
   mutating: true;
   path: "caret set";
@@ -20,6 +22,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "clip.read";
   domain: "clip";
+  fingerprintPrecondition: false;
   method: "audioContent";
   mutating: false;
   path: "clip audio-content";
@@ -28,6 +31,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "clip.write";
   domain: "clip";
+  fingerprintPrecondition: false;
   method: "create";
   mutating: true;
   path: "clip create";
@@ -36,6 +40,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "clip.read";
   domain: "clip";
+  fingerprintPrecondition: false;
   method: "get";
   mutating: false;
   path: "clip get";
@@ -44,6 +49,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "clip.read";
   domain: "clip";
+  fingerprintPrecondition: false;
   method: "list";
   mutating: false;
   path: "clip list";
@@ -52,6 +58,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "clip.read";
   domain: "clip";
+  fingerprintPrecondition: false;
   method: "lyrics";
   mutating: false;
   path: "clip lyrics";
@@ -60,6 +67,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "clip.write";
   domain: "clip";
+  fingerprintPrecondition: false;
   method: "moveEdges";
   mutating: true;
   path: "clip move-edges";
@@ -68,6 +76,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "clip.read";
   domain: "clip";
+  fingerprintPrecondition: false;
   method: "noteContent";
   mutating: false;
   path: "clip note-content";
@@ -76,6 +85,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "clip.write";
   domain: "clip";
+  fingerprintPrecondition: true;
   method: "replaceContent";
   mutating: true;
   path: "clip replace-content";
@@ -84,6 +94,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "convert.editor-to-global";
   domain: "convert";
+  fingerprintPrecondition: false;
   method: "editorToGlobal";
   mutating: false;
   path: "convert editor-to-global";
@@ -92,6 +103,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "convert.global-to-editor";
   domain: "convert";
+  fingerprintPrecondition: false;
   method: "globalToEditor";
   mutating: false;
   path: "convert global-to-editor";
@@ -100,6 +112,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "convert.measure-to-tick";
   domain: "convert";
+  fingerprintPrecondition: false;
   method: "measureToTick";
   mutating: false;
   path: "convert measure-to-tick";
@@ -108,6 +121,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "convert.tick-to-measure";
   domain: "convert";
+  fingerprintPrecondition: false;
   method: "tickToMeasure";
   mutating: false;
   path: "convert tick-to-measure";
@@ -116,6 +130,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "convert.tick-to-time";
   domain: "convert";
+  fingerprintPrecondition: false;
   method: "tickToTime";
   mutating: false;
   path: "convert tick-to-time";
@@ -124,6 +139,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "convert.time-to-tick";
   domain: "convert";
+  fingerprintPrecondition: false;
   method: "timeToTick";
   mutating: false;
   path: "convert time-to-tick";
@@ -132,6 +148,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "device.read";
   domain: "device";
+  fingerprintPrecondition: false;
   method: "current";
   mutating: false;
   path: "device current";
@@ -140,6 +157,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "device.read";
   domain: "device";
+  fingerprintPrecondition: false;
   method: "list";
   mutating: false;
   path: "device list";
@@ -148,6 +166,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "editor.read";
   domain: "editor";
+  fingerprintPrecondition: false;
   method: "currentClip";
   mutating: false;
   path: "editor current-clip";
@@ -156,6 +175,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "editor.write";
   domain: "editor";
+  fingerprintPrecondition: false;
   method: "open";
   mutating: true;
   path: "editor open";
@@ -164,6 +184,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "editor.read";
   domain: "editor";
+  fingerprintPrecondition: false;
   method: "status";
   mutating: false;
   path: "editor status";
@@ -172,6 +193,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "editor.read";
   domain: "editor";
+  fingerprintPrecondition: false;
   method: "tickRange";
   mutating: false;
   path: "editor tick-range";
@@ -180,6 +202,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "job.control";
   domain: "job";
+  fingerprintPrecondition: false;
   method: "cancel";
   mutating: true;
   path: "job cancel";
@@ -188,6 +211,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "job.control";
   domain: "job";
+  fingerprintPrecondition: false;
   method: "discardResult";
   mutating: true;
   path: "job discard-result";
@@ -196,6 +220,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "job.read";
   domain: "job";
+  fingerprintPrecondition: false;
   method: "get";
   mutating: false;
   path: "job get";
@@ -204,6 +229,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "job.read";
   domain: "job";
+  fingerprintPrecondition: false;
   method: "list";
   mutating: false;
   path: "job list";
@@ -212,6 +238,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "clip.write";
   domain: "job";
+  fingerprintPrecondition: false;
   method: "place";
   mutating: true;
   path: "job place";
@@ -220,6 +247,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "job.read";
   domain: "job";
+  fingerprintPrecondition: false;
   method: "results";
   mutating: false;
   path: "job results";
@@ -228,6 +256,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "job.read";
   domain: "job";
+  fingerprintPrecondition: false;
   method: "wait";
   mutating: false;
   path: "job wait";
@@ -236,6 +265,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "ui.view";
   domain: "mixer";
+  fingerprintPrecondition: false;
   method: "get";
   mutating: false;
   path: "mixer get";
@@ -244,6 +274,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "ui.view";
   domain: "mixer";
+  fingerprintPrecondition: false;
   method: "hide";
   mutating: true;
   path: "mixer hide";
@@ -252,6 +283,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "ui.view";
   domain: "mixer";
+  fingerprintPrecondition: false;
   method: "show";
   mutating: true;
   path: "mixer show";
@@ -260,6 +292,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "note.write";
   domain: "note";
+  fingerprintPrecondition: true;
   method: "add";
   mutating: true;
   path: "note add";
@@ -268,6 +301,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "note.write";
   domain: "note";
+  fingerprintPrecondition: true;
   method: "delete";
   mutating: true;
   path: "note delete";
@@ -276,6 +310,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "note.write";
   domain: "note";
+  fingerprintPrecondition: true;
   method: "move";
   mutating: true;
   path: "note move";
@@ -284,6 +319,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "note.write";
   domain: "note";
+  fingerprintPrecondition: true;
   method: "resize";
   mutating: true;
   path: "note resize";
@@ -292,22 +328,107 @@ const OPERATIONS: readonly [{
 }, {
   capability: "note.write";
   domain: "note";
+  fingerprintPrecondition: true;
   method: "setLyric";
   mutating: true;
   path: "note set-lyric";
   takesParams: true;
   ungated: false;
 }, {
+  capability: "project.lifecycle";
+  domain: "project";
+  fingerprintPrecondition: false;
+  method: "collectSave";
+  mutating: true;
+  path: "project collect-save";
+  takesParams: true;
+  ungated: false;
+}, {
   capability: "project.read";
   domain: "project";
+  fingerprintPrecondition: false;
+  method: "dirty";
+  mutating: false;
+  path: "project dirty";
+  takesParams: false;
+  ungated: false;
+}, {
+  capability: "project.read";
+  domain: "project";
+  fingerprintPrecondition: false;
   method: "info";
   mutating: false;
   path: "project info";
   takesParams: false;
   ungated: false;
 }, {
+  capability: "project.lifecycle";
+  domain: "project";
+  fingerprintPrecondition: false;
+  method: "new";
+  mutating: true;
+  path: "project new";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "project.lifecycle";
+  domain: "project";
+  fingerprintPrecondition: false;
+  method: "open";
+  mutating: true;
+  path: "project open";
+  takesParams: true;
+  ungated: false;
+}, {
   capability: "project.read";
   domain: "project";
+  fingerprintPrecondition: false;
+  method: "recent";
+  mutating: false;
+  path: "project recent";
+  takesParams: false;
+  ungated: false;
+}, {
+  capability: "project.lifecycle";
+  domain: "project";
+  fingerprintPrecondition: false;
+  method: "recentClear";
+  mutating: true;
+  path: "project recent-clear";
+  takesParams: false;
+  ungated: false;
+}, {
+  capability: "project.lifecycle";
+  domain: "project";
+  fingerprintPrecondition: false;
+  method: "save";
+  mutating: true;
+  path: "project save";
+  takesParams: false;
+  ungated: false;
+}, {
+  capability: "project.lifecycle";
+  domain: "project";
+  fingerprintPrecondition: false;
+  method: "saveAs";
+  mutating: true;
+  path: "project save-as";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "project.lifecycle";
+  domain: "project";
+  entitlement: "membership";
+  fingerprintPrecondition: false;
+  method: "saveTemplate";
+  mutating: true;
+  path: "project save-template";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "project.read";
+  domain: "project";
+  fingerprintPrecondition: false;
   method: "synthesisStatus";
   mutating: false;
   path: "project synthesis-status";
@@ -316,6 +437,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "selection.read";
   domain: "selection";
+  fingerprintPrecondition: false;
   method: "get";
   mutating: false;
   path: "selection get";
@@ -324,6 +446,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "selection.write";
   domain: "selection";
+  fingerprintPrecondition: false;
   method: "set";
   mutating: true;
   path: "selection set";
@@ -332,6 +455,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "ui.view";
   domain: "special-tracks";
+  fingerprintPrecondition: false;
   method: "get";
   mutating: false;
   path: "special-tracks get";
@@ -340,6 +464,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "ui.view";
   domain: "special-tracks";
+  fingerprintPrecondition: false;
   method: "hide";
   mutating: true;
   path: "special-tracks hide";
@@ -348,6 +473,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "ui.view";
   domain: "special-tracks";
+  fingerprintPrecondition: false;
   method: "show";
   mutating: true;
   path: "special-tracks show";
@@ -356,6 +482,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "tempo.read";
   domain: "tempo";
+  fingerprintPrecondition: false;
   method: "get";
   mutating: false;
   path: "tempo get";
@@ -364,6 +491,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "tempo.write";
   domain: "tempo";
+  fingerprintPrecondition: false;
   method: "set";
   mutating: true;
   path: "tempo set";
@@ -372,6 +500,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "timesig.read";
   domain: "timesig";
+  fingerprintPrecondition: false;
   method: "get";
   mutating: false;
   path: "timesig get";
@@ -380,6 +509,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "timesig.write";
   domain: "timesig";
+  fingerprintPrecondition: false;
   method: "set";
   mutating: true;
   path: "timesig set";
@@ -388,6 +518,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "track.write";
   domain: "track";
+  fingerprintPrecondition: false;
   method: "delete";
   mutating: true;
   path: "track delete";
@@ -396,6 +527,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "track.read";
   domain: "track";
+  fingerprintPrecondition: false;
   method: "get";
   mutating: false;
   path: "track get";
@@ -404,6 +536,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "track.read";
   domain: "track";
+  fingerprintPrecondition: false;
   method: "list";
   mutating: false;
   path: "track list";
@@ -412,6 +545,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "track.write";
   domain: "track";
+  fingerprintPrecondition: false;
   method: "rename";
   mutating: true;
   path: "track rename";
@@ -420,6 +554,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "track.write";
   domain: "track";
+  fingerprintPrecondition: false;
   method: "set";
   mutating: true;
   path: "track set";
@@ -428,6 +563,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "track.write";
   domain: "track";
+  fingerprintPrecondition: false;
   method: "setRecord";
   mutating: true;
   path: "track set-record";
@@ -436,6 +572,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "track.read";
   domain: "track";
+  fingerprintPrecondition: false;
   method: "singerRecipe";
   mutating: false;
   path: "track singer-recipe";
@@ -444,6 +581,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "transport.state";
   domain: "transport";
+  fingerprintPrecondition: false;
   method: "loop";
   mutating: false;
   path: "transport loop";
@@ -452,6 +590,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "transport.control";
   domain: "transport";
+  fingerprintPrecondition: false;
   method: "metronome";
   mutating: true;
   path: "transport metronome";
@@ -460,6 +599,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "transport.control";
   domain: "transport";
+  fingerprintPrecondition: false;
   method: "play";
   mutating: true;
   path: "transport play";
@@ -468,6 +608,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "transport.control";
   domain: "transport";
+  fingerprintPrecondition: false;
   method: "seek";
   mutating: true;
   path: "transport seek";
@@ -476,6 +617,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "transport.control";
   domain: "transport";
+  fingerprintPrecondition: true;
   method: "setLoop";
   mutating: true;
   path: "transport set-loop";
@@ -484,6 +626,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "transport.state";
   domain: "transport";
+  fingerprintPrecondition: false;
   method: "state";
   mutating: false;
   path: "transport state";
@@ -492,6 +635,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "transport.control";
   domain: "transport";
+  fingerprintPrecondition: false;
   method: "stop";
   mutating: true;
   path: "transport stop";
@@ -500,6 +644,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "transport.control";
   domain: "transport";
+  fingerprintPrecondition: false;
   method: "toggle";
   mutating: true;
   path: "transport toggle";
@@ -508,6 +653,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "voice.write";
   domain: "voice";
+  fingerprintPrecondition: false;
   method: "collect";
   mutating: true;
   path: "voice collect";
@@ -516,6 +662,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "voice.read";
   domain: "voice";
+  fingerprintPrecondition: false;
   method: "communityList";
   mutating: false;
   path: "voice community-list";
@@ -524,6 +671,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "voice.read";
   domain: "voice";
+  fingerprintPrecondition: false;
   method: "communityPages";
   mutating: false;
   path: "voice community-pages";
@@ -532,6 +680,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "voice.read";
   domain: "voice";
+  fingerprintPrecondition: false;
   method: "list";
   mutating: false;
   path: "voice list";
@@ -540,6 +689,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "voice.write";
   domain: "voice";
+  fingerprintPrecondition: false;
   method: "load";
   mutating: true;
   path: "voice load";
@@ -548,6 +698,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "voice.read";
   domain: "voice";
+  fingerprintPrecondition: false;
   method: "tags";
   mutating: false;
   path: "voice tags";
@@ -556,6 +707,7 @@ const OPERATIONS: readonly [{
 }, {
   capability: "voice.write";
   domain: "voice";
+  fingerprintPrecondition: false;
   method: "unload";
   mutating: true;
   path: "voice unload";

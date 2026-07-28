@@ -1,22 +1,16 @@
 # Interface: MutatingCallOptions
 
-Options a mutating call additionally accepts — the remote-edit guardrails. Omitting `waitBusy` is fail-fast: a call landing mid-gesture answers `USER_BUSY` rather than queueing. Omitting `ifMatch` is an unguarded write.
+Options a mutating call additionally accepts — the busy-gate guardrail. Omitting `waitBusy` is fail-fast: a call landing mid-gesture answers `USER_BUSY` rather than queueing.
 
 ## Extends
 
 - [`CallOptions`](CallOptions.md)
 
+## Extended by
+
+- [`PreconditionCallOptions`](PreconditionCallOptions.md)
+
 ## Properties
-
-### ifMatch?
-
-```ts
-optional ifMatch?: Fingerprint;
-```
-
-The fingerprint from a prior read; the write fails `STALE_WRITE` if content changed since.
-
-***
 
 ### signal?
 

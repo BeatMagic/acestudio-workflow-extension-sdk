@@ -16,16 +16,20 @@
  * binding cannot be added while forgetting its gate.
  */
 
-import type { BridgeError } from "./errors.js";
+import { decodeBulkFields, encodeBulkFields, type BulkSites } from "./bulk.js";
+import { BridgeError } from "./errors.js";
 import { capabilityDenied, channelDenied, missingCapabilityRow, type Grant } from "./grant.js";
 import {
+  BULK_PARAM_FIELDS,
+  BULK_RESULT_FIELDS,
   FIELD_CAPABILITIES,
   NOTIFICATION_CHANNELS,
   OPERATIONS,
   REQUIRED_TOKENS,
   type CapabilityToken,
   type ChangeEvent,
-  type MutatingCallOptions,
+  type OperationDescriptor,
+  type PreconditionCallOptions,
   type Unsubscribe,
 } from "./generated/bindings.js";
 import { ChangeClient } from "./generated/Change.acerpc.js";
@@ -38,6 +42,15 @@ import type { BridgePeer } from "./peer.js";
  * is the canonical placement (ADR 0088 §5), not an accident of this file.
  */
 const FINGERPRINT_ARG_KEY = "fingerprint";
+
+/**
+ * The `arguments` key selecting a bulk payload's wire encoding (spec 1501 §8).
+ * The descriptor carries the value for an operation that declares it, and the
+ * generated params type does not name the key at all — the choice is not a
+ * caller's, because `json` would hand back plain number arrays under a signature
+ * that promises typed ones.
+ */
+const BULK_ENCODING_ARG_KEY = "encoding";
 
 /**
  * One generated method, before it is nested under its domain.
@@ -67,6 +80,30 @@ export interface OperationWarning extends InvokeWarning {
 export type WarningSink = (warning: OperationWarning) => void;
 
 /**
+ * One table of bulk-field sites, keyed by operation path. Most operations carry
+ * no bulk data and so have no row, which is what the `undefined` is: the lookup
+ * misses far more often than it hits.
+ *
+ * @internal
+ */
+export type BulkTable = Readonly<Record<string, BulkSites>>;
+
+/**
+ * The two tables the encode/decode pass walks. Overridable for the same reason
+ * `guardCall`'s field table is: the generated ones have no rows until the curve
+ * group reaches the catalog, and an unexercised pass is one nobody would notice
+ * failing.
+ *
+ * @internal
+ */
+export interface BulkTables {
+  readonly params: BulkTable;
+  readonly result: BulkTable;
+}
+
+const GENERATED_BULK_TABLES: BulkTables = { params: BULK_PARAM_FIELDS, result: BULK_RESULT_FIELDS };
+
+/**
  * Build the client the generated `PublicBindings` interface describes.
  *
  * The return type is deliberately loose here and asserted at the seam that hands
@@ -74,14 +111,19 @@ export type WarningSink = (warning: OperationWarning) => void;
  * from a table row, so there is no per-method type for the compiler to check this
  * construction against; the generated interface is what checks the *callers*.
  */
-export function buildBindings(peer: BridgePeer, grant: Grant, warn: WarningSink): Record<string, unknown> {
+export function buildBindings(
+  peer: BridgePeer,
+  grant: Grant,
+  warn: WarningSink,
+  bulk: BulkTables = GENERATED_BULK_TABLES,
+): Record<string, unknown> {
   const client = new OperationClient(peer);
   const root: Record<string, unknown> = {};
 
   for (const operation of OPERATIONS) {
     const invoke: BoundMethod = async (...args) => {
       const params = operation.takesParams ? args[0] : undefined;
-      const options = ((operation.takesParams ? args[1] : args[0]) ?? {}) as MutatingCallOptions;
+      const options = ((operation.takesParams ? args[1] : args[0]) ?? {}) as PreconditionCallOptions;
       // The pre-wire guard, refusing without a round trip and with the error the
       // host would have sent back.
       const denial = guardCall(grant, operation, params);
@@ -89,12 +131,12 @@ export function buildBindings(peer: BridgePeer, grant: Grant, warn: WarningSink)
         throw denial;
       }
       const answer = await peer.withDeadline({ timeoutMs: options.timeoutMs, signal: options.signal }, () =>
-        client.operationInvoke(invocation(operation.path, params, options)),
+        client.operationInvoke(invocation(operation, params, options, bulk.params[operation.path])),
       );
       for (const warning of answer.warnings ?? []) {
         warn({ ...warning, path: operation.path });
       }
-      return answer.data;
+      return decodeBulkFields(bulk.result[operation.path], answer.data);
     };
 
     // Read as a plain string: the table's literal types say no operation sits at
@@ -219,18 +261,54 @@ function fieldDenial(
 }
 
 /**
- * Shape one invocation. The guardrail options are the only ones that reach the
- * host: `timeoutMs` and `signal` bound the local wait and are none of its
- * business, while `waitBusy` and `ifMatch` are asking the host to behave
- * differently (ADR 0088).
+ * Shape one invocation: the arguments with their bulk fields encoded, plus the
+ * options that are the host's business. Exported for the tests, which need a
+ * descriptor that pins a bulk encoding — the real table has none until the curve
+ * group reaches the catalog.
+ *
+ * @internal
+ *
+ * Which those are: `waitBusy` and `ifMatch` ask the host to behave differently
+ * (ADR 0088), so they go — the wait on the envelope, the fingerprint inside the
+ * arguments. `timeoutMs` and `signal` bound the local wait and stay here. The
+ * bulk `encoding` also goes, and is the one argument the caller did not supply:
+ * the binding pins it because it speaks typed arrays.
  */
-function invocation(path: string, params: unknown, options: MutatingCallOptions): InvokeParams {
-  const args = (params ?? {}) as Record<string, unknown>;
-  return {
-    path,
-    arguments: options.ifMatch === undefined ? args : { ...args, [FINGERPRINT_ARG_KEY]: options.ifMatch },
-    waitTimeoutMs: options.waitBusy,
-  };
+export function invocation(
+  operation: OperationDescriptor,
+  params: unknown,
+  options: PreconditionCallOptions,
+  bulkParams: BulkSites,
+): InvokeParams {
+  let args = (encodeBulkFields(bulkParams, params) ?? {}) as Record<string, unknown>;
+  if (operation.bulkEncoding !== undefined) {
+    args = { ...args, [BULK_ENCODING_ARG_KEY]: operation.bulkEncoding };
+  }
+  if (options.ifMatch !== undefined) {
+    args = { ...args, [FINGERPRINT_ARG_KEY]: checkedFingerprint(operation, options.ifMatch) };
+  }
+  return { path: operation.path, arguments: args, waitTimeoutMs: options.waitBusy };
+}
+
+/**
+ * The fingerprint, if this operation is one that checks it.
+ *
+ * The generated option type already refuses an `ifMatch` anywhere else, so a
+ * typed caller cannot reach this. An untyped one can, and forwarding the token
+ * would be worse than refusing it: the host accepts a token for an op that never
+ * opted into the gate and ignores it (ADR 0088 §5), so the write would look
+ * guarded and be unguarded — the exact failure the per-op option type exists to
+ * make unsayable.
+ */
+function checkedFingerprint(operation: OperationDescriptor, ifMatch: string): string {
+  if (operation.fingerprintPrecondition) {
+    return ifMatch;
+  }
+  throw new BridgeError({
+    code: "INVALID_ARG",
+    message: `'${operation.path}' does not check a content fingerprint, so ifMatch would guard nothing`,
+    hint: "only an operation whose descriptor sets fingerprintPrecondition accepts ifMatch",
+  });
 }
 
 /**

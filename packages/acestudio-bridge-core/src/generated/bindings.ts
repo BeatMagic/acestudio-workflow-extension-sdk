@@ -3,10 +3,10 @@
 // The public capability bindings: the operations the capability registry
 // publishes (ADR 0094 §2), plus the scaffolding every consumer shares.
 //
-// Surface version: 2.0
+// Surface version: 3.0
 
 /** The contract surface version these bindings were generated from (`major.minor`). The handshake compares it against the host's: a major mismatch is a typed error at connect, minor drift is fine under the tolerant-reader rule. */
-export const SURFACE_VERSION = '2.0';
+export const SURFACE_VERSION = '3.0';
 
 /** Every canonical error code, as a string-literal union. `BridgeError.code` narrows against it, so error handling is exhaustiveness-checked by the compiler. Codes are a contract; the message beside one is not. */
 export type BridgeErrorCode =
@@ -28,6 +28,7 @@ export type BridgeErrorCode =
   | 'INVALID_ARG'
   | 'IO_ERROR'
   | 'JOB_NOT_CANCELLABLE'
+  | 'NOTE_OVERLAP'
   | 'NOT_FOUND'
   | 'NO_GESTURE'
   | 'NO_MASTER_CHAIN'
@@ -121,6 +122,8 @@ export interface OperationDescriptor {
     readonly ungated: boolean;
     /** True when the operation accepts the mutating guardrail options. */
     readonly mutating: boolean;
+    /** True when the binding takes an arguments object. False for an operation with none, whose binding takes the options object as its *first* argument — which a runtime binding them has to know, or it sends one as the other. */
+    readonly takesParams: boolean;
 }
 
 /** Where a bulk field sits inside an arguments or result object: a dotted path from the root, with `[]` marking an array element. `dtype` is null when the schema leaves the element type to the payload. */
@@ -189,6 +192,67 @@ export type CapabilityToken =
   | 'workflow.dev'
   | 'workflow.ui';
 
+/** Every token in the union above, as a value: what the handshake's granted names are matched against to tell a token this artifact cannot name from one it does not recognise at all. */
+export const CAPABILITY_TOKENS = [
+    'caret.read',
+    'caret.write',
+    'chord.read',
+    'chord.write',
+    'clip.read',
+    'clip.write',
+    'device.read',
+    'device.write',
+    'editor.read',
+    'editor.write',
+    'export.invoke',
+    'fx.read',
+    'fx.write',
+    'generative.add-layer',
+    'generative.enhance',
+    'generative.retake',
+    'generative.seed-audio',
+    'generative.song',
+    'generative.sound-effects',
+    'generative.stem-split',
+    'generative.text2sample',
+    'generative.vocal2midi',
+    'generative.voice-change',
+    'history.control',
+    'history.read',
+    'import.invoke',
+    'job.control',
+    'job.read',
+    'lyric.read',
+    'lyric.write',
+    'note.read',
+    'note.write',
+    'project.lifecycle',
+    'project.read',
+    'recording.control',
+    'selection.read',
+    'selection.write',
+    'session.handshake',
+    'session.ping',
+    'session.shutdown',
+    'tempo.analyze',
+    'tempo.applyV2',
+    'tempo.read',
+    'tempo.write',
+    'timesig.read',
+    'timesig.write',
+    'track.read',
+    'track.write',
+    'transport.control',
+    'transport.state',
+    'ui.view',
+    'vocalparam.read',
+    'vocalparam.write',
+    'voice.read',
+    'voice.write',
+    'workflow.dev',
+    'workflow.ui',
+] as const satisfies readonly CapabilityToken[];
+
 // --- caret -----------------------------------------------------------------
 
 /** Arguments for `caret get`. */
@@ -244,34 +308,6 @@ export interface CaretOperations {
 
 // --- clip ------------------------------------------------------------------
 
-/** Arguments for `clip add`. */
-export interface ClipAddParams {
-    /** Clip duration. Ticks (`3840t`), a note value (`1/4`, `1/8.`), beats (`2b`), or whole measures (`2bar`, anchored at `--pos`). See `help time-values`. */
-    dur: number;
-    /** Optional custom name. Omit to let ACE Studio auto-generate a name. */
-    name?: string | null;
-    /** Clip start position. Ticks (`3840t`), clock time (`1.5s`, `1:23.5`), or musical position (`4.1.0`). See `help time-values`. */
-    pos: number;
-    /** Target track index (0-based). Empty tracks are automatically converted to the appropriate type. */
-    trackIndex: number;
-    /** Clip type: `sing`, `instrument`, or `genericmidi`. */
-    type: string;
-}
-
-/** Success payload of `clip add`. */
-export interface ClipAddResult {
-    /** Clip start on the global timeline, in ticks. */
-    clipBegin: number;
-    /** Clip end on the global timeline, in ticks (pos + dur). */
-    clipEnd: number;
-    /** Custom name, or '(auto-generated)' when no name was given. */
-    clipName: string;
-    /** Type of the placed clip: Sing, Instrument, or GenericMidi. */
-    clipType: string;
-    /** Name of the track the clip was placed on. */
-    trackName: string;
-}
-
 /** Arguments for `clip audio-content`. */
 export interface ClipAudioContentParams {
     /** Clip index within the track (0-based). The clip must be of type `Audio`; other clip types return an error. */
@@ -288,6 +324,59 @@ export interface ClipAudioContentResult {
     loadingState: string;
 }
 
+/** Arguments for `clip create`. */
+export interface ClipCreateParams {
+    /** Clip duration. Ticks (`3840t`), a note value (`1/4`, `1/8.`), beats (`2b`), or whole measures (`2bar`, anchored at `--pos`). See `help time-values`. */
+    dur: number;
+    /** Optional custom name. Omit to let ACE Studio auto-generate a name. */
+    name?: string | null;
+    /**
+     * Initial notes, as a JSON array in clip-local ticks — the same shape `note add` takes. Omit to create an empty clip.
+     *
+     * Example: `--notes '[\{"pos":0,"dur":480,"pitch":60,"lyric":"la"\}]'`
+     */
+    notes?: {
+        /** Articulation name for Instrument clips. Defaults to the track's default articulation. */
+        articulation?: string | null;
+        /** Note duration in ticks. Must be positive. */
+        dur: number;
+        /** Per-note language override for Sing clips: `CHN`, `JPN`, `ENG`, `SPA`, or `KOR`. Defaults to the track's default language. */
+        language?: string | null;
+        /** Lyric text. Required for Sing clips; `-` marks a tenuto that extends the previous syllable (see `help note-exclusivity`). Ignored for Instrument and GenericMidi clips. */
+        lyric?: string | null;
+        /** MIDI pitch, 0-127. */
+        pitch: number;
+        /** Note start in clip-local ticks. */
+        pos: number;
+    }[] | null;
+    /** Clip start position. Ticks (`3840t`), clock time (`1.5s`, `1:23.5`), or musical position (`4.1.0`). See `help time-values`. */
+    pos: number;
+    /** Target track index (0-based). Empty tracks are automatically converted to the appropriate type. */
+    trackIndex: number;
+    /** Clip type: `sing`, `instrument`, or `genericMidi` — the same spellings `clipType` is reported in. Matched case-insensitively. */
+    type: string;
+}
+
+/** Success payload of `clip create`. */
+export interface ClipCreateResult {
+    /** Clip start on the global timeline, in ticks. */
+    clipBegin: number;
+    /** Clip end on the global timeline, in ticks (pos + dur). */
+    clipEnd: number;
+    /** Display name of the created clip (auto-generated when no name was given). */
+    clipName: string;
+    /** Type of the placed clip: `sing`, `instrument`, or `genericMidi`. */
+    clipType: string;
+    /** UUID of the created clip, with braces. Address it with `clip get`, `note add`, and the other id-taking commands. */
+    clipUuid: string;
+    /** Number of notes in the new clip. */
+    noteCount: number;
+    /** UUIDs of the initial notes, in the clip's own note order — the order `clip note-content` reports, which is not necessarily the order they were given in. Empty when the clip was created without content. */
+    noteUuids: string[];
+    /** Name of the track the clip was placed on. */
+    trackName: string;
+}
+
 /** Arguments for `clip get`. */
 export interface ClipGetParams {
     /** Clip index within the track (0-based, chronological order). */
@@ -302,7 +391,7 @@ export interface ClipGetParams {
 export interface ClipGetResult {
     /** Display name (auto-generated when no raw name is set). */
     clipName: string;
-    /** Clip type: Sing, Instrument, GenericMidi, Audio, or Chord. */
+    /** Clip type: `sing`, `instrument`, `genericMidi`, `audio`, or `chord`. */
     clipType: string;
     /** Stable clip UUID, with braces. */
     clipUuid: string;
@@ -355,7 +444,7 @@ export interface ClipListResult {
         clipEnd: number;
         /** Display name (auto-generated when no raw name is set). */
         clipName: string;
-        /** Clip type: Sing, Instrument, GenericMidi, Audio, or Chord. */
+        /** Clip type: `sing`, `instrument`, `genericMidi`, `audio`, or `chord`. */
         clipType: string;
         /** Stable clip UUID, with braces. Use with `clip move-edges`. */
         clipUuid: string;
@@ -372,7 +461,7 @@ export interface ClipLyricsParams {
     rangeBegin?: number | null;
     /** End of the time-range filter in ticks. Defaults to `clipEnd`. */
     rangeEnd?: number | null;
-    /** Coordinate system for `rangeBegin`/`rangeEnd`. `project` (default) = global timeline; `canvas` = pattern-local coordinates. */
+    /** Coordinate system for `rangeBegin`/`rangeEnd`. `project` (default) = global timeline; `clip-local` = coordinates from the clip's own start. */
     rangeScope?: string | null;
     /** Track index (0-based). */
     trackIndex: number;
@@ -386,7 +475,7 @@ export interface ClipLyricsResult {
         begin: number;
         /** Filter range end (exclusive), in ticks, in the coordinate system named by scope. */
         end: number;
-        /** Coordinate system of begin/end: 'project' or 'canvas'. */
+        /** Coordinate system of begin/end: `project` or `clip-local`. */
         scope: string;
     };
     /** Number of sentences returned. */
@@ -395,9 +484,9 @@ export interface ClipLyricsResult {
     sentences: {
         /** Merged lyric text for the sentence. */
         lyric: string;
-        /** Sentence start in canvas (pattern-local) ticks, regardless of rangeScope. */
+        /** Sentence start in clip-local ticks, regardless of rangeScope. */
         sentenceBegin: number;
-        /** Sentence end in canvas (pattern-local) ticks, regardless of rangeScope. */
+        /** Sentence end in clip-local ticks, regardless of rangeScope. */
         sentenceEnd: number;
     }[];
 }
@@ -418,7 +507,7 @@ export interface ClipMoveEdgesParams {
 export interface ClipMoveEdgesResult {
     /** Display name of the clip. */
     clipName: string;
-    /** Clip type: Sing, Instrument, GenericMidi, Audio, or Chord. */
+    /** Clip type: `sing`, `instrument`, `genericMidi`, `audio`, or `chord`. */
     clipType: string;
     /** UUID of the moved clip, with braces. */
     clipUuid: string;
@@ -449,7 +538,7 @@ export interface ClipNoteContentParams {
     rangeBegin?: number | null;
     /** End of the time-range filter in ticks. Defaults to `clipEnd`. */
     rangeEnd?: number | null;
-    /** Coordinate system for `rangeBegin`/`rangeEnd`. `project` (default) = global timeline; `canvas` = pattern-local coordinates. */
+    /** Coordinate system for `rangeBegin`/`rangeEnd`. `project` (default) = global timeline; `clip-local` = coordinates from the clip's own start. */
     rangeScope?: string | null;
     /** Track index (0-based). */
     trackIndex: number;
@@ -463,9 +552,11 @@ export interface ClipNoteContentResult {
         begin: number;
         /** Filter range end (exclusive), in ticks, in the coordinate system named by scope. */
         end: number;
-        /** Coordinate system of begin/end: 'project' or 'canvas'. */
+        /** Coordinate system of begin/end: `project` or `clip-local`. */
         scope: string;
     };
+    /** Content fingerprint of the whole clip's note content (ADR 0088 §5). Carry it back as `--if-match` on `clip replace-content` or any `note` write to fail STALE_WRITE instead of overwriting edits made since this read. Always covers the full clip, even when the read was range-filtered. */
+    fingerprint: Fingerprint;
     /** Number of notes returned. */
     noteCount: number;
     /** Notes overlapping the filter range, in pattern order. */
@@ -474,7 +565,7 @@ export interface ClipNoteContentResult {
         articulation?: string;
         /** Note duration in ticks. */
         dur: number;
-        /** Note end in canvas ticks (pos + dur). */
+        /** Note end in clip-local ticks (pos + dur). */
         endPos: number;
         /** Head consonant lengths in seconds (may be empty). Sing clips only. */
         headConsonants?: number[];
@@ -486,7 +577,7 @@ export interface ClipNoteContentResult {
         noteUuid: string;
         /** MIDI pitch number. */
         pitch: number;
-        /** Note start in canvas (pattern-local) ticks. */
+        /** Note start in clip-local ticks. */
         pos: number;
         /** Space-separated phonemes. Sing clips only. */
         syllable?: string;
@@ -495,21 +586,56 @@ export interface ClipNoteContentResult {
     }[];
 }
 
+/** Arguments for `clip replace-content`. */
+export interface ClipReplaceContentParams {
+    /** UUID of the target clip. Accepted with or without curly braces. The clip must be a note clip (Sing, Instrument, or GenericMidi). */
+    clipUuid: string;
+    /** The clip's new notes, as a JSON array in clip-local ticks. An empty array (`[]`) clears the clip. */
+    notes: {
+        /** Articulation name for Instrument clips. Defaults to the track's default articulation. */
+        articulation?: string | null;
+        /** Note duration in ticks. Must be positive. */
+        dur: number;
+        /** Per-note language override for Sing clips: `CHN`, `JPN`, `ENG`, `SPA`, or `KOR`. Defaults to the track's default language. */
+        language?: string | null;
+        /** Lyric text. Required for Sing clips; `-` marks a tenuto that extends the previous syllable (see `help note-exclusivity`). Ignored for Instrument and GenericMidi clips. */
+        lyric?: string | null;
+        /** MIDI pitch, 0-127. */
+        pitch: number;
+        /** Note start in clip-local ticks. */
+        pos: number;
+    }[];
+}
+
+/** Success payload of `clip replace-content`. */
+export interface ClipReplaceContentResult {
+    /** Clip type: `sing`, `instrument`, or `genericMidi`. */
+    clipType: string;
+    /** UUID of the clip whose content was replaced, with braces. */
+    clipUuid: string;
+    /** Number of notes now in the clip. */
+    noteCount: number;
+    /** UUIDs of the notes now in the clip, in the order they were given. */
+    noteUuids: string[];
+    /** Number of notes the clip held before the swap. */
+    previousNoteCount: number;
+}
+
 /** The `clip` operations, mirroring the canonical operation tree 1:1. */
 export interface ClipOperations {
-    /**
-     * Place a new empty note clip on a track at a given position.
-     *
-     * Requires the `clip.write` capability.
-     */
-    add(params: ClipAddParams, options?: MutatingCallOptions): Promise<ClipAddResult>;
-
     /**
      * Get audio file name and loading state for an Audio clip.
      *
      * Requires the `clip.read` capability.
      */
     audioContent(params: ClipAudioContentParams, options?: CallOptions): Promise<ClipAudioContentResult>;
+
+    /**
+     * Place a new note clip on a track, optionally with initial notes.
+     *
+     * Requires the `clip.write` capability.
+     */
+    create(params: ClipCreateParams, options?: MutatingCallOptions): Promise<ClipCreateResult>;
 
     /**
      * Get full metadata for one clip (geometry, color, enabled state).
@@ -545,6 +671,13 @@ export interface ClipOperations {
      * Requires the `clip.read` capability.
      */
     noteContent(params: ClipNoteContentParams, options?: CallOptions): Promise<ClipNoteContentResult>;
+
+    /**
+     * Replace a clip's notes wholesale with a new set.
+     *
+     * Requires the `clip.write` capability.
+     */
+    replaceContent(params: ClipReplaceContentParams, options?: MutatingCallOptions): Promise<ClipReplaceContentResult>;
 }
 
 // --- convert ---------------------------------------------------------------
@@ -763,140 +896,18 @@ export interface DeviceOperations {
 
 // --- editor ----------------------------------------------------------------
 
-/** Arguments for `editor add-notes`. */
-export interface EditorAddNotesParams {
-    /** [Sentence mode] Language code for the entire lyric sentence (`CHN`/`JPN`/`ENG`/`SPA`/`KOR`). Defaults to the track's default language. Only used when `--lyric-sentence` is specified. */
-    language?: string | null;
-    /** [Sentence mode, RECOMMENDED for Sing clips] Lyric sentence to auto-distribute across notes using the G2P backend. Supports syllable indices (`word#N`) and tenuto (`-`). Mutually exclusive with per-note `lyric` fields inside `notes`. */
-    lyric_sentence?: string | null;
-    /**
-     * Array of note objects. Required and non-empty. Each note must have `pos`, `dur`, and `pitch`. Lyric fields depend on the editor type and mode - see `editor add-notes` documentation for Sing vs Instrument vs GenericMidi.
-     *
-     * On the CLI, pass as a JSON string: `--notes '[\{"pos":0,"dur":480,"pitch":60\}]'`
-     */
-    notes: ({
-        /** Articulation for Instrument notes (optional). Trimmed and lowercased before validation. */
-        articulation?: string | null;
-        /** Duration in ticks. Must be \> 0. */
-        dur: number;
-        /** [Per-note mode] Language code for this note: `CHN`, `JPN`, `ENG`, `SPA`, or `KOR`. Defaults to the track's default language. */
-        language?: string | null;
-        /** [Per-note mode] Lyric for Sing notes. Use `"-"` for tenuto (extends the previous syllable). Mutually exclusive with top-level `lyric_sentence`. */
-        lyric?: string | null;
-        /** MIDI pitch (0-127). */
-        pitch: number;
-        /** Position in local ticks (relative to the editor's `tickBegin`). */
-        pos: number;
-    })[];
-    /** Tick offset applied to the marker-line position before placing notes. Default: 0. A positive value shifts notes to the right. */
-    offset?: number | null;
-}
-
-/** Success payload of `editor add-notes`. */
-export interface EditorAddNotesResult {
-    /** Lyrics the G2P filler applied to the pasted notes, in selection order. Present only for Sing clips in sentence mode; all other successes return an empty object. */
-    lyricsApplied?: string[];
-}
-
 /** Success payload of `editor current-clip`. */
 export interface EditorCurrentClipResult {
     /** 0-based index of the clip within its track. */
     clipIndex: number;
     /** Display name of the clip. */
     clipName: string;
-    /** Clip type: Sing, Instrument, GenericMidi, Audio, or Chord. */
+    /** Clip type: `sing`, `instrument`, `genericMidi`, `audio`, or `chord`. */
     clipType: string;
     /** Track default language code (CHN/JPN/ENG/SPA/KOR). Present only for Sing clips. */
     defaultLanguage?: string;
     /** 0-based index of the clip's track in the project. */
     trackIndex: number;
-}
-
-/** Success payload of `editor delete-selection`. */
-export interface EditorDeleteSelectionResult {
-    /** Number of notes or chords deleted. May be 0 for a parameters-only deletion. */
-    deletedCount: number;
-    /** Clip type of the active editor: Sing, Instrument, GenericMidi, or Chord. */
-    editorType: string;
-    /** True when something was deleted (or a parameters-only deletion ran); false only when the chord editor had no selection. */
-    success: boolean;
-}
-
-/** Arguments for `editor get-content`. */
-export interface EditorGetContentParams {
-    /** Named range selector: `all` (default), `clip_region`, or `viewport`. Mutually exclusive with `--range-begin` / `--range-end`. `viewport` is only valid for note editors (Sing/Instrument/GenericMidi). */
-    range?: string | null;
-    /** Custom range start (inclusive), editor-local. Ticks (`480t`) or a musical/clock position resolved into the clip frame (`4.1.0`, `1.5s`). Requires `--range-end`. Mutually exclusive with `--range`. See `help time-values`. */
-    rangeBegin?: number | null;
-    /** Custom range end (exclusive), editor-local. Same forms as `--range-begin`. Requires `--range-begin`; must be greater. See `help time-values`. */
-    rangeEnd?: number | null;
-}
-
-/** Success payload of `editor get-content`. */
-export interface EditorGetContentResult {
-    /** The tick range that was actually queried. */
-    actualRange: {
-        /** Inclusive range start in local ticks. */
-        begin: number;
-        /** Exclusive range end in local ticks. */
-        end: number;
-    };
-    /** Number of chords returned. Present for the chord editor only. */
-    chordCount?: number;
-    /** Chords overlapping the range. Present for the chord editor only. */
-    chords?: {
-        /** Added-tone modifications. */
-        addeds: string[];
-        /** Pitch classes (0-11) of the chord. */
-        basicKeys: number[];
-        /** Bass note, for slash chords. */
-        bass: string;
-        /** Chord duration in ticks. */
-        dur: number;
-        /** Chord end in local ticks (pos + dur). */
-        endPos: number;
-        /** Whether this is the chord editor's selected chord. */
-        isSelected: boolean;
-        /** Actual MIDI pitches of the chord. */
-        keys: number[];
-        /** Chord start in local ticks. */
-        pos: number;
-        /** Chord root, e.g. C. */
-        root: string;
-        /** Chord type, e.g. maj7. */
-        type: string;
-        /** Display name of the chord, e.g. Gmaj7. */
-        viewName: string;
-    }[];
-    /** Number of notes returned. Present for note editors only. */
-    noteCount?: number;
-    /** Notes overlapping the range. Present for note editors (Sing/Instrument/GenericMidi); absent for the chord editor. */
-    notes?: {
-        /** Articulation key. Instrument notes only. */
-        articulation?: string;
-        /** Note duration in ticks. */
-        dur: number;
-        /** Note end in local ticks (pos + dur). */
-        endPos: number;
-        /** Head consonant lengths in seconds. Sing notes only. */
-        headConsonants?: number[];
-        /** Whether the note is currently selected in the editor. */
-        isSelected: boolean;
-        /** Note language as an English full name. Sing notes only. */
-        language?: string;
-        /** Note lyric. Sing notes only. */
-        lyric?: string;
-        /** MIDI pitch (0-127). */
-        pitch: number;
-        /** Note start in local ticks (relative to the editor's tickBegin). */
-        pos: number;
-        /** Phonetic syllable string. Sing notes only. */
-        syllable?: string;
-        /** Tail consonant lengths in seconds. Sing notes only. */
-        tailConsonants?: number[];
-    }[];
-    /** Resolved range selector: all, clip_region, viewport, or custom. */
-    rangeType: string;
 }
 
 /** Success payload of `editor open`. */
@@ -942,32 +953,11 @@ export interface EditorTickRangeResult {
 /** The `editor` operations, mirroring the canonical operation tree 1:1. */
 export interface EditorOperations {
     /**
-     * Bulk-add notes to the current editor at the marker-line position.
-     *
-     * Requires the `note.write` capability.
-     */
-    addNotes(params: EditorAddNotesParams, options?: MutatingCallOptions): Promise<EditorAddNotesResult>;
-
-    /**
      * Read which clip is currently open in the piano-roll editor.
      *
      * Requires the `editor.read` capability.
      */
     currentClip(options?: CallOptions): Promise<EditorCurrentClipResult>;
-
-    /**
-     * Delete the current selection in the editor.
-     *
-     * Requires the `note.write` capability.
-     */
-    deleteSelection(options?: MutatingCallOptions): Promise<EditorDeleteSelectionResult>;
-
-    /**
-     * Fetch the editor's notes or chords with a range selector.
-     *
-     * Requires the `clip.read` capability.
-     */
-    getContent(params: EditorGetContentParams, options?: CallOptions): Promise<EditorGetContentResult>;
 
     /**
      * Open (make visible) the piano-roll editor window.
@@ -1249,11 +1239,205 @@ export interface MixerOperations {
     show(options?: MutatingCallOptions): Promise<void>;
 }
 
+// --- note ------------------------------------------------------------------
+
+/** Arguments for `note add`. */
+export interface NoteAddParams {
+    /** UUID of the target clip. Accepted with or without curly braces. The clip must be a note clip (Sing, Instrument, or GenericMidi). */
+    clipUuid: string;
+    /**
+     * Notes to add, as a JSON array. Each note takes `pos` and `dur` in clip-local ticks plus `pitch`; Sing notes also take `lyric` and optional `language`, Instrument notes optional `articulation`.
+     *
+     * Bulk is the primitive, not a convenience: on a Sing clip the whole batch is resolved against the monophonic rule at once (`help note-exclusivity`).
+     *
+     * Example: `--notes '[\{"pos":0,"dur":480,"pitch":60,"lyric":"la"\}]'`
+     */
+    notes: {
+        /** Articulation name for Instrument clips. Defaults to the track's default articulation. */
+        articulation?: string | null;
+        /** Note duration in ticks. Must be positive. */
+        dur: number;
+        /** Per-note language override for Sing clips: `CHN`, `JPN`, `ENG`, `SPA`, or `KOR`. Defaults to the track's default language. */
+        language?: string | null;
+        /** Lyric text. Required for Sing clips; `-` marks a tenuto that extends the previous syllable (see `help note-exclusivity`). Ignored for Instrument and GenericMidi clips. */
+        lyric?: string | null;
+        /** MIDI pitch, 0-127. */
+        pitch: number;
+        /** Note start in clip-local ticks. */
+        pos: number;
+    }[];
+}
+
+/** Success payload of `note add`. */
+export interface NoteAddResult {
+    /** Number of notes added. */
+    addedCount: number;
+    /** Clip type: `sing`, `instrument`, or `genericMidi`. */
+    clipType: string;
+    /** UUID of the clip the notes were added to, with braces. */
+    clipUuid: string;
+    /** Total notes in the clip after the add. Nothing existing is disturbed, so this is always the previous count plus `addedCount`; a Sing add that would overlap is refused with `NOTE_OVERLAP` instead (see `help note-exclusivity`). */
+    noteCount: number;
+    /** UUIDs of the notes that were added, in the order they were given. Address them with the other `note` commands. */
+    noteUuids: string[];
+}
+
+/** Arguments for `note delete`. */
+export interface NoteDeleteParams {
+    /** UUIDs of the notes to delete, from `clip note-content`. Repeat the flag or pass several values after one flag. All must be in the same clip. */
+    noteUuids: string[];
+}
+
+/** Success payload of `note delete`. */
+export interface NoteDeleteResult {
+    /** UUID of the clip the deleted notes belonged to, with braces. */
+    clipUuid: string;
+    /** Number of notes deleted. */
+    deletedCount: number;
+}
+
+/** Arguments for `note move`. */
+export interface NoteMoveParams {
+    /** Shift every note this much earlier. Same length forms as `--later`. The move is rejected if it would push any note before tick 0. */
+    moveEarlier?: number | null;
+    /** Shift every note this much later. A length: ticks (`480t`), a note value (`1/4`), beats (`2b`), or measures (`1bar`). The grammar has no sign, so "earlier" is its own flag. */
+    moveLater?: number | null;
+    /** UUIDs of the notes to move, from `clip note-content`. Repeat the flag or pass several values after one flag. */
+    noteUuids: string[];
+    /** New MIDI pitch (0-127) of the anchor note; the rest transpose by the same interval. */
+    pitch?: number | null;
+    /** Transpose every note by this many semitones. Negative moves down. */
+    pitchDelta?: number | null;
+    /** New position of the anchor note. Ticks (`960t`), clock time (`1.5s`), or a musical position (`4.1.0`). Ticks are clip-local unless `--to-scope project` says otherwise; musical and clock forms are always project-framed. See `help time-values`. */
+    pos?: number | null;
+    /** Coordinate system `--to` is expressed in. Defaults to `clip-local` — a note only exists inside a clip, and it is the frame `clip note-content` reports note positions in, so a value read from there goes straight back. Pass `project` for the global timeline; musical and clock forms imply it, since they have no clip-local meaning. */
+    posScope?: string | null;
+}
+
+/** Success payload of `note move`. */
+export interface NoteMoveResult {
+    /** UUID of the clip the moved notes belong to, with braces. */
+    clipUuid: string;
+    /** Number of notes moved. */
+    movedCount: number;
+    /** Notes after the move, in pattern order. */
+    notes: {
+        /** Note duration in ticks. */
+        dur: number;
+        /** Note end in clip-local ticks (pos + dur). */
+        endPos: number;
+        /** Stable note UUID, with braces. */
+        noteUuid: string;
+        /** MIDI pitch number. */
+        pitch: number;
+        /** Note start in clip-local ticks. */
+        pos: number;
+    }[];
+}
+
+/** Arguments for `note resize`. */
+export interface NoteResizeParams {
+    /** New duration for every named note. Ticks (`480t`), a note value (`1/4`, `1/8.`), beats (`2b`), or measures (`1bar`). Must be positive. See `help time-values`. */
+    dur: number;
+    /** UUIDs of the notes to resize, from `clip note-content`. Repeat the flag or pass several values after one flag. */
+    noteUuids: string[];
+}
+
+/** Success payload of `note resize`. */
+export interface NoteResizeResult {
+    /** UUID of the clip the resized notes belong to, with braces. */
+    clipUuid: string;
+    /** Notes after the resize, in pattern order. */
+    notes: {
+        /** Note duration in ticks. */
+        dur: number;
+        /** Note end in clip-local ticks (pos + dur). */
+        endPos: number;
+        /** Stable note UUID, with braces. */
+        noteUuid: string;
+        /** MIDI pitch number. */
+        pitch: number;
+        /** Note start in clip-local ticks. */
+        pos: number;
+    }[];
+    /** Number of notes resized. */
+    resizedCount: number;
+}
+
+/** Arguments for `note set-lyric`. */
+export interface NoteSetLyricParams {
+    /** Language for every named note: `CHN`, `JPN`, `ENG`, `SPA`, or `KOR`. Omit to leave each note's language untouched. */
+    language?: string | null;
+    /** One lyric applied to every named note. Use `-` for a tenuto that extends the previous syllable. Mutually exclusive with `--lyrics`. */
+    lyric?: string | null;
+    /**
+     * One lyric per note, as a JSON array of strings positionally matching `--note-uuid`. Length must match exactly.
+     *
+     * Example: `--lyrics '["ha","ppy"]'`
+     */
+    lyrics?: string[] | null;
+    /** UUIDs of the Sing notes to edit, from `clip note-content`. Repeat the flag or pass several values after one flag. */
+    noteUuids: string[];
+}
+
+/** Success payload of `note set-lyric`. */
+export interface NoteSetLyricResult {
+    /** Notes after the edit, in the order they were given. */
+    notes: {
+        /** Full language name now on the note. */
+        language: string;
+        /** Lyric text now on the note. */
+        lyric: string;
+        /** Stable note UUID, with braces. */
+        noteUuid: string;
+    }[];
+    /** Number of notes whose lyric was set. */
+    updatedCount: number;
+}
+
+/** The `note` operations, mirroring the canonical operation tree 1:1. */
+export interface NoteOperations {
+    /**
+     * Add notes to a clip by id, with optional lyrics.
+     *
+     * Requires the `note.write` capability.
+     */
+    add(params: NoteAddParams, options?: MutatingCallOptions): Promise<NoteAddResult>;
+
+    /**
+     * Delete notes by id.
+     *
+     * Requires the `note.write` capability.
+     */
+    delete(params: NoteDeleteParams, options?: MutatingCallOptions): Promise<NoteDeleteResult>;
+
+    /**
+     * Move notes by id in time, in pitch, or both.
+     *
+     * Requires the `note.write` capability.
+     */
+    move(params: NoteMoveParams, options?: MutatingCallOptions): Promise<NoteMoveResult>;
+
+    /**
+     * Set the duration of notes addressed by id.
+     *
+     * Requires the `note.write` capability.
+     */
+    resize(params: NoteResizeParams, options?: MutatingCallOptions): Promise<NoteResizeResult>;
+
+    /**
+     * Set the lyric (and optionally language) of Sing notes by id.
+     *
+     * Requires the `note.write` capability.
+     */
+    setLyric(params: NoteSetLyricParams, options?: MutatingCallOptions): Promise<NoteSetLyricResult>;
+}
+
 // --- project ---------------------------------------------------------------
 
 /** Success payload of `project info`. */
 export interface ProjectInfoResult {
-    /** Arrangement canvas length in project ticks. */
+    /** Arrangement length in project ticks. */
     duration: number;
     /** True if the project was just created and has never been saved at all. */
     isNewProject: boolean;
@@ -1272,7 +1456,7 @@ export interface ProjectSynthesisStatusResult {
 /** The `project` operations, mirroring the canonical operation tree 1:1. */
 export interface ProjectOperations {
     /**
-     * Read basic project metadata: name, saved/temp state, and canvas duration.
+     * Read basic project metadata: name, saved/temp state, and arrangement length.
      *
      * Requires the `project.read` capability.
      */
@@ -2237,6 +2421,7 @@ export interface PublicBindings {
     readonly editor: EditorOperations;
     readonly job: JobOperations;
     readonly mixer: MixerOperations;
+    readonly note: NoteOperations;
     readonly project: ProjectOperations;
     readonly selection: SelectionOperations;
     readonly specialTracks: SpecialTracksOperations;
@@ -2248,93 +2433,94 @@ export interface PublicBindings {
 }
 
 /** Every operation in this artifact, sorted by path. */
-export const OPERATIONS: readonly OperationDescriptor[] = [
-    { path: 'caret get', domain: 'caret', method: 'get', capability: 'caret.read', ungated: false, mutating: false },
-    { path: 'caret set', domain: 'caret', method: 'set', capability: 'caret.write', ungated: false, mutating: true },
-    { path: 'clip add', domain: 'clip', method: 'add', capability: 'clip.write', ungated: false, mutating: true },
-    { path: 'clip audio-content', domain: 'clip', method: 'audioContent', capability: 'clip.read', ungated: false, mutating: false },
-    { path: 'clip get', domain: 'clip', method: 'get', capability: 'clip.read', ungated: false, mutating: false },
-    { path: 'clip list', domain: 'clip', method: 'list', capability: 'clip.read', ungated: false, mutating: false },
-    { path: 'clip lyrics', domain: 'clip', method: 'lyrics', capability: 'clip.read', ungated: false, mutating: false },
-    { path: 'clip move-edges', domain: 'clip', method: 'moveEdges', capability: 'clip.write', ungated: false, mutating: true },
-    { path: 'clip note-content', domain: 'clip', method: 'noteContent', capability: 'clip.read', ungated: false, mutating: false },
-    { path: 'convert editor-to-global', domain: 'convert', method: 'editorToGlobal', capability: 'convert.editor-to-global', ungated: true, mutating: false },
-    { path: 'convert global-to-editor', domain: 'convert', method: 'globalToEditor', capability: 'convert.global-to-editor', ungated: true, mutating: false },
-    { path: 'convert measure-to-tick', domain: 'convert', method: 'measureToTick', capability: 'convert.measure-to-tick', ungated: true, mutating: false },
-    { path: 'convert tick-to-measure', domain: 'convert', method: 'tickToMeasure', capability: 'convert.tick-to-measure', ungated: true, mutating: false },
-    { path: 'convert tick-to-time', domain: 'convert', method: 'tickToTime', capability: 'convert.tick-to-time', ungated: true, mutating: false },
-    { path: 'convert time-to-tick', domain: 'convert', method: 'timeToTick', capability: 'convert.time-to-tick', ungated: true, mutating: false },
-    { path: 'device current', domain: 'device', method: 'current', capability: 'device.read', ungated: false, mutating: false },
-    { path: 'device list', domain: 'device', method: 'list', capability: 'device.read', ungated: false, mutating: false },
-    { path: 'editor add-notes', domain: 'editor', method: 'addNotes', capability: 'note.write', ungated: false, mutating: true },
-    { path: 'editor current-clip', domain: 'editor', method: 'currentClip', capability: 'editor.read', ungated: false, mutating: false },
-    { path: 'editor delete-selection', domain: 'editor', method: 'deleteSelection', capability: 'note.write', ungated: false, mutating: true },
-    { path: 'editor get-content', domain: 'editor', method: 'getContent', capability: 'clip.read', ungated: false, mutating: false },
-    { path: 'editor open', domain: 'editor', method: 'open', capability: 'editor.write', ungated: false, mutating: true },
-    { path: 'editor status', domain: 'editor', method: 'status', capability: 'editor.read', ungated: false, mutating: false },
-    { path: 'editor tick-range', domain: 'editor', method: 'tickRange', capability: 'editor.read', ungated: false, mutating: false },
-    { path: 'job cancel', domain: 'job', method: 'cancel', capability: 'job.control', ungated: false, mutating: true },
-    { path: 'job discard-result', domain: 'job', method: 'discardResult', capability: 'job.control', ungated: false, mutating: true },
-    { path: 'job get', domain: 'job', method: 'get', capability: 'job.read', ungated: false, mutating: false },
-    { path: 'job list', domain: 'job', method: 'list', capability: 'job.read', ungated: false, mutating: false },
-    { path: 'job place', domain: 'job', method: 'place', capability: 'clip.write', ungated: false, mutating: true },
-    { path: 'job results', domain: 'job', method: 'results', capability: 'job.read', ungated: false, mutating: false },
-    { path: 'job wait', domain: 'job', method: 'wait', capability: 'job.read', ungated: false, mutating: false },
-    { path: 'mixer get', domain: 'mixer', method: 'get', capability: 'ui.view', ungated: false, mutating: false },
-    { path: 'mixer hide', domain: 'mixer', method: 'hide', capability: 'ui.view', ungated: false, mutating: true },
-    { path: 'mixer show', domain: 'mixer', method: 'show', capability: 'ui.view', ungated: false, mutating: true },
-    { path: 'project info', domain: 'project', method: 'info', capability: 'project.read', ungated: false, mutating: false },
-    { path: 'project synthesis-status', domain: 'project', method: 'synthesisStatus', capability: 'project.read', ungated: false, mutating: false },
-    { path: 'selection get', domain: 'selection', method: 'get', capability: 'selection.read', ungated: false, mutating: false },
-    { path: 'selection set', domain: 'selection', method: 'set', capability: 'selection.write', ungated: false, mutating: true },
-    { path: 'special-tracks get', domain: 'special-tracks', method: 'get', capability: 'ui.view', ungated: false, mutating: false },
-    { path: 'special-tracks hide', domain: 'special-tracks', method: 'hide', capability: 'ui.view', ungated: false, mutating: true },
-    { path: 'special-tracks show', domain: 'special-tracks', method: 'show', capability: 'ui.view', ungated: false, mutating: true },
-    { path: 'tempo get', domain: 'tempo', method: 'get', capability: 'tempo.read', ungated: false, mutating: false },
-    { path: 'tempo set', domain: 'tempo', method: 'set', capability: 'tempo.write', ungated: false, mutating: true },
-    { path: 'timesig get', domain: 'timesig', method: 'get', capability: 'timesig.read', ungated: false, mutating: false },
-    { path: 'timesig set', domain: 'timesig', method: 'set', capability: 'timesig.write', ungated: false, mutating: true },
-    { path: 'track delete', domain: 'track', method: 'delete', capability: 'track.write', ungated: false, mutating: true },
-    { path: 'track get', domain: 'track', method: 'get', capability: 'track.read', ungated: false, mutating: false },
-    { path: 'track list', domain: 'track', method: 'list', capability: 'track.read', ungated: false, mutating: false },
-    { path: 'track rename', domain: 'track', method: 'rename', capability: 'track.write', ungated: false, mutating: true },
-    { path: 'track set', domain: 'track', method: 'set', capability: 'track.write', ungated: false, mutating: true },
-    { path: 'track set-record', domain: 'track', method: 'setRecord', capability: 'track.write', ungated: false, mutating: true },
-    { path: 'track singer-recipe', domain: 'track', method: 'singerRecipe', capability: 'track.read', ungated: false, mutating: false },
-    { path: 'transport loop', domain: 'transport', method: 'loop', capability: 'transport.state', ungated: false, mutating: false },
-    { path: 'transport metronome', domain: 'transport', method: 'metronome', capability: 'transport.control', ungated: false, mutating: true },
-    { path: 'transport play', domain: 'transport', method: 'play', capability: 'transport.control', ungated: false, mutating: true },
-    { path: 'transport seek', domain: 'transport', method: 'seek', capability: 'transport.control', ungated: false, mutating: true },
-    { path: 'transport set-loop', domain: 'transport', method: 'setLoop', capability: 'transport.control', ungated: false, mutating: true },
-    { path: 'transport state', domain: 'transport', method: 'state', capability: 'transport.state', ungated: false, mutating: false },
-    { path: 'transport stop', domain: 'transport', method: 'stop', capability: 'transport.control', ungated: false, mutating: true },
-    { path: 'transport toggle', domain: 'transport', method: 'toggle', capability: 'transport.control', ungated: false, mutating: true },
-    { path: 'voice collect', domain: 'voice', method: 'collect', capability: 'voice.write', ungated: false, mutating: true },
-    { path: 'voice community-list', domain: 'voice', method: 'communityList', capability: 'voice.read', ungated: false, mutating: false },
-    { path: 'voice community-pages', domain: 'voice', method: 'communityPages', capability: 'voice.read', ungated: false, mutating: false },
-    { path: 'voice list', domain: 'voice', method: 'list', capability: 'voice.read', ungated: false, mutating: false },
-    { path: 'voice load', domain: 'voice', method: 'load', capability: 'voice.write', ungated: false, mutating: true },
-    { path: 'voice tags', domain: 'voice', method: 'tags', capability: 'voice.read', ungated: false, mutating: false },
-    { path: 'voice unload', domain: 'voice', method: 'unload', capability: 'voice.write', ungated: false, mutating: true },
-];
+export const OPERATIONS = [
+    { path: 'caret get', domain: 'caret', method: 'get', capability: 'caret.read', ungated: false, mutating: false, takesParams: true },
+    { path: 'caret set', domain: 'caret', method: 'set', capability: 'caret.write', ungated: false, mutating: true, takesParams: true },
+    { path: 'clip audio-content', domain: 'clip', method: 'audioContent', capability: 'clip.read', ungated: false, mutating: false, takesParams: true },
+    { path: 'clip create', domain: 'clip', method: 'create', capability: 'clip.write', ungated: false, mutating: true, takesParams: true },
+    { path: 'clip get', domain: 'clip', method: 'get', capability: 'clip.read', ungated: false, mutating: false, takesParams: true },
+    { path: 'clip list', domain: 'clip', method: 'list', capability: 'clip.read', ungated: false, mutating: false, takesParams: true },
+    { path: 'clip lyrics', domain: 'clip', method: 'lyrics', capability: 'clip.read', ungated: false, mutating: false, takesParams: true },
+    { path: 'clip move-edges', domain: 'clip', method: 'moveEdges', capability: 'clip.write', ungated: false, mutating: true, takesParams: true },
+    { path: 'clip note-content', domain: 'clip', method: 'noteContent', capability: 'clip.read', ungated: false, mutating: false, takesParams: true },
+    { path: 'clip replace-content', domain: 'clip', method: 'replaceContent', capability: 'clip.write', ungated: false, mutating: true, takesParams: true },
+    { path: 'convert editor-to-global', domain: 'convert', method: 'editorToGlobal', capability: 'convert.editor-to-global', ungated: true, mutating: false, takesParams: true },
+    { path: 'convert global-to-editor', domain: 'convert', method: 'globalToEditor', capability: 'convert.global-to-editor', ungated: true, mutating: false, takesParams: true },
+    { path: 'convert measure-to-tick', domain: 'convert', method: 'measureToTick', capability: 'convert.measure-to-tick', ungated: true, mutating: false, takesParams: true },
+    { path: 'convert tick-to-measure', domain: 'convert', method: 'tickToMeasure', capability: 'convert.tick-to-measure', ungated: true, mutating: false, takesParams: true },
+    { path: 'convert tick-to-time', domain: 'convert', method: 'tickToTime', capability: 'convert.tick-to-time', ungated: true, mutating: false, takesParams: true },
+    { path: 'convert time-to-tick', domain: 'convert', method: 'timeToTick', capability: 'convert.time-to-tick', ungated: true, mutating: false, takesParams: true },
+    { path: 'device current', domain: 'device', method: 'current', capability: 'device.read', ungated: false, mutating: false, takesParams: false },
+    { path: 'device list', domain: 'device', method: 'list', capability: 'device.read', ungated: false, mutating: false, takesParams: false },
+    { path: 'editor current-clip', domain: 'editor', method: 'currentClip', capability: 'editor.read', ungated: false, mutating: false, takesParams: false },
+    { path: 'editor open', domain: 'editor', method: 'open', capability: 'editor.write', ungated: false, mutating: true, takesParams: false },
+    { path: 'editor status', domain: 'editor', method: 'status', capability: 'editor.read', ungated: false, mutating: false, takesParams: false },
+    { path: 'editor tick-range', domain: 'editor', method: 'tickRange', capability: 'editor.read', ungated: false, mutating: false, takesParams: false },
+    { path: 'job cancel', domain: 'job', method: 'cancel', capability: 'job.control', ungated: false, mutating: true, takesParams: true },
+    { path: 'job discard-result', domain: 'job', method: 'discardResult', capability: 'job.control', ungated: false, mutating: true, takesParams: true },
+    { path: 'job get', domain: 'job', method: 'get', capability: 'job.read', ungated: false, mutating: false, takesParams: true },
+    { path: 'job list', domain: 'job', method: 'list', capability: 'job.read', ungated: false, mutating: false, takesParams: true },
+    { path: 'job place', domain: 'job', method: 'place', capability: 'clip.write', ungated: false, mutating: true, takesParams: true },
+    { path: 'job results', domain: 'job', method: 'results', capability: 'job.read', ungated: false, mutating: false, takesParams: true },
+    { path: 'job wait', domain: 'job', method: 'wait', capability: 'job.read', ungated: false, mutating: false, takesParams: true },
+    { path: 'mixer get', domain: 'mixer', method: 'get', capability: 'ui.view', ungated: false, mutating: false, takesParams: false },
+    { path: 'mixer hide', domain: 'mixer', method: 'hide', capability: 'ui.view', ungated: false, mutating: true, takesParams: false },
+    { path: 'mixer show', domain: 'mixer', method: 'show', capability: 'ui.view', ungated: false, mutating: true, takesParams: false },
+    { path: 'note add', domain: 'note', method: 'add', capability: 'note.write', ungated: false, mutating: true, takesParams: true },
+    { path: 'note delete', domain: 'note', method: 'delete', capability: 'note.write', ungated: false, mutating: true, takesParams: true },
+    { path: 'note move', domain: 'note', method: 'move', capability: 'note.write', ungated: false, mutating: true, takesParams: true },
+    { path: 'note resize', domain: 'note', method: 'resize', capability: 'note.write', ungated: false, mutating: true, takesParams: true },
+    { path: 'note set-lyric', domain: 'note', method: 'setLyric', capability: 'note.write', ungated: false, mutating: true, takesParams: true },
+    { path: 'project info', domain: 'project', method: 'info', capability: 'project.read', ungated: false, mutating: false, takesParams: false },
+    { path: 'project synthesis-status', domain: 'project', method: 'synthesisStatus', capability: 'project.read', ungated: false, mutating: false, takesParams: false },
+    { path: 'selection get', domain: 'selection', method: 'get', capability: 'selection.read', ungated: false, mutating: false, takesParams: true },
+    { path: 'selection set', domain: 'selection', method: 'set', capability: 'selection.write', ungated: false, mutating: true, takesParams: true },
+    { path: 'special-tracks get', domain: 'special-tracks', method: 'get', capability: 'ui.view', ungated: false, mutating: false, takesParams: false },
+    { path: 'special-tracks hide', domain: 'special-tracks', method: 'hide', capability: 'ui.view', ungated: false, mutating: true, takesParams: true },
+    { path: 'special-tracks show', domain: 'special-tracks', method: 'show', capability: 'ui.view', ungated: false, mutating: true, takesParams: true },
+    { path: 'tempo get', domain: 'tempo', method: 'get', capability: 'tempo.read', ungated: false, mutating: false, takesParams: false },
+    { path: 'tempo set', domain: 'tempo', method: 'set', capability: 'tempo.write', ungated: false, mutating: true, takesParams: true },
+    { path: 'timesig get', domain: 'timesig', method: 'get', capability: 'timesig.read', ungated: false, mutating: false, takesParams: false },
+    { path: 'timesig set', domain: 'timesig', method: 'set', capability: 'timesig.write', ungated: false, mutating: true, takesParams: true },
+    { path: 'track delete', domain: 'track', method: 'delete', capability: 'track.write', ungated: false, mutating: true, takesParams: false },
+    { path: 'track get', domain: 'track', method: 'get', capability: 'track.read', ungated: false, mutating: false, takesParams: true },
+    { path: 'track list', domain: 'track', method: 'list', capability: 'track.read', ungated: false, mutating: false, takesParams: false },
+    { path: 'track rename', domain: 'track', method: 'rename', capability: 'track.write', ungated: false, mutating: true, takesParams: true },
+    { path: 'track set', domain: 'track', method: 'set', capability: 'track.write', ungated: false, mutating: true, takesParams: true },
+    { path: 'track set-record', domain: 'track', method: 'setRecord', capability: 'track.write', ungated: false, mutating: true, takesParams: true },
+    { path: 'track singer-recipe', domain: 'track', method: 'singerRecipe', capability: 'track.read', ungated: false, mutating: false, takesParams: true },
+    { path: 'transport loop', domain: 'transport', method: 'loop', capability: 'transport.state', ungated: false, mutating: false, takesParams: false },
+    { path: 'transport metronome', domain: 'transport', method: 'metronome', capability: 'transport.control', ungated: false, mutating: true, takesParams: true },
+    { path: 'transport play', domain: 'transport', method: 'play', capability: 'transport.control', ungated: false, mutating: true, takesParams: false },
+    { path: 'transport seek', domain: 'transport', method: 'seek', capability: 'transport.control', ungated: false, mutating: true, takesParams: true },
+    { path: 'transport set-loop', domain: 'transport', method: 'setLoop', capability: 'transport.control', ungated: false, mutating: true, takesParams: true },
+    { path: 'transport state', domain: 'transport', method: 'state', capability: 'transport.state', ungated: false, mutating: false, takesParams: false },
+    { path: 'transport stop', domain: 'transport', method: 'stop', capability: 'transport.control', ungated: false, mutating: true, takesParams: false },
+    { path: 'transport toggle', domain: 'transport', method: 'toggle', capability: 'transport.control', ungated: false, mutating: true, takesParams: false },
+    { path: 'voice collect', domain: 'voice', method: 'collect', capability: 'voice.write', ungated: false, mutating: true, takesParams: true },
+    { path: 'voice community-list', domain: 'voice', method: 'communityList', capability: 'voice.read', ungated: false, mutating: false, takesParams: true },
+    { path: 'voice community-pages', domain: 'voice', method: 'communityPages', capability: 'voice.read', ungated: false, mutating: false, takesParams: true },
+    { path: 'voice list', domain: 'voice', method: 'list', capability: 'voice.read', ungated: false, mutating: false, takesParams: true },
+    { path: 'voice load', domain: 'voice', method: 'load', capability: 'voice.write', ungated: false, mutating: true, takesParams: true },
+    { path: 'voice tags', domain: 'voice', method: 'tags', capability: 'voice.read', ungated: false, mutating: false, takesParams: true },
+    { path: 'voice unload', domain: 'voice', method: 'unload', capability: 'voice.write', ungated: false, mutating: true, takesParams: true },
+] as const satisfies readonly OperationDescriptor[];
 
 /** The token each operation requires, for the pre-wire guard: a call the session's grant cannot reach fails locally with the identical typed `CAPABILITY_DENIED` the host would have returned. Ungated operations are absent — they need no token. */
-export const REQUIRED_TOKENS: Readonly<Record<string, CapabilityToken>> = {
+export const REQUIRED_TOKENS = {
     'caret get': 'caret.read',
     'caret set': 'caret.write',
-    'clip add': 'clip.write',
     'clip audio-content': 'clip.read',
+    'clip create': 'clip.write',
     'clip get': 'clip.read',
     'clip list': 'clip.read',
     'clip lyrics': 'clip.read',
     'clip move-edges': 'clip.write',
     'clip note-content': 'clip.read',
+    'clip replace-content': 'clip.write',
     'device current': 'device.read',
     'device list': 'device.read',
-    'editor add-notes': 'note.write',
     'editor current-clip': 'editor.read',
-    'editor delete-selection': 'note.write',
-    'editor get-content': 'clip.read',
     'editor open': 'editor.write',
     'editor status': 'editor.read',
     'editor tick-range': 'editor.read',
@@ -2348,6 +2534,11 @@ export const REQUIRED_TOKENS: Readonly<Record<string, CapabilityToken>> = {
     'mixer get': 'ui.view',
     'mixer hide': 'ui.view',
     'mixer show': 'ui.view',
+    'note add': 'note.write',
+    'note delete': 'note.write',
+    'note move': 'note.write',
+    'note resize': 'note.write',
+    'note set-lyric': 'note.write',
     'project info': 'project.read',
     'project synthesis-status': 'project.read',
     'selection get': 'selection.read',
@@ -2381,13 +2572,19 @@ export const REQUIRED_TOKENS: Readonly<Record<string, CapabilityToken>> = {
     'voice load': 'voice.write',
     'voice tags': 'voice.read',
     'voice unload': 'voice.write',
-};
+} as const satisfies Readonly<Record<string, CapabilityToken>>;
+
+/** Each published Capability Profile's transitive token expansion (ADR 0022): a named bundle a grant is measured against, rather than a set the consumer hand-lists. A profile is met when every token here is granted. The expansion is the registry's, so it moves with the registry — a profile still marked draft there may still be re-cut. */
+export const PROFILES = {
+    'surface.cli-mcp.v1': ['caret.read', 'caret.write', 'chord.read', 'chord.write', 'clip.read', 'clip.write', 'device.read', 'device.write', 'editor.read', 'editor.write', 'export.invoke', 'fx.read', 'fx.write', 'generative.add-layer', 'generative.enhance', 'generative.retake', 'generative.seed-audio', 'generative.song', 'generative.sound-effects', 'generative.stem-split', 'generative.text2sample', 'generative.vocal2midi', 'generative.voice-change', 'history.control', 'history.read', 'import.invoke', 'job.control', 'job.read', 'lyric.read', 'lyric.write', 'note.read', 'note.write', 'project.lifecycle', 'project.read', 'recording.control', 'selection.read', 'selection.write', 'tempo.analyze', 'tempo.applyV2', 'tempo.read', 'tempo.write', 'timesig.read', 'timesig.write', 'track.read', 'track.write', 'transport.control', 'transport.state', 'ui.view', 'vocalparam.read', 'vocalparam.write', 'voice.read', 'voice.write'],
+    'surface.extension-sdk.v1': ['session.handshake', 'session.ping', 'session.shutdown', 'workflow.dev', 'workflow.ui'],
+} as const satisfies Readonly<Record<string, readonly CapabilityToken[]>>;
 
 /** Capability-gated arguments fields (ADR 0071): setting one on a session that did not negotiate its capability is refused before the wire. A field gated by a capability this artifact may not name is absent from the type above entirely, so it can never appear here. */
-export const FIELD_CAPABILITIES: Readonly<Record<string, Readonly<Record<string, CapabilityToken>>>> = {};
+export const FIELD_CAPABILITIES = {} as const satisfies Readonly<Record<string, Readonly<Record<string, CapabilityToken>>>>;
 
 /** Where the bulk fields sit in each operation's arguments object, for the encode/decode pass that swaps typed arrays for the base64 envelope. */
-export const BULK_PARAM_FIELDS: Readonly<Record<string, readonly BulkFieldDescriptor[]>> = {};
+export const BULK_PARAM_FIELDS = {} as const satisfies Readonly<Record<string, readonly BulkFieldDescriptor[]>>;
 
 /** Where the bulk fields sit in each operation's result object, for the encode/decode pass that swaps typed arrays for the base64 envelope. */
-export const BULK_RESULT_FIELDS: Readonly<Record<string, readonly BulkFieldDescriptor[]>> = {};
+export const BULK_RESULT_FIELDS = {} as const satisfies Readonly<Record<string, readonly BulkFieldDescriptor[]>>;

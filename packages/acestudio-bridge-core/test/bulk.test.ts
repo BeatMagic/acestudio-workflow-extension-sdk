@@ -32,13 +32,19 @@ import { ScriptedHostPeer, type ScriptedHostOptions } from "./support/host-peer.
  * message is what a human reads.
  */
 function refuses(call: () => unknown, code: "INVALID_ARG" | "MALFORMED_PAYLOAD", reason: RegExp): void {
-  expect(call).toThrowError(reason);
   let caught: unknown;
+  let returned = false;
   try {
     call();
+    returned = true;
   } catch (error) {
     caught = error;
   }
+  // Called once, so a helper reused by a test with side effects still describes
+  // one invocation.
+  expect(returned, "the call was expected to throw, and returned").toBe(false);
+  expect(caught).toBeInstanceOf(Error);
+  expect((caught as Error).message).toMatch(reason);
   expect(isCode(caught, code)).toBe(true);
 }
 

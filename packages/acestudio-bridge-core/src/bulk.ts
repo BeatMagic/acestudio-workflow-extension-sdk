@@ -247,13 +247,19 @@ function requireLittleEndian(dtype: Dtype): void {
   });
 }
 
-/** Base64 of `bytes`, in chunks small enough for `btoa`'s argument limit. */
+/**
+ * Base64 of `bytes`, in chunks small enough for `btoa`'s argument limit.
+ *
+ * The chunks are joined once rather than appended to a running string: this is
+ * the path built for payloads that are large by design, and one `join` does not
+ * depend on the engine optimizing repeated concatenation.
+ */
 function toBase64(bytes: Uint8Array): string {
-  let binary = "";
+  const chunks: string[] = [];
   for (let at = 0; at < bytes.length; at += BASE64_CHUNK) {
-    binary += String.fromCharCode(...bytes.subarray(at, at + BASE64_CHUNK));
+    chunks.push(String.fromCharCode(...bytes.subarray(at, at + BASE64_CHUNK)));
   }
-  return btoa(binary);
+  return btoa(chunks.join(""));
 }
 
 /**

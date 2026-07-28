@@ -209,6 +209,14 @@ function decodeSite(value: unknown, site: BulkFieldDescriptor): unknown {
     throw malformedPayload(site, `expected dtype ${site.dtype}, got ${dtype}`);
   }
   requireLittleEndian(dtype);
+  // `count` is a number by the check above, which is not yet a count. A
+  // fractional one whose product happens to match the byte length would pass
+  // the size check below and reach the view constructor, which rejects a buffer
+  // that is not a whole number of elements with a bare `RangeError` — past this
+  // module's promise that a bad payload arrives as `MALFORMED_PAYLOAD`.
+  if (!Number.isSafeInteger(blob.count) || blob.count < 0) {
+    throw malformedPayload(site, `count ${blob.count} is not a whole number of elements`);
+  }
 
   const bytes = fromBase64(blob.data, site);
   // The `count` check, and the reason `count` is on the wire at all: a blob that

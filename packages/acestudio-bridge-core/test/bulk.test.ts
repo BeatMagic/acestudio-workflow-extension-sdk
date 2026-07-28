@@ -140,6 +140,23 @@ describe("decoding a wire envelope", () => {
     );
   });
 
+  it("rejects a count that is not a whole number of elements", () => {
+    // The size check alone would pass this: 1.5 × 8 is 12, and the payload really
+    // is 12 bytes. What it is not is a whole number of doubles, and the view
+    // constructor says so with a bare RangeError — so the count is checked as a
+    // count first, and the caller still gets a MALFORMED_PAYLOAD to branch on.
+    refuses(
+      () => decodeBulkFields(at("points", "f64le"), { points: blob("f64le", new Uint8Array(12), 1.5) }),
+      "MALFORMED_PAYLOAD",
+      /count 1.5 is not a whole number of elements/,
+    );
+    refuses(
+      () => decodeBulkFields(at("points", "f64le"), { points: blob("f64le", new Uint8Array(8), -1) }),
+      "MALFORMED_PAYLOAD",
+      /count -1 is not a whole number of elements/,
+    );
+  });
+
   it("rejects a dtype the schema did not declare, and one nobody declares", () => {
     const wrong = blob("f32le", new Uint8Array(new Float32Array([1, 2]).buffer), 2);
     expect(() => decodeBulkFields(at("points", "f64le"), { points: wrong })).toThrowError(

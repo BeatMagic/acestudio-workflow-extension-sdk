@@ -3,10 +3,10 @@
 // The public capability bindings: the operations the capability registry
 // publishes (ADR 0094 §2), plus the scaffolding every consumer shares.
 //
-// Surface version: 3.0
+// Surface version: 3.1
 
 /** The contract surface version these bindings were generated from (`major.minor`). The handshake compares it against the host's: a major mismatch is a typed error at connect, minor drift is fine under the tolerant-reader rule. */
-export const SURFACE_VERSION = '3.0';
+export const SURFACE_VERSION = '3.1';
 
 /** Every canonical error code, as a string-literal union. `BridgeError.code` narrows against it, so error handling is exhaustiveness-checked by the compiler. Codes are a contract; the message beside one is not. */
 export type BridgeErrorCode =
@@ -16,7 +16,9 @@ export type BridgeErrorCode =
   | 'CAPABILITY_DENIED'
   | 'CAPABILITY_OUT_OF_SURFACE'
   | 'CHAIN_NOT_GROWN'
+  | 'COLLECT_FAILED'
   | 'CREATE_TIMEOUT'
+  | 'CREDIT_INSUFFICIENT'
   | 'EDITOR_NOT_READY'
   | 'EDIT_TIMEOUT'
   | 'EXPORT_IN_PROGRESS'
@@ -28,6 +30,8 @@ export type BridgeErrorCode =
   | 'INVALID_ARG'
   | 'IO_ERROR'
   | 'JOB_NOT_CANCELLABLE'
+  | 'MEMBERSHIP_REQUIRED'
+  | 'NEW_FAILED'
   | 'NOTE_OVERLAP'
   | 'NOT_FOUND'
   | 'NO_GESTURE'
@@ -38,8 +42,10 @@ export type BridgeErrorCode =
   | 'NO_SCENE'
   | 'NO_STATE'
   | 'NO_WINDOW'
+  | 'OPEN_FAILED'
   | 'PLAYBACK_START_FAILED'
   | 'RECORD_START_FAILED'
+  | 'SAVE_FAILED'
   | 'SCENARIO_FAILED'
   | 'SESSION_INVALID'
   | 'STALE_WRITE'
@@ -49,6 +55,7 @@ export type BridgeErrorCode =
   | 'UNKNOWN_CAPABILITY'
   | 'UNKNOWN_COMMAND'
   | 'UNKNOWN_SCENARIO'
+  | 'UNSAVED_CHANGES'
   | 'USER_BUSY';
 
 /** Element type and byte order of a bulk-data blob. Byte order is pinned in the contract — little-endian everywhere — so no consumer guesses it. */
@@ -100,10 +107,14 @@ export interface CallOptions {
     signal?: AbortSignal;
 }
 
-/** Options a mutating call additionally accepts — the remote-edit guardrails. Omitting `waitBusy` is fail-fast: a call landing mid-gesture answers `USER_BUSY` rather than queueing. Omitting `ifMatch` is an unguarded write. */
+/** Options a mutating call additionally accepts — the busy-gate guardrail. Omitting `waitBusy` is fail-fast: a call landing mid-gesture answers `USER_BUSY` rather than queueing. */
 export interface MutatingCallOptions extends CallOptions {
     /** Wait up to this many milliseconds for the user to finish before failing `USER_BUSY`. */
     waitBusy?: number;
+}
+
+/** Options a write that honors the stale-write precondition additionally accepts. Only those writes get `ifMatch`: an operation that has not opted into the fingerprint gate accepts a carried token and ignores it, so offering one here would type-check into a write that reads as guarded and is not. Omitting it is an unguarded write. */
+export interface PreconditionCallOptions extends MutatingCallOptions {
     /** The fingerprint from a prior read; the write fails `STALE_WRITE` if content changed since. */
     ifMatch?: Fingerprint;
 }
@@ -122,8 +133,14 @@ export interface OperationDescriptor {
     readonly ungated: boolean;
     /** True when the operation accepts the mutating guardrail options. */
     readonly mutating: boolean;
+    /** True when the operation checks a carried fingerprint, and so accepts `ifMatch`. The type above already refuses one elsewhere; the runtime reads this to refuse an untyped caller's too, rather than forward a token the host would accept and ignore. */
+    readonly fingerprintPrecondition: boolean;
     /** True when the binding takes a params object. An operation with no arguments is emitted as `method(options?)` instead, so a runtime binding these methods by position has to read this or it will send the caller's options as the payload. */
     readonly takesParams: boolean;
+    /** The pay gate the account must satisfy, absent when the operation is free. */
+    readonly entitlement?: string;
+    /** The `encoding` argument the runtime pins on this operation, absent when it declares none. The choice is not a caller's: bindings speak typed arrays, and `json` would change the payload shape under the same method. */
+    readonly bulkEncoding?: 'base64';
 }
 
 /** Stop listening. Calling it more than once is harmless; a subscription dropped this way never fires again, including for a notification already in flight. */
@@ -702,7 +719,7 @@ export interface ClipOperations {
      *
      * Requires the `clip.write` capability.
      */
-    replaceContent(params: ClipReplaceContentParams, options?: MutatingCallOptions): Promise<ClipReplaceContentResult>;
+    replaceContent(params: ClipReplaceContentParams, options?: PreconditionCallOptions): Promise<ClipReplaceContentResult>;
 }
 
 // --- convert ---------------------------------------------------------------
@@ -1437,38 +1454,74 @@ export interface NoteOperations {
      *
      * Requires the `note.write` capability.
      */
-    add(params: NoteAddParams, options?: MutatingCallOptions): Promise<NoteAddResult>;
+    add(params: NoteAddParams, options?: PreconditionCallOptions): Promise<NoteAddResult>;
 
     /**
      * Delete notes by id.
      *
      * Requires the `note.write` capability.
      */
-    delete(params: NoteDeleteParams, options?: MutatingCallOptions): Promise<NoteDeleteResult>;
+    delete(params: NoteDeleteParams, options?: PreconditionCallOptions): Promise<NoteDeleteResult>;
 
     /**
      * Move notes by id in time, in pitch, or both.
      *
      * Requires the `note.write` capability.
      */
-    move(params: NoteMoveParams, options?: MutatingCallOptions): Promise<NoteMoveResult>;
+    move(params: NoteMoveParams, options?: PreconditionCallOptions): Promise<NoteMoveResult>;
 
     /**
      * Set the duration of notes addressed by id.
      *
      * Requires the `note.write` capability.
      */
-    resize(params: NoteResizeParams, options?: MutatingCallOptions): Promise<NoteResizeResult>;
+    resize(params: NoteResizeParams, options?: PreconditionCallOptions): Promise<NoteResizeResult>;
 
     /**
      * Set the lyric (and optionally language) of Sing notes by id.
      *
      * Requires the `note.write` capability.
      */
-    setLyric(params: NoteSetLyricParams, options?: MutatingCallOptions): Promise<NoteSetLyricResult>;
+    setLyric(params: NoteSetLyricParams, options?: PreconditionCallOptions): Promise<NoteSetLyricResult>;
 }
 
 // --- project ---------------------------------------------------------------
+
+/** Arguments for `project collect-save`. */
+export interface ProjectCollectSaveParams {
+    /** Destination .acep path. Omit to collect into the current project and save in place (which needs a project that has been saved before). */
+    path?: string | null;
+}
+
+/** Success payload of `project collect-save`. */
+export interface ProjectCollectSaveResult {
+    /** `copied` = external media was pulled into the bundle; `noNeed` = every referenced file already lived inside it. */
+    collected: 'copied' | 'noNeed';
+    /** True for a just-created project that has never been saved. */
+    isNewProject: boolean;
+    /** True while the project lives in the temporary workspace rather than a saved bundle. */
+    isTempProject: boolean;
+    /** Project filename without extension. Empty for a temporary or never-saved project. */
+    projectName: string;
+    /** Absolute path of the project file. Empty for a temporary project. */
+    projectPath: string;
+    /** Where the project was actually written. A save wraps the requested path in a project folder, so this is the file to reopen -- not necessarily the path that was asked for. */
+    savedPath: string;
+}
+
+/** Success payload of `project dirty`. */
+export interface ProjectDirtyResult {
+    /** True when the project has changes not yet written to disk. */
+    dirty: boolean;
+    /** True for a just-created project that has never been saved. */
+    isNewProject: boolean;
+    /** True while the project lives in the temporary workspace rather than a saved bundle. */
+    isTempProject: boolean;
+    /** Project filename without extension. Empty for a temporary or never-saved project. */
+    projectName: string;
+    /** Absolute path of the project file. Empty for a temporary project. */
+    projectPath: string;
+}
 
 /** Success payload of `project info`. */
 export interface ProjectInfoResult {
@@ -1482,6 +1535,109 @@ export interface ProjectInfoResult {
     projectName: string;
 }
 
+/** Arguments for `project new`. */
+export interface ProjectNewParams {
+    /** Proceed even if the current project has unsaved changes, discarding them. Without this, a dirty project fails `UNSAVED_CHANGES`. */
+    discardChanges?: boolean;
+    /** Start from a song template archive (.acet) instead of an empty project. */
+    template?: string | null;
+}
+
+/** Success payload of `project new`. */
+export interface ProjectNewResult {
+    /** True for a just-created project that has never been saved. */
+    isNewProject: boolean;
+    /** True while the project lives in the temporary workspace rather than a saved bundle. */
+    isTempProject: boolean;
+    /** Project filename without extension. Empty for a temporary or never-saved project. */
+    projectName: string;
+    /** Absolute path of the project file. Empty for a temporary project. */
+    projectPath: string;
+}
+
+/** Arguments for `project open`. */
+export interface ProjectOpenParams {
+    /** Proceed even if the current project has unsaved changes, discarding them. Without this, a dirty project fails `UNSAVED_CHANGES`. */
+    discardChanges?: boolean;
+    /** Path to the .acep project file to open. */
+    path: string;
+}
+
+/** Success payload of `project open`. */
+export interface ProjectOpenResult {
+    /** True for a just-created project that has never been saved. */
+    isNewProject: boolean;
+    /** True while the project lives in the temporary workspace rather than a saved bundle. */
+    isTempProject: boolean;
+    /** Project filename without extension. Empty for a temporary or never-saved project. */
+    projectName: string;
+    /** Absolute path of the project file. Empty for a temporary project. */
+    projectPath: string;
+}
+
+/** Success payload of `project recent`. */
+export interface ProjectRecentResult {
+    /** Number of entries in `projects`. */
+    count: number;
+    /** Recently opened projects, most recently read first. */
+    projects: {
+        /** Whether the file is still on disk. A recent entry outlives the file it names. */
+        exists: boolean;
+        /** When the project was last opened, ISO 8601. Empty if the record carries no timestamp. */
+        lastRead: string;
+        /** Absolute path of the project file. */
+        path: string;
+        /** Project filename without extension. */
+        projectName: string;
+    }[];
+}
+
+/** Success payload of `project save`. */
+export interface ProjectSaveResult {
+    /** True for a just-created project that has never been saved. */
+    isNewProject: boolean;
+    /** True while the project lives in the temporary workspace rather than a saved bundle. */
+    isTempProject: boolean;
+    /** Project filename without extension. Empty for a temporary or never-saved project. */
+    projectName: string;
+    /** Absolute path of the project file. Empty for a temporary project. */
+    projectPath: string;
+    /** Where the project was actually written. A save wraps the requested path in a project folder, so this is the file to reopen -- not necessarily the path that was asked for. */
+    savedPath: string;
+}
+
+/** Arguments for `project save-as`. */
+export interface ProjectSaveAsParams {
+    /** Destination .acep path. The save wraps it in a project folder, so read `savedPath` from the result for the file that was actually written. */
+    path: string;
+}
+
+/** Success payload of `project save-as`. */
+export interface ProjectSaveAsResult {
+    /** True for a just-created project that has never been saved. */
+    isNewProject: boolean;
+    /** True while the project lives in the temporary workspace rather than a saved bundle. */
+    isTempProject: boolean;
+    /** Project filename without extension. Empty for a temporary or never-saved project. */
+    projectName: string;
+    /** Absolute path of the project file. Empty for a temporary project. */
+    projectPath: string;
+    /** Where the project was actually written. A save wraps the requested path in a project folder, so this is the file to reopen -- not necessarily the path that was asked for. */
+    savedPath: string;
+}
+
+/** Arguments for `project save-template`. */
+export interface ProjectSaveTemplateParams {
+    /** Destination .acet template path. */
+    path: string;
+}
+
+/** Success payload of `project save-template`. */
+export interface ProjectSaveTemplateResult {
+    /** Absolute path of the written .acet template archive. */
+    templatePath: string;
+}
+
 /** Success payload of `project synthesis-status`. */
 export interface ProjectSynthesisStatusResult {
     /** Whether content synthesis is currently in progress. */
@@ -1491,11 +1647,76 @@ export interface ProjectSynthesisStatusResult {
 /** The `project` operations, mirroring the canonical operation tree 1:1. */
 export interface ProjectOperations {
     /**
+     * Copy externally-referenced media into the bundle, then save.
+     *
+     * Requires the `project.lifecycle` capability.
+     */
+    collectSave(params: ProjectCollectSaveParams, options?: MutatingCallOptions): Promise<ProjectCollectSaveResult>;
+
+    /**
+     * Report whether the project has unsaved changes.
+     *
+     * Requires the `project.read` capability.
+     */
+    dirty(options?: CallOptions): Promise<ProjectDirtyResult>;
+
+    /**
      * Read basic project metadata: name, saved/temp state, and arrangement length.
      *
      * Requires the `project.read` capability.
      */
     info(options?: CallOptions): Promise<ProjectInfoResult>;
+
+    /**
+     * Reset to a fresh project, optionally from a song template.
+     *
+     * Requires the `project.lifecycle` capability.
+     */
+    'new'(params: ProjectNewParams, options?: MutatingCallOptions): Promise<ProjectNewResult>;
+
+    /**
+     * Open a project file, blocking until it is fully loaded.
+     *
+     * Requires the `project.lifecycle` capability.
+     */
+    open(params: ProjectOpenParams, options?: MutatingCallOptions): Promise<ProjectOpenResult>;
+
+    /**
+     * List recently opened projects, most recently read first.
+     *
+     * Requires the `project.read` capability.
+     */
+    recent(options?: CallOptions): Promise<ProjectRecentResult>;
+
+    /**
+     * Clear the recently-opened-projects history.
+     *
+     * Requires the `project.lifecycle` capability.
+     */
+    recentClear(options?: MutatingCallOptions): Promise<void>;
+
+    /**
+     * Save the project to its current path.
+     *
+     * Requires the `project.lifecycle` capability.
+     */
+    save(options?: MutatingCallOptions): Promise<ProjectSaveResult>;
+
+    /**
+     * Save the project to a new path and continue working there.
+     *
+     * Requires the `project.lifecycle` capability.
+     */
+    saveAs(params: ProjectSaveAsParams, options?: MutatingCallOptions): Promise<ProjectSaveAsResult>;
+
+    /**
+     * Export the project as a reusable song template (.acet).
+     *
+     * Requires the `project.lifecycle` capability.
+     *
+     * Pay-gated on `membership`: an account that does not satisfy it is refused, without a purchase prompt.
+     */
+    saveTemplate(params: ProjectSaveTemplateParams, options?: MutatingCallOptions): Promise<ProjectSaveTemplateResult>;
 
     /**
      * Read whether content synthesis is currently in progress.
@@ -2167,7 +2388,7 @@ export interface TransportOperations {
      *
      * Requires the `transport.control` capability.
      */
-    setLoop(params: TransportSetLoopParams, options?: MutatingCallOptions): Promise<void>;
+    setLoop(params: TransportSetLoopParams, options?: PreconditionCallOptions): Promise<void>;
 
     /**
      * Read the current transport state and playback head position.
@@ -2469,76 +2690,85 @@ export interface PublicBindings {
 
 /** Every operation in this artifact, sorted by path. */
 export const OPERATIONS = [
-    { path: 'caret get', domain: 'caret', method: 'get', capability: 'caret.read', ungated: false, mutating: false, takesParams: true },
-    { path: 'caret set', domain: 'caret', method: 'set', capability: 'caret.write', ungated: false, mutating: true, takesParams: true },
-    { path: 'clip audio-content', domain: 'clip', method: 'audioContent', capability: 'clip.read', ungated: false, mutating: false, takesParams: true },
-    { path: 'clip create', domain: 'clip', method: 'create', capability: 'clip.write', ungated: false, mutating: true, takesParams: true },
-    { path: 'clip get', domain: 'clip', method: 'get', capability: 'clip.read', ungated: false, mutating: false, takesParams: true },
-    { path: 'clip list', domain: 'clip', method: 'list', capability: 'clip.read', ungated: false, mutating: false, takesParams: true },
-    { path: 'clip lyrics', domain: 'clip', method: 'lyrics', capability: 'clip.read', ungated: false, mutating: false, takesParams: true },
-    { path: 'clip move-edges', domain: 'clip', method: 'moveEdges', capability: 'clip.write', ungated: false, mutating: true, takesParams: true },
-    { path: 'clip note-content', domain: 'clip', method: 'noteContent', capability: 'clip.read', ungated: false, mutating: false, takesParams: true },
-    { path: 'clip replace-content', domain: 'clip', method: 'replaceContent', capability: 'clip.write', ungated: false, mutating: true, takesParams: true },
-    { path: 'convert editor-to-global', domain: 'convert', method: 'editorToGlobal', capability: 'convert.editor-to-global', ungated: true, mutating: false, takesParams: true },
-    { path: 'convert global-to-editor', domain: 'convert', method: 'globalToEditor', capability: 'convert.global-to-editor', ungated: true, mutating: false, takesParams: true },
-    { path: 'convert measure-to-tick', domain: 'convert', method: 'measureToTick', capability: 'convert.measure-to-tick', ungated: true, mutating: false, takesParams: true },
-    { path: 'convert tick-to-measure', domain: 'convert', method: 'tickToMeasure', capability: 'convert.tick-to-measure', ungated: true, mutating: false, takesParams: true },
-    { path: 'convert tick-to-time', domain: 'convert', method: 'tickToTime', capability: 'convert.tick-to-time', ungated: true, mutating: false, takesParams: true },
-    { path: 'convert time-to-tick', domain: 'convert', method: 'timeToTick', capability: 'convert.time-to-tick', ungated: true, mutating: false, takesParams: true },
-    { path: 'device current', domain: 'device', method: 'current', capability: 'device.read', ungated: false, mutating: false, takesParams: false },
-    { path: 'device list', domain: 'device', method: 'list', capability: 'device.read', ungated: false, mutating: false, takesParams: false },
-    { path: 'editor current-clip', domain: 'editor', method: 'currentClip', capability: 'editor.read', ungated: false, mutating: false, takesParams: false },
-    { path: 'editor open', domain: 'editor', method: 'open', capability: 'editor.write', ungated: false, mutating: true, takesParams: false },
-    { path: 'editor status', domain: 'editor', method: 'status', capability: 'editor.read', ungated: false, mutating: false, takesParams: false },
-    { path: 'editor tick-range', domain: 'editor', method: 'tickRange', capability: 'editor.read', ungated: false, mutating: false, takesParams: false },
-    { path: 'job cancel', domain: 'job', method: 'cancel', capability: 'job.control', ungated: false, mutating: true, takesParams: true },
-    { path: 'job discard-result', domain: 'job', method: 'discardResult', capability: 'job.control', ungated: false, mutating: true, takesParams: true },
-    { path: 'job get', domain: 'job', method: 'get', capability: 'job.read', ungated: false, mutating: false, takesParams: true },
-    { path: 'job list', domain: 'job', method: 'list', capability: 'job.read', ungated: false, mutating: false, takesParams: true },
-    { path: 'job place', domain: 'job', method: 'place', capability: 'clip.write', ungated: false, mutating: true, takesParams: true },
-    { path: 'job results', domain: 'job', method: 'results', capability: 'job.read', ungated: false, mutating: false, takesParams: true },
-    { path: 'job wait', domain: 'job', method: 'wait', capability: 'job.read', ungated: false, mutating: false, takesParams: true },
-    { path: 'mixer get', domain: 'mixer', method: 'get', capability: 'ui.view', ungated: false, mutating: false, takesParams: false },
-    { path: 'mixer hide', domain: 'mixer', method: 'hide', capability: 'ui.view', ungated: false, mutating: true, takesParams: false },
-    { path: 'mixer show', domain: 'mixer', method: 'show', capability: 'ui.view', ungated: false, mutating: true, takesParams: false },
-    { path: 'note add', domain: 'note', method: 'add', capability: 'note.write', ungated: false, mutating: true, takesParams: true },
-    { path: 'note delete', domain: 'note', method: 'delete', capability: 'note.write', ungated: false, mutating: true, takesParams: true },
-    { path: 'note move', domain: 'note', method: 'move', capability: 'note.write', ungated: false, mutating: true, takesParams: true },
-    { path: 'note resize', domain: 'note', method: 'resize', capability: 'note.write', ungated: false, mutating: true, takesParams: true },
-    { path: 'note set-lyric', domain: 'note', method: 'setLyric', capability: 'note.write', ungated: false, mutating: true, takesParams: true },
-    { path: 'project info', domain: 'project', method: 'info', capability: 'project.read', ungated: false, mutating: false, takesParams: false },
-    { path: 'project synthesis-status', domain: 'project', method: 'synthesisStatus', capability: 'project.read', ungated: false, mutating: false, takesParams: false },
-    { path: 'selection get', domain: 'selection', method: 'get', capability: 'selection.read', ungated: false, mutating: false, takesParams: true },
-    { path: 'selection set', domain: 'selection', method: 'set', capability: 'selection.write', ungated: false, mutating: true, takesParams: true },
-    { path: 'special-tracks get', domain: 'special-tracks', method: 'get', capability: 'ui.view', ungated: false, mutating: false, takesParams: false },
-    { path: 'special-tracks hide', domain: 'special-tracks', method: 'hide', capability: 'ui.view', ungated: false, mutating: true, takesParams: true },
-    { path: 'special-tracks show', domain: 'special-tracks', method: 'show', capability: 'ui.view', ungated: false, mutating: true, takesParams: true },
-    { path: 'tempo get', domain: 'tempo', method: 'get', capability: 'tempo.read', ungated: false, mutating: false, takesParams: false },
-    { path: 'tempo set', domain: 'tempo', method: 'set', capability: 'tempo.write', ungated: false, mutating: true, takesParams: true },
-    { path: 'timesig get', domain: 'timesig', method: 'get', capability: 'timesig.read', ungated: false, mutating: false, takesParams: false },
-    { path: 'timesig set', domain: 'timesig', method: 'set', capability: 'timesig.write', ungated: false, mutating: true, takesParams: true },
-    { path: 'track delete', domain: 'track', method: 'delete', capability: 'track.write', ungated: false, mutating: true, takesParams: false },
-    { path: 'track get', domain: 'track', method: 'get', capability: 'track.read', ungated: false, mutating: false, takesParams: true },
-    { path: 'track list', domain: 'track', method: 'list', capability: 'track.read', ungated: false, mutating: false, takesParams: false },
-    { path: 'track rename', domain: 'track', method: 'rename', capability: 'track.write', ungated: false, mutating: true, takesParams: true },
-    { path: 'track set', domain: 'track', method: 'set', capability: 'track.write', ungated: false, mutating: true, takesParams: true },
-    { path: 'track set-record', domain: 'track', method: 'setRecord', capability: 'track.write', ungated: false, mutating: true, takesParams: true },
-    { path: 'track singer-recipe', domain: 'track', method: 'singerRecipe', capability: 'track.read', ungated: false, mutating: false, takesParams: true },
-    { path: 'transport loop', domain: 'transport', method: 'loop', capability: 'transport.state', ungated: false, mutating: false, takesParams: false },
-    { path: 'transport metronome', domain: 'transport', method: 'metronome', capability: 'transport.control', ungated: false, mutating: true, takesParams: true },
-    { path: 'transport play', domain: 'transport', method: 'play', capability: 'transport.control', ungated: false, mutating: true, takesParams: false },
-    { path: 'transport seek', domain: 'transport', method: 'seek', capability: 'transport.control', ungated: false, mutating: true, takesParams: true },
-    { path: 'transport set-loop', domain: 'transport', method: 'setLoop', capability: 'transport.control', ungated: false, mutating: true, takesParams: true },
-    { path: 'transport state', domain: 'transport', method: 'state', capability: 'transport.state', ungated: false, mutating: false, takesParams: false },
-    { path: 'transport stop', domain: 'transport', method: 'stop', capability: 'transport.control', ungated: false, mutating: true, takesParams: false },
-    { path: 'transport toggle', domain: 'transport', method: 'toggle', capability: 'transport.control', ungated: false, mutating: true, takesParams: false },
-    { path: 'voice collect', domain: 'voice', method: 'collect', capability: 'voice.write', ungated: false, mutating: true, takesParams: true },
-    { path: 'voice community-list', domain: 'voice', method: 'communityList', capability: 'voice.read', ungated: false, mutating: false, takesParams: true },
-    { path: 'voice community-pages', domain: 'voice', method: 'communityPages', capability: 'voice.read', ungated: false, mutating: false, takesParams: true },
-    { path: 'voice list', domain: 'voice', method: 'list', capability: 'voice.read', ungated: false, mutating: false, takesParams: true },
-    { path: 'voice load', domain: 'voice', method: 'load', capability: 'voice.write', ungated: false, mutating: true, takesParams: true },
-    { path: 'voice tags', domain: 'voice', method: 'tags', capability: 'voice.read', ungated: false, mutating: false, takesParams: true },
-    { path: 'voice unload', domain: 'voice', method: 'unload', capability: 'voice.write', ungated: false, mutating: true, takesParams: true },
+    { path: 'caret get', domain: 'caret', method: 'get', capability: 'caret.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'caret set', domain: 'caret', method: 'set', capability: 'caret.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip audio-content', domain: 'clip', method: 'audioContent', capability: 'clip.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip create', domain: 'clip', method: 'create', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip get', domain: 'clip', method: 'get', capability: 'clip.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip list', domain: 'clip', method: 'list', capability: 'clip.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip lyrics', domain: 'clip', method: 'lyrics', capability: 'clip.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip move-edges', domain: 'clip', method: 'moveEdges', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip note-content', domain: 'clip', method: 'noteContent', capability: 'clip.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip replace-content', domain: 'clip', method: 'replaceContent', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'convert editor-to-global', domain: 'convert', method: 'editorToGlobal', capability: 'convert.editor-to-global', ungated: true, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'convert global-to-editor', domain: 'convert', method: 'globalToEditor', capability: 'convert.global-to-editor', ungated: true, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'convert measure-to-tick', domain: 'convert', method: 'measureToTick', capability: 'convert.measure-to-tick', ungated: true, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'convert tick-to-measure', domain: 'convert', method: 'tickToMeasure', capability: 'convert.tick-to-measure', ungated: true, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'convert tick-to-time', domain: 'convert', method: 'tickToTime', capability: 'convert.tick-to-time', ungated: true, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'convert time-to-tick', domain: 'convert', method: 'timeToTick', capability: 'convert.time-to-tick', ungated: true, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'device current', domain: 'device', method: 'current', capability: 'device.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'device list', domain: 'device', method: 'list', capability: 'device.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'editor current-clip', domain: 'editor', method: 'currentClip', capability: 'editor.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'editor open', domain: 'editor', method: 'open', capability: 'editor.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'editor status', domain: 'editor', method: 'status', capability: 'editor.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'editor tick-range', domain: 'editor', method: 'tickRange', capability: 'editor.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'job cancel', domain: 'job', method: 'cancel', capability: 'job.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'job discard-result', domain: 'job', method: 'discardResult', capability: 'job.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'job get', domain: 'job', method: 'get', capability: 'job.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'job list', domain: 'job', method: 'list', capability: 'job.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'job place', domain: 'job', method: 'place', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'job results', domain: 'job', method: 'results', capability: 'job.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'job wait', domain: 'job', method: 'wait', capability: 'job.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'mixer get', domain: 'mixer', method: 'get', capability: 'ui.view', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'mixer hide', domain: 'mixer', method: 'hide', capability: 'ui.view', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'mixer show', domain: 'mixer', method: 'show', capability: 'ui.view', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'note add', domain: 'note', method: 'add', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'note delete', domain: 'note', method: 'delete', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'note move', domain: 'note', method: 'move', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'note resize', domain: 'note', method: 'resize', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'note set-lyric', domain: 'note', method: 'setLyric', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'project collect-save', domain: 'project', method: 'collectSave', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'project dirty', domain: 'project', method: 'dirty', capability: 'project.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'project info', domain: 'project', method: 'info', capability: 'project.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'project new', domain: 'project', method: 'new', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'project open', domain: 'project', method: 'open', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'project recent', domain: 'project', method: 'recent', capability: 'project.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'project recent-clear', domain: 'project', method: 'recentClear', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'project save', domain: 'project', method: 'save', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'project save-as', domain: 'project', method: 'saveAs', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'project save-template', domain: 'project', method: 'saveTemplate', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'membership' },
+    { path: 'project synthesis-status', domain: 'project', method: 'synthesisStatus', capability: 'project.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'selection get', domain: 'selection', method: 'get', capability: 'selection.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'selection set', domain: 'selection', method: 'set', capability: 'selection.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'special-tracks get', domain: 'special-tracks', method: 'get', capability: 'ui.view', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'special-tracks hide', domain: 'special-tracks', method: 'hide', capability: 'ui.view', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'special-tracks show', domain: 'special-tracks', method: 'show', capability: 'ui.view', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'tempo get', domain: 'tempo', method: 'get', capability: 'tempo.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'tempo set', domain: 'tempo', method: 'set', capability: 'tempo.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'timesig get', domain: 'timesig', method: 'get', capability: 'timesig.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'timesig set', domain: 'timesig', method: 'set', capability: 'timesig.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'track delete', domain: 'track', method: 'delete', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'track get', domain: 'track', method: 'get', capability: 'track.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'track list', domain: 'track', method: 'list', capability: 'track.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'track rename', domain: 'track', method: 'rename', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'track set', domain: 'track', method: 'set', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'track set-record', domain: 'track', method: 'setRecord', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'track singer-recipe', domain: 'track', method: 'singerRecipe', capability: 'track.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'transport loop', domain: 'transport', method: 'loop', capability: 'transport.state', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'transport metronome', domain: 'transport', method: 'metronome', capability: 'transport.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'transport play', domain: 'transport', method: 'play', capability: 'transport.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'transport seek', domain: 'transport', method: 'seek', capability: 'transport.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'transport set-loop', domain: 'transport', method: 'setLoop', capability: 'transport.control', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'transport state', domain: 'transport', method: 'state', capability: 'transport.state', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'transport stop', domain: 'transport', method: 'stop', capability: 'transport.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'transport toggle', domain: 'transport', method: 'toggle', capability: 'transport.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'voice collect', domain: 'voice', method: 'collect', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'voice community-list', domain: 'voice', method: 'communityList', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'voice community-pages', domain: 'voice', method: 'communityPages', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'voice list', domain: 'voice', method: 'list', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'voice load', domain: 'voice', method: 'load', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'voice tags', domain: 'voice', method: 'tags', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'voice unload', domain: 'voice', method: 'unload', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
 ] as const satisfies readonly OperationDescriptor[];
 
 /** Every observable channel in this artifact, sorted by channel. The runtime builds one subscription per row and guards it with the row's capability; a channel absent from this table is not observable from this artifact at all. */
@@ -2579,7 +2809,16 @@ export const REQUIRED_TOKENS = {
     'note move': 'note.write',
     'note resize': 'note.write',
     'note set-lyric': 'note.write',
+    'project collect-save': 'project.lifecycle',
+    'project dirty': 'project.read',
     'project info': 'project.read',
+    'project new': 'project.lifecycle',
+    'project open': 'project.lifecycle',
+    'project recent': 'project.read',
+    'project recent-clear': 'project.lifecycle',
+    'project save': 'project.lifecycle',
+    'project save-as': 'project.lifecycle',
+    'project save-template': 'project.lifecycle',
     'project synthesis-status': 'project.read',
     'selection get': 'selection.read',
     'selection set': 'selection.write',

@@ -204,7 +204,7 @@ Requires the `clip.write` capability.
 
 ##### options?
 
-[`MutatingCallOptions`](MutatingCallOptions.md)
+[`PreconditionCallOptions`](PreconditionCallOptions.md)
 
 #### Returns
 

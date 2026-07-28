@@ -33,7 +33,7 @@ export class BridgeError<C extends AnyBridgeErrorCode = AnyBridgeErrorCode> exte
 }
 
 // @public
-export type BridgeErrorCode = 'ALREADY_RECORDING' | 'BAD_ARGS' | 'BRIDGE_UNREACHABLE' | 'CAPABILITY_DENIED' | 'CAPABILITY_OUT_OF_SURFACE' | 'CHAIN_NOT_GROWN' | 'CREATE_TIMEOUT' | 'EDITOR_NOT_READY' | 'EDIT_TIMEOUT' | 'EXPORT_IN_PROGRESS' | 'EXPORT_START_FAILED' | 'FLUSH_TIMEOUT' | 'GESTURE_HELD' | 'HANDLER_FAILED' | 'INSERT_FAILED' | 'INVALID_ARG' | 'IO_ERROR' | 'JOB_NOT_CANCELLABLE' | 'NOTE_OVERLAP' | 'NOT_FOUND' | 'NO_GESTURE' | 'NO_MASTER_CHAIN' | 'NO_PATTERN_EDIT_OPEN' | 'NO_PROJECT' | 'NO_PROJECT_OPEN' | 'NO_SCENE' | 'NO_STATE' | 'NO_WINDOW' | 'PLAYBACK_START_FAILED' | 'RECORD_START_FAILED' | 'SCENARIO_FAILED' | 'SESSION_INVALID' | 'STALE_WRITE' | 'TIMEOUT' | 'TIME_UNIT_REQUIRED' | 'UNAVAILABLE' | 'UNKNOWN_CAPABILITY' | 'UNKNOWN_COMMAND' | 'UNKNOWN_SCENARIO' | 'USER_BUSY';
+export type BridgeErrorCode = 'ALREADY_RECORDING' | 'BAD_ARGS' | 'BRIDGE_UNREACHABLE' | 'CAPABILITY_DENIED' | 'CAPABILITY_OUT_OF_SURFACE' | 'CHAIN_NOT_GROWN' | 'COLLECT_FAILED' | 'CREATE_TIMEOUT' | 'CREDIT_INSUFFICIENT' | 'EDITOR_NOT_READY' | 'EDIT_TIMEOUT' | 'EXPORT_IN_PROGRESS' | 'EXPORT_START_FAILED' | 'FLUSH_TIMEOUT' | 'GESTURE_HELD' | 'HANDLER_FAILED' | 'INSERT_FAILED' | 'INVALID_ARG' | 'IO_ERROR' | 'JOB_NOT_CANCELLABLE' | 'MEMBERSHIP_REQUIRED' | 'NEW_FAILED' | 'NOTE_OVERLAP' | 'NOT_FOUND' | 'NO_GESTURE' | 'NO_MASTER_CHAIN' | 'NO_PATTERN_EDIT_OPEN' | 'NO_PROJECT' | 'NO_PROJECT_OPEN' | 'NO_SCENE' | 'NO_STATE' | 'NO_WINDOW' | 'OPEN_FAILED' | 'PLAYBACK_START_FAILED' | 'RECORD_START_FAILED' | 'SAVE_FAILED' | 'SCENARIO_FAILED' | 'SESSION_INVALID' | 'STALE_WRITE' | 'TIMEOUT' | 'TIME_UNIT_REQUIRED' | 'UNAVAILABLE' | 'UNKNOWN_CAPABILITY' | 'UNKNOWN_COMMAND' | 'UNKNOWN_SCENARIO' | 'UNSAVED_CHANGES' | 'USER_BUSY';
 
 // @public
 export interface BridgeErrorDetails {
@@ -368,7 +368,7 @@ export interface ClipOperations {
     lyrics(params: ClipLyricsParams, options?: CallOptions): Promise<ClipLyricsResult>;
     moveEdges(params: ClipMoveEdgesParams, options?: MutatingCallOptions): Promise<ClipMoveEdgesResult>;
     noteContent(params: ClipNoteContentParams, options?: CallOptions): Promise<ClipNoteContentResult>;
-    replaceContent(params: ClipReplaceContentParams, options?: MutatingCallOptions): Promise<ClipReplaceContentResult>;
+    replaceContent(params: ClipReplaceContentParams, options?: PreconditionCallOptions): Promise<ClipReplaceContentResult>;
 }
 
 // @public
@@ -835,7 +835,6 @@ export interface MixerOperations {
 
 // @public
 export interface MutatingCallOptions extends CallOptions {
-    ifMatch?: Fingerprint;
     waitBusy?: number;
 }
 
@@ -898,11 +897,11 @@ export interface NoteMoveResult {
 
 // @public
 export interface NoteOperations {
-    add(params: NoteAddParams, options?: MutatingCallOptions): Promise<NoteAddResult>;
-    delete(params: NoteDeleteParams, options?: MutatingCallOptions): Promise<NoteDeleteResult>;
-    move(params: NoteMoveParams, options?: MutatingCallOptions): Promise<NoteMoveResult>;
-    resize(params: NoteResizeParams, options?: MutatingCallOptions): Promise<NoteResizeResult>;
-    setLyric(params: NoteSetLyricParams, options?: MutatingCallOptions): Promise<NoteSetLyricResult>;
+    add(params: NoteAddParams, options?: PreconditionCallOptions): Promise<NoteAddResult>;
+    delete(params: NoteDeleteParams, options?: PreconditionCallOptions): Promise<NoteDeleteResult>;
+    move(params: NoteMoveParams, options?: PreconditionCallOptions): Promise<NoteMoveResult>;
+    resize(params: NoteResizeParams, options?: PreconditionCallOptions): Promise<NoteResizeResult>;
+    setLyric(params: NoteSetLyricParams, options?: PreconditionCallOptions): Promise<NoteSetLyricResult>;
 }
 
 // @public
@@ -967,8 +966,11 @@ export class OperationClient {
 
 // @public
 export interface OperationDescriptor {
+    readonly bulkEncoding?: 'base64';
     readonly capability: string;
     readonly domain: string;
+    readonly entitlement?: string;
+    readonly fingerprintPrecondition: boolean;
     readonly method: string;
     readonly mutating: boolean;
     readonly path: string;
@@ -996,6 +998,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "caret.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "caret set";
@@ -1004,6 +1007,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "caret.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "clip audio-content";
@@ -1012,6 +1016,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "clip.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "clip create";
@@ -1020,6 +1025,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "clip.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "clip get";
@@ -1028,6 +1034,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "clip.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "clip list";
@@ -1036,6 +1043,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "clip.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "clip lyrics";
@@ -1044,6 +1052,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "clip.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "clip move-edges";
@@ -1052,6 +1061,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "clip.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "clip note-content";
@@ -1060,6 +1070,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "clip.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "clip replace-content";
@@ -1068,6 +1079,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "clip.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: true;
     readonly takesParams: true;
 }, {
     readonly path: "convert editor-to-global";
@@ -1076,6 +1088,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "convert.editor-to-global";
     readonly ungated: true;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "convert global-to-editor";
@@ -1084,6 +1097,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "convert.global-to-editor";
     readonly ungated: true;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "convert measure-to-tick";
@@ -1092,6 +1106,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "convert.measure-to-tick";
     readonly ungated: true;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "convert tick-to-measure";
@@ -1100,6 +1115,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "convert.tick-to-measure";
     readonly ungated: true;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "convert tick-to-time";
@@ -1108,6 +1124,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "convert.tick-to-time";
     readonly ungated: true;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "convert time-to-tick";
@@ -1116,6 +1133,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "convert.time-to-tick";
     readonly ungated: true;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "device current";
@@ -1124,6 +1142,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "device.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
     readonly path: "device list";
@@ -1132,6 +1151,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "device.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
     readonly path: "editor current-clip";
@@ -1140,6 +1160,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "editor.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
     readonly path: "editor open";
@@ -1148,6 +1169,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "editor.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
     readonly path: "editor status";
@@ -1156,6 +1178,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "editor.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
     readonly path: "editor tick-range";
@@ -1164,6 +1187,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "editor.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
     readonly path: "job cancel";
@@ -1172,6 +1196,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "job.control";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "job discard-result";
@@ -1180,6 +1205,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "job.control";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "job get";
@@ -1188,6 +1214,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "job.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "job list";
@@ -1196,6 +1223,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "job.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "job place";
@@ -1204,6 +1232,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "clip.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "job results";
@@ -1212,6 +1241,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "job.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "job wait";
@@ -1220,6 +1250,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "job.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "mixer get";
@@ -1228,6 +1259,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "ui.view";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
     readonly path: "mixer hide";
@@ -1236,6 +1268,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "ui.view";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
     readonly path: "mixer show";
@@ -1244,6 +1277,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "ui.view";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
     readonly path: "note add";
@@ -1252,6 +1286,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "note.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: true;
     readonly takesParams: true;
 }, {
     readonly path: "note delete";
@@ -1260,6 +1295,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "note.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: true;
     readonly takesParams: true;
 }, {
     readonly path: "note move";
@@ -1268,6 +1304,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "note.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: true;
     readonly takesParams: true;
 }, {
     readonly path: "note resize";
@@ -1276,6 +1313,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "note.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: true;
     readonly takesParams: true;
 }, {
     readonly path: "note set-lyric";
@@ -1284,7 +1322,26 @@ export const OPERATIONS: readonly [{
     readonly capability: "note.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: true;
     readonly takesParams: true;
+}, {
+    readonly path: "project collect-save";
+    readonly domain: "project";
+    readonly method: "collectSave";
+    readonly capability: "project.lifecycle";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "project dirty";
+    readonly domain: "project";
+    readonly method: "dirty";
+    readonly capability: "project.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: false;
 }, {
     readonly path: "project info";
     readonly domain: "project";
@@ -1292,7 +1349,72 @@ export const OPERATIONS: readonly [{
     readonly capability: "project.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: false;
+}, {
+    readonly path: "project new";
+    readonly domain: "project";
+    readonly method: "new";
+    readonly capability: "project.lifecycle";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "project open";
+    readonly domain: "project";
+    readonly method: "open";
+    readonly capability: "project.lifecycle";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "project recent";
+    readonly domain: "project";
+    readonly method: "recent";
+    readonly capability: "project.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "project recent-clear";
+    readonly domain: "project";
+    readonly method: "recentClear";
+    readonly capability: "project.lifecycle";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "project save";
+    readonly domain: "project";
+    readonly method: "save";
+    readonly capability: "project.lifecycle";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "project save-as";
+    readonly domain: "project";
+    readonly method: "saveAs";
+    readonly capability: "project.lifecycle";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "project save-template";
+    readonly domain: "project";
+    readonly method: "saveTemplate";
+    readonly capability: "project.lifecycle";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+    readonly entitlement: "membership";
 }, {
     readonly path: "project synthesis-status";
     readonly domain: "project";
@@ -1300,6 +1422,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "project.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
     readonly path: "selection get";
@@ -1308,6 +1431,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "selection.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "selection set";
@@ -1316,6 +1440,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "selection.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "special-tracks get";
@@ -1324,6 +1449,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "ui.view";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
     readonly path: "special-tracks hide";
@@ -1332,6 +1458,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "ui.view";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "special-tracks show";
@@ -1340,6 +1467,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "ui.view";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "tempo get";
@@ -1348,6 +1476,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "tempo.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
     readonly path: "tempo set";
@@ -1356,6 +1485,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "tempo.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "timesig get";
@@ -1364,6 +1494,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "timesig.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
     readonly path: "timesig set";
@@ -1372,6 +1503,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "timesig.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "track delete";
@@ -1380,6 +1512,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "track.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
     readonly path: "track get";
@@ -1388,6 +1521,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "track.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "track list";
@@ -1396,6 +1530,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "track.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
     readonly path: "track rename";
@@ -1404,6 +1539,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "track.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "track set";
@@ -1412,6 +1548,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "track.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "track set-record";
@@ -1420,6 +1557,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "track.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "track singer-recipe";
@@ -1428,6 +1566,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "track.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "transport loop";
@@ -1436,6 +1575,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "transport.state";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
     readonly path: "transport metronome";
@@ -1444,6 +1584,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "transport.control";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "transport play";
@@ -1452,6 +1593,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "transport.control";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
     readonly path: "transport seek";
@@ -1460,6 +1602,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "transport.control";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "transport set-loop";
@@ -1468,6 +1611,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "transport.control";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: true;
     readonly takesParams: true;
 }, {
     readonly path: "transport state";
@@ -1476,6 +1620,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "transport.state";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
     readonly path: "transport stop";
@@ -1484,6 +1629,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "transport.control";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
     readonly path: "transport toggle";
@@ -1492,6 +1638,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "transport.control";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
     readonly path: "voice collect";
@@ -1500,6 +1647,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "voice.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "voice community-list";
@@ -1508,6 +1656,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "voice.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "voice community-pages";
@@ -1516,6 +1665,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "voice.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "voice list";
@@ -1524,6 +1674,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "voice.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "voice load";
@@ -1532,6 +1683,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "voice.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "voice tags";
@@ -1540,6 +1692,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "voice.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "voice unload";
@@ -1548,6 +1701,7 @@ export const OPERATIONS: readonly [{
     readonly capability: "voice.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }];
 
@@ -1567,6 +1721,11 @@ export interface PingResult {
 }
 
 // @public
+export interface PreconditionCallOptions extends MutatingCallOptions {
+    ifMatch?: Fingerprint;
+}
+
+// @public
 export type ProfileName = keyof typeof PROFILES;
 
 // @public
@@ -1582,6 +1741,30 @@ export type ProfileScopedBindings<P extends ProfileName> = ScopedBindings<Profil
 export type ProfileTokens<P extends ProfileName> = (typeof PROFILES)[P][number];
 
 // @public
+export interface ProjectCollectSaveParams {
+    path?: string | null;
+}
+
+// @public
+export interface ProjectCollectSaveResult {
+    collected: 'copied' | 'noNeed';
+    isNewProject: boolean;
+    isTempProject: boolean;
+    projectName: string;
+    projectPath: string;
+    savedPath: string;
+}
+
+// @public
+export interface ProjectDirtyResult {
+    dirty: boolean;
+    isNewProject: boolean;
+    isTempProject: boolean;
+    projectName: string;
+    projectPath: string;
+}
+
+// @public
 export interface ProjectInfoResult {
     duration: number;
     isNewProject: boolean;
@@ -1590,9 +1773,90 @@ export interface ProjectInfoResult {
 }
 
 // @public
+export interface ProjectNewParams {
+    discardChanges?: boolean;
+    template?: string | null;
+}
+
+// @public
+export interface ProjectNewResult {
+    isNewProject: boolean;
+    isTempProject: boolean;
+    projectName: string;
+    projectPath: string;
+}
+
+// @public
+export interface ProjectOpenParams {
+    discardChanges?: boolean;
+    path: string;
+}
+
+// @public
+export interface ProjectOpenResult {
+    isNewProject: boolean;
+    isTempProject: boolean;
+    projectName: string;
+    projectPath: string;
+}
+
+// @public
 export interface ProjectOperations {
+    collectSave(params: ProjectCollectSaveParams, options?: MutatingCallOptions): Promise<ProjectCollectSaveResult>;
+    dirty(options?: CallOptions): Promise<ProjectDirtyResult>;
     info(options?: CallOptions): Promise<ProjectInfoResult>;
+    'new'(params: ProjectNewParams, options?: MutatingCallOptions): Promise<ProjectNewResult>;
+    open(params: ProjectOpenParams, options?: MutatingCallOptions): Promise<ProjectOpenResult>;
+    recent(options?: CallOptions): Promise<ProjectRecentResult>;
+    recentClear(options?: MutatingCallOptions): Promise<void>;
+    save(options?: MutatingCallOptions): Promise<ProjectSaveResult>;
+    saveAs(params: ProjectSaveAsParams, options?: MutatingCallOptions): Promise<ProjectSaveAsResult>;
+    saveTemplate(params: ProjectSaveTemplateParams, options?: MutatingCallOptions): Promise<ProjectSaveTemplateResult>;
     synthesisStatus(options?: CallOptions): Promise<ProjectSynthesisStatusResult>;
+}
+
+// @public
+export interface ProjectRecentResult {
+    count: number;
+    projects: {
+        exists: boolean;
+        lastRead: string;
+        path: string;
+        projectName: string;
+    }[];
+}
+
+// @public
+export interface ProjectSaveAsParams {
+    path: string;
+}
+
+// @public
+export interface ProjectSaveAsResult {
+    isNewProject: boolean;
+    isTempProject: boolean;
+    projectName: string;
+    projectPath: string;
+    savedPath: string;
+}
+
+// @public
+export interface ProjectSaveResult {
+    isNewProject: boolean;
+    isTempProject: boolean;
+    projectName: string;
+    projectPath: string;
+    savedPath: string;
+}
+
+// @public
+export interface ProjectSaveTemplateParams {
+    path: string;
+}
+
+// @public
+export interface ProjectSaveTemplateResult {
+    templatePath: string;
 }
 
 // @public
@@ -1681,7 +1945,16 @@ export const REQUIRED_TOKENS: {
     readonly 'note move': "note.write";
     readonly 'note resize': "note.write";
     readonly 'note set-lyric': "note.write";
+    readonly 'project collect-save': "project.lifecycle";
+    readonly 'project dirty': "project.read";
     readonly 'project info': "project.read";
+    readonly 'project new': "project.lifecycle";
+    readonly 'project open': "project.lifecycle";
+    readonly 'project recent': "project.read";
+    readonly 'project recent-clear': "project.lifecycle";
+    readonly 'project save': "project.lifecycle";
+    readonly 'project save-as': "project.lifecycle";
+    readonly 'project save-template': "project.lifecycle";
     readonly 'project synthesis-status': "project.read";
     readonly 'selection get': "selection.read";
     readonly 'selection set': "selection.write";
@@ -1733,6 +2006,13 @@ export type SdkErrorCode =
 "BRIDGE_UNREACHABLE"
 /** The host refused the handshake, or answered something unreadable. */
 | "HANDSHAKE_FAILED"
+/**
+* The host's payload does not match the operation's declared shape — a bulk
+* blob whose bytes do not come to `count × sizeof(dtype)`, for instance.
+* Nothing was decoded: the alternative is handing back data that is quietly
+* short.
+*/
+| "MALFORMED_PAYLOAD"
 /** The host speaks a different major of the bridge wire itself. */
 | "PROTOCOL_VERSION_MISMATCH"
 /** The host's contract surface is a different major than the bindings'. */
@@ -1899,7 +2179,7 @@ export interface SpecialTracksShowParams {
 }
 
 // @public
-export const SURFACE_VERSION = "3.0";
+export const SURFACE_VERSION = "3.1";
 
 // @public
 export interface TempoGetResult {
@@ -2119,7 +2399,7 @@ export interface TransportOperations {
     metronome(params: TransportMetronomeParams, options?: MutatingCallOptions): Promise<void>;
     play(options?: MutatingCallOptions): Promise<void>;
     seek(params: TransportSeekParams, options?: MutatingCallOptions): Promise<void>;
-    setLoop(params: TransportSetLoopParams, options?: MutatingCallOptions): Promise<void>;
+    setLoop(params: TransportSetLoopParams, options?: PreconditionCallOptions): Promise<void>;
     state(options?: CallOptions): Promise<TransportStateResult>;
     stop(options?: MutatingCallOptions): Promise<void>;
     toggle(options?: MutatingCallOptions): Promise<void>;

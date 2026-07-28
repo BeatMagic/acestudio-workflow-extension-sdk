@@ -4,6 +4,16 @@ What one generated operation is, for the runtime that binds the interfaces below
 
 ## Properties
 
+### bulkEncoding?
+
+```ts
+readonly optional bulkEncoding?: "base64";
+```
+
+The `encoding` argument the runtime pins on this operation, absent when it declares none. The choice is not a caller's: bindings speak typed arrays, and `json` would change the payload shape under the same method.
+
+***
+
 ### capability
 
 ```ts
@@ -21,6 +31,26 @@ readonly domain: string;
 ```
 
 Domain group the binding nests under; empty for a root-level operation.
+
+***
+
+### entitlement?
+
+```ts
+readonly optional entitlement?: string;
+```
+
+The pay gate the account must satisfy, absent when the operation is free.
+
+***
+
+### fingerprintPrecondition
+
+```ts
+readonly fingerprintPrecondition: boolean;
+```
+
+True when the operation checks a carried fingerprint, and so accepts `ifMatch`. The type above already refuses one elsewhere; the runtime reads this to refuse an untyped caller's too, rather than forward a token the host would accept and ignore.
 
 ***
 

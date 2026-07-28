@@ -22,7 +22,7 @@ Requires the `note.write` capability.
 
 ##### options?
 
-[`MutatingCallOptions`](MutatingCallOptions.md)
+[`PreconditionCallOptions`](PreconditionCallOptions.md)
 
 #### Returns
 
@@ -48,7 +48,7 @@ Requires the `note.write` capability.
 
 ##### options?
 
-[`MutatingCallOptions`](MutatingCallOptions.md)
+[`PreconditionCallOptions`](PreconditionCallOptions.md)
 
 #### Returns
 
@@ -74,7 +74,7 @@ Requires the `note.write` capability.
 
 ##### options?
 
-[`MutatingCallOptions`](MutatingCallOptions.md)
+[`PreconditionCallOptions`](PreconditionCallOptions.md)
 
 #### Returns
 
@@ -100,7 +100,7 @@ Requires the `note.write` capability.
 
 ##### options?
 
-[`MutatingCallOptions`](MutatingCallOptions.md)
+[`PreconditionCallOptions`](PreconditionCallOptions.md)
 
 #### Returns
 
@@ -126,7 +126,7 @@ Requires the `note.write` capability.
 
 ##### options?
 
-[`MutatingCallOptions`](MutatingCallOptions.md)
+[`PreconditionCallOptions`](PreconditionCallOptions.md)
 
 #### Returns
 

@@ -23,6 +23,13 @@ export type SdkErrorCode =
   | "BRIDGE_UNREACHABLE"
   /** The host refused the handshake, or answered something unreadable. */
   | "HANDSHAKE_FAILED"
+  /**
+   * The host's payload does not match the operation's declared shape — a bulk
+   * blob whose bytes do not come to `count × sizeof(dtype)`, for instance.
+   * Nothing was decoded: the alternative is handing back data that is quietly
+   * short.
+   */
+  | "MALFORMED_PAYLOAD"
   /** The host speaks a different major of the bridge wire itself. */
   | "PROTOCOL_VERSION_MISMATCH"
   /** The host's contract surface is a different major than the bindings'. */

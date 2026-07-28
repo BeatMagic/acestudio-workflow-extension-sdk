@@ -12,11 +12,13 @@ import {
   createTransportPair,
   isBridgeError,
   isCode,
+  NOTIFICATION_CHANNELS,
   OPERATIONS,
   PROFILES,
   REQUIRED_TOKENS,
   type BridgeConnection,
   type CapabilityToken,
+  type ChangeEvent,
   type InvokeParams,
   type TrackListResult,
 } from "@timedomain/acestudio-bridge-core";
@@ -32,6 +34,15 @@ async function connectToScriptedHost(
   const host = new ScriptedHostPeer(hostTransport, options);
   const connection = await connect({ transport: client, authToken: "token-abc" });
   return { connection, host };
+}
+
+/**
+ * Let the transport pair deliver. Both ends hand messages over through
+ * `queueMicrotask`, and a notification has no response to await, so a test that
+ * pushes one has to yield before asserting on what arrived.
+ */
+async function flush(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 /** One scripted `track list` answer, shaped by the generated result type. */
@@ -240,6 +251,93 @@ describe("the pre-wire guard's field half", () => {
     const denial = guardCall(grant, { path: "track invented", ungated: false }, {});
     expect(isCode(denial, "CAPABILITY_DENIED")).toBe(true);
     expect(denial?.details.missing).toEqual([]);
+  });
+});
+
+describe("the change subscriptions", () => {
+  it("delivers a granted channel's changes to its domain's listener", async () => {
+    const { connection, host } = await connectToScriptedHost({ grantedTokens: ["job.read"] });
+    const seen: ChangeEvent[] = [];
+
+    const stop = connection.client.job.onChanged((event) => seen.push(event));
+    expect(host.notifyChange("jobs", ["job-7"])).toBe(true);
+    await flush();
+
+    expect(seen).toEqual([{ channel: "jobs", revision: 1, changes: ["job-7"] }]);
+
+    // Unsubscribing is what it claims: the next change reaches nobody, even
+    // though the host still sent it.
+    stop();
+    expect(host.notifyChange("jobs", ["job-8"])).toBe(true);
+    await flush();
+    expect(seen).toHaveLength(1);
+    connection.close();
+  });
+
+  it("refuses an ungranted subscription rather than never calling back", async () => {
+    const { connection, host } = await connectToScriptedHost({ grantedTokens: ["job.control"] });
+
+    // The failure this guard exists to prevent: without it, subscribing succeeds,
+    // the host withholds the channel, and the extension waits forever on a
+    // callback — indistinguishable from a subject that has not changed.
+    expect(host.notifyChange("jobs")).toBe(false);
+    expect(() => connection.client.job.onChanged(() => {})).toThrowError(
+      expect.objectContaining({ code: "CAPABILITY_DENIED" }),
+    );
+
+    const error = (() => {
+      try {
+        connection.client.job.onChanged(() => {});
+        return undefined;
+      } catch (thrown: unknown) {
+        return thrown;
+      }
+    })();
+    if (!isCode(error, "CAPABILITY_DENIED")) {
+      throw new Error("expected a CAPABILITY_DENIED");
+    }
+    // The same code and the same details a refused *call* carries, so one branch
+    // handles both. Only the message differs, because the host composes none for
+    // a subscription it simply withholds.
+    expect(error.details.missing).toEqual(["job.read"]);
+    expect(error.details.token).toBe("job.read");
+    expect(error.hint).toBe("missing capability token: job.read");
+    expect(error.message).toContain("jobs");
+    connection.close();
+  });
+
+  it("binds and guards every declared channel from the generated table", async () => {
+    const { connection } = await connectToScriptedHost({ grantedTokens: [] });
+    expect(NOTIFICATION_CHANNELS.length).toBeGreaterThan(0);
+
+    // Table-driven for the same reason the operation guard is: a channel added to
+    // the registry must arrive already gated, not gated once someone remembers.
+    for (const descriptor of NOTIFICATION_CHANNELS) {
+      const domain = (connection.client as unknown as Record<string, Record<string, (cb: () => void) => void>>)[
+        domainKey(descriptor.domain)
+      ];
+      expect(typeof domain[descriptor.method]).toBe("function");
+      expect(() => domain[descriptor.method](() => {})).toThrowError(
+        expect.objectContaining({ code: "CAPABILITY_DENIED" }),
+      );
+    }
+    connection.close();
+  });
+
+  it("demultiplexes by channel, so one subject's listener never sees another's", async () => {
+    const { connection, host } = await connectToScriptedHost({ grantedTokens: ["job.read"] });
+    const seen: string[] = [];
+    connection.client.job.onChanged((event) => seen.push(event.channel));
+
+    // A channel this artifact cannot name, arriving on the same wire notification.
+    // Nothing listens for it, so it is dropped rather than fanned out to whoever
+    // happens to be subscribed.
+    host.notifyUnknownChannel("project");
+    expect(host.notifyChange("jobs")).toBe(true);
+    await flush();
+
+    expect(seen).toEqual(["jobs"]);
+    connection.close();
   });
 });
 

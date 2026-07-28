@@ -152,6 +152,27 @@ export function capabilityDenied(path: string, token: string): BridgeError<"CAPA
 }
 
 /**
+ * The refusal for subscribing to a change channel the grant cannot reach.
+ *
+ * The code, the details, and the hint match {@link capabilityDenied} exactly, so
+ * a caller handles a refused subscription and a refused call with one branch. The
+ * message does not, and cannot: the host composes no refusal for a subscription —
+ * it simply does not send that channel to a peer that may not read it — so there
+ * is no server wording here to transcribe. Saying "command" would be the only
+ * inaccuracy available.
+ *
+ * @internal
+ */
+export function channelDenied(channel: string, token: string): BridgeError<"CAPABILITY_DENIED"> {
+  return new BridgeError({
+    code: "CAPABILITY_DENIED",
+    message: `capability denied for change channel: ${channel}`,
+    details: { token, missing: [token] },
+    hint: `missing capability token: ${token}`,
+  });
+}
+
+/**
  * The refusal for a gated operation with no row in the required-token table.
  * There is no token to name, so nothing can be checked — and the host answers the
  * same way for a command whose capability it cannot look up. Failing closed on

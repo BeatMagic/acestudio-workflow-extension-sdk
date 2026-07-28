@@ -126,6 +126,31 @@ export interface OperationDescriptor {
     readonly takesParams: boolean;
 }
 
+/** Stop listening. Calling it more than once is harmless; a subscription dropped this way never fires again, including for a notification already in flight. */
+export type Unsubscribe = () => void;
+
+/** What a change notification carries (ADR 0083 §2.4). It is a hint to re-read, never the new state: notifications coalesce, so a listener that treats `changes` as the complete diff will drift. Compare `revision` against the one your last snapshot was stamped with, and re-fetch when it is behind. */
+export interface ChangeEvent {
+    /** The channel that moved — the subject the subscription named. */
+    readonly channel: string;
+    /** The channel's monotonic revision after the change. */
+    readonly revision: number;
+    /** Coarse list of what changed, to narrow the re-fetch. May be empty. */
+    readonly changes: readonly string[];
+}
+
+/** What one observable channel is, for the runtime that binds the subscriptions below onto a connection. One wire notification carries every channel, so the runtime demultiplexes on `channel` and guards the subscribe with `capability` — the same refusal a call to an ungranted operation raises, so an extension learns at the subscribe rather than waiting for a callback that never fires. */
+export interface ChannelDescriptor {
+    /** Channel name as it travels in the notification envelope. */
+    readonly channel: string;
+    /** Domain group the subscription nests under; never empty. */
+    readonly domain: string;
+    /** Binding method name for the subscription. */
+    readonly method: string;
+    /** The capability a subscription to this channel requires. */
+    readonly capability: string;
+}
+
 /** Where a bulk field sits inside an arguments or result object: a dotted path from the root, with `[]` marking an array element. `dtype` is null when the schema leaves the element type to the payload. */
 export interface BulkFieldDescriptor {
     readonly field: string;
@@ -1153,7 +1178,7 @@ export interface JobWaitResult {
     }[];
 }
 
-/** The `job` operations, mirroring the canonical operation tree 1:1. */
+/** The `job` operations, mirroring the canonical operation tree 1:1, and the subscription that reports when the subject changes. */
 export interface JobOperations {
     /**
      * Cancel a job (honest per-class cancelability).
@@ -1203,6 +1228,16 @@ export interface JobOperations {
      * Requires the `job.read` capability.
      */
     wait(params: JobWaitParams, options?: CallOptions): Promise<JobWaitResult>;
+
+    /**
+     * The job ledger (ADR 0084): a job's lifecycle or result transition. `changes`
+     * carries the affected job ids.
+     *
+     * Listen for changes on the `jobs` channel. The event is a hint to re-read, not the new state.
+     *
+     * Requires the `job.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
+     */
+    onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
 }
 
 // --- mixer -----------------------------------------------------------------
@@ -2505,6 +2540,11 @@ export const OPERATIONS = [
     { path: 'voice tags', domain: 'voice', method: 'tags', capability: 'voice.read', ungated: false, mutating: false, takesParams: true },
     { path: 'voice unload', domain: 'voice', method: 'unload', capability: 'voice.write', ungated: false, mutating: true, takesParams: true },
 ] as const satisfies readonly OperationDescriptor[];
+
+/** Every observable channel in this artifact, sorted by channel. The runtime builds one subscription per row and guards it with the row's capability; a channel absent from this table is not observable from this artifact at all. */
+export const NOTIFICATION_CHANNELS = [
+    { channel: 'jobs', domain: 'job', method: 'onChanged', capability: 'job.read' },
+] as const satisfies readonly ChannelDescriptor[];
 
 /** The token each operation requires, for the pre-wire guard: a call the session's grant cannot reach fails locally with the identical typed `CAPABILITY_DENIED` the host would have returned. Ungated operations are absent — they need no token. */
 export const REQUIRED_TOKENS = {

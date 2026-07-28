@@ -7,22 +7,28 @@
  * amount of hand-written code that turns those tables into an object — one
  * async method per operation, each of which checks the session's grant before it
  * spends a round trip, then invokes the operation over the one core-owned wire
- * verb (`operation.invoke`, declared in `Operation.acerpc`).
+ * verb (`operation.invoke`, declared in `Operation.acerpc`) — plus one
+ * subscription per observable channel, over the one core-owned notification
+ * (`state.changed`, declared in `Change.acerpc`).
  *
- * Nothing here is per-operation. Adding an operation to the catalog changes the
- * generated tables and this file not at all — which is the point: a binding
- * cannot be added while forgetting its gate.
+ * Nothing here is per-operation or per-channel. Adding either to the catalog
+ * changes the generated tables and this file not at all — which is the point: a
+ * binding cannot be added while forgetting its gate.
  */
 
 import type { BridgeError } from "./errors.js";
-import { capabilityDenied, missingCapabilityRow, type Grant } from "./grant.js";
+import { capabilityDenied, channelDenied, missingCapabilityRow, type Grant } from "./grant.js";
 import {
   FIELD_CAPABILITIES,
+  NOTIFICATION_CHANNELS,
   OPERATIONS,
   REQUIRED_TOKENS,
   type CapabilityToken,
+  type ChangeEvent,
   type MutatingCallOptions,
+  type Unsubscribe,
 } from "./generated/bindings.js";
+import { ChangeClient } from "./generated/Change.acerpc.js";
 import { OperationClient, type InvokeParams } from "./generated/Operation.acerpc.js";
 import type { BridgePeer } from "./peer.js";
 
@@ -84,7 +90,49 @@ export function buildBindings(peer: BridgePeer, grant: Grant): Record<string, un
     group[operation.method] = invoke;
   }
 
+  bindChannels(peer, grant, root);
   return root;
+}
+
+/**
+ * Add each declared channel's subscription to its domain group.
+ *
+ * One wire notification carries every channel, so there is one subscription on
+ * the peer and the demultiplexing happens here. There is no subscribe call to
+ * make: the host sends a channel to whoever may read it, so what a listener
+ * registers is purely local — which is exactly why the guard matters. Without it
+ * an ungranted subscription is not an error, it is a callback that never fires,
+ * and nothing distinguishes that from a subject that simply has not changed.
+ */
+function bindChannels(peer: BridgePeer, grant: Grant, root: Record<string, unknown>): void {
+  const listeners = new Map<string, Set<(event: ChangeEvent) => void>>();
+  new ChangeClient(peer).onStateChanged((event) => {
+    // A channel with no listeners — including one this artifact cannot name —
+    // is dropped. The host decides what to send; this side decides what it
+    // asked to hear about.
+    for (const listener of [...(listeners.get(event.channel) ?? [])]) {
+      listener(event);
+    }
+  });
+
+  for (const descriptor of NOTIFICATION_CHANNELS) {
+    const subscribe = (listener: (event: ChangeEvent) => void): Unsubscribe => {
+      if (!grant.has(descriptor.capability)) {
+        throw channelDenied(descriptor.channel, descriptor.capability);
+      }
+      let group = listeners.get(descriptor.channel);
+      if (group === undefined) {
+        group = new Set();
+        listeners.set(descriptor.channel, group);
+      }
+      group.add(listener);
+      return () => {
+        group.delete(listener);
+      };
+    };
+    const domain = (root[domainKey(descriptor.domain)] ??= {}) as Record<string, unknown>;
+    domain[descriptor.method] = subscribe;
+  }
 }
 
 /**

@@ -1,6 +1,6 @@
 # Interface: JobOperations
 
-The `job` operations, mirroring the canonical operation tree 1:1.
+The `job` operations, mirroring the canonical operation tree 1:1, and the subscription that reports when the subject changes.
 
 ## Methods
 
@@ -105,6 +105,31 @@ Requires the `job.read` capability.
 #### Returns
 
 `Promise`\<[`JobListResult`](JobListResult.md)\>
+
+***
+
+### onChanged()
+
+```ts
+onChanged(listener): Unsubscribe;
+```
+
+The job ledger (ADR 0084): a job's lifecycle or result transition. `changes`
+carries the affected job ids.
+
+Listen for changes on the `jobs` channel. The event is a hint to re-read, not the new state.
+
+Requires the `job.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
+
+#### Parameters
+
+##### listener
+
+(`event`) => `void`
+
+#### Returns
+
+[`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
 ***
 

@@ -23,7 +23,9 @@ export type { JsonRpcFault, JsonRpcMessage } from "./protocol.js";
 export type { ProfileScopedBindings, ProfileTokens, ScopedBindings } from "./scoped.js";
 export { createTransportPair } from "./transport.js";
 export type { Transport, TransportPair } from "./transport.js";
-export type { Unsubscribe } from "./types-runtime.js";
+// `Unsubscribe` is deliberately not re-exported from here. The generated
+// bindings below declare it — they have to stand alone — and two public spellings
+// of `() => void` under one name is one more than anyone needs.
 
 // The generated core session surface (Session.acerpc): the handshake, liveness
 // and shutdown wire shapes, and the client that speaks them. Regenerated in the
@@ -35,6 +37,11 @@ export * from "./generated/Session.acerpc.js";
 // verb every operation rides, and its envelope. Same provenance as the session
 // surface above — regenerated in the Studio repo, committed here. Do not edit.
 export * from "./generated/Operation.acerpc.js";
+
+// The generated change-notification surface (Change.acerpc): the one wire
+// notification every observable channel rides, and its envelope. Same provenance
+// as the surfaces above — regenerated in the Studio repo, committed here.
+export * from "./generated/Change.acerpc.js";
 
 // The generated capability bindings (ADR 0094 §2). Regenerated in the Studio
 // repo by `cargo run -p ace_command_catalog --bin gen_sdk_bindings`; this copy

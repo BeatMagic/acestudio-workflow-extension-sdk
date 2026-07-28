@@ -2,21 +2,26 @@
  * A scripted stand-in for the ACE Studio side of the bridge.
  *
  * Plays the host half of the generated surfaces: serves `session.handshake` and
- * `operation.invoke`, calls `session.ping`, and emits `session.shutdown`. The
- * payload types come from the generated modules, so a schema change breaks this
- * peer at compile time rather than letting the tests drift away from the wire.
- * The method names are literals — the host spells them, and `HOST_METHODS` is
- * asserted against the generated maps in connect.test.ts.
+ * `operation.invoke`, calls `session.ping`, and emits `session.shutdown` and
+ * `state.changed`. The payload types come from the generated modules, so a schema
+ * change breaks this peer at compile time rather than letting the tests drift
+ * away from the wire. The method names are literals — the host spells them, and
+ * `HOST_METHODS` is asserted against the generated maps in connect.test.ts.
  *
- * Its capability gate is a transcription of `CommandRegistry::capabilityDenial`,
- * reading the same generated required-token table the Studio's own table is
- * generated from. That is what makes it a fair witness for "the SDK's pre-wire
- * refusal is the one the host would have sent".
+ * Its two capability gates are transcriptions of the host's own. The inbound one
+ * is `CommandRegistry::capabilityDenial`, reading the same generated
+ * required-token table the Studio's table is generated from — which is what makes
+ * this a fair witness for "the SDK's pre-wire refusal is the one the host would
+ * have sent". The outbound one is `mayReceiveChannel`: a change goes out only if
+ * the granted set reaches the channel's token, so a test can also witness the
+ * case where the guard is the *only* thing that turns silence into an error.
  */
 
 import {
+  NOTIFICATION_CHANNELS,
   PROTOCOL_VERSION,
   REQUIRED_TOKENS,
+  type ChangedParams,
   type HandshakeParams,
   type HandshakeResult,
   type InvokeParams,
@@ -35,6 +40,7 @@ export const HOST_METHODS = {
   handshake: "session.handshake",
   ping: "session.ping",
   shutdown: "session.shutdown",
+  changed: "state.changed",
 } as const;
 
 /** The operation-invocation verb, the one wire name every operation rides. */
@@ -79,6 +85,8 @@ export class ScriptedHostPeer {
   private readonly grantedTokens: ReadonlySet<string>;
   private announceHandshake!: (params: HandshakeParams) => void;
   private nextId = 1;
+  /** The session revision counter the change envelope stamps. */
+  private revision = 0;
   /** Set once a handshake succeeds: before that, nothing is authorized. */
   private granted = false;
 
@@ -109,6 +117,34 @@ export class ScriptedHostPeer {
   /** Open the shutdown grace window, as the host's stop routine does. */
   notifyShutdown(params: ShutdownParams): void {
     this.send({ jsonrpc: "2.0", method: HOST_METHODS.shutdown, params });
+  }
+
+  /**
+   * Report a change on `channel`, as a driver's fan-out does — including its
+   * gate: a peer whose granted set does not reach the channel's token is sent
+   * nothing at all, and no denial either, exactly as `mayReceiveChannel` decides
+   * it. Returns whether the notification went out, so a test can tell "the host
+   * withheld it" apart from "the SDK dropped it".
+   */
+  notifyChange(channel: string, changes: readonly string[] = [], revision = ++this.revision): boolean {
+    const token = NOTIFICATION_CHANNELS.find((row) => row.channel === channel)?.capability;
+    if (token === undefined || !this.grantedTokens.has(token)) {
+      return false;
+    }
+    const params: ChangedParams = { channel, revision, changes: [...changes] };
+    this.send({ jsonrpc: "2.0", method: HOST_METHODS.changed, params });
+    return true;
+  }
+
+  /**
+   * Push a change on a channel this SDK build does not declare, skipping the gate
+   * — what a host running a newer registry does. Worth being able to stage: it is
+   * the same wire notification every channel rides, so a peer that fanned out by
+   * anything other than the channel name would hand it to the wrong listener.
+   */
+  notifyUnknownChannel(channel: string, revision = ++this.revision): void {
+    const params: ChangedParams = { channel, revision, changes: [] };
+    this.send({ jsonrpc: "2.0", method: HOST_METHODS.changed, params });
   }
 
   /** Call a method on the connected peer. */

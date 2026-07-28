@@ -140,6 +140,55 @@ export interface CaretSetParams {
     trackIndex?: number | null;
 }
 
+// @public (undocumented)
+export const CHANGE_CAPABILITY_TOKENS: readonly ChangeCapability[];
+
+// @public (undocumented)
+export const CHANGE_METHOD_CAPABILITIES: Readonly<Record<string, ChangeCapability>>;
+
+// @public
+export type ChangeCapability = never;
+
+// @public (undocumented)
+export class ChangeClient {
+    constructor(peer: ChangePeer);
+    onStateChanged(callback: (event: ChangedParams) => void): Unsubscribe;
+}
+
+// @public
+export interface ChangedParams {
+    changes: string[];
+    channel: string;
+    revision: number;
+}
+
+// @public
+export interface ChangeEvent {
+    readonly changes: readonly string[];
+    readonly channel: string;
+    readonly revision: number;
+}
+
+// @public (undocumented)
+export interface ChangePeer {
+    // (undocumented)
+    notify(method: string, params?: unknown): void;
+    // (undocumented)
+    request<T>(method: string, params?: unknown): Promise<T>;
+    // (undocumented)
+    setRequestHandler<P, R>(method: string, handler: (params: P) => Promise<R> | R): void;
+    // (undocumented)
+    subscribe<T>(method: string, callback: (event: T) => void): Unsubscribe;
+}
+
+// @public
+export interface ChannelDescriptor {
+    readonly capability: string;
+    readonly channel: string;
+    readonly domain: string;
+    readonly method: string;
+}
+
 // @public
 export interface ClipAudioContentParams {
     clipIndex: number;
@@ -670,6 +719,7 @@ export interface JobOperations {
     discardResult(params: JobDiscardResultParams, options?: MutatingCallOptions): Promise<void>;
     get(params: JobGetParams, options?: CallOptions): Promise<JobGetResult>;
     list(params: JobListParams, options?: CallOptions): Promise<JobListResult>;
+    onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
     place(params: JobPlaceParams, options?: MutatingCallOptions): Promise<JobPlaceResult>;
     results(params: JobResultsParams, options?: CallOptions): Promise<JobResultsResult>;
     wait(params: JobWaitParams, options?: CallOptions): Promise<JobWaitResult>;
@@ -890,6 +940,14 @@ export interface NoteSetLyricResult {
     }[];
     updatedCount: number;
 }
+
+// @public
+export const NOTIFICATION_CHANNELS: readonly [{
+    readonly channel: "jobs";
+    readonly domain: "job";
+    readonly method: "onChanged";
+    readonly capability: "job.read";
+}];
 
 // @public (undocumented)
 export const OPERATION_CAPABILITY_TOKENS: readonly OperationCapability[];

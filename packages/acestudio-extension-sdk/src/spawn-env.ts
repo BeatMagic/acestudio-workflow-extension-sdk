@@ -62,10 +62,10 @@ export function readSpawnContract(env: Environment, options: { socketPathRequire
   const socketPath = text(env[BRIDGE_SOCKET_ENV]);
   const authToken = text(env[BRIDGE_TOKEN_ENV]);
   if (options.socketPathRequired && socketPath === undefined) {
-    throw notSpawnedByStudio(BRIDGE_SOCKET_ENV);
+    throw noEndpoint();
   }
   if (authToken === undefined) {
-    throw notSpawnedByStudio(BRIDGE_TOKEN_ENV);
+    throw noToken();
   }
   return { socketPath, authToken };
 }
@@ -75,8 +75,25 @@ function text(value: string | undefined): string | undefined {
   return value === undefined || value.length === 0 ? undefined : value;
 }
 
-function notSpawnedByStudio(variable: string): ExtensionError {
-  return new ExtensionError(`the environment has no ${variable}, so this process has no bridge to connect to`, {
+/**
+ * The two variables fail differently, so they say different things. Nothing is
+ * missing here that a caller could work around — the point of each message is to
+ * name the one thing that would actually fix it.
+ */
+function noEndpoint(): ExtensionError {
+  return new ExtensionError(`the environment has no ${BRIDGE_SOCKET_ENV}, so this process has no bridge to connect to`, {
     hint: "an extension runs as a process ACE Studio spawns; to drive it from a test, pass a transport to defineExtension",
   });
+}
+
+function noToken(): ExtensionError {
+  return new ExtensionError(
+    `the environment has no ${BRIDGE_TOKEN_ENV}, so this process has nothing to authenticate its handshake with`,
+    {
+      // Deliberately not the transport hint: the token is checked whether or not the
+      // caller brought a transport, so suggesting one here would send a developer
+      // after the thing that cannot fix it.
+      hint: `ACE Studio mints this token per spawn; to drive an extension from a test, set ${BRIDGE_TOKEN_ENV} to the token the host peer expects`,
+    },
+  );
 }

@@ -355,6 +355,10 @@ describe("a run that cannot start", () => {
 
     await expect(exitCode).resolves.toBe(2);
     expect(error).toHaveBeenCalledWith(expect.stringContaining(`no ${BRIDGE_TOKEN_ENV}`));
+    // This run *has* a transport, and the token is still missing — so the advice a
+    // missing endpoint gets would be the wrong advice here.
+    expect(error).toHaveBeenCalledWith(expect.stringContaining("authenticate its handshake"));
+    expect(error).not.toHaveBeenCalledWith(expect.stringContaining("pass a transport"));
     error.mockRestore();
   });
 

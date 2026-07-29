@@ -72,6 +72,11 @@ export interface CallOptions {
  * whose only field is `signal`, and a caller deciding what a value *meant* from its
  * shape would drop exactly those.
  *
+ * Both positions are optional: `options` is never required, and a call whose
+ * declaration takes no parameter takes no arguments at all. An editor shows this
+ * directly; a rendered signature that spells the elements out cannot, since generated
+ * docs drop the `?` these tuple elements carry.
+ *
  * @public
  */
 export type CallArgs<Params extends readonly unknown[]> = Params extends readonly []

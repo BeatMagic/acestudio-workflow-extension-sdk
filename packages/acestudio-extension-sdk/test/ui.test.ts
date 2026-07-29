@@ -9,7 +9,7 @@
  * only that the fake matched.
  */
 
-import { mkdtemp, writeFile } from "node:fs/promises";
+import { chmod, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, test, vi } from "vitest";
@@ -77,7 +77,13 @@ async function helloWorldAssets(): Promise<string> {
  */
 async function startServed(
   options: { window?: SurfaceWindow; grantedTokens?: readonly string[] } = {},
-): Promise<{ run: Run<typeof manifest>; window: SurfaceWindow; context: ExtensionContext<typeof manifest>; url: string }> {
+): Promise<{
+  run: Run<typeof manifest>;
+  window: SurfaceWindow;
+  context: ExtensionContext<typeof manifest>;
+  url: string;
+  assets: string;
+}> {
   const window = options.window ?? new SurfaceWindow();
   const assets = await helloWorldAssets();
   const activated = signal<ExtensionContext<typeof manifest>>();
@@ -92,7 +98,7 @@ async function startServed(
   const context = await activated.reached;
   const url = context.ui.url;
   expect(url).toBeTypeOf("string");
-  return { run, window, context, url: url as string };
+  return { run, window, context, url: url as string, assets };
 }
 
 /** A page channel pointed at a served URL, closed when the test ends. */
@@ -376,6 +382,31 @@ test("the channel refuses a request that came from another origin", async () => 
     body: JSON.stringify({ id: 1, name: "ping" }),
   });
   expect(response.status).toBe(403);
+});
+
+/**
+ * Readable by its owner is what makes the unreadable-file case reachable at all, so a
+ * root process — which opens anything regardless of mode — cannot exercise it.
+ */
+const enforcesFileModes = process.platform !== "win32" && process.getuid?.() !== 0;
+
+test.skipIf(!enforcesFileModes)("a file that cannot be opened does not take the process down", async () => {
+  const { url, assets } = await startServed();
+  const locked = join(assets, "locked.css");
+  await writeFile(locked, "body{}", "utf8");
+  // Passes the stat — a real file of a known size — and then fails to open, the way a
+  // file deleted or chmod-ed between those two moments does. Left unhandled, the read
+  // stream's error is an uncaught exception in the extension's own process.
+  await chmod(locked, 0o000);
+
+  // However this request ends for the browser, it must not end the server.
+  await fetch(new URL("locked.css", url)).then(
+    (response) => response.arrayBuffer().catch(() => undefined),
+    () => undefined,
+  );
+
+  // Still serving: the unreadable asset cost that one response and nothing more.
+  expect(await (await fetch(url)).text()).toBe(HELLO);
 });
 
 test("stopping the run stops serving the page", async () => {

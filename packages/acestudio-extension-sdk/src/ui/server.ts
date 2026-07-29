@@ -18,6 +18,7 @@ import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { extname, join, normalize, resolve, sep } from "node:path";
+import type { Readable } from "node:stream";
 import { ExtensionError } from "../errors.js";
 import type { ChannelHub, EventSink } from "./channel.js";
 import { CHANNEL_PATH, frameEvent, type CallRequest, type CallResponse, type EventMessage } from "./protocol.js";
@@ -296,7 +297,29 @@ async function serveAsset(
     response.end();
     return;
   }
-  createReadStream(target).pipe(response);
+  send(createReadStream(target), response);
+}
+
+/**
+ * Stream a file's bytes out, surviving a file that stops being readable mid-flight.
+ *
+ * A file can vanish or lose its permissions between the stat above and the open here,
+ * and `pipe` carries the read stream's failure nowhere: an unhandled `error` on a
+ * stream is an uncaught exception, which would take the whole extension process down
+ * over one bad asset. The headers are already sent by then, so there is no status left
+ * to correct — the response is cut, and the browser reports the truncated body.
+ *
+ * The other direction matters too: a page that navigates away mid-download closes the
+ * response, and the file handle would otherwise stay open.
+ */
+function send(file: Readable, response: ServerResponse): void {
+  file.on("error", () => {
+    response.destroy();
+  });
+  response.on("close", () => {
+    file.destroy();
+  });
+  file.pipe(response);
 }
 
 /**

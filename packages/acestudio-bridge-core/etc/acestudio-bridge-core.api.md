@@ -7,7 +7,7 @@
 // @public
 export type AnyBridgeErrorCode = BridgeErrorCode | SdkErrorCode;
 
-// @public (undocumented)
+// @public
 export type AtRoot<T extends CapabilityToken> = Extract<Reachable<T>, {
     domain: "";
 }>;

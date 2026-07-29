@@ -6,7 +6,7 @@ type Camel<S> = S extends `${infer Head}-${infer Tail}` ? `${Head}${Capitalize<C
 
 Turns `special-tracks` into `specialTracks`: the canonical tree hyphenates a
 multi-word domain and the binding surface camelCases it. The runtime
-counterpart is `camelCase()` in `bindings.ts`; the two have to agree, and the
+counterpart is `domainKey()` in `bindings.ts`; the two have to agree, and the
 `keyof PublicBindings` constraints below are what notices if they stop.
 
 Exported because [ScopedBindings](ScopedBindings.md) is written in terms of it, and a

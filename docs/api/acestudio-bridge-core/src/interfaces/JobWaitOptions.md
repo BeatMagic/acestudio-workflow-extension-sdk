@@ -46,3 +46,9 @@ the wait runs until the job is terminal.
 
 Waiting only observes: an expiry never cancels the job, and the work keeps
 running (ADR 0084).
+
+#### Throws
+
+BridgeError with code `INVALID_ARG` for a bound that is not a finite,
+non-negative number. There is no safe reading of one — the fallback for "no
+bound" is to wait forever.

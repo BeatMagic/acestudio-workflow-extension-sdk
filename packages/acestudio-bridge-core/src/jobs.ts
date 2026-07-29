@@ -59,6 +59,10 @@ export interface JobWaitOptions {
    *
    * Waiting only observes: an expiry never cancels the job, and the work keeps
    * running (ADR 0084).
+   *
+   * @throws BridgeError with code `INVALID_ARG` for a bound that is not a finite,
+   * non-negative number. There is no safe reading of one — the fallback for "no
+   * bound" is to wait forever.
    */
   timeoutMs?: number;
   /**
@@ -316,6 +320,7 @@ class Handle<Result> implements JobHandle<Result> {
   async wait(options: JobWaitOptions = {}): Promise<JobWaitOutcome> {
     const startedAt = Date.now();
     const floor = pollFloor(options.pollIntervalMs);
+    checkedBound(options.timeoutMs);
 
     for (;;) {
       if (options.signal?.aborted === true) {
@@ -472,6 +477,25 @@ class Watch {
 /** Milliseconds since a mark. */
 function elapsed(since: number): number {
   return Date.now() - since;
+}
+
+/**
+ * Refuse a bound that is not one, rather than waiting on it. Unlike a bad poll
+ * interval there is nothing safe to substitute — the fallback for "no bound" is
+ * to wait forever, which is the opposite of what a caller who passed one asked
+ * for. Left unchecked, a `NaN` compares false against every deadline test in the
+ * loop, so the wait neither expires nor naps: it re-asks as fast as the transport
+ * allows, without end.
+ */
+function checkedBound(timeoutMs: number | undefined): void {
+  if (timeoutMs === undefined || (Number.isFinite(timeoutMs) && timeoutMs >= 0)) {
+    return;
+  }
+  throw new BridgeError({
+    code: "INVALID_ARG",
+    message: `'${String(timeoutMs)}' is not a wait bound in milliseconds`,
+    hint: "pass a finite, non-negative timeoutMs, or omit it to wait until the job is terminal",
+  });
 }
 
 /**

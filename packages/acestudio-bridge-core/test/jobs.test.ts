@@ -438,4 +438,19 @@ describe("the poll interval beside the wait's bound", () => {
     expect(host.invocations.length).toBeLessThanOrEqual(3);
     connection.close();
   });
+
+  it("refuses a bound that is not a bound rather than waiting on it", async () => {
+    const ledger = new ScriptedJobLedger([scriptedJob({ id: "job-42", lifecycle: "running" })]);
+    const { connection, host } = await connectToLedger(ledger);
+
+    // The interval has a default to fall back to; a bound does not — "no bound"
+    // means waiting forever, which is the one thing a caller who passed one did
+    // not ask for. So this is refused, before a single poll goes out.
+    await expect(connection.job("job-42").wait({ timeoutMs: Number.NaN })).rejects.toSatisfy((error: unknown) =>
+      isCode(error, "INVALID_ARG"),
+    );
+
+    expect(host.invocations).toHaveLength(0);
+    connection.close();
+  });
 });

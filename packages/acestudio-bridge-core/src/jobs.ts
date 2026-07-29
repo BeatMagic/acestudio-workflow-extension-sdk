@@ -15,7 +15,7 @@
  * observable by anyone granted `job.read`, jobs they started or not.
  */
 
-import { BridgeError, isBridgeError, isCode } from "./errors.js";
+import { BridgeError, describeCause, isBridgeError, isCode } from "./errors.js";
 import type {
   CallOptions,
   ChangeEvent,
@@ -118,6 +118,11 @@ export interface JobHandle<Result = unknown> {
    * (`hasProgress`); otherwise a snapshot is the lifecycle and result states
    * moving, which is what there is to report.
    *
+   * A re-read that fails is logged rather than delivered — the listener takes
+   * snapshots, and there is no honest snapshot to hand it — and the subscription
+   * survives, so the next change reads again. Watch `connection.onClose` for the
+   * one failure that ends it.
+   *
    * @throws BridgeError with code `CAPABILITY_DENIED` if the grant cannot read
    * the ledger — raised here rather than leaving a listener that never fires.
    */
@@ -128,6 +133,11 @@ export interface JobHandle<Result = unknown> {
    * The waiting is explicit and it only observes: nothing here cancels the job,
    * on expiry or otherwise. Cancelling is {@link JobHandle.cancel}, and only ever
    * that.
+   *
+   * An expiry is an outcome; a host that stops answering is not. If a poll goes
+   * unanswered past its own deadline this raises `TIMEOUT` rather than reporting
+   * a timeout outcome, because there is no snapshot behind an answer that never
+   * came, and inventing one would be worse than saying so.
    */
   wait(options?: JobWaitOptions): Promise<JobWaitOutcome>;
   /**
@@ -205,6 +215,11 @@ export interface JobClassDescriptor {
  * nothing for the generator to emit, and an emitted empty table would look the
  * same as this. When the catalog declares one, this becomes generated output
  * beside `BULK_PARAM_FIELDS` and the seam below stops needing a table of its own.
+ *
+ * The emitter owes the *type* as well as the row: a job-class operation's
+ * generated signature has to promise `Promise<JobHandle<Result>>`, since the
+ * runtime already hands one back. Until then the two disagree, and a caller
+ * reaching a launch op through the generated interface has to say so with a cast.
  *
  * @internal
  */
@@ -318,22 +333,22 @@ class Handle<Result> implements JobHandle<Result> {
       if (answer.done) {
         return { status: "finished", job };
       }
+      // The bound is only ever declared spent against a poll that has just
+      // answered — never against one still to come. A job that finished while the
+      // loop was waiting to ask again finished inside the bound, and saying
+      // `timeout` because nobody looked would be a false negative.
+      if (options.timeoutMs !== undefined && elapsed(startedAt) >= options.timeoutMs) {
+        return { status: "timeout", job };
+      }
 
-      // What is left of the caller's bound now the poll has answered, and how
-      // much of that the loop may spend waiting to ask again. Clamping the nap to
-      // the bound is what keeps `wait({timeoutMs: 100})` from returning at 250ms
-      // against a host that answers instantly: the interval is a floor on asking
-      // again, never a reason to outstay the caller.
+      // What is left of the bound, and how much of it the loop may spend before
+      // asking again. Clamping the nap to what is left puts the last poll on the
+      // deadline instead of an interval past it: `wait({timeoutMs: 100})` against
+      // a host that answers instantly answers at 100ms, not at 250.
       const left = options.timeoutMs === undefined ? Infinity : options.timeoutMs - elapsed(startedAt);
       const nap = Math.min(floor - elapsed(polledAt), left);
       if (nap > 0) {
         await pause(nap, options.signal, this.id);
-      }
-      // The bound ran out — during the poll, or during the nap that followed it.
-      // The answer above is the last word: a poll nobody is waiting for any more
-      // is a round trip spent on a result the caller will not see.
-      if (left - nap <= 0) {
-        return { status: "timeout", job };
       }
     }
   }
@@ -432,7 +447,7 @@ class Watch {
     try {
       this.listener(snapshot);
     } catch (cause) {
-      console.warn(`[ace-studio] a job progress listener threw: ${(cause as Error)?.message ?? String(cause)}`);
+      console.warn(`[ace-studio] a job progress listener threw: ${describeCause(cause)}`);
     }
   }
 

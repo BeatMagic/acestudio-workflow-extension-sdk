@@ -68,6 +68,11 @@ answer. Progress is a real fraction only where the class declares one
 (`hasProgress`); otherwise a snapshot is the lifecycle and result states
 moving, which is what there is to report.
 
+A re-read that fails is logged rather than delivered — the listener takes
+snapshots, and there is no honest snapshot to hand it — and the subscription
+survives, so the next change reads again. Watch `connection.onClose` for the
+one failure that ends it.
+
 #### Parameters
 
 ##### listener
@@ -125,6 +130,11 @@ Wait for the job to reach a terminal lifecycle, bounded by `options`.
 The waiting is explicit and it only observes: nothing here cancels the job,
 on expiry or otherwise. Cancelling is [JobHandle.cancel](#cancel), and only ever
 that.
+
+An expiry is an outcome; a host that stops answering is not. If a poll goes
+unanswered past its own deadline this raises `TIMEOUT` rather than reporting
+a timeout outcome, because there is no snapshot behind an answer that never
+came, and inventing one would be worse than saying so.
 
 #### Parameters
 

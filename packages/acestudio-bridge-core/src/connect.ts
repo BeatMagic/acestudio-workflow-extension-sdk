@@ -13,7 +13,7 @@
  */
 
 import { buildBindings, type OperationWarning } from "./bindings.js";
-import { BridgeError } from "./errors.js";
+import { BridgeError, describeCause } from "./errors.js";
 import type { CapabilityToken, PublicBindings } from "./generated/bindings.js";
 import {
   SessionClient,
@@ -270,7 +270,7 @@ class Connection implements BridgeConnection {
       try {
         listener(warning);
       } catch (cause) {
-        console.warn(`[ace-studio] a warning listener threw: ${(cause as Error)?.message ?? String(cause)}`);
+        console.warn(`[ace-studio] a warning listener threw: ${describeCause(cause)}`);
       }
     }
   }
@@ -341,7 +341,7 @@ function handshakeFailure(cause: unknown): BridgeError {
   }
   return new BridgeError({
     code: "HANDSHAKE_FAILED",
-    message: `The ACE Studio bridge refused the handshake: ${(cause as Error)?.message ?? String(cause)}`,
+    message: `The ACE Studio bridge refused the handshake: ${describeCause(cause)}`,
     hint: "check the auth token and that the requested capabilities are inside this surface",
     cause,
   });

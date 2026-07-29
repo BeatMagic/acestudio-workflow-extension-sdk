@@ -38,17 +38,13 @@ async function connectToLedger(
   return { connection, host };
 }
 
-/** Let the handle's poll loop go round at least once before the ledger moves. */
-async function letThePollLoopRun(): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 10));
-}
-
 /**
- * Let a pushed notification land and whatever it triggered settle. A change has
- * no response to await, and the re-read it provokes is a round trip of its own,
- * so a test that pushes one has to yield before asserting on what arrived.
+ * Yield long enough for the stack to get on with it — a poll loop to go round
+ * before the ledger moves, or a pushed change and the re-read it provokes to
+ * land. Neither has a response a test can await: the change is a notification,
+ * and the loop is nobody's promise until it resolves.
  */
-async function flush(): Promise<void> {
+async function settle(): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 10));
 }
 
@@ -61,7 +57,7 @@ describe("waiting on a job", () => {
     // back `done: false` and the handle re-issues it — the long-poll loop ADR
     // 0092 §5 describes, run by the SDK instead of by hand.
     const waiting = connection.job("job-42").wait({ pollIntervalMs: 1 });
-    await letThePollLoopRun();
+    await settle();
     ledger.advance("job-42", { lifecycle: "succeeded", progress: 1 });
     const outcome = await waiting;
 
@@ -118,7 +114,7 @@ describe("waiting on a job", () => {
     const controller = new AbortController();
 
     const waiting = connection.job("job-42").wait({ signal: controller.signal, pollIntervalMs: 50 });
-    await letThePollLoopRun();
+    await settle();
     controller.abort();
 
     // An abort is the caller changing their mind mid-wait, so it raises rather
@@ -126,6 +122,40 @@ describe("waiting on a job", () => {
     await expect(waiting).rejects.toSatisfy((error: unknown) => isCode(error, "TIMEOUT"));
     expect(ledger.job("job-42").lifecycle).toBe("running");
     expect(host.invocations.map((invocation) => invocation.path)).not.toContain("job cancel");
+    connection.close();
+  });
+
+  it("reports a job that finished while the loop was waiting to ask again as finished", async () => {
+    const ledger = new ScriptedJobLedger([scriptedJob({ id: "job-42", lifecycle: "running" })]);
+    const { connection } = await connectToLedger(ledger);
+
+    // The job settles inside the last nap: after the poll at 300ms, before the
+    // bound at 400ms. Deciding "timed out" from the poll *before* that nap would
+    // report a false negative — the work finished inside the window the caller
+    // asked about, and nobody looked.
+    setTimeout(() => ledger.advance("job-42", { lifecycle: "succeeded" }), 320);
+    const outcome = await connection.job("job-42").wait({ timeoutMs: 400, pollIntervalMs: 300 });
+
+    expect(outcome.status).toBe("finished");
+    expect(outcome.job.lifecycle).toBe("succeeded");
+    connection.close();
+  });
+});
+
+describe("waiting against a host that holds the poll", () => {
+  it("spends one call on a long-poll the host answers when the job finishes", async () => {
+    const ledger = new ScriptedJobLedger([scriptedJob({ id: "job-42", lifecycle: "running" })], { holdWaits: true });
+    const { connection, host } = await connectToLedger(ledger);
+
+    // The host of ADR 0092 §5: it holds the call rather than answering "still
+    // running", so the loop's poll interval never comes into it and the whole
+    // wait costs one round trip.
+    const waiting = connection.job("job-42").wait();
+    await settle();
+    ledger.advance("job-42", { lifecycle: "succeeded" });
+
+    expect(await waiting).toMatchObject({ status: "finished" });
+    expect(host.invocations.filter((invocation) => invocation.path === "job wait")).toHaveLength(1);
     connection.close();
   });
 });
@@ -138,9 +168,9 @@ describe("watching a job", () => {
 
     const stop = connection.job("job-42").onProgress((snapshot) => seen.push(snapshot));
     ledger.advance("job-42", { lifecycle: "running", progress: 0.4 });
-    await flush();
+    await settle();
     ledger.advance("job-42", { lifecycle: "succeeded", progress: 1 });
-    await flush();
+    await settle();
 
     // The change channel is a hint to re-read, never the new state (ADR 0083
     // §2.4) — so what a listener gets is the snapshot behind the hint, and the
@@ -153,7 +183,7 @@ describe("watching a job", () => {
     // round trip.
     stop();
     ledger.advance("job-42", { lifecycle: "failed" });
-    await flush();
+    await settle();
     expect(seen).toHaveLength(2);
     expect(host.invocations.filter((invocation) => invocation.path === "job get")).toHaveLength(2);
     connection.close();
@@ -172,7 +202,7 @@ describe("watching a job", () => {
     // and has to read `changes` to know which are its own. Re-reading on someone
     // else's is a round trip per job in the session, per event.
     ledger.advance("job-43", { lifecycle: "succeeded" });
-    await flush();
+    await settle();
 
     expect(seen).toEqual([]);
     expect(host.invocations.filter((invocation) => invocation.path === "job get")).toHaveLength(0);
@@ -329,9 +359,10 @@ describe("a job-class operation", () => {
   });
 
   it("declares no job class for any operation on today's public surface", () => {
-    // The table is hand-written until the generator emits it, so this is what
-    // says so: a row appearing here without the emitter having put it there is a
-    // hand-edit, and a regen that starts emitting rows lands as a visible change.
+    // Which is why every test above hands in a fixture table: the launch path is
+    // inert in a shipping build, and this is the assertion that says so out loud
+    // rather than leaving the empty table looking like an oversight. It goes when
+    // the catalog declares its first job class.
     expect(JOB_CLASS_OPERATIONS).toEqual({});
   });
 });

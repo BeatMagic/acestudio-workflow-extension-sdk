@@ -60,7 +60,7 @@ export type ScriptedOperation =
  * get` has to answer differently once the job has moved on, and a fixed answer
  * would let a wait loop "finish" against a reply that was already written.
  */
-export type ScriptedOperationHandler = (params: InvokeParams) => ScriptedOperation;
+export type ScriptedOperationHandler = (params: InvokeParams) => ScriptedOperation | Promise<ScriptedOperation>;
 
 /** Everything the script can decide about how the host behaves. */
 export interface ScriptedHostOptions {
@@ -220,7 +220,7 @@ export class ScriptedHostPeer {
    * from the script: session valid, then capability granted. A well-behaved SDK
    * never reaches the second one — that is what `invocations` is recorded for.
    */
-  private handleInvoke(params: InvokeParams): InvokeResult {
+  private async handleInvoke(params: InvokeParams): Promise<InvokeResult> {
     this.invocations.push(params);
     if (!this.granted) {
       throw {
@@ -236,7 +236,9 @@ export class ScriptedHostPeer {
     }
 
     const entry = this.options.operations?.[params.path];
-    const scripted = typeof entry === "function" ? entry(params) : entry;
+    // Awaited, so a handler may hold its answer — which is what `job wait` does
+    // on the real wire when it long-polls (ADR 0092 §5).
+    const scripted = typeof entry === "function" ? await entry(params) : entry;
     if (scripted === undefined) {
       throw {
         code: -32004,

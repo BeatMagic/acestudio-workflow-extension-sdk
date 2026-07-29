@@ -169,6 +169,18 @@ test("a file that has gone away is a 404, not a broken response", async () => {
   expect((await fetch(handle.url)).status).toBe(404);
 });
 
+test("serving an asset once the run has stopped is refused, not handed a URL nothing answers", async () => {
+  const { run, context } = await ui.startServed();
+
+  context.exit(0);
+  await expect(run.exitCode).resolves.toBe(0);
+
+  // The port is gone, so minting a URL for it would hand the page a link that resolves
+  // to nothing. It is a different mistake from never having taken the paved road, and it
+  // gets its own words rather than the advice to declare `ui: { assets }`.
+  expect(() => context.ui.serveAsset(new TextEncoder().encode("late"))).toThrow(/stopped serving its page/);
+});
+
 test("an extension serving its own page is told it has nowhere to serve an asset from", async () => {
   const { context } = await ui.startBare();
 

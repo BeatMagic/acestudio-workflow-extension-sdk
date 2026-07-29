@@ -66,7 +66,9 @@ export interface ExtensionUi {
    * seek. Nothing is decoded or converted on the way through.
    *
    * @throws ExtensionError when this extension is not on the paved road — there is no
-   * server of ours to put it on, and an extension running its own already has a route.
+   * server of ours to put it on, and an extension running its own already has a route —
+   * or when the run has stopped serving, since the port is gone and a URL naming it
+   * would resolve to nothing.
    *
    * @example
    * ```ts

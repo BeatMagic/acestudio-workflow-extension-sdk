@@ -99,6 +99,7 @@ export type AssetEntry =
 export class AssetRegistry {
   private readonly entries = new Map<string, AssetEntry>();
   private base: string | undefined;
+  private stopped = false;
 
   /** Say where the server that carries these URLs is listening. */
   publishAt(base: string): void {
@@ -110,12 +111,21 @@ export class AssetRegistry {
     return this.entries.get(token);
   }
 
-  /** Revoke everything — the server is going away. */
+  /**
+   * Revoke everything and stop minting URLs — the server is going away.
+   *
+   * Forgetting where it was listening is the point of the second half: a URL handed out
+   * afterwards would name a port nothing is on any more, and failing to serve is a
+   * better answer than a link that silently does not resolve. Nothing legitimate is cut
+   * off, since `deactivate` has already run by the time the server closes.
+   */
   revokeAll(): void {
     for (const entry of this.entries.values()) {
       release(entry);
     }
     this.entries.clear();
+    this.base = undefined;
+    this.stopped = true;
   }
 
   /**
@@ -123,14 +133,17 @@ export class AssetRegistry {
    *
    * @throws ExtensionError when this extension has no server to serve it from: these
    * URLs live on the paved road's loopback server, so an extension running its own
-   * server already has the route it would need.
+   * server already has the route it would need — or when the run has already stopped
+   * serving, which is a different mistake and says so.
    */
   serve(source: AssetSource, options: ServeAssetOptions = {}): ServedAsset {
     const base = this.base;
     if (base === undefined) {
-      throw new ExtensionError("this extension is not serving a page, so it has nowhere to serve an asset from", {
-        hint: "declare `ui: { assets }` to take the paved road, or serve it from the server you run yourself",
-      });
+      throw this.stopped
+        ? new ExtensionError("this run has stopped serving its page, so an asset served now could not be fetched")
+        : new ExtensionError("this extension is not serving a page, so it has nowhere to serve an asset from", {
+            hint: "declare `ui: { assets }` to take the paved road, or serve it from the server you run yourself",
+          });
     }
     const token = randomBytes(TOKEN_BYTES).toString("hex");
     this.entries.set(token, entryFor(source, options.contentType));

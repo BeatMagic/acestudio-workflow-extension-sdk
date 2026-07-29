@@ -1,0 +1,10 @@
+{
+  // api-extractor analyses built declarations, so its compiler has to resolve
+  // @timedomain peers to their built declarations too. Dropping the "development"
+  // condition the rest of the repo runs on is what does that: with it, bridge-core
+  // resolves to src/*.ts and api-extractor refuses to read a .ts file.
+  "extends": "./tsconfig.build.json",
+  "compilerOptions": {
+    "customConditions": []
+  }
+}

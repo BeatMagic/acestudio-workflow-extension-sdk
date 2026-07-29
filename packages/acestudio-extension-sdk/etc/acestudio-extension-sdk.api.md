@@ -4,7 +4,140 @@
 
 ```ts
 
+import type { CapabilityToken } from '@timedomain/acestudio-bridge-core';
+import type { Grant } from '@timedomain/acestudio-bridge-core';
+import type { ProfileName } from '@timedomain/acestudio-bridge-core';
+import type { ProfileTokens } from '@timedomain/acestudio-bridge-core';
+import type { ScopedBindings } from '@timedomain/acestudio-bridge-core';
+import { Transport } from '@timedomain/acestudio-bridge-core';
+
 // @public
-export const packageName = "@timedomain/acestudio-extension-sdk";
+export type AbsoluteFilesystemPath = `/${string}` | `\\${string}` | `${string}:${"/" | "\\"}${string}`;
+
+// @public
+export const BRIDGE_SOCKET_ENV = "ACE_EXTENSION_BRIDGE_SOCKET";
+
+// @public
+export const BRIDGE_TOKEN_ENV = "ACE_EXTENSION_BRIDGE_TOKEN";
+
+// @public
+export type CapabilityTokensOf<C extends RequestedCapability> = C extends ProfileName ? ProfileTokens<C> : C extends CapabilityToken ? C : never;
+
+// @public
+export const COMMAND_ENV = "ACE_EXTENSION_COMMAND";
+
+// @public
+export function defineExtension<const M extends ExtensionManifest>(definition: ExtensionDefinition<M>, options?: ExtensionRuntimeOptions): Extension<M>;
+
+// @public
+export type EnumeratedFilesystemScope = "projectMedia" | "home" | "documents" | "music" | "desktop" | "downloads" | "all";
+
+// @public
+export type Environment = Readonly<Record<string, string | undefined>>;
+
+// @public
+export interface Extension<M extends ExtensionManifest = ExtensionManifest> {
+    readonly exitCode: Promise<number>;
+    readonly manifest: M;
+}
+
+// @public
+export interface ExtensionContext<M extends ExtensionManifest = ExtensionManifest> {
+    readonly client: ManifestClient<M>;
+    readonly command?: string;
+    exit(code?: number): void;
+    readonly grant: Grant;
+    readonly manifest: M;
+}
+
+// @public
+export interface ExtensionDefinition<M extends ExtensionManifest> {
+    readonly activate?: ExtensionHandler<M>;
+    readonly commands?: Readonly<Record<string, ExtensionHandler<M>>>;
+    readonly deactivate?: ExtensionHandler<M>;
+    readonly manifest: M;
+}
+
+// @public
+export class ExtensionError extends Error {
+    constructor(message: string, options?: {
+        hint?: string;
+        cause?: unknown;
+    });
+    readonly hint?: string;
+}
+
+// @public
+export type ExtensionHandler<M extends ExtensionManifest> = (context: ExtensionContext<M>) => void | Promise<void>;
+
+// @public
+export type ExtensionLifecycle = "one-shot" | "persistent";
+
+// @public
+export interface ExtensionManifest {
+    readonly capabilities: readonly RequestedCapability[];
+    readonly cwd?: string;
+    readonly description?: string;
+    readonly entry: string;
+    readonly hostAccess?: HostAccess;
+    readonly icon?: string;
+    readonly id: string;
+    readonly lifecycle: ExtensionLifecycle;
+    readonly name: string;
+    readonly publisher: string;
+    readonly version: string;
+}
+
+// @public
+export interface ExtensionRuntimeOptions {
+    readonly env?: Environment;
+    readonly exit?: (code: number) => void;
+    readonly transport?: Transport;
+}
+
+// @public
+export interface FilesystemAccess {
+    readonly read?: readonly FilesystemScope[] | "all";
+    readonly write?: readonly FilesystemScope[] | "all";
+}
+
+// @public
+export type FilesystemScope = EnumeratedFilesystemScope | `project:${string}` | AbsoluteFilesystemPath;
+
+// @public
+export interface HostAccess {
+    readonly childProcess?: boolean;
+    readonly filesystem?: FilesystemAccess;
+    readonly nativeAddons?: boolean;
+    readonly wasi?: boolean;
+    readonly workers?: boolean;
+}
+
+// @public
+export const MANIFEST_FILENAME = "manifest.json";
+
+// @public
+export const MANIFEST_VERSION = 1;
+
+// @public
+export type ManifestClient<M extends ExtensionManifest> = ScopedBindings<CapabilityTokensOf<M["capabilities"][number]>>;
+
+// @public
+export interface ManifestJson extends ExtensionManifest {
+    readonly manifestVersion: number;
+    readonly sdkApiVersion: number;
+}
+
+// @public
+export type RequestedCapability = CapabilityToken | ProfileName;
+
+// @public
+export const SDK_API_VERSION = 1;
+
+// @public
+export function serializeManifest(manifest: ExtensionManifest): string;
+
+// @public
+export function writeManifestJson(manifest: ExtensionManifest, outputDir: string): Promise<string>;
 
 ```

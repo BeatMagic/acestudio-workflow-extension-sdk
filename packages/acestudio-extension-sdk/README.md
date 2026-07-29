@@ -47,6 +47,58 @@ lifecycle policy decides how ACE Studio supervises the process — a `one-shot`
 run is over when `activate` resolves, a `persistent` peer stays up until it is
 stopped.
 
+## The UI paved road
+
+Declare `ui: { assets }` and the SDK serves your built page on loopback, announces
+its URL to ACE Studio, and carries a typed channel between that page and your
+process. Declare one protocol type, import it from both sides, and both halves of
+the conversation are checked:
+
+```ts
+// protocol.ts — imported by the process and by the page
+import type { UiProtocol } from "@timedomain/acestudio-extension-sdk";
+
+export interface StemsUi extends UiProtocol {
+  calls: {
+    listStems(params: { trackIndex: number }): Promise<string[]>;
+  };
+  events: {
+    progress: { done: number; total: number };
+  };
+}
+```
+
+```ts
+// index.ts — the process side
+export default defineExtension({
+  manifest,
+  ui: { assets: "dist/ui" },
+  activate: (ctx) => {
+    const channel = ctx.ui.channel<StemsUi>();
+    channel.handle("listStems", ({ trackIndex }) => stemsOf(trackIndex));
+    channel.emit("progress", { done: 1, total: 4 });
+  },
+});
+```
+
+```ts
+// ui/main.ts — the page side, from the browser-only subpath
+import { connectChannel } from "@timedomain/acestudio-extension-sdk/page";
+import type { StemsUi } from "../protocol.js";
+
+const channel = connectChannel<StemsUi>();
+channel.on("progress", ({ done, total }) => setProgress(done / total));
+const stems = await channel.call("listStems", { trackIndex: 0 });
+```
+
+It is a convenience, not the way in: an extension that runs its own server — a
+framework's production server, a dev server — leaves `ui` out and calls
+`ctx.ui.announceSurface(url)` with its own URL instead. Either way ACE Studio owns
+the window, and `ctx.ui.reload()` / `ctx.ui.navigate(url)` are how you ask it to
+re-point what it is showing.
+
+## Emitting the manifest
+
 ```ts
 // build script — emit manifest.json into the bundle
 import { writeManifestJson } from "@timedomain/acestudio-extension-sdk";
@@ -55,8 +107,7 @@ import { manifest } from "./manifest.js";
 await writeManifestJson(manifest, "bundle");
 ```
 
-> **Status:** pre-release (`0.0.0`). `defineExtension`, the TypeScript manifest,
-> and the manifest-scoped client are in place; the UI paved road — loopback server,
-> typed page↔process channel, media handles, `devServerUrl`, debug mode — arrives in
-> later slices, as does the `./page` entry's real API. The API may still change
+> **Status:** pre-release (`0.0.0`). `defineExtension`, the TypeScript manifest, the
+> manifest-scoped client, and the UI paved road are in place. Media handles,
+> `devServerUrl`, and debug mode arrive in later slices. The API may still change
 > before the first release.

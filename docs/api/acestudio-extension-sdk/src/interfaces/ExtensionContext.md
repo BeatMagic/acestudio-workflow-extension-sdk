@@ -43,6 +43,18 @@ readonly manifest: M;
 
 The manifest this extension was defined with, as written.
 
+***
+
+### ui
+
+```ts
+readonly ui: ExtensionUi;
+```
+
+The window ACE Studio hosts this extension's page in, and the typed channel
+between that page and this process. An extension that declared `ui: { assets }`
+finds its page already served and announced.
+
 ## Methods
 
 ### exit()

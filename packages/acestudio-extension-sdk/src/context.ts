@@ -5,6 +5,7 @@
 import type { Grant } from "@timedomain/acestudio-bridge-core";
 import type { ManifestClient } from "./client.js";
 import type { ExtensionManifest } from "./manifest.js";
+import type { ExtensionUi } from "./ui/surface.js";
 
 /**
  * The context every handler receives — one open session, already handshaken, with
@@ -27,6 +28,12 @@ export interface ExtensionContext<M extends ExtensionManifest = ExtensionManifes
    * extension can do useful work with only part of what it asked for.
    */
   readonly grant: Grant;
+  /**
+   * The window ACE Studio hosts this extension's page in, and the typed channel
+   * between that page and this process. An extension that declared `ui: { assets }`
+   * finds its page already served and announced.
+   */
+  readonly ui: ExtensionUi;
   /**
    * End the run: `deactivate`, then exit with `code` (`0` by default). The natural
    * ending for a workflow that is done, or one the user cancelled from the

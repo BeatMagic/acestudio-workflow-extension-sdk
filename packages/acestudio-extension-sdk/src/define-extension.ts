@@ -201,6 +201,13 @@ class ExtensionRun<M extends ExtensionManifest> {
     try {
       await this.definition.activate(context);
     } catch (error) {
+      // The run can already be over: ACE Studio's stop landed mid-handler, or the
+      // handler called `ctx.exit()` itself. An `activate` that then rejects because
+      // the session was closed under it did not fail the run, and logging that it
+      // did would tell the developer their extension broke when the user stopped it.
+      if (this.ending) {
+        return;
+      }
       this.activateFailed = true;
       console.error(`[ace-studio] activate failed: ${describeFailure(error)}`);
       await this.finish(EXIT_HANDLER_FAILED);

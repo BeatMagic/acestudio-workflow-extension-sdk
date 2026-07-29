@@ -233,15 +233,17 @@ function validateBundlePath(
     return;
   }
   if (typeof value !== "string" || value.length === 0) {
-    problems.push(`"${field}" must be a non-empty bundle-relative path`);
+    problems.push(`"${field}" must be a non-empty bundle-relative path, got ${JSON.stringify(value)}`);
     return;
   }
+  // Quoted, like the other value problems: a path is where a stray backslash or
+  // trailing space hides, and raw interpolation is where it keeps hiding.
   if (ABSOLUTE_PATTERN.test(value)) {
-    problems.push(`"${field}" must be bundle-relative, not absolute: ${value}`);
+    problems.push(`"${field}" must be bundle-relative, not absolute, got ${JSON.stringify(value)}`);
     return;
   }
   if (escapesBundle(value)) {
-    problems.push(`"${field}" must stay inside the bundle: ${value}`);
+    problems.push(`"${field}" must stay inside the bundle, got ${JSON.stringify(value)}`);
   }
 }
 

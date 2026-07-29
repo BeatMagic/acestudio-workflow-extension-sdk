@@ -292,6 +292,37 @@ describe("ending a run", () => {
     error.mockRestore();
   });
 
+  it("does not report a failure when activate rejects after the run already ended", async () => {
+    // The ordinary way a user stops a busy extension: `activate` is awaiting a call,
+    // the stop closes the session under it, and the await rejects. The run ended
+    // cleanly; saying "activate failed" would blame the extension for being stopped.
+    const activated = signal();
+    const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    let failActivate!: (reason: Error) => void;
+    const { exitCode, host } = startRun(
+      {
+        manifest: PERSISTENT,
+        activate: async () => {
+          activated.announce();
+          await new Promise<void>((_resolve, reject) => {
+            failActivate = reject;
+          });
+        },
+      },
+      { host: GRANTING_HOST },
+    );
+
+    await activated.reached;
+    host.notifyShutdown({ reason: "user stopped the workflow", graceMs: 5_000 });
+    await expect(exitCode).resolves.toBe(0);
+
+    failActivate(new Error("clip.list never came back"));
+    // Long enough for the rejection to travel through the handler's catch.
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(error).not.toHaveBeenCalledWith(expect.stringContaining("activate failed"));
+    error.mockRestore();
+  });
+
   it("exits 3 without a wind-down when the bridge drops", async () => {
     const activated = signal();
     const error = vi.spyOn(console, "error").mockImplementation(() => undefined);

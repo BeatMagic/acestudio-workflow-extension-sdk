@@ -84,7 +84,7 @@ test("the channel is still on loopback, and answers the page the dev server serv
 });
 
 /**
- * The next three tests are about CORS, which is the thing this arrangement stands or
+ * The next four tests are about CORS, which is the thing this arrangement stands or
  * falls on and the thing a test in this runner cannot witness directly: Node's `fetch`
  * does not enforce it, so a passing `call()` here proves nothing about a webview. What
  * they assert instead is what a browser would be *told* — because with the page on the
@@ -136,6 +136,30 @@ test("the call, the event stream, and a served asset all say the page may read t
   expect(bytes.headers.get("access-control-expose-headers")).toContain("content-range");
 });
 
+test("a served asset answers the preflight a ranged fetch arrives with", async () => {
+  const { context, url } = await ui.startServed({ env: DEV_LOADED, ui: { devServerUrl: DEV_SERVER } });
+  const handle = context.ui.serveAsset(new TextEncoder().encode("audio bytes"));
+  const devOrigin = new URL(DEV_SERVER).origin;
+  expect(handle.url.startsWith(channelOrigin(url))).toBe(true);
+
+  // `range` is not a safelisted request header, so asking for one cross-origin costs a
+  // preflight of its own — and refusing it would leave a dev-server page able to fetch an
+  // asset whole and unable to seek inside it, which is the reason ranges are answered.
+  const preflight = await fetch(handle.url, {
+    method: "OPTIONS",
+    headers: {
+      origin: devOrigin,
+      "access-control-request-method": "GET",
+      "access-control-request-headers": "range",
+    },
+  });
+
+  expect(preflight.status).toBe(204);
+  expect(preflight.headers.get("access-control-allow-origin")).toBe(devOrigin);
+  expect(preflight.headers.get("access-control-allow-methods")).toContain("GET");
+  expect(preflight.headers.get("access-control-allow-headers")).toContain("range");
+});
+
 test("a foreign page is told nothing, so the permission widens by one origin only", async () => {
   const { context, url } = await ui.startServed({ env: DEV_LOADED, ui: { devServerUrl: DEV_SERVER } });
   const handle = context.ui.serveAsset(new TextEncoder().encode("audio bytes"));
@@ -153,6 +177,15 @@ test("a foreign page is told nothing, so the permission widens by one origin onl
   // handed permission to read what it addresses.
   const bytes = await fetch(handle.url, { headers: evil });
   expect(bytes.headers.get("access-control-allow-origin")).toBeNull();
+
+  // An asset's preflight is answered for anyone, since the route deliberately checks no
+  // `Origin` — withholding the permission is what stops a foreign page reading the answer.
+  const assetPreflight = await fetch(handle.url, {
+    method: "OPTIONS",
+    headers: { ...evil, "access-control-request-method": "GET", "access-control-request-headers": "range" },
+  });
+  expect(assetPreflight.status).toBe(204);
+  expect(assetPreflight.headers.get("access-control-allow-origin")).toBeNull();
 });
 
 test("the page finds its process from the announced URL, with nothing configured", async () => {

@@ -24,7 +24,8 @@ revoke(): void;
 
 Stop serving it. The URL stops resolving immediately; a transfer already in
 flight is left to finish, because cutting a video mid-buffer to reclaim a token
-helps nobody.
+helps nobody. A stream nobody read is closed, since serving it was the last thing
+holding it open.
 
 Revoking twice is not an error. Every handle is revoked when the run ends.
 

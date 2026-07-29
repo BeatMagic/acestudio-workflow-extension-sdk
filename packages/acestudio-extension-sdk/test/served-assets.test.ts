@@ -137,6 +137,31 @@ test("revoking a handle stops its URL resolving, and leaves every other handle a
   await expect((await fetch(kept.url)).text()).resolves.toBe("still here");
 });
 
+test("revoking a stream nobody read closes it", async () => {
+  const { context } = await ui.startServed();
+  const source = Readable.from([ALPHABET]);
+  const handle = context.ui.serveAsset(source, { contentType: "audio/wav" });
+
+  handle.revoke();
+
+  // Serving a stream hands it over, so once the URL is gone nothing else is left holding
+  // it — and an unread source still owns whatever it was reading from.
+  expect(source.destroyed).toBe(true);
+});
+
+test("a stream that was read is left alone, having closed itself on the way out", async () => {
+  const { context } = await ui.startServed();
+  const source = Readable.from([ALPHABET]);
+  const handle = context.ui.serveAsset(source, { contentType: "audio/wav" });
+
+  await expect((await fetch(handle.url)).text()).resolves.toBe(ALPHABET);
+  handle.revoke();
+
+  // Nothing to assert about a descriptor here — the point is that revoking a stream mid
+  // transfer is not how it gets cut off, which the served bytes above already showed.
+  expect(source.readableEnded).toBe(true);
+});
+
 test("a file that has gone away is a 404, not a broken response", async () => {
   const { context, assets } = await ui.startServed();
   const handle = context.ui.serveAsset(join(assets, "never-written.wav"));
@@ -150,12 +175,17 @@ test("an extension serving its own page is told it has nowhere to serve an asset
   expect(() => context.ui.serveAsset("/tmp/anything.wav")).toThrow(/nowhere to serve an asset from/);
 });
 
-test("stopping the run stops serving every asset", async () => {
+test("stopping the run stops serving every asset, and closes the streams none of them read", async () => {
   const { run, context, assets } = await ui.startServed();
   const handle = context.ui.serveAsset(await fileOfBytes(assets, "take.wav", ALPHABET));
+  const unread = Readable.from([ALPHABET]);
+  context.ui.serveAsset(unread, { contentType: "audio/wav" });
 
   context.exit(0);
   await expect(run.exitCode).resolves.toBe(0);
 
   await expect(fetch(handle.url)).rejects.toThrow();
+  // An extension may serve a render it turns out nobody asks for. The run ending is the
+  // last chance to let go of it, so it is taken.
+  expect(unread.destroyed).toBe(true);
 });

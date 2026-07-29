@@ -301,7 +301,7 @@ async function serveChannel(request: IncomingMessage, response: ServerResponse, 
   }
   allowCrossOrigin(request, response, routes.pageOrigin);
   if (request.method === "OPTIONS") {
-    answerPreflight(response);
+    answerPreflight(response, "GET, POST", "content-type");
     return;
   }
   if (request.method === "GET") {
@@ -347,16 +347,22 @@ function allowCrossOrigin(
 }
 
 /**
- * Answer the request a browser sends before it will make a cross-origin call.
+ * Answer the request a browser sends before it will make a cross-origin one.
  *
- * Neither content type the channel speaks is CORS-safelisted, so a preflight precedes
- * every single call — which is why it is worth a `max-age` rather than being asked and
- * answered thousands of times over one page's life.
+ * Every route here needs this, because everything worth asking for crosses the
+ * safelist: neither content type the channel speaks is safelisted, and neither is a
+ * `range` header. So a preflight precedes each real request — which is why it is worth
+ * a `max-age` rather than being asked and answered thousands of times over one page's
+ * life.
+ *
+ * The permission to *read* the answer is {@link allowCrossOrigin}'s and is set by the
+ * caller before this, so a preflight from an origin the route does not accept is still
+ * answered — with nothing in it that lets the asking page proceed.
  */
-function answerPreflight(response: ServerResponse): void {
+function answerPreflight(response: ServerResponse, methods: string, headers: string): void {
   response.writeHead(204, {
-    "access-control-allow-methods": "GET, POST",
-    "access-control-allow-headers": "content-type",
+    "access-control-allow-methods": methods,
+    "access-control-allow-headers": headers,
     "access-control-max-age": "600",
   });
   response.end();
@@ -459,7 +465,7 @@ async function readBody(request: IncomingMessage, limit: number): Promise<Uint8A
 }
 
 /**
- * Serve one media handle's bytes, answering byte ranges so a media element can seek.
+ * Serve one served asset's bytes, answering byte ranges so a media element can seek.
  *
  * No `Origin` check, unlike the channel: a browser sends none when an element loads
  * a `src`, so a check here would refuse the page this exists for. The token in the URL
@@ -467,7 +473,10 @@ async function readBody(request: IncomingMessage, limit: number): Promise<Uint8A
  *
  * A page may also `fetch` these bytes rather than hand the URL to an element, and in
  * dev that fetch is cross-origin — so the permission is offered, to the same one extra
- * origin the channel accepts and no other.
+ * origin the channel accepts and no other. A ranged fetch brings a preflight with it,
+ * since `range` is not a safelisted request header, and it is answered before the token
+ * is looked up: what a preflight asks is whether the method and header are allowed here
+ * at all, which is true of every asset URL and of none that was revoked.
  */
 async function serveAsset(
   request: IncomingMessage,
@@ -476,6 +485,10 @@ async function serveAsset(
   token: string,
 ): Promise<void> {
   allowCrossOrigin(request, response, routes.pageOrigin, "accept-ranges, content-range");
+  if (request.method === "OPTIONS") {
+    answerPreflight(response, "GET, HEAD", "range");
+    return;
+  }
   if (request.method !== "GET" && request.method !== "HEAD") {
     refuseMethod(response, "GET, HEAD", "a served asset answers GET and HEAD");
     return;

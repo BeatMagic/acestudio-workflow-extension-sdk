@@ -69,7 +69,8 @@ export interface ServedAsset {
   /**
    * Stop serving it. The URL stops resolving immediately; a transfer already in
    * flight is left to finish, because cutting a video mid-buffer to reclaim a token
-   * helps nobody.
+   * helps nobody. A stream nobody read is closed, since serving it was the last thing
+   * holding it open.
    *
    * Revoking twice is not an error. Every handle is revoked when the run ends.
    */
@@ -111,6 +112,9 @@ export class AssetRegistry {
 
   /** Revoke everything — the server is going away. */
   revokeAll(): void {
+    for (const entry of this.entries.values()) {
+      release(entry);
+    }
     this.entries.clear();
   }
 
@@ -133,9 +137,28 @@ export class AssetRegistry {
     return {
       url: new URL(`${ASSET_PATH}${token}`, base).toString(),
       revoke: () => {
+        const entry = this.entries.get(token);
         this.entries.delete(token);
+        if (entry !== undefined) {
+          release(entry);
+        }
       },
     };
+  }
+}
+
+/**
+ * Let go of whatever an entry that is no longer served was holding.
+ *
+ * Only a stream holds anything: serving one hands it over, so once its URL is gone
+ * nothing else is left to close it, and one that was never read still owns whatever it
+ * was reading from — a descriptor, a socket, a child process's output. A stream already
+ * going out is left alone, because a transfer in flight is finished rather than cut, and
+ * it closes itself when it ends.
+ */
+function release(entry: AssetEntry): void {
+  if (entry.kind === "stream" && !entry.consumed) {
+    entry.stream.destroy();
   }
 }
 

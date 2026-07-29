@@ -33,12 +33,26 @@ the generated domain bindings with their grants and pre-wire capability guard, a
 the compile-time capability facade; typed job handles and typed-array bulk data
 land on top of them. `acestudio-extension-sdk` carries the layer above:
 `defineExtension`'s lifecycle choreography, the TypeScript manifest and its JSON
-emission, and the manifest-scoped client — the UI paved road and the `./page`
-entry's real API arrive in later slices. The scaffolder is still a skeleton: it
-builds and is wired into the pipeline, but its public API is filled in by a
-subsequent slice. All three are versioned `0.0.0` until their first release. The
-name `@timedomain/acestudio-sdk` is intentionally left unclaimed, reserved for a
-future umbrella package.
+emission, the manifest-scoped client, and the UI paved road — the loopback asset
+server, the surface announcement, and the typed page↔process channel whose browser
+half ships from the `./page` subpath. The scaffolder is still a skeleton: it builds
+and is wired into the pipeline, but its public API is filled in by a subsequent
+slice. All three are versioned `0.0.0` until their first release. The name
+`@timedomain/acestudio-sdk` is intentionally left unclaimed, reserved for a future
+umbrella package.
+
+### Generated wire surfaces
+
+Two packages carry generated code, regenerated in the Studio repo with
+`acerpcgen --ts-out` and arriving here by regen PR — never edited in place:
+
+| Package                   | Generated                                                                         | From                                                                       |
+| ------------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `acestudio-bridge-core`   | `src/generated/{Session,Operation,Change}.acerpc.ts`, `src/generated/bindings.ts` | the Capability Core surfaces, and the capability catalog                    |
+| `acestudio-extension-sdk` | `src/generated/WorkflowUi.acerpc.ts`                                              | `WorkflowUi.acerpc` — the channel an extension presents its UI through      |
+
+Each sits beside a hand-written `types-runtime.ts`, which is the module path the
+generator's imports resolve against.
 
 Bridge-core tests drive the real stack over an in-memory transport pair against
 `packages/acestudio-bridge-core/test/support/host-peer.ts` — a scripted stand-in
@@ -57,6 +71,13 @@ The extension SDK's tests reach that same peer by path
 core's `connect()` — so one seam covers both packages. The two things the harness
 stands in for are the two an extension process cannot have inside a test runner: its
 socket and its exit.
+
+A surface only the extension layer speaks is scripted from that layer's own suite
+through the peer's `methods` option, against the generated payload types — which is
+how `test/support/surface-window.ts` plays Studio's half of the surface channel. The
+UI tests then run the real loopback server and the real `./page` module against each
+other, so "the two ends of one protocol type actually talk" is witnessed rather than
+asserted about stand-ins.
 
 ## Development
 
@@ -144,6 +165,11 @@ npm run build
 declarations with `tsc` for every package that has a public type surface. The
 bundle resolves the extensionless relative imports Node's ESM loader rejects, so
 the output runs under plain `node`.
+
+The extension SDK's `./page` entry is the exception: it is bundled with
+`platform: "browser"` and no Node target, since it runs in ACE Studio's webview. A
+stray Node built-in reaching that import graph fails the build, which is the gate
+that keeps the page side browser-only.
 
 ### The CLI is self-contained
 

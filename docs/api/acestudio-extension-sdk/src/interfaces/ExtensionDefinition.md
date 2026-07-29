@@ -47,3 +47,18 @@ readonly manifest: M;
 ```
 
 The manifest module, written `as const satisfies ExtensionManifest`.
+
+***
+
+### ui?
+
+```ts
+readonly optional ui?: ExtensionUiOptions;
+```
+
+The UI paved road: point it at the built page and the SDK serves it on loopback
+and announces the URL to ACE Studio before `activate` runs.
+
+Optional because it is a convenience, not the way in. An extension that runs its
+own server — a framework's production server, a dev server — leaves this out and
+calls `ctx.ui.announceSurface(url)` with its own URL.

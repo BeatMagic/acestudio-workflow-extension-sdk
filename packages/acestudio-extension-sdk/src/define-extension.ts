@@ -26,6 +26,9 @@ import type { ExtensionContext } from "./context.js";
 import { describeFailure } from "./errors.js";
 import type { ExtensionManifest } from "./manifest.js";
 import { readSpawnContract, type Environment, type SpawnContract } from "./spawn-env.js";
+import { ChannelHub } from "./ui/channel.js";
+import { serveUi, type ExtensionUiOptions, type UiServer } from "./ui/server.js";
+import { createExtensionUi } from "./ui/surface.js";
 
 /** The run ended the way it was supposed to. */
 const EXIT_OK = 0;
@@ -33,7 +36,10 @@ const EXIT_OK = 0;
 /** A handler threw. */
 const EXIT_HANDLER_FAILED = 1;
 
-/** The run never started: the spawn environment, the definition, or the handshake. */
+/**
+ * The run never started: the spawn environment, the definition, the handshake, or
+ * the UI it declared.
+ */
 const EXIT_NOT_STARTED = 2;
 
 /** The bridge closed under a running extension. */
@@ -73,6 +79,15 @@ export interface ExtensionDefinition<M extends ExtensionManifest> {
    * platform: the user decides that in the interface the extension draws.
    */
   readonly activate: ExtensionHandler<M>;
+  /**
+   * The UI paved road: point it at the built page and the SDK serves it on loopback
+   * and announces the URL to ACE Studio before `activate` runs.
+   *
+   * Optional because it is a convenience, not the way in. An extension that runs its
+   * own server — a framework's production server, a dev server — leaves this out and
+   * calls `ctx.ui.announceSurface(url)` with its own URL.
+   */
+  readonly ui?: ExtensionUiOptions;
   /**
    * Wind-down, run once before the process exits: on ACE Studio's stop (inside the
    * grace window), when a one-shot finishes, and on {@link ExtensionContext.exit}.
@@ -115,7 +130,8 @@ export interface Extension<M extends ExtensionManifest = ExtensionManifest> {
    *
    * - `0` — the run finished, or was stopped, cleanly.
    * - `1` — a handler threw.
-   * - `2` — the run never started: no spawn environment, or a refused handshake.
+   * - `2` — the run never started: no spawn environment, a refused handshake, or a
+   *   declared UI that could not be served or announced.
    * - `3` — the bridge closed under a running extension.
    */
   readonly exitCode: Promise<number>;
@@ -156,9 +172,17 @@ class ExtensionRun<M extends ExtensionManifest> {
   private readonly definition: ExtensionDefinition<M>;
   private readonly options: ExtensionRuntimeOptions;
   private readonly exit: (code: number) => void;
+  /**
+   * The one channel behind every typed view of it. Owned by the run rather than by
+   * the server, so `ctx.ui.channel()` is the same object whether or not this extension
+   * took the paved road — registering handlers on it is never an error, it is the page
+   * reaching them that needs a served page.
+   */
+  private readonly hub = new ChannelHub();
   private settleExitCode!: (code: number) => void;
   private connection: BridgeConnection | undefined;
   private context: ExtensionContext<M> | undefined;
+  private server: UiServer | undefined;
   /**
    * Set when `activate` threw, which is the one case with nothing wound up for
    * `deactivate` to wind down. Deliberately not "did activate finish": an activate
@@ -193,6 +217,9 @@ class ExtensionRun<M extends ExtensionManifest> {
         socketPathRequired: this.options.transport === undefined,
       });
       context = this.attach(await this.openSession(contract));
+      // Before `activate`, so a handler that emits on the channel or reads
+      // `ctx.ui.url` finds the page already served and announced.
+      await this.servePavedRoad(context);
     } catch (error) {
       this.abandon(EXIT_NOT_STARTED, `this extension could not start: ${describeFailure(error)}`);
       return;
@@ -239,6 +266,20 @@ class ExtensionRun<M extends ExtensionManifest> {
     });
   }
 
+  /**
+   * Serve and announce the declared page, so the window has something to show before
+   * the extension's own code runs. An extension that runs its own server declared
+   * nothing here and announces for itself.
+   */
+  private async servePavedRoad(context: ExtensionContext<M>): Promise<void> {
+    const { ui } = this.definition;
+    if (ui === undefined) {
+      return;
+    }
+    this.server = await serveUi(ui.assets, this.hub);
+    await context.ui.announceSurface(this.server.url);
+  }
+
   /** Build the handler's context and wire the endings the host can trigger. */
   private attach(connection: BridgeConnection): ExtensionContext<M> {
     this.connection = connection;
@@ -249,6 +290,7 @@ class ExtensionRun<M extends ExtensionManifest> {
       // this type — is what refuses a call the grant cannot reach.
       client: connection.client as unknown as ManifestClient<M>,
       grant: connection.grant,
+      ui: createExtensionUi(connection, this.hub),
       exit: (code = EXIT_OK) => {
         void this.finish(code);
       },
@@ -274,8 +316,25 @@ class ExtensionRun<M extends ExtensionManifest> {
     }
     this.ending = true;
     await this.runDeactivate(shutdown?.graceMs);
+    // After the wind-down: a `deactivate` that flushes a last progress event to its
+    // page should still find the page there.
+    await this.stopServing();
     this.connection?.close();
     this.settle(code);
+  }
+
+  /**
+   * Stop serving the page. A failure here changes nothing about how the run ends —
+   * the process is about to exit and the OS closes the listener either way — so it is
+   * logged rather than allowed to replace the ending already decided.
+   */
+  private async stopServing(): Promise<void> {
+    try {
+      await this.server?.close();
+    } catch (error) {
+      console.warn(`[ace-studio] the UI server did not shut down cleanly: ${describeFailure(error)}`);
+    }
+    this.server = undefined;
   }
 
   private async runDeactivate(graceMs: number | undefined): Promise<void> {
@@ -315,6 +374,10 @@ class ExtensionRun<M extends ExtensionManifest> {
   private abandon(code: number, message: string): void {
     this.ending = true;
     console.error(`[ace-studio] ${message}`);
+    // Not awaited: this path is reached from a listener as well as from `run`, so it
+    // cannot be async without making a dropped bridge an unhandled rejection. The
+    // listener is closed either way — by this call, or by the process exiting.
+    void this.stopServing();
     this.connection?.close();
     this.settle(code);
   }

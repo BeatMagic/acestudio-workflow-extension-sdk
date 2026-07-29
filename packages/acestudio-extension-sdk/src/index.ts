@@ -11,7 +11,10 @@
  * handler's client be typed down to exactly the capabilities the manifest asked
  * for.
  *
- * The browser-only page-side channel ships from the `./page` subpath.
+ * The optional UI paved road lives here too: declare `ui: { assets }` and the SDK
+ * serves the page on loopback, announces it to ACE Studio, and carries the typed
+ * page↔process channel ({@link UiProtocol}). The browser-only other end of that
+ * channel ships from the `./page` subpath.
  *
  * @packageDocumentation
  */
@@ -43,3 +46,11 @@ export type {
 export { MANIFEST_FILENAME, serializeManifest, writeManifestJson } from "./manifest-json.js";
 export { BRIDGE_SOCKET_ENV, BRIDGE_TOKEN_ENV } from "./spawn-env.js";
 export type { Environment } from "./spawn-env.js";
+export type { CallHandler, EmitArgs, UiChannel } from "./ui/channel.js";
+// `ParamsOf` and `ResultOf` are the vocabulary the channel's signatures are written
+// in. They are public because those signatures name them: api-extractor refuses to
+// describe a public type in terms of hidden ones, and it is right to — a consumer
+// reading the report cannot see what a handler is handed otherwise.
+export type { CallsOf, EventsOf, ParamsOf, ResultOf, UiCalls, UiEvents, UiProtocol } from "./ui/protocol.js";
+export type { ExtensionUiOptions } from "./ui/server.js";
+export type { ExtensionUi } from "./ui/surface.js";

@@ -13,7 +13,10 @@ the host and the signer read ([serializeManifest](functions/serializeManifest.md
 handler's client be typed down to exactly the capabilities the manifest asked
 for.
 
-The browser-only page-side channel ships from the `./page` subpath.
+The optional UI paved road lives here too: declare `ui: { assets }` and the SDK
+serves the page on loopback, announces it to ACE Studio, and carries the typed
+page↔process channel ([UiProtocol](interfaces/UiProtocol.md)). The browser-only other end of that
+channel ships from the `./page` subpath.
 
 ## Classes
 
@@ -26,22 +29,34 @@ The browser-only page-side channel ships from the `./page` subpath.
 - [ExtensionDefinition](interfaces/ExtensionDefinition.md)
 - [ExtensionManifest](interfaces/ExtensionManifest.md)
 - [ExtensionRuntimeOptions](interfaces/ExtensionRuntimeOptions.md)
+- [ExtensionUi](interfaces/ExtensionUi.md)
+- [ExtensionUiOptions](interfaces/ExtensionUiOptions.md)
 - [FilesystemAccess](interfaces/FilesystemAccess.md)
 - [HostAccess](interfaces/HostAccess.md)
 - [ManifestJson](interfaces/ManifestJson.md)
+- [UiChannel](interfaces/UiChannel.md)
+- [UiProtocol](interfaces/UiProtocol.md)
 
 ## Type Aliases
 
 - [AbsoluteFilesystemPath](type-aliases/AbsoluteFilesystemPath.md)
+- [CallHandler](type-aliases/CallHandler.md)
+- [CallsOf](type-aliases/CallsOf.md)
 - [CapabilityTokensOf](type-aliases/CapabilityTokensOf.md)
 - [DriveLetter](type-aliases/DriveLetter.md)
+- [EmitArgs](type-aliases/EmitArgs.md)
 - [EnumeratedFilesystemScope](type-aliases/EnumeratedFilesystemScope.md)
 - [Environment](type-aliases/Environment.md)
+- [EventsOf](type-aliases/EventsOf.md)
 - [ExtensionHandler](type-aliases/ExtensionHandler.md)
 - [ExtensionLifecycle](type-aliases/ExtensionLifecycle.md)
 - [FilesystemScope](type-aliases/FilesystemScope.md)
 - [ManifestClient](type-aliases/ManifestClient.md)
+- [ParamsOf](type-aliases/ParamsOf.md)
 - [RequestedCapability](type-aliases/RequestedCapability.md)
+- [ResultOf](type-aliases/ResultOf.md)
+- [UiCalls](type-aliases/UiCalls.md)
+- [UiEvents](type-aliases/UiEvents.md)
 - [UppercaseDriveLetter](type-aliases/UppercaseDriveLetter.md)
 
 ## Variables

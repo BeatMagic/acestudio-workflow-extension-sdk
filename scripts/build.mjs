@@ -26,16 +26,16 @@ const PACKAGES = [
 
   // The extension SDK packages. bridge-core is the connection layer; the
   // extension SDK sits above it, and keeps it external so consumers share one
-  // copy — and one BridgeError class identity. The extension SDK's browser-only
-  // page side ships from the ./page subpath (a second entry); when that side
-  // gains real browser code, its slice bundles it with platform: "browser" so
-  // Node built-ins become hard errors. Today both its entries are node-bundled,
-  // which is harmless for a placeholder export. The scaffolder ships as a bin —
+  // copy — and one BridgeError class identity. The extension SDK's page side ships
+  // from the ./page subpath, bundled for the browser: `platform: "browser"` is what
+  // turns a stray Node built-in in that import graph into a build failure rather
+  // than something a webview discovers at run time. The scaffolder ships as a bin —
   // no .d.ts.
   { dir: "packages/acestudio-bridge-core", entries: ["src/index.ts"], external: [], types: true },
   {
     dir: "packages/acestudio-extension-sdk",
-    entries: ["src/index.ts", "src/page/index.ts"],
+    entries: ["src/index.ts"],
+    browserEntries: ["src/page/index.ts"],
     external: ["@timedomain/acestudio-bridge-core"],
     types: true,
   },
@@ -45,19 +45,31 @@ const PACKAGES = [
 for (const pkg of PACKAGES) {
   const outdir = abs(`${pkg.dir}/dist`);
   await rm(outdir, { recursive: true, force: true });
-  await build({
-    entryPoints: pkg.entries.map((entry) => abs(`${pkg.dir}/${entry}`)),
-    outdir,
-    bundle: true,
-    platform: "node",
-    format: "esm",
-    target: "node24",
-    // Resolve @timedomain peers to their source (the packages' dev entry), the
-    // same as tsc's customConditions and vitest's alias.
-    conditions: ["development"],
-    external: pkg.external,
-    logLevel: "info",
-  });
+  // `outbase` is pinned to src/ so each slice lands where the package's exports map
+  // says, rather than at whatever the entries of that one slice have in common.
+  const bundle = (entries, platform, target) =>
+    build({
+      entryPoints: entries.map((entry) => abs(`${pkg.dir}/${entry}`)),
+      outdir,
+      outbase: abs(`${pkg.dir}/src`),
+      bundle: true,
+      platform,
+      format: "esm",
+      target,
+      // Resolve @timedomain peers to their source (the packages' dev entry), the
+      // same as tsc's customConditions and vitest's alias.
+      conditions: ["development"],
+      external: pkg.external,
+      logLevel: "info",
+    });
+
+  await bundle(pkg.entries, "node", "node24");
+  if (pkg.browserEntries) {
+    // No Node target here: the page side runs in ACE Studio's webview and in whatever
+    // browser a developer opens it in, so it is built against the browsers, not an
+    // engine version the SDK has no business naming.
+    await bundle(pkg.browserEntries, "browser", "es2023");
+  }
   if (pkg.types) {
     // Run tsc via `node <tsc entry>` rather than the .bin shim, so the build
     // works on Windows too (where the shim is tsc.cmd, not an execFile target).

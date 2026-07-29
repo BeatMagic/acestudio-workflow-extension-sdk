@@ -21,6 +21,12 @@ export const BRIDGE_SOCKET_ENV = "ACE_EXTENSION_BRIDGE_SOCKET";
 export const BRIDGE_TOKEN_ENV = "ACE_EXTENSION_BRIDGE_TOKEN";
 
 // @public
+export type CallHandler<C, K extends keyof C> = (...args: ParamsOf<C, K>) => ResultOf<C, K> | Promise<ResultOf<C, K>>;
+
+// @public
+export type CallsOf<P extends UiProtocol> = P["calls"] extends UiCalls ? P["calls"] : Record<never, never>;
+
+// @public
 export type CapabilityTokensOf<C extends RequestedCapability> = C extends ProfileName ? ProfileTokens<C> : C extends CapabilityToken ? C : never;
 
 // @public
@@ -30,10 +36,16 @@ export function defineExtension<const M extends ExtensionManifest>(definition: E
 export type DriveLetter = Lowercase<UppercaseDriveLetter> | UppercaseDriveLetter;
 
 // @public
+export type EmitArgs<Payload> = [Payload] extends [void] ? [] : [payload: Payload];
+
+// @public
 export type EnumeratedFilesystemScope = "projectMedia" | "home" | "documents" | "music" | "desktop" | "downloads" | "all";
 
 // @public
 export type Environment = Readonly<Record<string, string | undefined>>;
+
+// @public
+export type EventsOf<P extends UiProtocol> = P["events"] extends UiEvents ? P["events"] : Record<never, never>;
 
 // @public
 export interface Extension<M extends ExtensionManifest = ExtensionManifest> {
@@ -47,6 +59,7 @@ export interface ExtensionContext<M extends ExtensionManifest = ExtensionManifes
     exit(code?: number): void;
     readonly grant: Grant;
     readonly manifest: M;
+    readonly ui: ExtensionUi;
 }
 
 // @public
@@ -54,6 +67,7 @@ export interface ExtensionDefinition<M extends ExtensionManifest> {
     readonly activate: ExtensionHandler<M>;
     readonly deactivate?: ExtensionHandler<M>;
     readonly manifest: M;
+    readonly ui?: ExtensionUiOptions;
 }
 
 // @public
@@ -94,6 +108,20 @@ export interface ExtensionRuntimeOptions {
 }
 
 // @public
+export interface ExtensionUi {
+    announceSurface(url: string): Promise<void>;
+    channel<P extends UiProtocol>(): UiChannel<P>;
+    navigate(url: string): Promise<void>;
+    reload(): Promise<void>;
+    readonly url: string | undefined;
+}
+
+// @public
+export interface ExtensionUiOptions {
+    readonly assets: string;
+}
+
+// @public
 export interface FilesystemAccess {
     readonly read?: readonly FilesystemScope[] | "all";
     readonly write?: readonly FilesystemScope[] | "all";
@@ -127,13 +155,37 @@ export interface ManifestJson extends ExtensionManifest {
 }
 
 // @public
+export type ParamsOf<C, K extends keyof C> = C[K] extends (params: never) => unknown ? Parameters<C[K]> : never;
+
+// @public
 export type RequestedCapability = CapabilityToken | ProfileName;
+
+// @public
+export type ResultOf<C, K extends keyof C> = C[K] extends (params: never) => infer R ? Awaited<R> : never;
 
 // @public
 export const SDK_API_VERSION = 1;
 
 // @public
 export function serializeManifest(manifest: ExtensionManifest): string;
+
+// @public
+export type UiCalls = Readonly<Record<string, (params: never) => unknown>>;
+
+// @public
+export interface UiChannel<P extends UiProtocol> {
+    emit<K extends keyof EventsOf<P> & string>(name: K, ...payload: EmitArgs<EventsOf<P>[K]>): void;
+    handle<K extends keyof CallsOf<P> & string>(name: K, handler: CallHandler<CallsOf<P>, K>): void;
+}
+
+// @public
+export type UiEvents = Readonly<Record<string, unknown>>;
+
+// @public
+export interface UiProtocol {
+    readonly calls?: UiCalls;
+    readonly events?: UiEvents;
+}
 
 // @public
 export type UppercaseDriveLetter = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z";

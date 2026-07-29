@@ -6,7 +6,9 @@
  * `state.changed`. The payload types come from the generated modules, so a schema
  * change breaks this peer at compile time rather than letting the tests drift
  * away from the wire. The method names are literals — the host spells them, and
- * `HOST_METHODS` is asserted against the generated maps in connect.test.ts.
+ * `HOST_METHODS` is asserted against the generated maps in connect.test.ts. A surface
+ * that only a layer above core speaks is scripted through `methods`, by that layer's
+ * own suite.
  *
  * Its two capability gates are transcriptions of the host's own. The inbound one
  * is `CommandRegistry::capabilityDenial`, reading the same generated
@@ -79,6 +81,16 @@ export interface ScriptedHostOptions {
    * unknown path does on the real wire.
    */
   operations?: Readonly<Record<string, ScriptedOperation | ScriptedOperationHandler>>;
+  /**
+   * Host halves of surfaces core does not own, by wire name — the extension
+   * platform's own verbs, scripted by the suite that tests them. Answering here is
+   * returning a result; throwing a {@link JsonRpcFault} is refusing.
+   *
+   * Kept as an escape hatch rather than grown into this file: a surface that only one
+   * layer above speaks belongs to that layer's tests, where its generated payload
+   * types are what the script is written against.
+   */
+  methods?: Readonly<Record<string, (params: unknown) => unknown>>;
 }
 
 /** The host end of a scripted session. */
@@ -211,6 +223,17 @@ export class ScriptedHostPeer {
     }
     if (target === HOST_INVOKE) {
       return this.handleInvoke(params as InvokeParams);
+    }
+    const scripted = this.options.methods?.[target];
+    if (scripted !== undefined) {
+      if (!this.granted) {
+        throw {
+          code: -32001,
+          message: "no established extension session",
+          data: { code: "SESSION_INVALID" },
+        } satisfies JsonRpcFault;
+      }
+      return scripted(params);
     }
     throw { code: -32601, message: `method not found: ${target}` } satisfies JsonRpcFault;
   }

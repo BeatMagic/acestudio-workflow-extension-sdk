@@ -358,7 +358,7 @@ class Handle<Result> implements JobHandle<Result> {
       // answered — never against one still to come. A job that finished while the
       // loop was waiting to ask again finished inside the bound, and saying
       // `timeout` because nobody looked would be a false negative.
-      if (options.timeoutMs !== undefined && elapsed(startedAt) >= options.timeoutMs - BOUND_SPENT_SLACK_MS) {
+      if (options.timeoutMs !== undefined && elapsed(startedAt) >= spentAt(options.timeoutMs)) {
         return { status: "timeout", job };
       }
 
@@ -490,6 +490,16 @@ class Watch {
 /** Milliseconds since a mark. */
 function elapsed(since: number): number {
   return Date.now() - since;
+}
+
+/**
+ * The elapsed time at which a bound counts as spent — the bound itself, less the
+ * millisecond {@link BOUND_SPENT_SLACK_MS} allows for two clocks disagreeing, and
+ * never below zero so a bound of zero is spent the moment it is measured rather
+ * than at a threshold no elapsed time can fail to meet by a different route.
+ */
+function spentAt(timeoutMs: number): number {
+  return Math.max(0, timeoutMs - BOUND_SPENT_SLACK_MS);
 }
 
 /**

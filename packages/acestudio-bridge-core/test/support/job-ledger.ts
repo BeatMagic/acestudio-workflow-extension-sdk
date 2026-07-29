@@ -181,7 +181,9 @@ export class ScriptedJobLedger {
       if (typeof params.timeoutMs !== "number") {
         return;
       }
-      const shortfall = this.options.holdShortfallMs ?? 0;
+      // Clamped, so the knob can only do what its name says: a negative shortfall would
+      // hold *past* the bound, which is a different host and not this one.
+      const shortfall = Math.max(0, this.options.holdShortfallMs ?? 0);
       held.expiry = setTimeout(
         () => {
           this.holding.delete(held);

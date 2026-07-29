@@ -158,6 +158,21 @@ describe("waiting against a host that holds the poll", () => {
     expect(host.invocations.filter((invocation) => invocation.path === "job wait")).toHaveLength(1);
     connection.close();
   });
+
+  it("answers a bound the host held all the way to with a timeout outcome", async () => {
+    const ledger = new ScriptedJobLedger([scriptedJob({ id: "job-42", lifecycle: "running" })], { holdWaits: true });
+    const { connection, host } = await connectToLedger(ledger);
+
+    // The caller's bound goes out as the hold's own bound, so the host answers
+    // "still running" at the deadline rather than being cut off at it. What comes
+    // back is the outcome, not the BridgeError a call outrunning its local
+    // deadline would raise — and the whole wait still costs one round trip.
+    const outcome = await connection.job("job-42").wait({ timeoutMs: 80 });
+
+    expect(outcome).toMatchObject({ status: "timeout", job: { lifecycle: "running" } });
+    expect(host.invocations.filter((invocation) => invocation.path === "job wait")).toHaveLength(1);
+    connection.close();
+  });
 });
 
 describe("watching a job", () => {

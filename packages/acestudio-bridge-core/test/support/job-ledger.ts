@@ -67,6 +67,8 @@ export interface ScriptedLedgerOptions {
 interface HeldWait {
   params: JobWaitParams;
   release: (answer: ScriptedOperation) => void;
+  /** The bound the caller sent, once it is armed; absent on an unbounded hold. */
+  expiry?: ReturnType<typeof setTimeout>;
 }
 
 /** The ledger behind a scripted host: the jobs, and the ops that project them. */
@@ -132,6 +134,7 @@ export class ScriptedJobLedger {
       const answer = this.pollWait(held.params);
       if (answer.done) {
         this.holding.delete(held);
+        clearTimeout(held.expiry);
         held.release({ data: answer });
       }
     }
@@ -154,7 +157,10 @@ export class ScriptedJobLedger {
   /**
    * One poll, held or not: which of the named jobs have reached a terminal
    * lifecycle, and whether that satisfies the caller's condition. A holding
-   * ledger keeps an unsatisfied poll open until a move satisfies it.
+   * ledger keeps an unsatisfied poll open until a move satisfies it — or until
+   * the bound the caller sent runs out, whichever comes first. The bound expiring
+   * is an *answer*, `done: false` over the jobs as they stand: a long poll that
+   * outstayed its welcome is not a fault, and never a cancellation (ADR 0092 §5).
    */
   private answerWait(params: JobWaitParams): ScriptedOperation | Promise<ScriptedOperation> {
     const answer = this.pollWait(params);
@@ -162,7 +168,16 @@ export class ScriptedJobLedger {
       return { data: answer };
     }
     return new Promise<ScriptedOperation>((resolve) => {
-      this.holding.add({ params, release: resolve });
+      const held: HeldWait = { params, release: resolve };
+      this.holding.add(held);
+      if (typeof params.timeoutMs !== "number") {
+        return;
+      }
+      held.expiry = setTimeout(() => {
+        this.holding.delete(held);
+        held.release({ data: this.pollWait(params) });
+      }, params.timeoutMs);
+      held.expiry.unref?.();
     });
   }
 

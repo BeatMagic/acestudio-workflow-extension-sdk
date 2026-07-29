@@ -124,3 +124,46 @@ no page to reload, and the host says so.
 #### Returns
 
 `Promise`\<`void`\>
+
+***
+
+### serveAsset()
+
+```ts
+serveAsset(source, options?): ServedAsset;
+```
+
+Put bytes on the server the paved road is already running, at an opaque, revocable
+URL the page can point an element at: `<video>`, `<audio>`, `<img>`.
+
+`ui: { assets }` covers what the extension had at build time; this covers what it
+makes while running. Byte ranges are answered, which is what lets a media element
+seek. Nothing is decoded or converted on the way through.
+
+#### Parameters
+
+##### source
+
+[`AssetSource`](../type-aliases/AssetSource.md)
+
+##### options?
+
+[`ServeAssetOptions`](ServeAssetOptions.md)
+
+#### Returns
+
+[`ServedAsset`](ServedAsset.md)
+
+#### Throws
+
+ExtensionError when this extension is not on the paved road — there is no
+server of ours to put it on, and an extension running its own already has a route.
+
+#### Example
+
+```ts
+const preview = ctx.ui.serveAsset("/tmp/render-42.wav");
+channel.emit("previewReady", { url: preview.url });
+// …once the page is done with it
+preview.revoke();
+```

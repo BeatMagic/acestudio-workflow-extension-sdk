@@ -35,7 +35,11 @@ land on top of them. `acestudio-extension-sdk` carries the layer above:
 `defineExtension`'s lifecycle choreography, the TypeScript manifest and its JSON
 emission, the manifest-scoped client, and the UI paved road — the loopback asset
 server, the surface announcement, and the typed page↔process channel whose browser
-half ships from the `./page` subpath. The scaffolder is still a skeleton: it builds
+half ships from the `./page` subpath, plus the two things a JSON channel cannot
+express: revocable asset URLs answering byte ranges, and calls that carry bytes.
+Debug mode spans both packages — `createDebugLog` and the `debug` option live in
+core, and the extension layer is what reads the environment variable the dev tooling
+sets. The scaffolder is still a skeleton: it builds
 and is wired into the pipeline, but its public API is filled in by a subsequent
 slice. All three are versioned `0.0.0` until their first release. The name
 `@timedomain/acestudio-sdk` is intentionally left unclaimed, reserved for a future
@@ -77,7 +81,10 @@ through the peer's `methods` option, against the generated payload types — whi
 how `test/support/surface-window.ts` plays Studio's half of the surface channel. The
 UI tests then run the real loopback server and the real `./page` module against each
 other, so "the two ends of one protocol type actually talk" is witnessed rather than
-asserted about stand-ins.
+asserted about stand-ins. Getting to that state — a persistent run whose page is
+served and announced — is `test/support/served-ui.ts`, so a test is about served assets,
+bytes, or the dev server rather than about staging; what a test varies is the
+declaration it took to get there.
 
 ## Development
 

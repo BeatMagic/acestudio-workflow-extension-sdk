@@ -17,6 +17,7 @@
  */
 
 import { decodeBulkFields, encodeBulkFields, type BulkSites } from "./bulk.js";
+import type { DebugLog } from "./debug.js";
 import { BridgeError } from "./errors.js";
 import { capabilityDenied, channelDenied, missingCapabilityRow, type Grant } from "./grant.js";
 import {
@@ -117,6 +118,7 @@ export function buildBindings(
   peer: BridgePeer,
   grant: Grant,
   warn: WarningSink,
+  debug: DebugLog,
   bulk: BulkTables = GENERATED_BULK_TABLES,
   jobs: JobClassTable = JOB_CLASS_OPERATIONS,
 ): Record<string, unknown> {
@@ -134,14 +136,24 @@ export function buildBindings(
       // host would have sent back.
       const denial = guardCall(grant, operation, params);
       if (denial !== undefined) {
+        debug(`call ${operation.path}: refused before the wire, ${denial.code}`);
         throw denial;
       }
-      const answer = await peer.withDeadline({ timeoutMs: options.timeoutMs, signal: options.signal }, () =>
-        client.operationInvoke(invocation(operation, params, options, bulk.params[operation.path])),
-      );
+      debug(`call ${operation.path}`);
+      const answer = await peer
+        .withDeadline({ timeoutMs: options.timeoutMs, signal: options.signal }, () =>
+          client.operationInvoke(invocation(operation, params, options, bulk.params[operation.path])),
+        )
+        .catch((cause: unknown) => {
+          // Named and re-thrown, never absorbed: what a failing call needs to look
+          // like is settled by whoever made it, and the log is a bystander.
+          debug(`call ${operation.path}: failed, ${failureName(cause)}`);
+          throw cause;
+        });
       for (const warning of answer.warnings ?? []) {
         warn({ ...warning, path: operation.path });
       }
+      debug(`call ${operation.path}: answered`);
       const data = decodeBulkFields(bulk.result[operation.path], answer.data);
       // An operation that launches a job answers on acceptance, so what it has
       // to hand back is the job, not a result that does not exist yet (ADR 0094
@@ -166,8 +178,20 @@ export function buildBindings(
     group[operation.method] = invoke;
   }
 
-  bindChannels(peer, grant, root);
+  bindChannels(peer, grant, root, debug);
   return root;
+}
+
+/**
+ * What to call a failure in one debug word. A {@link BridgeError}'s code is the
+ * whole of what a reader needs; anything else is named by its constructor, because
+ * the message may quote a payload and a debug line must not (ADR 0091 §6).
+ */
+function failureName(cause: unknown): string {
+  if (cause instanceof BridgeError) {
+    return cause.code;
+  }
+  return cause instanceof Error ? cause.name : typeof cause;
 }
 
 /**
@@ -180,13 +204,15 @@ export function buildBindings(
  * an ungranted subscription is not an error, it is a callback that never fires,
  * and nothing distinguishes that from a subject that simply has not changed.
  */
-function bindChannels(peer: BridgePeer, grant: Grant, root: Record<string, unknown>): void {
+function bindChannels(peer: BridgePeer, grant: Grant, root: Record<string, unknown>, debug: DebugLog): void {
   const listeners = new Map<string, Set<(event: ChangeEvent) => void>>();
   new ChangeClient(peer).onStateChanged((event) => {
     // A channel with no listeners — including one this artifact cannot name —
     // is dropped. The host decides what to send; this side decides what it
     // asked to hear about.
-    for (const listener of [...(listeners.get(event.channel) ?? [])]) {
+    const forChannel = [...(listeners.get(event.channel) ?? [])];
+    debug(`channel ${event.channel}: ${String(forChannel.length)} listening`);
+    for (const listener of forChannel) {
       listener(event);
     }
   });
@@ -194,8 +220,10 @@ function bindChannels(peer: BridgePeer, grant: Grant, root: Record<string, unkno
   for (const descriptor of NOTIFICATION_CHANNELS) {
     const subscribe = (listener: (event: ChangeEvent) => void): Unsubscribe => {
       if (!grant.has(descriptor.capability)) {
+        debug(`channel ${descriptor.channel}: subscription refused, needs ${descriptor.capability}`);
         throw channelDenied(descriptor.channel, descriptor.capability);
       }
+      debug(`channel ${descriptor.channel}: subscribed`);
       let group = listeners.get(descriptor.channel);
       if (group === undefined) {
         group = new Set();

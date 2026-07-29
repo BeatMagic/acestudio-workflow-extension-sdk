@@ -16,7 +16,9 @@
  * @packageDocumentation
  */
 
+import { decodeMessage, encodeMessage } from "../ui/binary.js";
 import {
+  CHANNEL_ORIGIN_PARAM,
   CHANNEL_PATH,
   FRAME_END,
   readFrame,
@@ -44,10 +46,11 @@ const RETRY_CEILING_MS = 2_000;
  */
 export interface ConnectChannelOptions {
   /**
-   * Where the extension's process is serving the channel. Defaults to the page's own
-   * origin, which is what a page served by its extension wants — pass this only when
-   * the page comes from somewhere else, such as a framework dev server on a different
-   * port.
+   * Where the extension's process is serving the channel.
+   *
+   * Rarely needed. A page served by its own extension finds the channel on its own
+   * origin; a page served by a dev server finds it from the origin the SDK attached to
+   * the URL it announced. This is for a page that arrived by neither route.
    */
   readonly url?: string;
 }
@@ -177,14 +180,40 @@ export function connectChannel<P extends UiProtocol>(options: ConnectChannelOpti
 }
 
 /**
- * Where the channel is. The bare path is resolved by the browser against the page's
- * own origin, which is the whole configuration a page served by its extension needs.
+ * Where the channel is, in the order a page can know it: what the caller passed, then
+ * the origin the SDK attached to the URL it announced — which is how a page a dev
+ * server is serving finds a process on a port nobody could predict — then the page's
+ * own origin, where a page served by its own extension finds it.
+ *
+ * The last case resolves a bare path against the document, which is why it needs no
+ * origin of its own and works in a page opened from a file too.
  */
 function channelEndpoint(base: string | undefined): string {
-  if (base === undefined) {
+  const announced = base ?? announcedChannelOrigin();
+  if (announced === undefined) {
     return CHANNEL_PATH;
   }
-  return new URL(CHANNEL_PATH, base.endsWith("/") ? base : `${base}/`).toString();
+  return new URL(CHANNEL_PATH, announced.endsWith("/") ? announced : `${announced}/`).toString();
+}
+
+/**
+ * The channel origin the announced URL carried, if this page was loaded from one.
+ * Read defensively: this module also runs where there is no `location` at all — a
+ * test, a server-rendered pass — and having no query is the ordinary case.
+ */
+function announcedChannelOrigin(): string | undefined {
+  // Cast because the DOM types promise a `location` that this module cannot count on:
+  // the browser build is what ships, and the same module is imported by tests and by
+  // a framework's server pass, where there is no document to have a URL.
+  const here = (globalThis as { location?: Location }).location;
+  if (here === undefined) {
+    return undefined;
+  }
+  try {
+    return new URL(here.href).searchParams.get(CHANNEL_ORIGIN_PARAM) ?? undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 async function post(
@@ -194,10 +223,13 @@ async function post(
   signal: AbortSignal | undefined,
 ): Promise<unknown> {
   const id = nextCallId();
+  // Bytes in the parameters put the call in a binary frame; everything else stays
+  // plain JSON, so an ordinary call pays nothing for a feature it does not use.
+  const encoded = await encodeMessage({ id, name, ...(params === undefined ? {} : { params }) });
   const response = await fetch(endpoint, {
     method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ id, name, ...(params === undefined ? {} : { params }) }),
+    headers: { "content-type": encoded.contentType },
+    body: encoded.body,
     ...(signal === undefined ? {} : { signal }),
   });
   if (!response.ok) {
@@ -205,7 +237,10 @@ async function post(
       `the extension's process refused the call "${name}": ${String(response.status)} ${await response.text()}`,
     );
   }
-  const answer = (await response.json()) as CallResponse;
+  const answer = decodeMessage(
+    response.headers.get("content-type") ?? undefined,
+    new Uint8Array(await response.arrayBuffer()),
+  ) as CallResponse;
   if (answer.error !== undefined) {
     throw new Error(answer.error.message);
   }

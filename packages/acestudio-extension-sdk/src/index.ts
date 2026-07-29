@@ -44,9 +44,10 @@ export type {
   UppercaseDriveLetter,
 } from "./manifest.js";
 export { MANIFEST_FILENAME, serializeManifest, writeManifestJson } from "./manifest-json.js";
-export { BRIDGE_SOCKET_ENV, BRIDGE_TOKEN_ENV } from "./spawn-env.js";
+export { BRIDGE_SOCKET_ENV, BRIDGE_TOKEN_ENV, DEBUG_ENV, DEV_LOADED_ENV } from "./spawn-env.js";
 export type { Environment } from "./spawn-env.js";
 export type { CallHandler, EmitArgs, UiChannel } from "./ui/channel.js";
+export type { AssetSource, ServeAssetOptions, ServedAsset } from "./ui/assets.js";
 // `ParamsOf` and `ResultOf` are the vocabulary the channel's signatures are written
 // in. They are public because those signatures name them: api-extractor refuses to
 // describe a public type in terms of hidden ones, and it is right to — a consumer

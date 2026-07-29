@@ -330,6 +330,7 @@ describe("a job-class operation", () => {
       connection.peer,
       connection.grant,
       () => undefined,
+      () => undefined,
       { params: {}, result: {} },
       jobClasses,
     ) as { track: { rename(params: unknown, options?: unknown): Promise<unknown> } };

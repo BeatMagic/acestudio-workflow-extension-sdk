@@ -114,6 +114,26 @@ export type ResultOf<C, K extends keyof C> = C[K] extends (params: never) => inf
 export const CHANNEL_PATH = "/__ace/channel";
 
 /**
+ * Where a served asset's URL sits, under the same reserved prefix. The token
+ * follows.
+ *
+ * @internal
+ */
+export const ASSET_PATH = "/__ace/asset/";
+
+/**
+ * The query parameter an announced URL carries the channel's origin in, for the one
+ * case where the page is not served by the process it talks to: a dev server on
+ * another port. The page side reads it before falling back to its own origin, so a
+ * hot-reloading page finds its process with nothing to configure.
+ *
+ * Absent from a production URL, where the page and the channel share an origin.
+ *
+ * @internal
+ */
+export const CHANNEL_ORIGIN_PARAM = "__aceChannel";
+
+/**
  * One call, as it travels page→process.
  *
  * @internal

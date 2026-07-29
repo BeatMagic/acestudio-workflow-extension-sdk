@@ -29,6 +29,34 @@ export const BRIDGE_SOCKET_ENV = "ACE_EXTENSION_BRIDGE_SOCKET";
 export const BRIDGE_TOKEN_ENV = "ACE_EXTENSION_BRIDGE_TOKEN";
 
 /**
+ * Set when ACE Studio loaded this extension from a working folder rather than from an
+ * installed bundle — a *dev-loaded* extension, as ADR 0091 §1 defines one.
+ *
+ * It is what gates the developer affordances that must not reach a user's machine —
+ * `ui.devServerUrl` above all. Nothing an extension ships can set it for itself,
+ * because the spawn environment is the host's to compose.
+ *
+ * The rule it enforces is ADR 0094 §11's; the variable carrying the host's answer is
+ * this SDK's own, and no ADR names it yet.
+ *
+ * @public
+ */
+export const DEV_LOADED_ENV = "ACE_EXTENSION_DEV_LOADED";
+
+/**
+ * Set by the dev tooling to turn on the SDK's own logging — the debug mode ADR 0091 §6
+ * asks for. The `debug` option on `defineExtension` decides either way when it is
+ * passed.
+ *
+ * Named for the SDK because that is whose operations it reports: it does not put the
+ * extension into a debug mode of any kind, and what the extension itself logs is its
+ * own business either way.
+ *
+ * @public
+ */
+export const DEBUG_ENV = "ACE_EXTENSION_SDK_DEBUG";
+
+/**
  * An environment to read the spawn contract out of.
  *
  * @public
@@ -45,6 +73,11 @@ export interface SpawnContract {
   readonly socketPath: string | undefined;
   /** The one-time token the handshake presents. */
   readonly authToken: string;
+  /**
+   * Whether ACE Studio loaded this extension from a folder. Only the developer
+   * affordances read it.
+   */
+  readonly devLoaded: boolean;
 }
 
 /**
@@ -67,7 +100,21 @@ export function readSpawnContract(env: Environment, options: { socketPathRequire
   if (authToken === undefined) {
     throw noToken();
   }
-  return { socketPath, authToken };
+  return { socketPath, authToken, devLoaded: readFlag(env, DEV_LOADED_ENV) };
+}
+
+/**
+ * Read one of the environment's boolean flags.
+ *
+ * `1` and `true` are on and everything else — including `0` and `false` — is off,
+ * rather than "any value at all is on". A host that says `ACE_EXTENSION_DEV_LOADED=0`
+ * means off, and reading that as on would honor a dev server on a user's machine.
+ *
+ * @internal
+ */
+export function readFlag(env: Environment, name: string): boolean {
+  const value = text(env[name])?.toLowerCase();
+  return value === "1" || value === "true";
 }
 
 /** A variable's value, with an unset one and an empty one meaning the same thing. */

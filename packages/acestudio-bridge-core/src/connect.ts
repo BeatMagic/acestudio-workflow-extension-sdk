@@ -13,6 +13,7 @@
  */
 
 import { buildBindings, type OperationWarning } from "./bindings.js";
+import { createDebugLog, type DebugLog } from "./debug.js";
 import { BridgeError, describeCause } from "./errors.js";
 import type { CapabilityToken, PublicBindings } from "./generated/bindings.js";
 import {
@@ -56,6 +57,15 @@ export interface ConnectOptions {
   timeoutMs?: number;
   /** Abort the handshake. */
   signal?: AbortSignal;
+  /**
+   * Log what the SDK does — the handshake, every call and how it ended, every
+   * channel event — to stderr. Off by default.
+   *
+   * Operations and capabilities by name, never a payload: there is no wire trace
+   * here, on purpose (ADR 0091 §6). An extension does not pass this; the SDK reads
+   * it from the environment variable its dev tooling sets.
+   */
+  debug?: boolean;
 }
 
 /**
@@ -157,6 +167,7 @@ export interface BridgeConnection {
  * @public
  */
 export async function connect(options: ConnectOptions): Promise<BridgeConnection> {
+  const debug = createDebugLog(options.debug ?? false);
   const peer = new BridgePeer(options.transport);
   // Served before the handshake goes out: the host starts probing as soon as the
   // session lands. The nonce comes straight back so it can correlate.
@@ -175,6 +186,7 @@ export async function connect(options: ConnectOptions): Promise<BridgeConnection
       options.requestedCapabilities === undefined ? undefined : [...options.requestedCapabilities],
   };
 
+  debug(`handshake: requesting ${String(request.requestedCapabilities?.length ?? 0)} capabilities on protocol ${String(PROTOCOL_VERSION)}`);
   try {
     const answer = await peer.withDeadline(
       { timeoutMs: options.timeoutMs ?? DEFAULT_HANDSHAKE_TIMEOUT_MS, signal: options.signal },
@@ -185,10 +197,13 @@ export async function connect(options: ConnectOptions): Promise<BridgeConnection
     if (mismatch !== undefined) {
       throw mismatch;
     }
-    return new Connection(peer, client, result, options.requestedCapabilities ?? []);
+    debug(`handshake: session ${result.sessionId} granted [${result.grantedTokens.join(", ")}]`);
+    return new Connection(peer, client, result, options.requestedCapabilities ?? [], debug);
   } catch (cause) {
     peer.close();
-    throw handshakeFailure(cause);
+    const failure = handshakeFailure(cause);
+    debug(`handshake: refused with ${failure.code}`);
+    throw failure;
   }
 }
 
@@ -201,20 +216,41 @@ class Connection implements BridgeConnection {
   readonly client: PublicBindings;
 
   private readonly session: SessionClient;
+  private readonly debug: DebugLog;
   private readonly warningListeners = new Set<(warning: OperationWarning) => void>();
 
-  constructor(peer: BridgePeer, session: SessionClient, result: HandshakeResult, requested: readonly string[]) {
+  constructor(
+    peer: BridgePeer,
+    session: SessionClient,
+    result: HandshakeResult,
+    requested: readonly string[],
+    debug: DebugLog,
+  ) {
     this.peer = peer;
     this.session = session;
+    this.debug = debug;
     this.sessionId = result.sessionId;
     this.protocolVersion = result.acceptedProtocolVersion;
     this.grant = createGrant(result.sessionId, requested, result.grantedTokens);
     // The generated interface is what type-checks the callers; the runtime
     // builds every method from one table row, so there is nothing per-method
     // here for the compiler to check the construction against.
-    this.client = buildBindings(peer, this.grant, (warning) => {
-      this.reportWarning(warning);
-    }) as unknown as PublicBindings;
+    this.client = buildBindings(
+      peer,
+      this.grant,
+      (warning) => {
+        this.reportWarning(warning);
+      },
+      debug,
+    ) as unknown as PublicBindings;
+    // Subscribed once here rather than wrapped around each listener, so one event
+    // is one line however many places in the SDK are listening for it.
+    session.onSessionShutdown((params) => {
+      debug(`session ${this.sessionId}: the host is stopping this peer, ${String(params.graceMs)}ms grace`);
+    });
+    peer.onClose(() => {
+      debug(`session ${this.sessionId}: the connection closed`);
+    });
   }
 
   onWarning(listener: (warning: OperationWarning) => void): Unsubscribe {

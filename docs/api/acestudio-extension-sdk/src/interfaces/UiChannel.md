@@ -43,6 +43,12 @@ connected ask.
 
 `void`
 
+#### Throws
+
+ExtensionError when the payload carries bytes. The event stream's framing
+is text, so a `Uint8Array` in a push would arrive as an object of numbered keys —
+answer a `call` with the bytes, or serve them and hand the page the URL.
+
 ***
 
 ### handle()

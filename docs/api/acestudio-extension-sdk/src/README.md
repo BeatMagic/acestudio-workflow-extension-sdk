@@ -34,12 +34,15 @@ channel ships from the `./page` subpath.
 - [FilesystemAccess](interfaces/FilesystemAccess.md)
 - [HostAccess](interfaces/HostAccess.md)
 - [ManifestJson](interfaces/ManifestJson.md)
+- [ServeAssetOptions](interfaces/ServeAssetOptions.md)
+- [ServedAsset](interfaces/ServedAsset.md)
 - [UiChannel](interfaces/UiChannel.md)
 - [UiProtocol](interfaces/UiProtocol.md)
 
 ## Type Aliases
 
 - [AbsoluteFilesystemPath](type-aliases/AbsoluteFilesystemPath.md)
+- [AssetSource](type-aliases/AssetSource.md)
 - [CallHandler](type-aliases/CallHandler.md)
 - [CallsOf](type-aliases/CallsOf.md)
 - [CapabilityTokensOf](type-aliases/CapabilityTokensOf.md)
@@ -63,6 +66,8 @@ channel ships from the `./page` subpath.
 
 - [BRIDGE\_SOCKET\_ENV](variables/BRIDGE_SOCKET_ENV.md)
 - [BRIDGE\_TOKEN\_ENV](variables/BRIDGE_TOKEN_ENV.md)
+- [DEBUG\_ENV](variables/DEBUG_ENV.md)
+- [DEV\_LOADED\_ENV](variables/DEV_LOADED_ENV.md)
 - [MANIFEST\_FILENAME](variables/MANIFEST_FILENAME.md)
 - [MANIFEST\_VERSION](variables/MANIFEST_VERSION.md)
 - [SDK\_API\_VERSION](variables/SDK_API_VERSION.md)

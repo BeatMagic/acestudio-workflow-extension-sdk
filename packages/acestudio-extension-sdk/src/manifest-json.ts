@@ -33,7 +33,11 @@ import {
   type ManifestJson,
 } from "./manifest.js";
 
-/** The manifest's filename at the bundle root. The host looks for exactly this. */
+/**
+ * The manifest's filename at the bundle root. The host looks for exactly this.
+ *
+ * @public
+ */
 export const MANIFEST_FILENAME = "manifest.json";
 
 /**

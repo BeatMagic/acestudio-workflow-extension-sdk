@@ -29,17 +29,20 @@ export class ExtensionError extends Error {
 }
 
 /**
- * An {@link ExtensionError}, or whatever else was thrown, as one line for the log.
- * Studio captures the extension's stderr, so this is what a developer actually
- * reads when a run refuses to start.
+ * Whatever was thrown, as one line for the log. ACE Studio captures the
+ * extension's stderr, so this is what a developer actually reads when a run
+ * refuses to start.
+ *
+ * Both error classes a failure here can be — this layer's {@link ExtensionError}
+ * and core's `BridgeError` — carry a `hint` beside the message, and the hint is
+ * the half that says what to do about it. Read structurally rather than by class,
+ * because not every rejection is either one: a JSON-RPC fault reaches a `catch` as
+ * a plain object.
  *
  * @internal
  */
 export function describeFailure(error: unknown): string {
-  if (error instanceof ExtensionError && error.hint !== undefined) {
-    return `${error.message} — ${error.hint}`;
-  }
-  const hint = (error as { hint?: unknown } | undefined)?.hint;
-  const message = (error as Error | undefined)?.message ?? String(error);
-  return typeof hint === "string" ? `${message} — ${hint}` : message;
+  const failure = error as { message?: unknown; hint?: unknown } | undefined;
+  const message = typeof failure?.message === "string" ? failure.message : String(error);
+  return typeof failure?.hint === "string" ? `${message} — ${failure.hint}` : message;
 }

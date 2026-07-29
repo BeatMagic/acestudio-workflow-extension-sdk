@@ -222,6 +222,38 @@ describe("a persistent peer", () => {
     warn.mockRestore();
   });
 
+  it("keeps its exit when a deactivate fails after the window closed", async () => {
+    const activated = signal();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const { exitCode, host } = startRun(
+      {
+        manifest: PERSISTENT,
+        activate: () => {
+          activated.announce();
+        },
+        // Overran the grace window and *then* failed: by the time it rejects, the
+        // run is already over. The late failure changes nothing about the ending —
+        // and, because the grace race is still subscribed to it, disturbs nothing on
+        // the way out either.
+        deactivate: () =>
+          new Promise<void>((_resolve, reject) => {
+            setTimeout(() => {
+              reject(new Error("flush timed out"));
+            }, 40);
+          }),
+      },
+      { host: GRANTING_HOST },
+    );
+
+    await activated.reached;
+    host.notifyShutdown({ reason: "app quit", graceMs: 20 });
+    await expect(exitCode).resolves.toBe(0);
+    // Long enough for the late rejection to land, so this run would notice if it
+    // took anything with it.
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    warn.mockRestore();
+  });
+
   it("dispatches the command it was invoked for and keeps running", async () => {
     const order: string[] = [];
     const dispatched = signal();
@@ -268,6 +300,32 @@ describe("ending a run", () => {
     );
 
     await expect(exitCode).resolves.toBe(7);
+    expect(order).toEqual(["activate", "deactivate"]);
+  });
+
+  it("dispatches no command once the run is already ending", async () => {
+    const order: string[] = [];
+    const command = vi.fn();
+    const { exitCode } = startRun(
+      {
+        manifest: ONE_SHOT,
+        activate: (ctx) => {
+          order.push("activate");
+          // An activate that decides the run is over: the wind-down is under way
+          // before the command would have been dispatched, and starting author code
+          // alongside it would run the extension past its own ending.
+          ctx.exit(7);
+        },
+        commands: { "render-stems": command },
+        deactivate: () => {
+          order.push("deactivate");
+        },
+      },
+      { command: "render-stems", host: GRANTING_HOST },
+    );
+
+    await expect(exitCode).resolves.toBe(7);
+    expect(command).not.toHaveBeenCalled();
     expect(order).toEqual(["activate", "deactivate"]);
   });
 
@@ -435,11 +493,17 @@ describe("a run that cannot start", () => {
 });
 
 describe("the spawn contract", () => {
-  it("is the variable names ACE Studio's process host sets", () => {
-    // Literals on purpose: these three names are the contract with the host, and a
-    // rename here is a rename there.
+  it("reads the two variables ACE Studio's process host sets", () => {
+    // Literals on purpose: these are the contract with the host, and a rename here
+    // is a rename there.
     expect(BRIDGE_SOCKET_ENV).toBe("ACE_EXTENSION_BRIDGE_SOCKET");
     expect(BRIDGE_TOKEN_ENV).toBe("ACE_EXTENSION_BRIDGE_TOKEN");
+  });
+
+  it("names the command variable the host's invocation slice still owes", () => {
+    // Nothing sets this yet: manifest-declared command entry points and the
+    // variable naming the invoked one land with the host slice that surfaces
+    // workflows. Asserted here so the name is one place, not scattered.
     expect(COMMAND_ENV).toBe("ACE_EXTENSION_COMMAND");
   });
 });

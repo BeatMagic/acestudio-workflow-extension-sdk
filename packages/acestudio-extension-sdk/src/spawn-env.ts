@@ -13,23 +13,48 @@
 
 import { ExtensionError } from "./errors.js";
 
-/** The bridge endpoint for this process: a Unix-domain socket path or a Windows named pipe. */
+/**
+ * The bridge endpoint for this process: a Unix-domain socket path or a Windows
+ * named pipe.
+ *
+ * @public
+ */
 export const BRIDGE_SOCKET_ENV = "ACE_EXTENSION_BRIDGE_SOCKET";
 
-/** The one-time session token this process authenticates its handshake with. */
+/**
+ * The one-time session token this process authenticates its handshake with.
+ *
+ * @public
+ */
 export const BRIDGE_TOKEN_ENV = "ACE_EXTENSION_BRIDGE_TOKEN";
 
 /**
  * The command being invoked, for a run that started from one. A one-shot workflow
- * is spawned per invocation, so the command a user picked is known at spawn time
- * and travels here rather than over the bridge.
+ * is spawned per invocation, so the command a user picked is known at spawn time,
+ * and the environment is where the rest of the spawn contract already travels.
+ *
+ * Unlike the two above, this is one half of a contract whose other half is not
+ * written yet: ACE Studio's process host sets the endpoint and the token today, and
+ * gains command invocation — manifest-declared entry points, and a variable naming
+ * the invoked one — with the slice that surfaces workflows to the user. Until then
+ * every real run arrives without a command, which is what `activate` covers.
+ *
+ * @public
  */
 export const COMMAND_ENV = "ACE_EXTENSION_COMMAND";
 
-/** An environment to read the spawn contract out of. */
+/**
+ * An environment to read the spawn contract out of.
+ *
+ * @public
+ */
 export type Environment = Readonly<Record<string, string | undefined>>;
 
-/** What the spawn environment told this process. */
+/**
+ * What the spawn environment told this process.
+ *
+ * @internal
+ */
 export interface SpawnContract {
   /** Where the bridge is listening. Absent only when the caller brought its own transport. */
   readonly socketPath: string | undefined;

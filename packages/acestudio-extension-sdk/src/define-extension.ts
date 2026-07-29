@@ -213,6 +213,12 @@ class ExtensionRun<M extends ExtensionManifest> {
       await this.finish(EXIT_HANDLER_FAILED);
       return;
     }
+    // The run can have ended while `activate` was running — it called `ctx.exit()`,
+    // or ACE Studio's stop landed mid-handler. Dispatching after that would start
+    // author code alongside the wind-down that is already under way.
+    if (this.ending) {
+      return;
+    }
     if (command !== undefined && !(await runHandler("a command", command, context))) {
       await this.finish(EXIT_HANDLER_FAILED);
       return;

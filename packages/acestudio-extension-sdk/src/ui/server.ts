@@ -20,7 +20,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { extname, join, normalize, resolve, sep } from "node:path";
 import { ExtensionError } from "../errors.js";
 import type { ChannelHub, EventSink } from "./channel.js";
-import { CHANNEL_PATH, type CallRequest, type CallResponse, type EventMessage } from "./protocol.js";
+import { CHANNEL_PATH, frameEvent, type CallRequest, type CallResponse, type EventMessage } from "./protocol.js";
 
 /** The address family the server serves on, and the only one it will. */
 const LOOPBACK_HOST = "127.0.0.1";
@@ -167,7 +167,7 @@ function requestPath(request: IncomingMessage): string {
 
 async function serveChannel(request: IncomingMessage, response: ServerResponse, hub: ChannelHub): Promise<void> {
   if (!sameOrigin(request)) {
-    plain(response, 403, "the channel is reachable from this extension's own page only");
+    refuse(response, 403, "the channel is reachable from this extension's own page only");
     return;
   }
   if (request.method === "GET") {
@@ -178,8 +178,7 @@ async function serveChannel(request: IncomingMessage, response: ServerResponse, 
     await answerCall(request, response, hub);
     return;
   }
-  response.setHeader("allow", "GET, POST");
-  plain(response, 405, "the channel answers GET (events) and POST (calls)");
+  refuseMethod(response, "GET, POST", "the channel answers GET (events) and POST (calls)");
 }
 
 /**
@@ -204,15 +203,17 @@ function streamEvents(request: IncomingMessage, response: ServerResponse, hub: C
   response.writeHead(200, {
     "cache-control": "no-store",
     "content-type": "text/event-stream",
-    // Nagle's algorithm would hold a small event back waiting for company, which
-    // for a progress push is exactly the wrong trade.
     connection: "keep-alive",
   });
+  // Nagle's algorithm would hold a small frame back waiting for company, which for a
+  // progress push is exactly the wrong trade — a stream's whole value is that an
+  // event arrives when it happens.
+  request.socket.setNoDelay(true);
   response.flushHeaders();
 
   const sink: EventSink = {
     write: (event: EventMessage) => {
-      response.write(`data: ${JSON.stringify(event)}\n\n`);
+      response.write(frameEvent(event));
     },
   };
   const detach = hub.attach(sink);
@@ -225,7 +226,7 @@ async function answerCall(request: IncomingMessage, response: ServerResponse, hu
   try {
     call = parseCall(await readBody(request));
   } catch (error) {
-    plain(response, 400, error instanceof Error ? error.message : "unreadable call");
+    refuse(response, 400, error instanceof Error ? error.message : "unreadable call");
     return;
   }
   const answer: CallResponse = await hub.invoke(call);
@@ -269,21 +270,20 @@ async function serveAsset(
   path: string,
 ): Promise<void> {
   if (request.method !== "GET" && request.method !== "HEAD") {
-    response.setHeader("allow", "GET, HEAD");
-    plain(response, 405, "the asset server answers GET and HEAD");
+    refuseMethod(response, "GET, HEAD", "the asset server answers GET and HEAD");
     return;
   }
 
   const file = resolveAsset(root, path);
   if (file === undefined) {
-    plain(response, 403, "that path is outside this extension's assets");
+    refuse(response, 403, "that path is outside this extension's assets");
     return;
   }
   const found = await stat(file).catch(() => undefined);
   const target = found?.isDirectory() === true ? join(file, INDEX_FILE) : file;
   const meta = found?.isDirectory() === true ? await stat(target).catch(() => undefined) : found;
   if (meta?.isFile() !== true) {
-    plain(response, 404, "not found");
+    refuse(response, 404, "not found");
     return;
   }
 
@@ -318,7 +318,14 @@ function resolveAsset(root: string, path: string): string | undefined {
   return candidate === root || candidate.startsWith(root + sep) ? candidate : undefined;
 }
 
-function plain(response: ServerResponse, status: number, message: string): void {
+/** Turn a request away, saying why in a body a developer will see in the console. */
+function refuse(response: ServerResponse, status: number, reason: string): void {
   response.writeHead(status, { "cache-control": "no-store", "content-type": "text/plain; charset=utf-8" });
-  response.end(message);
+  response.end(reason);
+}
+
+/** Turn away a verb a route does not answer, naming the ones it does. */
+function refuseMethod(response: ServerResponse, allowed: string, reason: string): void {
+  response.setHeader("allow", allowed);
+  refuse(response, 405, reason);
 }

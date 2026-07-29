@@ -95,24 +95,32 @@ export interface ExtensionUi {
 export function createExtensionUi(connection: BridgeConnection, hub: ChannelHub): ExtensionUi {
   const client = new WorkflowUiClient(connection.peer);
   let announced: string | undefined;
+  /**
+   * Refuse before the wire, in the shape the host would have refused in. Every verb
+   * goes through it: there is one token, and a session that cannot present a surface
+   * cannot do any of the three.
+   */
+  const requireSurface = (): void => {
+    connection.require(SURFACE_TOKEN);
+  };
   return {
     get url(): string | undefined {
       return announced;
     },
     channel: <P extends UiProtocol>(): UiChannel<P> => hub.typed<P>(),
     announceSurface: async (url: string) => {
-      connection.require(SURFACE_TOKEN);
+      requireSurface();
       await client.workflowUiSurfaceReady({ url });
       // Recorded after the host accepted it: a refused URL is not what a reload
       // should go back to, and `url` reads as "what the window is showing".
       announced = url;
     },
     reload: async () => {
-      connection.require(SURFACE_TOKEN);
+      requireSurface();
       await client.workflowUiReload();
     },
     navigate: async (url: string) => {
-      connection.require(SURFACE_TOKEN);
+      requireSurface();
       await client.workflowUiNavigate({ url });
     },
   };

@@ -18,6 +18,8 @@
 
 import {
   CHANNEL_PATH,
+  FRAME_END,
+  readFrame,
   type CallResponse,
   type CallsOf,
   type EventMessage,
@@ -61,14 +63,19 @@ export interface CallOptions {
 }
 
 /**
- * A call's arguments: the declared parameter, if the call takes one, plus optional
- * per-call options. Spelled as a tuple so `call("ping")` needs no placeholder and
- * `call("render", { stem })` needs its parameter.
+ * A call's arguments: the declared parameter, then the options. Spelled as a tuple so
+ * `call("ping")` needs nothing, `call("render", { stem })` needs its parameter, and a
+ * call the declaration gives no parameter passes `undefined` before its options.
+ *
+ * The positions are fixed rather than overloaded — options never slide forward into
+ * the parameter's slot. A declared parameter can be any object, including `{}` or one
+ * whose only field is `signal`, and a caller deciding what a value *meant* from its
+ * shape would drop exactly those.
  *
  * @public
  */
 export type CallArgs<Params extends readonly unknown[]> = Params extends readonly []
-  ? [options?: CallOptions]
+  ? [params?: undefined, options?: CallOptions]
   : [params: Params[0], options?: CallOptions];
 
 /**
@@ -139,8 +146,10 @@ export function connectChannel<P extends UiProtocol>(options: ConnectChannelOpti
 
   return {
     call: async (name, ...args) => {
-      const [params, callOptions] = callArguments(args);
-      return post(endpoint, name, params, callOptions?.signal);
+      const [params, callOptions] = args;
+      // The wire carries JSON: what comes back is whatever the handler answered, and
+      // the protocol type is what already settled its shape on both ends.
+      return (await post(endpoint, name, params, callOptions?.signal)) as never;
     },
     on: (name, listener) => {
       const forName = listeners.get(name) ?? new Set();
@@ -169,28 +178,12 @@ function channelEndpoint(base: string | undefined): string {
   return new URL(CHANNEL_PATH, base.endsWith("/") ? base : `${base}/`).toString();
 }
 
-/**
- * Separate the declared parameter from the options. Both are optional, so the shape
- * is read rather than counted: a lone argument that is an options object is the
- * options, and anything else is the parameter.
- */
-function callArguments(args: readonly unknown[]): [params: unknown, options: CallOptions | undefined] {
-  const last = args.at(-1);
-  if (args.length === 1) {
-    return isOptions(last) ? [undefined, last] : [args[0], undefined];
-  }
-  return [args[0], isOptions(last) ? last : undefined];
-}
-
-function isOptions(value: unknown): value is CallOptions {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-  const keys = Object.keys(value);
-  return keys.length === 0 || (keys.length === 1 && keys[0] === "signal");
-}
-
-async function post(endpoint: string, name: string, params: unknown, signal: AbortSignal | undefined): Promise<never> {
+async function post(
+  endpoint: string,
+  name: string,
+  params: unknown,
+  signal: AbortSignal | undefined,
+): Promise<unknown> {
   const id = nextCallId();
   const response = await fetch(endpoint, {
     method: "POST",
@@ -207,7 +200,7 @@ async function post(endpoint: string, name: string, params: unknown, signal: Abo
   if (answer.error !== undefined) {
     throw new Error(answer.error.message);
   }
-  return answer.result as never;
+  return answer.result;
 }
 
 let lastCallId = 0;
@@ -280,7 +273,7 @@ class EventStream {
     }, wait);
   }
 
-  /** Read `data:` frames off the stream, delivering each complete one. */
+  /** Read frames off the stream, delivering each complete one. */
   private async read(body: ReadableStream<Uint8Array>, signal: AbortSignal): Promise<void> {
     const reader = body.getReader();
     const decoder = new TextDecoder();
@@ -291,33 +284,15 @@ class EventStream {
         return;
       }
       buffered += decoder.decode(value, { stream: true });
-      let boundary = buffered.indexOf("\n\n");
+      let boundary = buffered.indexOf(FRAME_END);
       while (boundary !== -1) {
-        this.frame(buffered.slice(0, boundary));
-        buffered = buffered.slice(boundary + 2);
-        boundary = buffered.indexOf("\n\n");
+        const event = readFrame(buffered.slice(0, boundary));
+        if (event !== undefined) {
+          this.deliver(event);
+        }
+        buffered = buffered.slice(boundary + FRAME_END.length);
+        boundary = buffered.indexOf(FRAME_END);
       }
-    }
-  }
-
-  /**
-   * One frame. A frame that does not parse is dropped rather than thrown: the stream
-   * is a push channel with no caller to fail, and taking it down over one bad event
-   * would lose every good one after it.
-   */
-  private frame(frame: string): void {
-    const payload = frame
-      .split("\n")
-      .filter((line) => line.startsWith("data:"))
-      .map((line) => line.slice("data:".length).trim())
-      .join("");
-    if (payload.length === 0) {
-      return;
-    }
-    try {
-      this.deliver(JSON.parse(payload) as EventMessage);
-    } catch {
-      return;
     }
   }
 }

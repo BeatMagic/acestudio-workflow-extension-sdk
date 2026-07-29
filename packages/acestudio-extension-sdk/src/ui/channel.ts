@@ -64,7 +64,11 @@ export interface UiChannel<P extends UiProtocol> {
   emit<K extends keyof EventsOf<P> & string>(name: K, ...payload: EmitArgs<EventsOf<P>[K]>): void;
 }
 
-/** Where a connected page's event stream is written. */
+/**
+ * Where a connected page's event stream is written.
+ *
+ * @internal
+ */
 export interface EventSink {
   /** Write one framed event. Throwing means the page is gone. */
   write(event: EventMessage): void;

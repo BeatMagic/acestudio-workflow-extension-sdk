@@ -69,10 +69,18 @@ export interface UiProtocol {
   readonly events?: UiEvents;
 }
 
-/** The `calls` half of a protocol, with the absent case filled in. */
+/**
+ * The `calls` half of a protocol, with the absent case filled in.
+ *
+ * @public
+ */
 export type CallsOf<P extends UiProtocol> = P["calls"] extends UiCalls ? P["calls"] : Record<never, never>;
 
-/** The `events` half of a protocol, with the absent case filled in. */
+/**
+ * The `events` half of a protocol, with the absent case filled in.
+ *
+ * @public
+ */
 export type EventsOf<P extends UiProtocol> = P["events"] extends UiEvents ? P["events"] : Record<never, never>;
 
 /**
@@ -105,7 +113,11 @@ export type ResultOf<C, K extends keyof C> = C[K] extends (params: never) => inf
  */
 export const CHANNEL_PATH = "/__ace/channel";
 
-/** One call, as it travels page→process. */
+/**
+ * One call, as it travels page→process.
+ *
+ * @internal
+ */
 export interface CallRequest {
   /** Correlates the answer with the call; opaque to the process. */
   readonly id: number;
@@ -115,7 +127,11 @@ export interface CallRequest {
   readonly params?: unknown;
 }
 
-/** One answer, as it travels process→page. */
+/**
+ * One answer, as it travels process→page.
+ *
+ * @internal
+ */
 export interface CallResponse {
   readonly id: number;
   /** The handler's result. Absent when `error` is present. */
@@ -124,8 +140,58 @@ export interface CallResponse {
   readonly error?: { readonly message: string };
 }
 
-/** One push, as it travels process→page over the event stream. */
+/**
+ * One push, as it travels process→page over the event stream.
+ *
+ * @internal
+ */
 export interface EventMessage {
   readonly name: string;
   readonly payload?: unknown;
+}
+
+/**
+ * How a frame ends, and how its payload line starts — server-sent-event framing, so
+ * the stream stays something a browser's tooling can read.
+ *
+ * Both are here rather than at either end because the two ends have to agree about
+ * them, which is what this module is for: one writer and one reader spelling `\n\n`
+ * separately is one spelling too many.
+ *
+ * @internal
+ */
+export const FRAME_END = "\n\n";
+export const FRAME_DATA = "data:";
+
+/**
+ * One event as a frame on the wire.
+ *
+ * @internal
+ */
+export function frameEvent(event: EventMessage): string {
+  return `${FRAME_DATA} ${JSON.stringify(event)}${FRAME_END}`;
+}
+
+/**
+ * The event in one frame, or `undefined` when the frame carries none — a keep-alive
+ * comment, or something that does not parse. A push has no caller to fail, so an
+ * unreadable frame is skipped rather than thrown: taking the stream down over one bad
+ * event would lose every good one after it.
+ *
+ * @internal
+ */
+export function readFrame(frame: string): EventMessage | undefined {
+  const payload = frame
+    .split("\n")
+    .filter((line) => line.startsWith(FRAME_DATA))
+    .map((line) => line.slice(FRAME_DATA.length).trim())
+    .join("");
+  if (payload.length === 0) {
+    return undefined;
+  }
+  try {
+    return JSON.parse(payload) as EventMessage;
+  } catch {
+    return undefined;
+  }
 }

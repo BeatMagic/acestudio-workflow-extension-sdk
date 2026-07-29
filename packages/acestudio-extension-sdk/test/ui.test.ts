@@ -12,7 +12,7 @@
 import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, expect, test } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import { isCode } from "@timedomain/acestudio-bridge-core";
 import { connectChannel } from "@timedomain/acestudio-extension-sdk/page";
 import type { ExtensionContext, UiProtocol } from "@timedomain/acestudio-extension-sdk";
@@ -42,6 +42,11 @@ interface StemsUi extends UiProtocol {
     listStems(params: { trackIndex: number }): Promise<string[]>;
     ping(): string;
     explode(): void;
+    /** A parameter that looks like the options object, which must not be read as one. */
+    save(params: { signal?: string }): string;
+    /** A parameter with no fields at all, for the same reason. */
+    clear(params: Record<string, never>): string;
+    slow(params: { ms: number }): string;
   };
   events: {
     progress: { done: number; total: number };
@@ -156,6 +161,37 @@ test("a call that takes nothing needs no argument, and an event that carries not
   });
 });
 
+test("a parameter is never mistaken for the options object", async () => {
+  const { context, url } = await startServed();
+  const channel = context.ui.channel<StemsUi>();
+  channel.handle("save", (params) => JSON.stringify(params));
+  channel.handle("clear", (params) => JSON.stringify(params));
+
+  const page = openPage(url);
+  // Both of these would be read as options by anything that guessed from shape, and
+  // the handler would be handed nothing.
+  await expect(page.call("save", { signal: "sigterm" })).resolves.toBe('{"signal":"sigterm"}');
+  await expect(page.call("clear", {})).resolves.toBe("{}");
+});
+
+test("a call can be abandoned by its caller", async () => {
+  const { context, url } = await startServed();
+  const channel = context.ui.channel<StemsUi>();
+  const started = signal();
+  channel.handle("slow", async ({ ms }) => {
+    started.announce();
+    await new Promise((done) => setTimeout(done, ms));
+    return "finished";
+  });
+
+  const page = openPage(url);
+  const abort = new AbortController();
+  const call = page.call("slow", { ms: 1_000 }, { signal: abort.signal });
+  await started.reached;
+  abort.abort();
+  await expect(call).rejects.toThrow();
+});
+
 test("a handler that throws fails that one call, with the reason the process reported", async () => {
   const { context, url } = await startServed();
   const channel = context.ui.channel<StemsUi>();
@@ -181,6 +217,39 @@ test("registering a second handler for one call is refused", async () => {
   const channel = context.ui.channel<StemsUi>();
   channel.handle("ping", () => "pong");
   expect(() => channel.handle("ping", () => "again")).toThrow(/already has a handler/);
+});
+
+test("an event stream that fails to open is re-opened, so the page keeps hearing", async () => {
+  const { context, url } = await startServed();
+  const channel = context.ui.channel<StemsUi>();
+
+  // The process can go away and come back under a page that is still on screen. The
+  // first attempt is refused here, standing in for that window.
+  const realFetch = globalThis.fetch;
+  let streamAttempts = 0;
+  globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const headers = init?.headers as Record<string, string> | undefined;
+    if (headers?.accept === "text/event-stream") {
+      streamAttempts += 1;
+      if (streamAttempts === 1) {
+        throw new Error("the process is not listening yet");
+      }
+    }
+    return realFetch(input, init);
+  }) as typeof fetch;
+  opened.push(() => {
+    globalThis.fetch = realFetch;
+  });
+
+  const page = openPage(url);
+  const pushed: unknown[] = [];
+  page.on("progress", (payload) => pushed.push(payload));
+
+  await eventually(() => {
+    channel.emit("progress", { done: 1, total: 1 });
+    return pushed.length > 0;
+  });
+  expect(streamAttempts).toBeGreaterThan(1);
 });
 
 test("emitting with no page connected is dropped, not queued", async () => {
@@ -271,6 +340,24 @@ test("a declared UI that cannot be served never starts the run", async () => {
   );
   await expect(run.exitCode).resolves.toBe(2);
   expect(window.announced).toEqual([]);
+});
+
+test("a declared UI the session cannot present says which capability is missing", async () => {
+  const window = new SurfaceWindow();
+  const logged: string[] = [];
+  const reportedTo = vi.spyOn(console, "error").mockImplementation((line: string) => logged.push(line));
+  const assets = await helloWorldAssets();
+  const run = startRun(
+    { manifest, ui: { assets }, activate: () => undefined },
+    { host: { grantedTokens: [], methods: window.methods() } },
+  );
+
+  // The page was served, but a window that cannot be presented is not a run to start:
+  // an extension whose whole interface is unreachable has nothing to offer its user.
+  await expect(run.exitCode).resolves.toBe(2);
+  expect(window.announced).toEqual([]);
+  expect(logged.join("\n")).toContain(SURFACE_TOKEN);
+  reportedTo.mockRestore();
 });
 
 test("the served page cannot be used to read files outside the assets directory", async () => {

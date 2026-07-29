@@ -25,16 +25,20 @@ const PACKAGES = [
   { dir: "packages/cli", entries: ["src/index.ts", "src/cli.ts"], external: ["@napi-rs/keyring"], types: false },
 
   // The extension SDK packages. bridge-core is the connection layer; the
-  // extension SDK sits above it. The extension SDK's browser-only page side
-  // ships from the ./page subpath (a second entry). The scaffolder ships as a
-  // bin — no .d.ts. Two things wait for the slices that add real code: when the
-  // extension SDK gains a real import of bridge-core, that slice declares it as
-  // a dependency and keeps it external here so consumers share one copy; and
-  // when ./page gains real browser code, that slice bundles it with
-  // platform: "browser" so Node built-ins become hard errors. Today every entry
-  // is node-bundled, which is harmless for the placeholder exports.
+  // extension SDK sits above it, and keeps it external so consumers share one
+  // copy — and one BridgeError class identity. The extension SDK's browser-only
+  // page side ships from the ./page subpath (a second entry); when that side
+  // gains real browser code, its slice bundles it with platform: "browser" so
+  // Node built-ins become hard errors. Today both its entries are node-bundled,
+  // which is harmless for a placeholder export. The scaffolder ships as a bin —
+  // no .d.ts.
   { dir: "packages/acestudio-bridge-core", entries: ["src/index.ts"], external: [], types: true },
-  { dir: "packages/acestudio-extension-sdk", entries: ["src/index.ts", "src/page/index.ts"], external: [], types: true },
+  {
+    dir: "packages/acestudio-extension-sdk",
+    entries: ["src/index.ts", "src/page/index.ts"],
+    external: ["@timedomain/acestudio-bridge-core"],
+    types: true,
+  },
   { dir: "packages/create-acestudio-extension", entries: ["src/index.ts", "src/cli.ts"], external: [], types: false },
 ];
 

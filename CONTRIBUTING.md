@@ -31,9 +31,12 @@ Signing and submission tooling:
 `acestudio-bridge-core` carries the transport seam, `connect()`, the error class,
 the generated domain bindings with their grants and pre-wire capability guard, and
 the compile-time capability facade; typed job handles and typed-array bulk data
-land on top of them. The extension SDK and the scaffolder are still skeletons —
-they build and are wired into the pipeline, but their public API is filled in by
-subsequent slices. All three are versioned `0.0.0` until their first release. The
+land on top of them. `acestudio-extension-sdk` carries the layer above:
+`defineExtension`'s lifecycle choreography, the TypeScript manifest and its JSON
+emission, and the manifest-scoped client — the UI paved road and the `./page`
+entry's real API arrive in later slices. The scaffolder is still a skeleton: it
+builds and is wired into the pipeline, but its public API is filled in by a
+subsequent slice. All three are versioned `0.0.0` until their first release. The
 name `@timedomain/acestudio-sdk` is intentionally left unclaimed, reserved for a
 future umbrella package.
 
@@ -47,6 +50,13 @@ so a refusal it composes is the one the real host would send. Beside it,
 `job` verbs a `JobHandle` rides on, and pushing the `jobs` change channel when one
 moves. They grow as the surface does; later slices test against the same peer
 rather than mocking the layer under test.
+
+The extension SDK's tests reach that same peer by path
+(`packages/acestudio-extension-sdk/test/support/extension-run.ts` wires it to a real
+`defineExtension` run), because the extension layer's only downward dependency is
+core's `connect()` — so one seam covers both packages. The two things the harness
+stands in for are the two an extension process cannot have inside a test runner: its
+socket and its exit.
 
 ## Development
 

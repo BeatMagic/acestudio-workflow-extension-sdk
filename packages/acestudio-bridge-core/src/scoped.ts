@@ -16,27 +16,52 @@
 import { OPERATIONS, PROFILES, type CapabilityToken, type PublicBindings } from "./generated/bindings.js";
 import type { ProfileName } from "./grant.js";
 
-/** One row of the generated operation table, with its literal types intact. */
-type Descriptor = (typeof OPERATIONS)[number];
+/**
+ * One row of the generated operation table, with its literal types intact.
+ *
+ * @public
+ */
+export type Descriptor = (typeof OPERATIONS)[number];
 
 /**
  * Turns `special-tracks` into `specialTracks`: the canonical tree hyphenates a
  * multi-word domain and the binding surface camelCases it. The runtime
  * counterpart is `camelCase()` in `bindings.ts`; the two have to agree, and the
  * `keyof PublicBindings` constraints below are what notices if they stop.
+ *
+ * Exported because {@link ScopedBindings} is written in terms of it, and a
+ * recursive conditional type cannot be inlined into the mapped type that uses it.
+ *
+ * @public
  */
-type Camel<S extends string> = S extends `${infer Head}-${infer Tail}` ? `${Head}${Capitalize<Camel<Tail>>}` : S;
+export type Camel<S extends string> = S extends `${infer Head}-${infer Tail}`
+  ? `${Head}${Capitalize<Camel<Tail>>}`
+  : S;
 
 /**
  * The operations a session holding `T` can reach: everything it has the token
  * for, plus every ungated operation — a registry-declared pure function is
  * reachable by any session, including one granted nothing at all.
+ *
+ * @public
  */
-type Reachable<T extends CapabilityToken> = Extract<Descriptor, { ungated: true } | { capability: T }>;
+export type Reachable<T extends CapabilityToken> = Extract<Descriptor, { ungated: true } | { capability: T }>;
 
-/** Reachable operations that nest under a domain, and those that do not. */
-type InDomain<T extends CapabilityToken> = Exclude<Reachable<T>, { domain: "" }>;
-type AtRoot<T extends CapabilityToken> = Extract<Reachable<T>, { domain: "" }>;
+/**
+ * Reachable operations that nest under a domain, and those that do not. Exported
+ * for the same reason as {@link Camel}: {@link ScopedBindings} names them, so the
+ * public surface cannot be described without them.
+ *
+ * @public
+ */
+export type InDomain<T extends CapabilityToken> = Exclude<Reachable<T>, { domain: "" }>;
+
+/**
+ * @see {@link InDomain}
+ *
+ * @public
+ */
+export type AtRoot<T extends CapabilityToken> = Extract<Reachable<T>, { domain: "" }>;
 
 /**
  * The client `T`'s reach admits: each domain keeps only the methods those tokens

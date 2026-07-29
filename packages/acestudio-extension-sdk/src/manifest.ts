@@ -100,9 +100,15 @@ export type EnumeratedFilesystemScope =
  * what counts as absolute; {@link serializeManifest} rejects the forms it can
  * tell are neither absolute nor a known scope name.
  *
+ * Three forms, matching what the host accepts: a POSIX root, a UNC share (two
+ * leading backslashes), and a drive letter with its separator. A single leading
+ * backslash is deliberately not one of them — on Windows that path is relative to
+ * the current drive, so it names a different folder depending on where the process
+ * happens to be, which is not something a consent line can vouch for.
+ *
  * @public
  */
-export type AbsoluteFilesystemPath = `/${string}` | `\\${string}` | `${string}:${"/" | "\\"}${string}`;
+export type AbsoluteFilesystemPath = `/${string}` | `\\\\${string}` | `${string}:${"/" | "\\"}${string}`;
 
 /**
  * One declared filesystem scope: a scope name, a `project:`-prefixed subpath of

@@ -135,6 +135,13 @@ describe("serializeManifest", () => {
     expect(refusal(withField("entry", "/usr/local/bin/node"))).toContain('"entry" must be bundle-relative');
     expect(refusal(withField("entry", "C:\\Windows\\system32\\cmd.exe"))).toContain('"entry" must be bundle-relative');
     expect(refusal(withField("entry", "../../elsewhere/index.js"))).toContain('"entry" must stay inside the bundle');
+    // One `..` up from a folder that was just entered, on either separator: the
+    // host resolves the path before it checks that it is inside the bundle, so
+    // refusing these would refuse a bundle ACE Studio installs happily.
+    expect(serializeManifest(withField("entry", "dist/../index.js"))).toContain('"entry": "dist/../index.js"');
+    expect(serializeManifest(withField("entry", "dist\\..\\index.js"))).toBeTruthy();
+    // And the walk that does leave, spelled so the segments alone cannot tell.
+    expect(refusal(withField("entry", "dist/../../index.js"))).toContain('"entry" must stay inside the bundle');
   });
 
   it("refuses an unknown lifecycle", () => {
@@ -163,6 +170,19 @@ describe("serializeManifest", () => {
         "must name a path inside the project",
       );
       expect(hostAccess({ filesystem: { read: ["project:"] } })).toContain("must name a path inside the project");
+    });
+
+    it("refuses any .. inside a project: path, even one that resolves back in", () => {
+      // Stricter than the bundle-path rule, because the host is stricter here too:
+      // this scope becomes a row the user reads in the consent dialog, and a path
+      // that has to be resolved before it can be trusted is not one to print.
+      expect(hostAccess({ filesystem: { read: ["project:Exports/../Stems"] } })).toContain(
+        "must name a path inside the project",
+      );
+      // A rooted subpath is not a subpath, whether or not it is absolute: a bare
+      // leading separator and a bare drive prefix are both refused.
+      expect(hostAccess({ filesystem: { read: ["project:/Stems"] } })).toContain("must name a path inside the project");
+      expect(hostAccess({ filesystem: { read: ["project:D:Stems"] } })).toContain("must name a path inside the project");
     });
 
     it("refuses writing projectMedia, which is read-only by definition", () => {

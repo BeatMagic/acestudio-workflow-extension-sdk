@@ -13,6 +13,7 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 import type { PublicBindings } from "@timedomain/acestudio-bridge-core";
 import type {
+  AbsoluteFilesystemPath,
   CapabilityTokensOf,
   ExtensionContext,
   ExtensionDefinition,
@@ -108,6 +109,25 @@ function reservedNames(): void {
   void misspelled;
 }
 
+/**
+ * The absolute-path scope forms, as declarations the compiler admits or refuses.
+ * The type has to agree with what {@link serializeManifest} accepts, or it promises
+ * an author a path the emitter then refuses.
+ */
+function absolutePathForms(): void {
+  const accepted: AbsoluteFilesystemPath[] = ["/Users/sam/Stems", "\\\\studio-nas\\stems", "D:/Stems", "D:\\Stems"];
+  void accepted;
+
+  // @ts-expect-error -- one leading backslash is drive-relative on Windows, so it
+  // names a different folder depending on the process's current drive
+  const driveRelative: AbsoluteFilesystemPath = "\\Stems";
+  void driveRelative;
+
+  // @ts-expect-error -- and a plain relative path is not a scope at all
+  const relative: AbsoluteFilesystemPath = "Stems/Renders";
+  void relative;
+}
+
 describe("the manifest-scoped client", () => {
   it("keeps the domains the capability request reaches, and drops the rest", () => {
     expectTypeOf<ManifestClient<typeof READS_CLIPS>>().toHaveProperty("clip");
@@ -140,5 +160,6 @@ describe("the manifest-scoped client", () => {
   it("is a compile-time view — there is nothing here to run", () => {
     expect(typeof callsTheManifestDecides).toBe("function");
     expect(typeof reservedNames).toBe("function");
+    expect(typeof absolutePathForms).toBe("function");
   });
 });

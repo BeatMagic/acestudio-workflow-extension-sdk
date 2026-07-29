@@ -12,7 +12,7 @@ import type { ScopedBindings } from '@timedomain/acestudio-bridge-core';
 import { Transport } from '@timedomain/acestudio-bridge-core';
 
 // @public
-export type AbsoluteFilesystemPath = `/${string}` | `\\${string}` | `${string}:${"/" | "\\"}${string}`;
+export type AbsoluteFilesystemPath = `/${string}` | `\\\\${string}` | `${string}:${"/" | "\\"}${string}`;
 
 // @public
 export const BRIDGE_SOCKET_ENV = "ACE_EXTENSION_BRIDGE_SOCKET";

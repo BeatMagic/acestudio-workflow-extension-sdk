@@ -198,9 +198,10 @@ function requireText(field: string, value: unknown, problems: string[]): void {
 }
 
 /**
- * The capability request has to be a list of names, and a non-empty one: an
- * extension that asks for nothing can still run (ungated operations are reachable
- * by any session), so an empty list is legal — an *absent* one is not.
+ * The capability request has to be present, and a list of non-empty names. The
+ * list itself may be empty: an extension that asks for nothing can still run,
+ * because ungated operations are reachable by any session. An *absent* list is
+ * the error.
  */
 function validateCapabilities(capabilities: unknown, problems: string[]): void {
   if (!Array.isArray(capabilities)) {
@@ -239,17 +240,55 @@ function validateBundlePath(
     problems.push(`"${field}" must be bundle-relative, not absolute: ${value}`);
     return;
   }
-  if (climbsOut(value)) {
+  if (escapesBundle(value)) {
     problems.push(`"${field}" must stay inside the bundle: ${value}`);
   }
 }
 
-/** Whether a relative path walks out of the tree it is rooted in. */
-function climbsOut(path: string): boolean {
-  return path
-    .replace(/\\/g, "/")
-    .split("/")
-    .some((segment) => segment === "..");
+/**
+ * Whether a relative path ends up above the tree it is rooted in, once its `..`
+ * segments are resolved. A `..` that is cancelled out on the way — `dist/../main.js`
+ * — stays inside and is fine: the host resolves the path before checking that it is
+ * within the bundle, so refusing it here would refuse a bundle ACE Studio installs.
+ */
+function escapesBundle(path: string): boolean {
+  let depth = 0;
+  for (const segment of segments(path)) {
+    if (segment === "..") {
+      if (depth === 0) {
+        return true;
+      }
+      depth -= 1;
+    } else if (segment !== ".") {
+      depth += 1;
+    }
+  }
+  return false;
+}
+
+/**
+ * Whether a path has a `..` segment at all. Stricter than {@link escapesBundle} on
+ * purpose, for the one place the host is stricter too: a `project:` scope is a row
+ * in the consent dialog, and what the user reads there has to be the path itself,
+ * not a walk that has to be resolved before it can be trusted.
+ */
+function hasParentSegment(path: string): boolean {
+  return segments(path).includes("..");
+}
+
+/**
+ * Whether a path is anchored somewhere of its own rather than at the folder it is
+ * meant to be relative to. Broader than {@link ABSOLUTE_PATTERN}: a lone leading
+ * separator or a bare drive prefix is not an absolute path, but it is not a subpath
+ * of anything either, which is all this asks.
+ */
+function isRooted(path: string): boolean {
+  return /^(?:\/|[A-Za-z]:)/.test(path.replace(/\\/g, "/"));
+}
+
+/** A path's segments, on either platform's separator. */
+function segments(path: string): string[] {
+  return path.replace(/\\/g, "/").split("/");
 }
 
 /** The `hostAccess` block: known keys only, and every scope in a form Studio can consent to. */
@@ -313,7 +352,7 @@ function validateScope(field: string, scope: unknown, write: boolean, problems: 
   }
   if (scope.startsWith("project:")) {
     const subPath = scope.slice("project:".length);
-    if (subPath.length === 0 || ABSOLUTE_PATTERN.test(subPath) || climbsOut(subPath)) {
+    if (subPath.length === 0 || isRooted(subPath) || hasParentSegment(subPath)) {
       problems.push(`"${field}" must name a path inside the project: ${scope}`);
     }
     return;

@@ -13,7 +13,7 @@
  */
 
 import { buildBindings, type OperationWarning } from "./bindings.js";
-import { BridgeError } from "./errors.js";
+import { BridgeError, describeCause } from "./errors.js";
 import type { CapabilityToken, PublicBindings } from "./generated/bindings.js";
 import {
   SessionClient,
@@ -24,6 +24,7 @@ import {
   type ShutdownParams,
 } from "./generated/Session.acerpc.js";
 import { createGrant, requireTokens, type Grant, type ProfileName } from "./grant.js";
+import { createJobHandle, type JobHandle } from "./jobs.js";
 import { BridgePeer } from "./peer.js";
 import { PROTOCOL_VERSION } from "./protocol.js";
 import type { ProfileScopedBindings, ScopedBindings } from "./scoped.js";
@@ -111,6 +112,16 @@ export interface BridgeConnection {
    */
   scoped<P extends ProfileName>(profile: P): ProfileScopedBindings<P>;
   scoped<T extends CapabilityToken>(...tokens: T[]): ScopedBindings<T>;
+  /**
+   * A {@link JobHandle} on a job in the ledger, by id — including one this
+   * session did not start, since job visibility is project-session-wide with
+   * attribution (ADR 0084). A job-class operation hands back its own handle; this
+   * is how to get one for a job whose id arrived some other way.
+   *
+   * Nothing is checked here: an id that names no job fails on the first call the
+   * handle makes, as the same id passed to `client.job.get` would.
+   */
+  job<Result = unknown>(id: string): JobHandle<Result>;
   /**
    * Called for each advisory warning an operation comes back with (ADR 0083 §2),
    * from any call on this connection. A warning never means the call failed — a
@@ -223,6 +234,13 @@ class Connection implements BridgeConnection {
     return this.client as never;
   }
 
+  job<Result = unknown>(id: string): JobHandle<Result> {
+    // Over the same guarded bindings a caller has: a session without `job.read`
+    // gets the pre-wire refusal from the handle's first call, not a second gate
+    // here.
+    return createJobHandle<Result>(this.client.job, id);
+  }
+
   onShutdown(listener: (params: ShutdownParams) => void): Unsubscribe {
     return this.session.onSessionShutdown(listener);
   }
@@ -252,7 +270,7 @@ class Connection implements BridgeConnection {
       try {
         listener(warning);
       } catch (cause) {
-        console.warn(`[ace-studio] a warning listener threw: ${(cause as Error)?.message ?? String(cause)}`);
+        console.warn(`[ace-studio] a warning listener threw: ${describeCause(cause)}`);
       }
     }
   }
@@ -323,7 +341,7 @@ function handshakeFailure(cause: unknown): BridgeError {
   }
   return new BridgeError({
     code: "HANDSHAKE_FAILED",
-    message: `The ACE Studio bridge refused the handshake: ${(cause as Error)?.message ?? String(cause)}`,
+    message: `The ACE Studio bridge refused the handshake: ${describeCause(cause)}`,
     hint: "check the auth token and that the requested capabilities are inside this surface",
     cause,
   });

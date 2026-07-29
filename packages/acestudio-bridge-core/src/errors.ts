@@ -131,6 +131,17 @@ export class BridgeError<C extends AnyBridgeErrorCode = AnyBridgeErrorCode> exte
 }
 
 /**
+ * Whatever was thrown, as something printable. Not every rejection is an
+ * `Error` — a JSON-RPC fault object reaches a `catch` as a plain object — so the
+ * fallback is the value itself rather than an empty message.
+ *
+ * @internal
+ */
+export function describeCause(cause: unknown): string {
+  return (cause as Error | undefined)?.message ?? String(cause);
+}
+
+/**
  * Whether a caught value is a {@link BridgeError}.
  *
  * @public

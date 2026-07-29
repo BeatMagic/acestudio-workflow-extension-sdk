@@ -28,12 +28,14 @@ import {
   REQUIRED_TOKENS,
   type CapabilityToken,
   type ChangeEvent,
+  type JobOperations,
   type OperationDescriptor,
   type PreconditionCallOptions,
   type Unsubscribe,
 } from "./generated/bindings.js";
 import { ChangeClient } from "./generated/Change.acerpc.js";
 import { OperationClient, type InvokeParams, type InvokeWarning } from "./generated/Operation.acerpc.js";
+import { acceptedJobId, createJobHandle, JOB_CLASS_OPERATIONS, type JobClassTable } from "./jobs.js";
 import type { BridgePeer } from "./peer.js";
 
 /**
@@ -116,9 +118,13 @@ export function buildBindings(
   grant: Grant,
   warn: WarningSink,
   bulk: BulkTables = GENERATED_BULK_TABLES,
+  jobs: JobClassTable = JOB_CLASS_OPERATIONS,
 ): Record<string, unknown> {
   const client = new OperationClient(peer);
   const root: Record<string, unknown> = {};
+  // Read when a launch answers, never while building: the `job` group is one of
+  // the methods this loop is still assembling.
+  const jobGroup = (): JobOperations => root[domainKey("job")] as JobOperations;
 
   for (const operation of OPERATIONS) {
     const invoke: BoundMethod = async (...args) => {
@@ -136,7 +142,15 @@ export function buildBindings(
       for (const warning of answer.warnings ?? []) {
         warn({ ...warning, path: operation.path });
       }
-      return decodeBulkFields(bulk.result[operation.path], answer.data);
+      const data = decodeBulkFields(bulk.result[operation.path], answer.data);
+      // An operation that launches a job answers on acceptance, so what it has
+      // to hand back is the job, not a result that does not exist yet (ADR 0094
+      // §6). The handle is sugar over the same `job` group built here, which is
+      // why there is no second wire contract for a caller to learn.
+      const launched = jobs[operation.path];
+      return launched === undefined
+        ? data
+        : createJobHandle(jobGroup(), acceptedJobId(operation.path, launched, data));
     };
 
     // Read as a plain string: the table's literal types say no operation sits at

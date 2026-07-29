@@ -42,9 +42,11 @@ Bridge-core tests drive the real stack over an in-memory transport pair against
 for the Studio side, serving the surfaces the schemas declare: the handshake, the
 liveness ping, the shutdown notice, and `operation.invoke`. Its capability gate is
 a transcription of the Studio's, reading the same generated required-token table,
-so a refusal it composes is the one the real host would send. It grows as the
-surface does; later slices test against the same peer rather than mocking the
-layer under test.
+so a refusal it composes is the one the real host would send. Beside it,
+`test/support/job-ledger.ts` scripts the job side: in-memory jobs answering the
+`job` verbs a `JobHandle` rides on, and pushing the `jobs` change channel when one
+moves. They grow as the surface does; later slices test against the same peer
+rather than mocking the layer under test.
 
 ## Development
 

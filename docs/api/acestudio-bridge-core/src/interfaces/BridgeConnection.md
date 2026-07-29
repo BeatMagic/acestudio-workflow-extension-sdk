@@ -74,6 +74,38 @@ Close the connection, failing every call in flight.
 
 ***
 
+### job()
+
+```ts
+job<Result>(id): JobHandle<Result>;
+```
+
+A [JobHandle](JobHandle.md) on a job in the ledger, by id — including one this
+session did not start, since job visibility is project-session-wide with
+attribution (ADR 0084). A job-class operation hands back its own handle; this
+is how to get one for a job whose id arrived some other way.
+
+Nothing is checked here: an id that names no job fails on the first call the
+handle makes, as the same id passed to `client.job.get` would.
+
+#### Type Parameters
+
+##### Result
+
+`Result` = `unknown`
+
+#### Parameters
+
+##### id
+
+`string`
+
+#### Returns
+
+[`JobHandle`](JobHandle.md)\<`Result`\>
+
+***
+
 ### onClose()
 
 ```ts

@@ -11,8 +11,10 @@ import type { ProfileTokens } from '@timedomain/acestudio-bridge-core';
 import type { ScopedBindings } from '@timedomain/acestudio-bridge-core';
 import { Transport } from '@timedomain/acestudio-bridge-core';
 
+// Warning: (ae-forgotten-export) The symbol "DriveLetter" needs to be exported by the entry point index.d.ts
+//
 // @public
-export type AbsoluteFilesystemPath = `/${string}` | `\\\\${string}` | `${string}:${"/" | "\\"}${string}`;
+export type AbsoluteFilesystemPath = `/${string}` | `\\\\${string}` | `${DriveLetter}:${"/" | "\\"}${string}`;
 
 // @public
 export const BRIDGE_SOCKET_ENV = "ACE_EXTENSION_BRIDGE_SOCKET";

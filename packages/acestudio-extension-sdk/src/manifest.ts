@@ -95,6 +95,49 @@ export type EnumeratedFilesystemScope =
   | "all";
 
 /**
+ * A single letter, either case — the only thing before the colon that the host
+ * reads as a drive. Spelled out because a template literal type cannot say "one
+ * letter" any other way, and `${string}:` would admit `Disk:/Stems`.
+ *
+ * @public
+ */
+export type DriveLetter = Lowercase<UppercaseDriveLetter> | UppercaseDriveLetter;
+
+/**
+ * The upper-case half of {@link DriveLetter}, listed once so the lower-case half can
+ * be derived from it.
+ *
+ * @public
+ */
+export type UppercaseDriveLetter =
+  | "A"
+  | "B"
+  | "C"
+  | "D"
+  | "E"
+  | "F"
+  | "G"
+  | "H"
+  | "I"
+  | "J"
+  | "K"
+  | "L"
+  | "M"
+  | "N"
+  | "O"
+  | "P"
+  | "Q"
+  | "R"
+  | "S"
+  | "T"
+  | "U"
+  | "V"
+  | "W"
+  | "X"
+  | "Y"
+  | "Z";
+
+/**
  * An absolute path, POSIX or Windows — the scope form a static manifest cannot
  * enumerate, rendered verbatim in the consent line. The host is the authority on
  * what counts as absolute; {@link serializeManifest} rejects the forms it can
@@ -104,11 +147,12 @@ export type EnumeratedFilesystemScope =
  * leading backslashes), and a drive letter with its separator. A single leading
  * backslash is deliberately not one of them — on Windows that path is relative to
  * the current drive, so it names a different folder depending on where the process
- * happens to be, which is not something a consent line can vouch for.
+ * happens to be, which is not something a consent line can vouch for. A bare drive
+ * prefix (`D:Stems`) is out for the same reason.
  *
  * @public
  */
-export type AbsoluteFilesystemPath = `/${string}` | `\\\\${string}` | `${string}:${"/" | "\\"}${string}`;
+export type AbsoluteFilesystemPath = `/${string}` | `\\\\${string}` | `${DriveLetter}:${"/" | "\\"}${string}`;
 
 /**
  * One declared filesystem scope: a scope name, a `project:`-prefixed subpath of

@@ -253,13 +253,17 @@ function validateBundlePath(
  */
 function escapesBundle(path: string): boolean {
   let depth = 0;
-  for (const segment of segments(path)) {
+  // Empty segments are dropped rather than counted: `a//../../x` has to resolve the
+  // way the host's cleanPath resolves it, which collapses the doubled separator
+  // first and so ends up above the root. Counting the empty one as a folder would
+  // give it a depth to spend and let the path through.
+  for (const segment of segments(path).filter((part) => part !== "" && part !== ".")) {
     if (segment === "..") {
       if (depth === 0) {
         return true;
       }
       depth -= 1;
-    } else if (segment !== ".") {
+    } else {
       depth += 1;
     }
   }

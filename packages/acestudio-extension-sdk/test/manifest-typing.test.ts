@@ -126,6 +126,14 @@ function absolutePathForms(): void {
   // @ts-expect-error -- and a plain relative path is not a scope at all
   const relative: AbsoluteFilesystemPath = "Stems/Renders";
   void relative;
+
+  // @ts-expect-error -- a drive is one letter, so this is a scheme or a folder name
+  const notADrive: AbsoluteFilesystemPath = "Disk:/Stems";
+  void notADrive;
+
+  // @ts-expect-error -- a bare drive prefix is relative to that drive's current folder
+  const driveRelativeToo: AbsoluteFilesystemPath = "D:Stems";
+  void driveRelativeToo;
 }
 
 describe("the manifest-scoped client", () => {

@@ -4,7 +4,7 @@
 type AbsoluteFilesystemPath = 
   | `/${string}`
   | `${string}`
-  | `${string}:${"/" | "\"}${string}`;
+  | `${DriveLetter}:${"/" | "\"}${string}`;
 ```
 
 An absolute path, POSIX or Windows — the scope form a static manifest cannot
@@ -16,4 +16,5 @@ Three forms, matching what the host accepts: a POSIX root, a UNC share (two
 leading backslashes), and a drive letter with its separator. A single leading
 backslash is deliberately not one of them — on Windows that path is relative to
 the current drive, so it names a different folder depending on where the process
-happens to be, which is not something a consent line can vouch for.
+happens to be, which is not something a consent line can vouch for. A bare drive
+prefix (`D:Stems`) is out for the same reason.

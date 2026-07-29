@@ -142,6 +142,9 @@ describe("serializeManifest", () => {
     expect(serializeManifest(withField("entry", "dist\\..\\index.js"))).toBeTruthy();
     // And the walk that does leave, spelled so the segments alone cannot tell.
     expect(refusal(withField("entry", "dist/../../index.js"))).toContain('"entry" must stay inside the bundle');
+    // A doubled separator is not a folder to climb back out of: the host collapses
+    // it before resolving, so this one leaves the bundle and has to be refused.
+    expect(refusal(withField("entry", "dist//../../index.js"))).toContain('"entry" must stay inside the bundle');
   });
 
   it("refuses an unknown lifecycle", () => {

@@ -173,6 +173,25 @@ describe("waiting against a host that holds the poll", () => {
     expect(host.invocations.filter((invocation) => invocation.path === "job wait")).toHaveLength(1);
     connection.close();
   });
+
+  it("still spends one call when the host's hold comes back a millisecond early", async () => {
+    const ledger = new ScriptedJobLedger([scriptedJob({ id: "job-42", lifecycle: "running" })], {
+      holdWaits: true,
+      holdShortfallMs: 1,
+    });
+    const { connection, host } = await connectToLedger(ledger);
+
+    // The bound is measured with a millisecond-resolution clock, and a hold is free to
+    // come back a millisecond under it — Node's timers do, a fraction of a percent of
+    // the time. Reading that millisecond as budget left buys nothing, since no poll
+    // answers inside it, and costs the round trip the test above says a long-poll does
+    // not spend. This is that arrival made deterministic instead of waited for.
+    const outcome = await connection.job("job-42").wait({ timeoutMs: 80 });
+
+    expect(outcome).toMatchObject({ status: "timeout", job: { lifecycle: "running" } });
+    expect(host.invocations.filter((invocation) => invocation.path === "job wait")).toHaveLength(1);
+    connection.close();
+  });
 });
 
 describe("watching a job", () => {

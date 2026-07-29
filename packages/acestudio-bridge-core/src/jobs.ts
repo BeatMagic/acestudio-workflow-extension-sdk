@@ -30,6 +30,19 @@ import type {
 const WAIT_CALL_GRACE_MS = 5_000;
 
 /**
+ * How much of the bound may be left over and still count as spent.
+ *
+ * The same clock-skew problem the grace above exists for, at the other end of the
+ * poll: the host holds for the bound by its clock and the loop measures the answer
+ * by `Date.now()`, whose resolution is a millisecond. The two disagree at the
+ * boundary — a hold given 80ms can come back with 79 elapsed — and without this the
+ * loop reads the difference as budget left and spends a whole round trip on it. No
+ * poll answers inside a millisecond, so there is nothing to buy; a millisecond is
+ * also the least the clock can tell apart, which is why the tolerance is exactly one.
+ */
+const BOUND_SPENT_SLACK_MS = 1;
+
+/**
  * How long the wait loop leaves between polls when the host answers at once.
  *
  * `job wait` is a long-poll: a host that has nothing to report holds the call
@@ -345,7 +358,7 @@ class Handle<Result> implements JobHandle<Result> {
       // answered — never against one still to come. A job that finished while the
       // loop was waiting to ask again finished inside the bound, and saying
       // `timeout` because nobody looked would be a false negative.
-      if (options.timeoutMs !== undefined && elapsed(startedAt) >= options.timeoutMs) {
+      if (options.timeoutMs !== undefined && elapsed(startedAt) >= spentAt(options.timeoutMs)) {
         return { status: "timeout", job };
       }
 
@@ -477,6 +490,16 @@ class Watch {
 /** Milliseconds since a mark. */
 function elapsed(since: number): number {
   return Date.now() - since;
+}
+
+/**
+ * The elapsed time at which a bound counts as spent — the bound itself, less the
+ * millisecond {@link BOUND_SPENT_SLACK_MS} allows for two clocks disagreeing, and
+ * never below zero so a bound of zero is spent the moment it is measured rather
+ * than at a threshold no elapsed time can fail to meet by a different route.
+ */
+function spentAt(timeoutMs: number): number {
+  return Math.max(0, timeoutMs - BOUND_SPENT_SLACK_MS);
 }
 
 /**

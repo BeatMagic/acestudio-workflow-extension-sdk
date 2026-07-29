@@ -61,6 +61,14 @@ export interface ScriptedLedgerOptions {
    * host a handle has to be right against.
    */
   holdWaits?: boolean;
+  /**
+   * Release a held wait this many milliseconds *before* the bound it was given,
+   * modelling a host whose hold timer fires a hair early. Node's do, a fraction of
+   * a percent of the time, and a real host's are equally free to — so this makes
+   * that arrival deterministic rather than something a test waits to be unlucky
+   * about. Left off, a hold runs to its bound.
+   */
+  holdShortfallMs?: number;
 }
 
 /** One `job wait` the ledger is holding until the jobs it named finish. */
@@ -173,10 +181,16 @@ export class ScriptedJobLedger {
       if (typeof params.timeoutMs !== "number") {
         return;
       }
-      held.expiry = setTimeout(() => {
-        this.holding.delete(held);
-        held.release({ data: this.pollWait(params) });
-      }, params.timeoutMs);
+      // Clamped, so the knob can only do what its name says: a negative shortfall would
+      // hold *past* the bound, which is a different host and not this one.
+      const shortfall = Math.max(0, this.options.holdShortfallMs ?? 0);
+      held.expiry = setTimeout(
+        () => {
+          this.holding.delete(held);
+          held.release({ data: this.pollWait(params) });
+        },
+        Math.max(0, params.timeoutMs - shortfall),
+      );
       held.expiry.unref?.();
     });
   }

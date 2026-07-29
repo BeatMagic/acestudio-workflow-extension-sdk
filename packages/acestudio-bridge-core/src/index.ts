@@ -30,6 +30,12 @@ export type { RequestHandler, RequestOptions } from "./peer.js";
 export { PROTOCOL_VERSION } from "./protocol.js";
 export type { JsonRpcFault, JsonRpcMessage } from "./protocol.js";
 export type { ProfileScopedBindings, ProfileTokens, ScopedBindings } from "./scoped.js";
+// The five below are the vocabulary `ScopedBindings` is defined in. They are part
+// of the public surface because its signature names them — api-extractor refuses to
+// describe a public type in terms of hidden ones, and it is right to: a consumer
+// reading the report cannot see what the scoped client expands to otherwise.
+// `Camel` has to stay a named type regardless, because it recurses.
+export type { AtRoot, Camel, Descriptor, InDomain, Reachable } from "./scoped.js";
 export { createTransportPair } from "./transport.js";
 export type { Transport, TransportPair } from "./transport.js";
 // `Unsubscribe` is deliberately not re-exported from here. The generated

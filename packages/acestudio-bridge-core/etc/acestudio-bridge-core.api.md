@@ -8,6 +8,11 @@
 export type AnyBridgeErrorCode = BridgeErrorCode | SdkErrorCode;
 
 // @public
+export type AtRoot<T extends CapabilityToken> = Extract<Reachable<T>, {
+    domain: "";
+}>;
+
+// @public
 export interface BridgeConnection {
     readonly client: PublicBindings;
     close(): void;
@@ -106,6 +111,9 @@ export interface CallOptions {
     signal?: AbortSignal;
     timeoutMs?: number;
 }
+
+// @public
+export type Camel<S extends string> = S extends `${infer Head}-${infer Tail}` ? `${Head}${Capitalize<Camel<Tail>>}` : S;
 
 // @public
 export const CAPABILITY_TOKENS: readonly ["caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "fx.read", "fx.write", "generative.add-layer", "generative.enhance", "generative.retake", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "session.handshake", "session.ping", "session.shutdown", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.read", "track.write", "transport.control", "transport.state", "ui.view", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write", "workflow.dev", "workflow.ui"];
@@ -486,6 +494,9 @@ export interface ConvertTimeToTickResult {
 export function createTransportPair(): TransportPair;
 
 // @public
+export type Descriptor = (typeof OPERATIONS)[number];
+
+// @public
 export type DetailsFor<C extends AnyBridgeErrorCode> = C extends keyof BridgeErrorDetails ? BridgeErrorDetails[C] : Record<string, unknown>;
 
 // @public
@@ -630,6 +641,11 @@ export interface HandshakeResult {
     grantedTokens: string[];
     sessionId: string;
 }
+
+// @public
+export type InDomain<T extends CapabilityToken> = Exclude<Reachable<T>, {
+    domain: "";
+}>;
 
 // @public
 export interface InvokeParams {
@@ -1939,6 +1955,13 @@ export interface PublicBindings {
 }
 
 // @public
+export type Reachable<T extends CapabilityToken> = Extract<Descriptor, {
+    ungated: true;
+} | {
+    capability: T;
+}>;
+
+// @public
 export type RequestHandler = (params: unknown) => unknown;
 
 // @public
@@ -2024,10 +2047,6 @@ export const REQUIRED_TOKENS: {
     readonly 'voice unload': "voice.write";
 };
 
-// Warning: (ae-forgotten-export) The symbol "InDomain" needs to be exported by the entry point index.d.ts
-// Warning: (ae-forgotten-export) The symbol "Camel" needs to be exported by the entry point index.d.ts
-// Warning: (ae-forgotten-export) The symbol "AtRoot" needs to be exported by the entry point index.d.ts
-//
 // @public
 export type ScopedBindings<T extends CapabilityToken> = {
     readonly [D in InDomain<T>["domain"] as Camel<D>]: Camel<D> extends keyof PublicBindings ? Pick<PublicBindings[Camel<D>], Extract<InDomain<T>, {

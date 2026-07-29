@@ -16,6 +16,14 @@ export type { BridgeConnection, ConnectOptions } from "./connect.js";
 export { BridgeError, isBridgeError, isCode } from "./errors.js";
 export type { AnyBridgeErrorCode, BridgeErrorDetails, BridgeErrorInit, DetailsFor, SdkErrorCode } from "./errors.js";
 export type { Grant, GrantProvenance, ProfileName } from "./grant.js";
+export type {
+  JobHandle,
+  JobResult,
+  JobResultChild,
+  JobSnapshot,
+  JobWaitOptions,
+  JobWaitOutcome,
+} from "./jobs.js";
 export { encodeFrame, FrameDecoder, LocalSocketTransport } from "./local-socket.js";
 export { BridgePeer } from "./peer.js";
 export type { RequestHandler, RequestOptions } from "./peer.js";

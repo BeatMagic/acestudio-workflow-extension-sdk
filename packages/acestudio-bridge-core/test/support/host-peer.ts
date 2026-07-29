@@ -54,6 +54,14 @@ export type ScriptedOperation =
   | { data: unknown; warnings?: readonly InvokeWarning[] }
   | { fault: JsonRpcFault };
 
+/**
+ * A scripted answer computed from the invocation rather than fixed in advance —
+ * what a subject with state behind it needs. The job ledger is the first: `job
+ * get` has to answer differently once the job has moved on, and a fixed answer
+ * would let a wait loop "finish" against a reply that was already written.
+ */
+export type ScriptedOperationHandler = (params: InvokeParams) => ScriptedOperation;
+
 /** Everything the script can decide about how the host behaves. */
 export interface ScriptedHostOptions {
   /** Refuse the handshake unless the peer presents this token. */
@@ -66,10 +74,11 @@ export interface ScriptedHostOptions {
   /** Answer the handshake with this instead of a well-formed response. */
   handshakeResult?: unknown;
   /**
-   * What each canonical operation path answers. A path with no entry answers
-   * `UNKNOWN_COMMAND`, as an unknown path does on the real wire.
+   * What each canonical operation path answers — a fixed answer, or one computed
+   * from the invocation. A path with no entry answers `UNKNOWN_COMMAND`, as an
+   * unknown path does on the real wire.
    */
-  operations?: Readonly<Record<string, ScriptedOperation>>;
+  operations?: Readonly<Record<string, ScriptedOperation | ScriptedOperationHandler>>;
 }
 
 /** The host end of a scripted session. */
@@ -226,7 +235,8 @@ export class ScriptedHostPeer {
       throw denial;
     }
 
-    const scripted = this.options.operations?.[params.path];
+    const entry = this.options.operations?.[params.path];
+    const scripted = typeof entry === "function" ? entry(params) : entry;
     if (scripted === undefined) {
       throw {
         code: -32004,

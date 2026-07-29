@@ -12,6 +12,7 @@ export interface BridgeConnection {
     readonly client: PublicBindings;
     close(): void;
     readonly grant: Grant;
+    job<Result = unknown>(id: string): JobHandle<Result>;
     onClose(listener: () => void): Unsubscribe;
     onShutdown(listener: (params: ShutdownParams) => void): Unsubscribe;
     onWarning(listener: (warning: OperationWarning) => void): Unsubscribe;
@@ -689,6 +690,15 @@ export interface JobGetResult {
 }
 
 // @public
+export interface JobHandle<Result = unknown> {
+    cancel(options?: MutatingCallOptions): Promise<void>;
+    readonly id: string;
+    onProgress(listener: (job: JobSnapshot) => void): Unsubscribe;
+    result(options?: CallOptions): Promise<readonly JobResult<Result>[]>;
+    wait(options?: JobWaitOptions): Promise<JobWaitOutcome>;
+}
+
+// @public
 export interface JobListParams {
     mine: boolean;
     running: boolean;
@@ -740,6 +750,15 @@ export interface JobPlaceResult {
 }
 
 // @public
+export type JobResult<Result = unknown> = JobResultChild & Result;
+
+// @public
+export interface JobResultChild {
+    readonly id: string;
+    readonly state: "pending" | "streaming" | "settled" | "failed";
+}
+
+// @public
 export interface JobResultsParams {
     id: string;
 }
@@ -750,6 +769,22 @@ export interface JobResultsResult {
         id: string;
         state: 'pending' | 'streaming' | 'settled' | 'failed';
     }[];
+}
+
+// @public
+export type JobSnapshot = JobGetResult;
+
+// @public
+export interface JobWaitOptions {
+    pollIntervalMs?: number;
+    signal?: AbortSignal;
+    timeoutMs?: number;
+}
+
+// @public
+export interface JobWaitOutcome {
+    readonly job: JobSnapshot;
+    readonly status: "finished" | "timeout";
 }
 
 // @public

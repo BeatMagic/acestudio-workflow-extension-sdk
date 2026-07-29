@@ -110,6 +110,10 @@ export interface PageChannel<P extends UiProtocol> {
    * Only what the process pushes from now on: an event emitted before this page
    * connected was not queued for it, so a page that needs current state asks for it
    * with a `call`.
+   *
+   * Unsubscribing stops the listener, not the stream — the connection stays open so a
+   * component that remounts resumes without a reconnect gap. {@link PageChannel.close}
+   * is what releases it.
    */
   on<K extends keyof EventsOf<P> & string>(name: K, listener: (payload: EventsOf<P>[K]) => void): () => void;
   /**

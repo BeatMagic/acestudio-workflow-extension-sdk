@@ -78,6 +78,10 @@ Only what the process pushes from now on: an event emitted before this page
 connected was not queued for it, so a page that needs current state asks for it
 with a `call`.
 
+Unsubscribing stops the listener, not the stream — the connection stays open so a
+component that remounts resumes without a reconnect gap. [PageChannel.close](#close)
+is what releases it.
+
 #### Type Parameters
 
 ##### K

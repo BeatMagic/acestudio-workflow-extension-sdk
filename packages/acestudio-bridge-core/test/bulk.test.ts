@@ -228,7 +228,7 @@ describe("the pass inside a binding", () => {
     const { client: clientTransport, host: hostTransport } = createTransportPair();
     const host = new ScriptedHostPeer(hostTransport, options);
     const connection = await connect({ transport: clientTransport, authToken: "token-abc" });
-    const client = buildBindings(connection.peer, connection.grant, () => {}, bulk) as {
+    const client = buildBindings(connection.peer, connection.grant, () => {}, () => undefined, bulk) as {
       transport: { setLoop(params: unknown, options?: unknown): Promise<unknown> };
       track: { list(options?: unknown): Promise<unknown> };
     };

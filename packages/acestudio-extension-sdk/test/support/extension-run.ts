@@ -35,6 +35,8 @@ export interface RunOptions {
    * cases where a variable's *absence* is the subject.
    */
   env?: Record<string, string | undefined>;
+  /** Turn SDK debug logging on by option, rather than through the environment. */
+  debug?: boolean;
 }
 
 /** A running extension, and the host on the other end of it. */
@@ -58,6 +60,7 @@ export function startRun<const M extends ExtensionManifest>(
     // The run's exit is observed through `extension.exitCode`; a real
     // `process.exit` would take the test runner with it.
     exit: () => {},
+    ...(options.debug === undefined ? {} : { debug: options.debug }),
   });
   return { extension, host, exitCode: extension.exitCode };
 }

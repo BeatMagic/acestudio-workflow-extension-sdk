@@ -7,6 +7,26 @@ transport with no ACE Studio in sight.
 
 ## Properties
 
+### debug?
+
+```ts
+readonly optional debug?: boolean;
+```
+
+Log what the SDK does — the lifecycle, every call and how it ended, the channel
+and the assets served — to stderr, where ACE Studio's stdio capture lands it in
+the extension's log folder (ADR 0091 §5).
+
+Defaults to what `ACE_EXTENSION_SDK_DEBUG` says, which is how dev tooling turns it
+on without the extension being rebuilt for it.
+
+There is no wire trace here, on purpose (ADR 0091 §6): a line names the operation
+and how it ended, plus the URLs this SDK serves and announces, which are what a
+developer is usually chasing. What a call carried — its arguments, its result, and
+the session token — is never written.
+
+***
+
 ### env?
 
 ```ts

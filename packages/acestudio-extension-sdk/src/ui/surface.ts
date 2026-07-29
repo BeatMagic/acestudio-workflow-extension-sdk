@@ -11,9 +11,10 @@
  * disagree with the host about what an announcement looks like.
  */
 
-import type { BridgeConnection } from "@timedomain/acestudio-bridge-core";
+import type { BridgeConnection, DebugLog } from "@timedomain/acestudio-bridge-core";
 import { WorkflowUiClient } from "../generated/WorkflowUi.acerpc.js";
 import type { ChannelHub, UiChannel } from "./channel.js";
+import type { AssetRegistry, AssetSource, ServeAssetOptions, ServedAsset } from "./assets.js";
 import type { UiProtocol } from "./protocol.js";
 
 /**
@@ -57,6 +58,28 @@ export interface ExtensionUi {
    */
   channel<P extends UiProtocol>(): UiChannel<P>;
   /**
+   * Put bytes on the server the paved road is already running, at an opaque, revocable
+   * URL the page can point an element at: `<video>`, `<audio>`, `<img>`.
+   *
+   * `ui: { assets }` covers what the extension had at build time; this covers what it
+   * makes while running. Byte ranges are answered, which is what lets a media element
+   * seek. Nothing is decoded or converted on the way through.
+   *
+   * @throws ExtensionError when this extension is not on the paved road — there is no
+   * server of ours to put it on, and an extension running its own already has a route —
+   * or when the run has stopped serving, since the port is gone and a URL naming it
+   * would resolve to nothing.
+   *
+   * @example
+   * ```ts
+   * const preview = ctx.ui.serveAsset("/tmp/render-42.wav");
+   * channel.emit("previewReady", { url: preview.url });
+   * // …once the page is done with it
+   * preview.revoke();
+   * ```
+   */
+  serveAsset(source: AssetSource, options?: ServeAssetOptions): ServedAsset;
+  /**
    * Tell ACE Studio where this extension's page is being served, so it can show it.
    *
    * The direct path for an extension that runs its own server — a framework's dev
@@ -88,11 +111,27 @@ export interface ExtensionUi {
 }
 
 /**
+ * What the UI handle is built over.
+ *
+ * @internal
+ */
+export interface ExtensionUiParts {
+  /** The open session the surface verbs are sent over, and whose grant gates them. */
+  readonly connection: BridgeConnection;
+  /** The channel the handle hands out to `ctx.ui.channel()`. */
+  readonly hub: ChannelHub;
+  /** The registry `ctx.ui.serveAsset()` puts bytes into. */
+  readonly assets: AssetRegistry;
+  /** Where the handle says what it asked the host for. */
+  readonly debug: DebugLog;
+}
+
+/**
  * Build the handler-facing UI handle over an open session.
  *
  * @internal
  */
-export function createExtensionUi(connection: BridgeConnection, hub: ChannelHub): ExtensionUi {
+export function createExtensionUi({ connection, hub, assets, debug }: ExtensionUiParts): ExtensionUi {
   const client = new WorkflowUiClient(connection.peer);
   let announced: string | undefined;
   /**
@@ -108,20 +147,24 @@ export function createExtensionUi(connection: BridgeConnection, hub: ChannelHub)
       return announced;
     },
     channel: <P extends UiProtocol>(): UiChannel<P> => hub.typed<P>(),
+    serveAsset: (source, options) => assets.serve(source, options),
     announceSurface: async (url: string) => {
       requireSurface();
       await client.workflowUiSurfaceReady({ url });
       // Recorded after the host accepted it: a refused URL is not what a reload
       // should go back to, and `url` reads as "what the window is showing".
       announced = url;
+      debug(`surface: announced ${url}`);
     },
     reload: async () => {
       requireSurface();
       await client.workflowUiReload();
+      debug("surface: reloaded");
     },
     navigate: async (url: string) => {
       requireSurface();
       await client.workflowUiNavigate({ url });
+      debug(`surface: navigated to ${url}`);
     },
   };
 }

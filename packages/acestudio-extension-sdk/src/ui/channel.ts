@@ -9,7 +9,9 @@
  * sure the names and payloads line up.
  */
 
+import type { DebugLog } from "@timedomain/acestudio-bridge-core";
 import { describeFailure, ExtensionError } from "../errors.js";
+import { hasBinary } from "./binary.js";
 import type {
   CallRequest,
   CallResponse,
@@ -60,6 +62,10 @@ export interface UiChannel<P extends UiProtocol> {
    * window is opened by the user, and a progress bar's history is not what they want
    * to see when they open it. Emit what is true now, and let a page that just
    * connected ask.
+   *
+   * @throws ExtensionError when the payload carries bytes. The event stream's framing
+   * is text, so a `Uint8Array` in a push would arrive as an object of numbered keys —
+   * answer a `call` with the bytes, or serve them and hand the page the URL.
    */
   emit<K extends keyof EventsOf<P> & string>(name: K, ...payload: EmitArgs<EventsOf<P>[K]>): void;
 }
@@ -83,6 +89,11 @@ export interface EventSink {
 export class ChannelHub {
   private readonly handlers = new Map<string, (params: unknown) => unknown>();
   private readonly sinks = new Set<EventSink>();
+  private readonly debug: DebugLog;
+
+  constructor(debug: DebugLog) {
+    this.debug = debug;
+  }
 
   /**
    * A view of this channel typed to `P`. Compile-time only — every view is this
@@ -153,8 +164,19 @@ export class ChannelHub {
    * Fan one event out. A sink that throws is a page whose socket died between the
    * last write and this one, which is not the emitting code's problem — drop it and
    * keep going, so one dead page cannot stop the others from being told.
+   *
+   * Bytes are refused first. The stream's framing is text, so they would go out
+   * stringified — an object of numbered keys, arriving as data the page cannot use —
+   * and a push has no answer for the emitter to notice that in. Saying so at the
+   * `emit` call is the only place it can be said.
    */
   private push(event: EventMessage): void {
+    if (hasBinary(event.payload)) {
+      throw new ExtensionError(`the UI event "${event.name}" carries bytes, which the event stream cannot`, {
+        hint: "answer a call with the bytes, or serve them with `ctx.ui.serveAsset()` and push the URL",
+      });
+    }
+    this.debug(`ui event ${event.name} → ${String(this.sinks.size)} page(s)`);
     for (const sink of [...this.sinks]) {
       try {
         sink.write(event);

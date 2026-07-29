@@ -13,6 +13,8 @@
 export type { OperationWarning } from "./bindings.js";
 export { connect } from "./connect.js";
 export type { BridgeConnection, ConnectOptions } from "./connect.js";
+export { createDebugLog } from "./debug.js";
+export type { DebugLog } from "./debug.js";
 export { BridgeError, isBridgeError, isCode } from "./errors.js";
 export type { AnyBridgeErrorCode, BridgeErrorDetails, BridgeErrorInit, DetailsFor, SdkErrorCode } from "./errors.js";
 export type { Grant, GrantProvenance, ProfileName } from "./grant.js";

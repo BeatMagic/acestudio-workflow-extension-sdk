@@ -8,11 +8,15 @@ import type { CapabilityToken } from '@timedomain/acestudio-bridge-core';
 import type { Grant } from '@timedomain/acestudio-bridge-core';
 import type { ProfileName } from '@timedomain/acestudio-bridge-core';
 import type { ProfileTokens } from '@timedomain/acestudio-bridge-core';
+import type { Readable } from 'node:stream';
 import type { ScopedBindings } from '@timedomain/acestudio-bridge-core';
 import { Transport } from '@timedomain/acestudio-bridge-core';
 
 // @public
 export type AbsoluteFilesystemPath = `/${string}` | `\\\\${string}` | `${DriveLetter}:${"/" | "\\"}${string}`;
+
+// @public
+export type AssetSource = string | Uint8Array | Readable;
 
 // @public
 export const BRIDGE_SOCKET_ENV = "ACE_EXTENSION_BRIDGE_SOCKET";
@@ -30,7 +34,13 @@ export type CallsOf<P extends UiProtocol> = P["calls"] extends UiCalls ? P["call
 export type CapabilityTokensOf<C extends RequestedCapability> = C extends ProfileName ? ProfileTokens<C> : C extends CapabilityToken ? C : never;
 
 // @public
+export const DEBUG_ENV = "ACE_EXTENSION_SDK_DEBUG";
+
+// @public
 export function defineExtension<const M extends ExtensionManifest>(definition: ExtensionDefinition<M>, options?: ExtensionRuntimeOptions): Extension<M>;
+
+// @public
+export const DEV_LOADED_ENV = "ACE_EXTENSION_DEV_LOADED";
 
 // @public
 export type DriveLetter = Lowercase<UppercaseDriveLetter> | UppercaseDriveLetter;
@@ -102,6 +112,7 @@ export interface ExtensionManifest {
 
 // @public
 export interface ExtensionRuntimeOptions {
+    readonly debug?: boolean;
     readonly env?: Environment;
     readonly exit?: (code: number) => void;
     readonly transport?: Transport;
@@ -113,12 +124,14 @@ export interface ExtensionUi {
     channel<P extends UiProtocol>(): UiChannel<P>;
     navigate(url: string): Promise<void>;
     reload(): Promise<void>;
+    serveAsset(source: AssetSource, options?: ServeAssetOptions): ServedAsset;
     readonly url: string | undefined;
 }
 
 // @public
 export interface ExtensionUiOptions {
     readonly assets: string;
+    readonly devServerUrl?: string;
 }
 
 // @public
@@ -168,6 +181,17 @@ export const SDK_API_VERSION = 1;
 
 // @public
 export function serializeManifest(manifest: ExtensionManifest): string;
+
+// @public
+export interface ServeAssetOptions {
+    readonly contentType?: string;
+}
+
+// @public
+export interface ServedAsset {
+    revoke(): void;
+    readonly url: string;
+}
 
 // @public
 export type UiCalls = Readonly<Record<string, (params: never) => unknown>>;

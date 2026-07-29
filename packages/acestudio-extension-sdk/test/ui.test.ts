@@ -9,32 +9,19 @@
  * only that the fake matched.
  */
 
-import { chmod, mkdtemp, writeFile } from "node:fs/promises";
+import { chmod, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, test, vi } from "vitest";
 import { isCode } from "@timedomain/acestudio-bridge-core";
-import { connectChannel } from "@timedomain/acestudio-extension-sdk/page";
-import type { ExtensionContext, UiProtocol } from "@timedomain/acestudio-extension-sdk";
+import type { UiProtocol } from "@timedomain/acestudio-extension-sdk";
 import { WORKFLOWUI_METHOD_CAPABILITIES } from "../src/generated/WorkflowUi.acerpc.js";
-import { signal, startRun, type Run } from "./support/extension-run.js";
+import { signal, startRun } from "./support/extension-run.js";
+import { eventually, helloWorldAssets, HELLO, manifest, SURFACE_TOKEN, uiHarness } from "./support/served-ui.js";
 import { SURFACE_METHODS, SurfaceWindow } from "./support/surface-window.js";
 
-/** The token every verb on the surface channel rides. */
-const SURFACE_TOKEN = "workflow.ui";
-
-const HELLO = "<!doctype html><title>Stem Tools</title><h1>hello world</h1>";
-
-/** A manifest that asks for the surface channel and nothing else. */
-const manifest = {
-  id: "acme.stem-tools",
-  name: "Stem Tools",
-  version: "1.0.0",
-  publisher: "Acme Audio",
-  lifecycle: "persistent",
-  capabilities: [SURFACE_TOKEN],
-  entry: "dist/index.js",
-} as const;
+const ui = uiHarness();
+afterEach(ui.teardown);
 
 /** The protocol both ends of the channel import — one `call` and one `event`. */
 interface StemsUi extends UiProtocol {
@@ -54,66 +41,9 @@ interface StemsUi extends UiProtocol {
   };
 }
 
-/** Every run and page channel the test opened, torn down whichever way the test ended. */
-const opened: Array<() => void | Promise<void>> = [];
-
-afterEach(async () => {
-  for (const close of opened.reverse()) {
-    await close();
-  }
-  opened.length = 0;
-});
-
-/** A directory holding one hello-world page. */
-async function helloWorldAssets(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), "ace-ui-"));
-  await writeFile(join(dir, "index.html"), HELLO, "utf8");
-  return dir;
-}
-
-/**
- * Start a persistent run that has declared the paved road, and wait until its page is
- * served and announced — which is the state every UI test starts from.
- */
-async function startServed(
-  options: { window?: SurfaceWindow; grantedTokens?: readonly string[] } = {},
-): Promise<{
-  run: Run<typeof manifest>;
-  window: SurfaceWindow;
-  context: ExtensionContext<typeof manifest>;
-  url: string;
-  assets: string;
-}> {
-  const window = options.window ?? new SurfaceWindow();
-  const assets = await helloWorldAssets();
-  const activated = signal<ExtensionContext<typeof manifest>>();
-  const run = startRun(
-    { manifest, ui: { assets }, activate: (context) => activated.announce(context) },
-    { host: { grantedTokens: options.grantedTokens ?? [SURFACE_TOKEN], methods: window.methods() } },
-  );
-  opened.push(() => {
-    run.extension.exitCode.catch(() => undefined);
-    run.host.close();
-  });
-  const context = await activated.reached;
-  const url = context.ui.url;
-  expect(url).toBeTypeOf("string");
-  return { run, window, context, url: url as string, assets };
-}
-
-/** A page channel pointed at a served URL, closed when the test ends. */
-function openPage(url: string) {
-  const channel = connectChannel<StemsUi>({ url });
-  opened.push(() => {
-    channel.close();
-  });
-  return channel;
-}
-
-/** Wait for `check` to hold, so a test can observe a push without sleeping on a guess. */
-async function eventually(check: () => boolean): Promise<void> {
-  await expect.poll(check, { timeout: 2_000, interval: 10 }).toBe(true);
-}
+/** The harness's `startServed`, typed to this file's protocol for `openPage`. */
+const startServed = ui.startServed;
+const openPage = (url: string) => ui.openPage<StemsUi>(url);
 
 test("the wire names the host script spells are the ones the surface declares", () => {
   expect(Object.keys(WORKFLOWUI_METHOD_CAPABILITIES).sort()).toEqual(Object.values(SURFACE_METHODS).sort());
@@ -243,7 +173,7 @@ test("an event stream that fails to open is re-opened, so the page keeps hearing
     }
     return realFetch(input, init);
   }) as typeof fetch;
-  opened.push(() => {
+  ui.track(() => {
     globalThis.fetch = realFetch;
   });
 
@@ -274,17 +204,7 @@ test("emitting with no page connected is dropped, not queued", async () => {
 });
 
 test("`announceSurface` is the direct path for an extension serving its own page", async () => {
-  const window = new SurfaceWindow();
-  const activated = signal<ExtensionContext<typeof manifest>>();
-  const run = startRun(
-    { manifest, activate: (context) => activated.announce(context) },
-    { host: { grantedTokens: [SURFACE_TOKEN], methods: window.methods() } },
-  );
-  opened.push(() => {
-    run.extension.exitCode.catch(() => undefined);
-    run.host.close();
-  });
-  const context = await activated.reached;
+  const { window, context } = await ui.startBare();
 
   // Nothing was served and nothing was announced: this extension has its own server.
   expect(context.ui.url).toBeUndefined();
@@ -303,17 +223,7 @@ test("`announceSurface` is the direct path for an extension serving its own page
 });
 
 test("a URL the host refuses is not what a reload would go back to", async () => {
-  const window = new SurfaceWindow();
-  const activated = signal<ExtensionContext<typeof manifest>>();
-  const run = startRun(
-    { manifest, activate: (context) => activated.announce(context) },
-    { host: { grantedTokens: [SURFACE_TOKEN], methods: window.methods() } },
-  );
-  opened.push(() => {
-    run.extension.exitCode.catch(() => undefined);
-    run.host.close();
-  });
-  const context = await activated.reached;
+  const { window, context } = await ui.startBare();
 
   window.refuse = { code: -32602, message: "that URL is not on loopback" };
   await expect(context.ui.announceSurface("http://example.com/")).rejects.toThrow(/not on loopback/);
@@ -321,17 +231,7 @@ test("a URL the host refuses is not what a reload would go back to", async () =>
 });
 
 test("a session that does not reach `workflow.ui` is refused before the wire", async () => {
-  const window = new SurfaceWindow();
-  const activated = signal<ExtensionContext<typeof manifest>>();
-  const run = startRun(
-    { manifest, activate: (context) => activated.announce(context) },
-    { host: { grantedTokens: [], methods: window.methods() } },
-  );
-  opened.push(() => {
-    run.extension.exitCode.catch(() => undefined);
-    run.host.close();
-  });
-  const context = await activated.reached;
+  const { window, context } = await ui.startBare({ grantedTokens: [] });
 
   const refused = await context.ui.announceSurface("http://127.0.0.1:5173/").catch((error: unknown) => error);
   expect(isCode(refused, "CAPABILITY_DENIED")).toBe(true);

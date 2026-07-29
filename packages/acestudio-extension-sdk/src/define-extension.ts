@@ -16,17 +16,21 @@
 
 import {
   connect,
+  createDebugLog,
   LocalSocketTransport,
   type BridgeConnection,
+  type DebugLog,
   type ShutdownParams,
   type Transport,
 } from "@timedomain/acestudio-bridge-core";
 import type { ManifestClient } from "./client.js";
 import type { ExtensionContext } from "./context.js";
-import { describeFailure } from "./errors.js";
+import { describeFailure, ExtensionError } from "./errors.js";
 import type { ExtensionManifest } from "./manifest.js";
-import { readSpawnContract, type Environment, type SpawnContract } from "./spawn-env.js";
+import { DEBUG_ENV, readFlag, readSpawnContract, type Environment, type SpawnContract } from "./spawn-env.js";
 import { ChannelHub } from "./ui/channel.js";
+import { AssetRegistry } from "./ui/assets.js";
+import { CHANNEL_ORIGIN_PARAM } from "./ui/protocol.js";
 import { serveUi, type ExtensionUiOptions, type UiServer } from "./ui/server.js";
 import { createExtensionUi } from "./ui/surface.js";
 
@@ -112,6 +116,20 @@ export interface ExtensionRuntimeOptions {
   readonly transport?: Transport;
   /** What ending the run means. Defaults to exiting the process. */
   readonly exit?: (code: number) => void;
+  /**
+   * Log what the SDK does — the lifecycle, every call and how it ended, the channel
+   * and the assets served — to stderr, where ACE Studio's stdio capture lands it in
+   * the extension's log folder (ADR 0091 §5).
+   *
+   * Defaults to what `ACE_EXTENSION_SDK_DEBUG` says, which is how dev tooling turns it
+   * on without the extension being rebuilt for it.
+   *
+   * There is no wire trace here, on purpose (ADR 0091 §6): a line names the operation
+   * and how it ended, plus the URLs this SDK serves and announces, which are what a
+   * developer is usually chasing. What a call carried — its arguments, its result, and
+   * the session token — is never written.
+   */
+  readonly debug?: boolean;
 }
 
 /**
@@ -172,13 +190,21 @@ class ExtensionRun<M extends ExtensionManifest> {
   private readonly definition: ExtensionDefinition<M>;
   private readonly options: ExtensionRuntimeOptions;
   private readonly exit: (code: number) => void;
+  private readonly debugEnabled: boolean;
+  private readonly debug: DebugLog;
   /**
    * The one channel behind every typed view of it. Owned by the run rather than by
    * the server, so `ctx.ui.channel()` is the same object whether or not this extension
    * took the paved road — registering handlers on it is never an error, it is the page
    * reaching them that needs a served page.
    */
-  private readonly hub = new ChannelHub();
+  private readonly hub: ChannelHub;
+  /**
+   * Every asset served at runtime, owned by the run for the same reason: `serveAsset`
+   * is one object for the whole run, and a URL is what happens to be reachable while
+   * a server is up.
+   */
+  private readonly assets = new AssetRegistry();
   private settleExitCode!: (code: number) => void;
   private connection: BridgeConnection | undefined;
   private context: ExtensionContext<M> | undefined;
@@ -196,6 +222,11 @@ class ExtensionRun<M extends ExtensionManifest> {
   constructor(definition: ExtensionDefinition<M>, options: ExtensionRuntimeOptions) {
     this.definition = definition;
     this.options = options;
+    // Read before anything else can fail, so a run that never starts still says why
+    // when the developer asked to be told.
+    this.debugEnabled = options.debug ?? readFlag(options.env ?? process.env, DEBUG_ENV);
+    this.debug = createDebugLog(this.debugEnabled);
+    this.hub = new ChannelHub(this.debug);
     this.exit =
       options.exit ??
       ((code) => {
@@ -219,14 +250,16 @@ class ExtensionRun<M extends ExtensionManifest> {
       context = this.attach(await this.openSession(contract));
       // Before `activate`, so a handler that emits on the channel or reads
       // `ctx.ui.url` finds the page already served and announced.
-      await this.servePavedRoad(context);
+      await this.servePavedRoad(context, contract);
     } catch (error) {
       this.abandon(EXIT_NOT_STARTED, `this extension could not start: ${describeFailure(error)}`);
       return;
     }
 
+    this.debug("lifecycle: activate");
     try {
       await this.definition.activate(context);
+      this.debug("lifecycle: activate returned");
     } catch (error) {
       // The run can already be over: ACE Studio's stop landed mid-handler, or the
       // handler called `ctx.exit()` itself. An `activate` that then rejects because
@@ -263,6 +296,9 @@ class ExtensionRun<M extends ExtensionManifest> {
       // extension host does not: an extension's grant is the consent record from
       // install, and the handshake answers with it either way.
       requestedCapabilities: this.definition.manifest.capabilities,
+      // Core keeps its own log rather than being handed this one: the option is what
+      // its public surface takes, and one boolean is what decides both.
+      debug: this.debugEnabled,
     });
   }
 
@@ -270,14 +306,58 @@ class ExtensionRun<M extends ExtensionManifest> {
    * Serve and announce the declared page, so the window has something to show before
    * the extension's own code runs. An extension that runs its own server declared
    * nothing here and announces for itself.
+   *
+   * The loopback server goes up either way — it is what carries the channel and the
+   * served assets — and what changes when a dev server is honored is only which URL ACE
+   * Studio is pointed at.
    */
-  private async servePavedRoad(context: ExtensionContext<M>): Promise<void> {
+  private async servePavedRoad(context: ExtensionContext<M>, contract: SpawnContract): Promise<void> {
     const { ui } = this.definition;
     if (ui === undefined) {
       return;
     }
-    this.server = await serveUi(ui.assets, this.hub);
-    await context.ui.announceSurface(this.server.url);
+    const devServer = this.honoredDevServerUrl(ui, contract.devLoaded);
+    this.server = await serveUi({
+      // The dev server owns the page while it is honored, so the built assets are not
+      // served beside it: a request landing on a stale build would be a confusing
+      // thing to debug, and the build may not even exist yet mid-loop.
+      pageRoot: devServer === undefined ? ui.assets : undefined,
+      hub: this.hub,
+      assets: this.assets,
+      pageUrl: devServer,
+      debug: this.debug,
+    });
+    this.assets.publishAt(this.server.url);
+    await context.ui.announceSurface(
+      devServer === undefined ? this.server.url : pageUrlReachingChannel(devServer, this.server.url),
+    );
+  }
+
+  /**
+   * The dev server to announce, or `undefined` to serve the built page.
+   *
+   * The gate is the host's word, not the extension's: `devServerUrl` is honored only
+   * when ACE Studio says it spawned this extension dev-loaded (ADR 0094 §11), so a
+   * packaged bundle that ships the field is served from its assets as if the field
+   * were not there rather than pointing a user's window at nothing.
+   *
+   * A URL that will not parse is refused here, before anything is served, so that the
+   * one place that decides whether to honor it is also the one place that decides
+   * whether it is a URL at all.
+   *
+   * @throws ExtensionError when `devServerUrl` is not a URL.
+   */
+  private honoredDevServerUrl(ui: ExtensionUiOptions, devLoaded: boolean): string | undefined {
+    if (ui.devServerUrl === undefined) {
+      return undefined;
+    }
+    if (!devLoaded) {
+      this.debug("ui: `devServerUrl` is declared, but this extension was not dev-loaded — serving the built page");
+      return undefined;
+    }
+    requireUrl(ui.devServerUrl);
+    this.debug(`ui: dev-loaded, so announcing the dev server at ${ui.devServerUrl}`);
+    return ui.devServerUrl;
   }
 
   /** Build the handler's context and wire the endings the host can trigger. */
@@ -290,7 +370,7 @@ class ExtensionRun<M extends ExtensionManifest> {
       // this type — is what refuses a call the grant cannot reach.
       client: connection.client as unknown as ManifestClient<M>,
       grant: connection.grant,
-      ui: createExtensionUi(connection, this.hub),
+      ui: createExtensionUi({ connection, hub: this.hub, assets: this.assets, debug: this.debug }),
       exit: (code = EXIT_OK) => {
         void this.finish(code);
       },
@@ -342,6 +422,7 @@ class ExtensionRun<M extends ExtensionManifest> {
     if (deactivate === undefined || this.context === undefined || this.activateFailed) {
       return;
     }
+    this.debug("lifecycle: deactivate");
     try {
       const work = Promise.resolve(deactivate(this.context));
       if (graceMs === undefined) {
@@ -383,8 +464,45 @@ class ExtensionRun<M extends ExtensionManifest> {
   }
 
   private settle(code: number): void {
+    this.debug(`lifecycle: exiting with ${String(code)}`);
     this.settleExitCode(code);
     this.exit(code);
+  }
+}
+
+/**
+ * The dev server's URL with the channel's origin attached, which is what makes the
+ * paved road's channel reachable from a page the paved road is not serving.
+ *
+ * A page served by its own extension finds the channel on its own origin and needs
+ * none of this. A page on a dev server's port cannot — and cannot be told the port
+ * ahead of time either, since the OS picks it at startup — so the announced URL
+ * carries it, and `connectChannel()` in the page reads it before falling back.
+ *
+ * @throws ExtensionError when `devServerUrl` is not a URL.
+ */
+function pageUrlReachingChannel(pageUrl: string, channelUrl: string): string {
+  const announced = requireUrl(pageUrl);
+  announced.searchParams.set(CHANNEL_ORIGIN_PARAM, new URL(channelUrl).origin);
+  return announced.toString();
+}
+
+/**
+ * A declared `devServerUrl`, parsed. The one place that decides whether the field is a
+ * URL, so that everything downstream — whose origin the channel accepts, what gets
+ * announced — is working from the same answer.
+ *
+ * @throws ExtensionError when it will not parse. It is the developer's own declaration
+ * and this is the run that is about to use it, so saying which field is wrong beats
+ * announcing something the window cannot load.
+ */
+function requireUrl(pageUrl: string): URL {
+  try {
+    return new URL(pageUrl);
+  } catch {
+    throw new ExtensionError(`\`ui.devServerUrl\` is not a URL: ${pageUrl}`, {
+      hint: "write the dev server's address in full, scheme and port included — http://127.0.0.1:5173/",
+    });
   }
 }
 

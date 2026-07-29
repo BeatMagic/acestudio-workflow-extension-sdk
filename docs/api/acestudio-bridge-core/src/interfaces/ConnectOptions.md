@@ -14,6 +14,21 @@ The one-time session token the host minted for this process.
 
 ***
 
+### debug?
+
+```ts
+optional debug?: boolean;
+```
+
+Log what the SDK does — the handshake, every call and how it ended, every
+channel event — to stderr. Off by default.
+
+Operations and capabilities by name, never a payload: there is no wire trace
+here, on purpose (ADR 0091 §6). An extension does not pass this; the SDK reads
+it from the environment variable its dev tooling sets.
+
+***
+
 ### requestedCapabilities?
 
 ```ts

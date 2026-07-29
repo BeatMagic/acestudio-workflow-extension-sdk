@@ -408,6 +408,7 @@ export function connect(options: ConnectOptions): Promise<BridgeConnection>;
 // @public
 export interface ConnectOptions {
     authToken: string;
+    debug?: boolean;
     requestedCapabilities?: readonly string[];
     signal?: AbortSignal;
     timeoutMs?: number;
@@ -491,7 +492,13 @@ export interface ConvertTimeToTickResult {
 }
 
 // @public
+export function createDebugLog(enabled: boolean): DebugLog;
+
+// @public
 export function createTransportPair(): TransportPair;
+
+// @public
+export type DebugLog = (message: string) => void;
 
 // @public
 export type Descriptor = (typeof OPERATIONS)[number];

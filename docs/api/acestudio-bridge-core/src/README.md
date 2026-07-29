@@ -196,6 +196,7 @@ The connection core for programming against a running ACE Studio.
 - [Camel](type-aliases/Camel.md)
 - [CapabilityToken](type-aliases/CapabilityToken.md)
 - [ChangeCapability](type-aliases/ChangeCapability.md)
+- [DebugLog](type-aliases/DebugLog.md)
 - [Descriptor](type-aliases/Descriptor.md)
 - [DetailsFor](type-aliases/DetailsFor.md)
 - [Dtype](type-aliases/Dtype.md)
@@ -239,6 +240,7 @@ The connection core for programming against a running ACE Studio.
 ## Functions
 
 - [connect](functions/connect.md)
+- [createDebugLog](functions/createDebugLog.md)
 - [createTransportPair](functions/createTransportPair.md)
 - [encodeFrame](functions/encodeFrame.md)
 - [isBridgeError](functions/isBridgeError.md)

@@ -10,7 +10,8 @@ What [connectChannel](../functions/connectChannel.md) needs, when the defaults a
 readonly optional url?: string;
 ```
 
-Where the extension's process is serving the channel. Defaults to the page's own
-origin, which is what a page served by its extension wants — pass this only when
-the page comes from somewhere else, such as a framework dev server on a different
-port.
+Where the extension's process is serving the channel.
+
+Rarely needed. A page served by its own extension finds the channel on its own
+origin; a page served by a dev server finds it from the origin the SDK attached to
+the URL it announced. This is for a page that arrived by neither route.

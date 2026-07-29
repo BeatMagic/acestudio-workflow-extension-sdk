@@ -23,8 +23,7 @@ logged where ACE Studio captures it, and reported as the code:
 
 - `0` — the run finished, or was stopped, cleanly.
 - `1` — a handler threw.
-- `2` — the run never started: no spawn environment, an unknown command, a
-  refused handshake.
+- `2` — the run never started: no spawn environment, or a refused handshake.
 - `3` — the bridge closed under a running extension.
 
 ***

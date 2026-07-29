@@ -28,11 +28,6 @@ export interface ExtensionContext<M extends ExtensionManifest = ExtensionManifes
    */
   readonly grant: Grant;
   /**
-   * The command this run was invoked for, when it started from one. A persistent
-   * peer opened from its surface has none.
-   */
-  readonly command?: string;
-  /**
    * End the run: `deactivate`, then exit with `code` (`0` by default). The natural
    * ending for a workflow that is done, or one the user cancelled from the
    * extension's own UI.

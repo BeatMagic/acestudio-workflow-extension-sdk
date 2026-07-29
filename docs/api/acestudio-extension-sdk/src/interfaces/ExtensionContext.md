@@ -23,17 +23,6 @@ A call the manifest does not ask for is a compile error here.
 
 ***
 
-### command?
-
-```ts
-readonly optional command?: string;
-```
-
-The command this run was invoked for, when it started from one. A persistent
-peer opened from its surface has none.
-
-***
-
 ### grant
 
 ```ts

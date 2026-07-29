@@ -6,8 +6,8 @@ above [the bridge core](https://www.npmjs.com/package/@timedomain/acestudio-brid
 ## Remarks
 
 Two things live here. [defineExtension](functions/defineExtension.md) owns an extension process's whole
-choreography — spawn environment, connect, handshake, command dispatch,
-wind-down and exit — so an author writes handlers and nothing else. And the
+choreography — spawn environment, connect, handshake, `activate`, wind-down and
+exit — so an author writes handlers and nothing else. And the
 manifest is a TypeScript module ([ExtensionManifest](interfaces/ExtensionManifest.md)), emitted to the JSON
 the host and the signer read ([serializeManifest](functions/serializeManifest.md)), which is what lets a
 handler's client be typed down to exactly the capabilities the manifest asked
@@ -46,7 +46,6 @@ The browser-only page-side channel ships from the `./page` subpath.
 
 - [BRIDGE\_SOCKET\_ENV](variables/BRIDGE_SOCKET_ENV.md)
 - [BRIDGE\_TOKEN\_ENV](variables/BRIDGE_TOKEN_ENV.md)
-- [COMMAND\_ENV](variables/COMMAND_ENV.md)
 - [MANIFEST\_FILENAME](variables/MANIFEST_FILENAME.md)
 - [MANIFEST\_VERSION](variables/MANIFEST_VERSION.md)
 - [SDK\_API\_VERSION](variables/SDK_API_VERSION.md)

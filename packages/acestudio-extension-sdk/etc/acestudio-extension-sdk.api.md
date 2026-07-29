@@ -24,9 +24,6 @@ export const BRIDGE_TOKEN_ENV = "ACE_EXTENSION_BRIDGE_TOKEN";
 export type CapabilityTokensOf<C extends RequestedCapability> = C extends ProfileName ? ProfileTokens<C> : C extends CapabilityToken ? C : never;
 
 // @public
-export const COMMAND_ENV = "ACE_EXTENSION_COMMAND";
-
-// @public
 export function defineExtension<const M extends ExtensionManifest>(definition: ExtensionDefinition<M>, options?: ExtensionRuntimeOptions): Extension<M>;
 
 // @public
@@ -44,7 +41,6 @@ export interface Extension<M extends ExtensionManifest = ExtensionManifest> {
 // @public
 export interface ExtensionContext<M extends ExtensionManifest = ExtensionManifest> {
     readonly client: ManifestClient<M>;
-    readonly command?: string;
     exit(code?: number): void;
     readonly grant: Grant;
     readonly manifest: M;
@@ -52,8 +48,7 @@ export interface ExtensionContext<M extends ExtensionManifest = ExtensionManifes
 
 // @public
 export interface ExtensionDefinition<M extends ExtensionManifest> {
-    readonly activate?: ExtensionHandler<M>;
-    readonly commands?: Readonly<Record<string, ExtensionHandler<M>>>;
+    readonly activate: ExtensionHandler<M>;
     readonly deactivate?: ExtensionHandler<M>;
     readonly manifest: M;
 }

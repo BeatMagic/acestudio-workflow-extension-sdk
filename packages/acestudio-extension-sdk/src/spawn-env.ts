@@ -29,21 +29,6 @@ export const BRIDGE_SOCKET_ENV = "ACE_EXTENSION_BRIDGE_SOCKET";
 export const BRIDGE_TOKEN_ENV = "ACE_EXTENSION_BRIDGE_TOKEN";
 
 /**
- * The command being invoked, for a run that started from one. A one-shot workflow
- * is spawned per invocation, so the command a user picked is known at spawn time,
- * and the environment is where the rest of the spawn contract already travels.
- *
- * Unlike the two above, this is one half of a contract whose other half is not
- * written yet: ACE Studio's process host sets the endpoint and the token today, and
- * gains command invocation — manifest-declared entry points, and a variable naming
- * the invoked one — with the slice that surfaces workflows to the user. Until then
- * every real run arrives without a command, which is what `activate` covers.
- *
- * @public
- */
-export const COMMAND_ENV = "ACE_EXTENSION_COMMAND";
-
-/**
  * An environment to read the spawn contract out of.
  *
  * @public
@@ -60,8 +45,6 @@ export interface SpawnContract {
   readonly socketPath: string | undefined;
   /** The one-time token the handshake presents. */
   readonly authToken: string;
-  /** The invoked command's name, when the run started from one. */
-  readonly command: string | undefined;
 }
 
 /**
@@ -84,7 +67,7 @@ export function readSpawnContract(env: Environment, options: { socketPathRequire
   if (authToken === undefined) {
     throw notSpawnedByStudio(BRIDGE_TOKEN_ENV);
   }
-  return { socketPath, authToken, command: text(env[COMMAND_ENV]) };
+  return { socketPath, authToken };
 }
 
 /** A variable's value, with an unset one and an empty one meaning the same thing. */

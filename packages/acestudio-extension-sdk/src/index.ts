@@ -4,8 +4,8 @@
  *
  * @remarks
  * Two things live here. {@link defineExtension} owns an extension process's whole
- * choreography — spawn environment, connect, handshake, command dispatch,
- * wind-down and exit — so an author writes handlers and nothing else. And the
+ * choreography — spawn environment, connect, handshake, `activate`, wind-down and
+ * exit — so an author writes handlers and nothing else. And the
  * manifest is a TypeScript module ({@link ExtensionManifest}), emitted to the JSON
  * the host and the signer read ({@link serializeManifest}), which is what lets a
  * handler's client be typed down to exactly the capabilities the manifest asked
@@ -39,5 +39,5 @@ export type {
   RequestedCapability,
 } from "./manifest.js";
 export { MANIFEST_FILENAME, serializeManifest, writeManifestJson } from "./manifest-json.js";
-export { BRIDGE_SOCKET_ENV, BRIDGE_TOKEN_ENV, COMMAND_ENV } from "./spawn-env.js";
+export { BRIDGE_SOCKET_ENV, BRIDGE_TOKEN_ENV } from "./spawn-env.js";
 export type { Environment } from "./spawn-env.js";

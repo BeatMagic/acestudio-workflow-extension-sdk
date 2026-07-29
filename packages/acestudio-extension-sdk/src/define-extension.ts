@@ -4,15 +4,14 @@
  * @remarks
  * An extension's entry module calls {@link defineExtension} and nothing else. From
  * there the SDK reads the spawn environment, dials the bridge, runs the canonical
- * handshake, dispatches the invoked command or starts the persistent peer, and
- * — when ACE Studio says it is stopping this process — runs `deactivate` inside the
- * grace window and exits before the hard kill. The author writes handlers.
+ * handshake, hands the session to `activate`, and — when ACE Studio says it is
+ * stopping this process — runs `deactivate` inside the grace window and exits before
+ * the hard kill. The author writes handlers.
  *
- * The run is, in order: `activate` (when declared), then the invoked command (when
- * ACE Studio named one). A one-shot exits when those resolve; a persistent peer
- * stays up until it is stopped. A run that would do neither is a configuration
- * error, as is an invoked command with no handler — both fail loud at startup,
- * where the developer is looking.
+ * `activate` is the one entry point, under either lifecycle policy: a one-shot's run
+ * is over when it resolves, and a persistent peer stays up until it is stopped. What
+ * happens inside is the extension's own business — the UI it draws is where its user
+ * decides what to run, and the SDK has no say in it.
  */
 
 import {
@@ -24,7 +23,7 @@ import {
 } from "@timedomain/acestudio-bridge-core";
 import type { ManifestClient } from "./client.js";
 import type { ExtensionContext } from "./context.js";
-import { describeFailure, ExtensionError } from "./errors.js";
+import { describeFailure } from "./errors.js";
 import type { ExtensionManifest } from "./manifest.js";
 import { readSpawnContract, type Environment, type SpawnContract } from "./spawn-env.js";
 
@@ -56,8 +55,7 @@ const GRACE_MARGIN_MS = 250;
 export type ExtensionHandler<M extends ExtensionManifest> = (context: ExtensionContext<M>) => void | Promise<void>;
 
 /**
- * What an extension is: its manifest, its command handlers, and its lifecycle
- * hooks.
+ * What an extension is: its manifest, its entry point, and its wind-down.
  *
  * The `operations` key is reserved for a later ACE Studio and deliberately absent
  * from this type, so declaring one is a compile error rather than something that
@@ -69,12 +67,12 @@ export interface ExtensionDefinition<M extends ExtensionManifest> {
   /** The manifest module, written `as const satisfies ExtensionManifest`. */
   readonly manifest: M;
   /**
-   * One handler per command the extension offers, keyed by command name. A
-   * one-shot run is one of these: it is invoked, it runs, the process exits.
+   * The extension's one entry point, and the whole of what the SDK will call. A
+   * one-shot's run is over when it resolves; a persistent peer serves its UI from
+   * here and stays up. Nothing about *what* the extension does belongs to the
+   * platform: the user decides that in the interface the extension draws.
    */
-  readonly commands?: Readonly<Record<string, ExtensionHandler<M>>>;
-  /** Startup for a persistent peer — the place to subscribe, serve, and warm up. */
-  readonly activate?: ExtensionHandler<M>;
+  readonly activate: ExtensionHandler<M>;
   /**
    * Wind-down, run once before the process exits: on ACE Studio's stop (inside the
    * grace window), when a one-shot finishes, and on {@link ExtensionContext.exit}.
@@ -117,8 +115,7 @@ export interface Extension<M extends ExtensionManifest = ExtensionManifest> {
    *
    * - `0` — the run finished, or was stopped, cleanly.
    * - `1` — a handler threw.
-   * - `2` — the run never started: no spawn environment, an unknown command, a
-   *   refused handshake.
+   * - `2` — the run never started: no spawn environment, or a refused handshake.
    * - `3` — the bridge closed under a running extension.
    */
   readonly exitCode: Promise<number>;
@@ -134,11 +131,9 @@ export interface Extension<M extends ExtensionManifest = ExtensionManifest> {
  *
  * export default defineExtension({
  *   manifest,
- *   commands: {
- *     "render-stems": async (ctx) => {
- *       const { clips } = await ctx.client.clip.list({ trackIndex: 0 });
- *       console.log(`rendering ${clips.length} clips`);
- *     },
+ *   activate: async (ctx) => {
+ *     const { clips } = await ctx.client.clip.list({ trackIndex: 0 });
+ *     console.log(`rendering ${clips.length} clips`);
  *   },
  * });
  * ```
@@ -193,69 +188,33 @@ class ExtensionRun<M extends ExtensionManifest> {
 
   private async run(): Promise<void> {
     let context: ExtensionContext<M>;
-    let command: ExtensionHandler<M> | undefined;
     try {
       const contract = readSpawnContract(this.options.env ?? process.env, {
         socketPathRequired: this.options.transport === undefined,
       });
-      // Resolved before the session is opened: an extension invoked for a command
-      // it does not implement should not have connected in the first place.
-      command = this.resolveCommand(contract.command);
-      context = this.attach(await this.openSession(contract), contract.command);
+      context = this.attach(await this.openSession(contract));
     } catch (error) {
       this.abandon(EXIT_NOT_STARTED, `this extension could not start: ${describeFailure(error)}`);
       return;
     }
 
-    const { activate } = this.definition;
-    if (activate !== undefined && !(await runHandler("activate", activate, context))) {
+    try {
+      await this.definition.activate(context);
+    } catch (error) {
       this.activateFailed = true;
-      await this.finish(EXIT_HANDLER_FAILED);
-      return;
-    }
-    // The run can have ended while `activate` was running — it called `ctx.exit()`,
-    // or ACE Studio's stop landed mid-handler. Dispatching after that would start
-    // author code alongside the wind-down that is already under way.
-    if (this.ending) {
-      return;
-    }
-    if (command !== undefined && !(await runHandler("a command", command, context))) {
+      console.error(`[ace-studio] activate failed: ${describeFailure(error)}`);
       await this.finish(EXIT_HANDLER_FAILED);
       return;
     }
 
-    // The one-shot promise: the run is over when the work is, with no exit call
-    // for the author to remember. A persistent peer stays up instead — its socket
-    // is what keeps the process alive — until ACE Studio stops it or it exits itself.
+    // The one-shot promise: the run is over when the work is, with no exit call for
+    // the author to remember. A persistent peer stays up instead — its socket is
+    // what keeps the process alive — until ACE Studio stops it or it exits itself.
+    // Either way `finish` runs once, so an `activate` that already ended the run
+    // keeps the code it asked for.
     if (this.definition.manifest.lifecycle === "one-shot") {
       await this.finish(EXIT_OK);
     }
-  }
-
-  /** The handler for the invoked command, or nothing when the run started without one. */
-  private resolveCommand(name: string | undefined): ExtensionHandler<M> | undefined {
-    if (name === undefined) {
-      if (this.definition.activate === undefined) {
-        throw new ExtensionError("this run has no command to dispatch and the extension declares no activate", {
-          hint: "declare activate for a run that starts without a command, or check what ACE Studio invoked",
-        });
-      }
-      return undefined;
-    }
-    const handler = this.definition.commands?.[name];
-    if (handler === undefined) {
-      const declared = Object.keys(this.definition.commands ?? {});
-      throw new ExtensionError(
-        `ACE Studio invoked the command '${name}', which this extension does not implement`,
-        {
-          hint:
-            declared.length === 0
-              ? "this extension declares no commands at all"
-              : `it implements ${declared.join(", ")}`,
-        },
-      );
-    }
-    return handler;
   }
 
   private async openSession(contract: SpawnContract): Promise<BridgeConnection> {
@@ -273,8 +232,8 @@ class ExtensionRun<M extends ExtensionManifest> {
     });
   }
 
-  /** Build the handlers' context and wire the endings the host can trigger. */
-  private attach(connection: BridgeConnection, command: string | undefined): ExtensionContext<M> {
+  /** Build the handler's context and wire the endings the host can trigger. */
+  private attach(connection: BridgeConnection): ExtensionContext<M> {
     this.connection = connection;
     const context: ExtensionContext<M> = {
       manifest: this.definition.manifest,
@@ -283,7 +242,6 @@ class ExtensionRun<M extends ExtensionManifest> {
       // this type — is what refuses a call the grant cannot reach.
       client: connection.client as unknown as ManifestClient<M>,
       grant: connection.grant,
-      command,
       exit: (code = EXIT_OK) => {
         void this.finish(code);
       },
@@ -357,26 +315,6 @@ class ExtensionRun<M extends ExtensionManifest> {
   private settle(code: number): void {
     this.settleExitCode(code);
     this.exit(code);
-  }
-}
-
-/**
- * Run one of the author's handlers, reporting whether it got through. A handler
- * that throws is logged where ACE Studio captures it — the extension's stderr — and
- * ends the run; it is never re-thrown at a caller, because there is nobody above
- * this to catch it.
- */
-async function runHandler<M extends ExtensionManifest>(
-  label: "activate" | "a command",
-  handler: ExtensionHandler<M>,
-  context: ExtensionContext<M>,
-): Promise<boolean> {
-  try {
-    await handler(context);
-    return true;
-  } catch (error) {
-    console.error(`[ace-studio] ${label} failed: ${describeFailure(error)}`);
-    return false;
   }
 }
 

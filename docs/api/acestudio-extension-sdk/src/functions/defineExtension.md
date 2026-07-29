@@ -34,11 +34,9 @@ import { manifest } from "./manifest.js";
 
 export default defineExtension({
   manifest,
-  commands: {
-    "render-stems": async (ctx) => {
-      const { clips } = await ctx.client.clip.list({ trackIndex: 0 });
-      console.log(`rendering ${clips.length} clips`);
-    },
+  activate: async (ctx) => {
+    const { clips } = await ctx.client.clip.list({ trackIndex: 0 });
+    console.log(`rendering ${clips.length} clips`);
   },
 });
 ```

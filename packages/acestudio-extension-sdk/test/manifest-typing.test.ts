@@ -76,7 +76,7 @@ function callsTheManifestDecides(
 function reservedNames(): void {
   const definition: ExtensionDefinition<typeof READS_CLIPS> = {
     manifest: READS_CLIPS,
-    commands: { "render-stems": () => undefined },
+    activate: () => undefined,
     // @ts-expect-error -- `operations` is reserved for a later ACE Studio and omitted from the v1 type
     operations: { "render-stems": {} },
   };

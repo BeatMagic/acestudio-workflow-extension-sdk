@@ -1,7 +1,6 @@
 # Interface: ExtensionDefinition\<M\>
 
-What an extension is: its manifest, its command handlers, and its lifecycle
-hooks.
+What an extension is: its manifest, its entry point, and its wind-down.
 
 The `operations` key is reserved for a later ACE Studio and deliberately absent
 from this type, so declaring one is a compile error rather than something that
@@ -15,24 +14,16 @@ quietly does nothing.
 
 ## Properties
 
-### activate?
+### activate
 
 ```ts
-readonly optional activate?: ExtensionHandler<M>;
+readonly activate: ExtensionHandler<M>;
 ```
 
-Startup for a persistent peer — the place to subscribe, serve, and warm up.
-
-***
-
-### commands?
-
-```ts
-readonly optional commands?: Readonly<Record<string, ExtensionHandler<M>>>;
-```
-
-One handler per command the extension offers, keyed by command name. A
-one-shot run is one of these: it is invoked, it runs, the process exits.
+The extension's one entry point, and the whole of what the SDK will call. A
+one-shot's run is over when it resolves; a persistent peer serves its UI from
+here and stays up. Nothing about *what* the extension does belongs to the
+platform: the user decides that in the interface the extension draws.
 
 ***
 

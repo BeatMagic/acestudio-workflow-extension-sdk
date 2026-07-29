@@ -3,7 +3,7 @@
  *
  * The scripted host peer from bridge-core's tests sits on one end of an in-memory
  * transport pair and `defineExtension` on the other, so a test exercises the whole
- * choreography — spawn contract, handshake, dispatch, wind-down, exit — through the
+ * choreography — spawn contract, handshake, activate, wind-down, exit — through the
  * same seam a shipped extension uses. Nothing here mocks the layer under test: the
  * only things the harness stands in for are the two the process cannot have inside a
  * test runner, its socket and its exit.
@@ -21,20 +21,18 @@ import {
   type ExtensionDefinition,
   type ExtensionManifest,
 } from "@timedomain/acestudio-extension-sdk";
-import { BRIDGE_TOKEN_ENV, COMMAND_ENV } from "../../src/spawn-env.js";
+import { BRIDGE_TOKEN_ENV } from "../../src/spawn-env.js";
 
 /** The one-time token the harness's scripted host minted for the process. */
 export const AUTH_TOKEN = "one-time-token";
 
 /** What the harness stages around a run. */
 export interface RunOptions {
-  /** The command ACE Studio invoked, when the run starts from one. */
-  command?: string;
   /** What the scripted host grants and how it answers operations. */
   host?: ScriptedHostOptions;
   /**
-   * The spawn environment, replacing the harness's default (the auth token, plus
-   * `command` when given). For the cases where a variable's *absence* is the subject.
+   * The spawn environment, replacing the harness's default (the auth token). For the
+   * cases where a variable's *absence* is the subject.
    */
   env?: Record<string, string | undefined>;
 }
@@ -56,10 +54,7 @@ export function startRun<const M extends ExtensionManifest>(
   const host = new ScriptedHostPeer(hostTransport, { authToken: AUTH_TOKEN, ...options.host });
   const extension = defineExtension(definition, {
     transport: client,
-    env: options.env ?? {
-      [BRIDGE_TOKEN_ENV]: AUTH_TOKEN,
-      ...(options.command === undefined ? {} : { [COMMAND_ENV]: options.command }),
-    },
+    env: options.env ?? { [BRIDGE_TOKEN_ENV]: AUTH_TOKEN },
     // The run's exit is observed through `extension.exitCode`; a real
     // `process.exit` would take the test runner with it.
     exit: () => {},

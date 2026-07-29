@@ -9,7 +9,6 @@ import { isCode, type ClipListResult, type InvokeParams } from "@timedomain/aces
 import {
   BRIDGE_SOCKET_ENV,
   BRIDGE_TOKEN_ENV,
-  COMMAND_ENV,
   defineExtension,
   type ExtensionManifest,
 } from "@timedomain/acestudio-extension-sdk";
@@ -38,23 +37,21 @@ const GRANTING_HOST = {
 } as const;
 
 describe("a one-shot run", () => {
-  it("dispatches the invoked command and exits when it resolves", async () => {
+  it("runs activate and exits when it resolves", async () => {
     const ran: string[] = [];
     const { exitCode, host } = startRun(
       {
         manifest: ONE_SHOT,
-        commands: {
-          "render-stems": async (ctx) => {
-            const clips: ClipListResult = await ctx.client.clip.list({ trackIndex: 0 });
-            ran.push(`render-stems:${clips.clipCount}:${ctx.command}`);
-          },
+        activate: async (ctx) => {
+          const clips: ClipListResult = await ctx.client.clip.list({ trackIndex: 0 });
+          ran.push(`activate:${clips.clipCount}`);
         },
       },
-      { command: "render-stems", host: GRANTING_HOST },
+      { host: GRANTING_HOST },
     );
 
     await expect(exitCode).resolves.toBe(0);
-    expect(ran).toEqual(["render-stems:1:render-stems"]);
+    expect(ran).toEqual(["activate:1"]);
     expect(host.invocations.map((invocation: InvokeParams) => invocation.path)).toEqual(["clip list"]);
   });
 
@@ -63,27 +60,22 @@ describe("a one-shot run", () => {
     const { exitCode } = startRun(
       {
         manifest: ONE_SHOT,
-        commands: {
-          "render-stems": () => {
-            order.push("command");
-          },
+        activate: () => {
+          order.push("activate");
         },
         deactivate: () => {
           order.push("deactivate");
         },
       },
-      { command: "render-stems", host: GRANTING_HOST },
+      { host: GRANTING_HOST },
     );
 
     await expect(exitCode).resolves.toBe(0);
-    expect(order).toEqual(["command", "deactivate"]);
+    expect(order).toEqual(["activate", "deactivate"]);
   });
 
   it("presents the manifest's capability request at the handshake", async () => {
-    const { exitCode, host } = startRun(
-      { manifest: ONE_SHOT, commands: { "render-stems": () => undefined } },
-      { command: "render-stems", host: GRANTING_HOST },
-    );
+    const { exitCode, host } = startRun({ manifest: ONE_SHOT, activate: () => undefined }, { host: GRANTING_HOST });
 
     await expect(host.handshake).resolves.toMatchObject({
       authToken: AUTH_TOKEN,
@@ -100,55 +92,16 @@ describe("a one-shot run", () => {
     const { exitCode, host } = startRun(
       {
         manifest: ONE_SHOT,
-        commands: {
-          "render-stems": async (ctx) => {
-            refusal = await ctx.client.clip.list({ trackIndex: 0 }).catch((error: unknown) => error);
-          },
+        activate: async (ctx) => {
+          refusal = await ctx.client.clip.list({ trackIndex: 0 }).catch((error: unknown) => error);
         },
       },
-      { command: "render-stems", host: { grantedTokens: [] } },
+      { host: { grantedTokens: [] } },
     );
 
     await expect(exitCode).resolves.toBe(0);
     expect(isCode(refusal, "CAPABILITY_DENIED")).toBe(true);
     expect(host.invocations).toEqual([]);
-  });
-
-  it("runs activate first when one is declared, then the command", async () => {
-    const order: string[] = [];
-    const { exitCode } = startRun(
-      {
-        manifest: ONE_SHOT,
-        activate: () => {
-          order.push("activate");
-        },
-        commands: {
-          "render-stems": () => {
-            order.push("command");
-          },
-        },
-      },
-      { command: "render-stems", host: GRANTING_HOST },
-    );
-
-    await expect(exitCode).resolves.toBe(0);
-    expect(order).toEqual(["activate", "command"]);
-  });
-
-  it("runs activate alone when the host named no command", async () => {
-    const order: string[] = [];
-    const { exitCode } = startRun(
-      {
-        manifest: ONE_SHOT,
-        activate: () => {
-          order.push("activate");
-        },
-      },
-      { host: GRANTING_HOST },
-    );
-
-    await expect(exitCode).resolves.toBe(0);
-    expect(order).toEqual(["activate"]);
   });
 });
 
@@ -253,33 +206,6 @@ describe("a persistent peer", () => {
     await new Promise((resolve) => setTimeout(resolve, 60));
     warn.mockRestore();
   });
-
-  it("dispatches the command it was invoked for and keeps running", async () => {
-    const order: string[] = [];
-    const dispatched = signal();
-    const ended = vi.fn();
-    const { exitCode } = startRun(
-      {
-        manifest: PERSISTENT,
-        activate: () => {
-          order.push("activate");
-        },
-        commands: {
-          "open-panel": () => {
-            order.push("open-panel");
-            dispatched.announce();
-          },
-        },
-      },
-      { command: "open-panel", host: GRANTING_HOST },
-    );
-    void exitCode.then(ended);
-
-    await dispatched.reached;
-    await Promise.resolve();
-    expect(order).toEqual(["activate", "open-panel"]);
-    expect(ended).not.toHaveBeenCalled();
-  });
 });
 
 describe("ending a run", () => {
@@ -303,29 +229,26 @@ describe("ending a run", () => {
     expect(order).toEqual(["activate", "deactivate"]);
   });
 
-  it("dispatches no command once the run is already ending", async () => {
+  it("keeps the code an activate exited with, rather than a one-shot's own zero", async () => {
     const order: string[] = [];
-    const command = vi.fn();
     const { exitCode } = startRun(
       {
         manifest: ONE_SHOT,
         activate: (ctx) => {
           order.push("activate");
-          // An activate that decides the run is over: the wind-down is under way
-          // before the command would have been dispatched, and starting author code
-          // alongside it would run the extension past its own ending.
+          // An activate that ends the run itself. A one-shot ends anyway when
+          // activate resolves, so the two endings meet here — and the first one
+          // through is the one that counts.
           ctx.exit(7);
         },
-        commands: { "render-stems": command },
         deactivate: () => {
           order.push("deactivate");
         },
       },
-      { command: "render-stems", host: GRANTING_HOST },
+      { host: GRANTING_HOST },
     );
 
     await expect(exitCode).resolves.toBe(7);
-    expect(command).not.toHaveBeenCalled();
     expect(order).toEqual(["activate", "deactivate"]);
   });
 
@@ -334,42 +257,18 @@ describe("ending a run", () => {
     const { exitCode } = startRun(
       {
         manifest: ONE_SHOT,
-        commands: { "render-stems": () => undefined },
+        activate: () => undefined,
         deactivate: () => {
           throw new Error("could not flush the cache");
         },
       },
-      { command: "render-stems", host: GRANTING_HOST },
+      { host: GRANTING_HOST },
     );
 
     // The work is done; a wind-down that fails is worth a log line, not a
     // different ending.
     await expect(exitCode).resolves.toBe(0);
     expect(error).toHaveBeenCalledWith(expect.stringContaining("deactivate failed: could not flush the cache"));
-    error.mockRestore();
-  });
-
-  it("reports a failed command as exit 1, and still winds down", async () => {
-    const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const order: string[] = [];
-    const { exitCode } = startRun(
-      {
-        manifest: ONE_SHOT,
-        commands: {
-          "render-stems": () => {
-            throw new Error("the render died");
-          },
-        },
-        deactivate: () => {
-          order.push("deactivate");
-        },
-      },
-      { command: "render-stems", host: GRANTING_HOST },
-    );
-
-    await expect(exitCode).resolves.toBe(1);
-    expect(order).toEqual(["deactivate"]);
-    expect(error).toHaveBeenCalledWith(expect.stringContaining("a command failed: the render died"));
     error.mockRestore();
   });
 
@@ -419,43 +318,9 @@ describe("ending a run", () => {
 });
 
 describe("a run that cannot start", () => {
-  it("refuses a command it does not implement, naming the ones it does", async () => {
-    const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const { exitCode, host } = startRun(
-      { manifest: ONE_SHOT, commands: { "render-stems": () => undefined } },
-      { command: "render-stemz", host: GRANTING_HOST },
-    );
-
-    await expect(exitCode).resolves.toBe(2);
-    // Refused before the handshake: an extension invoked for a command it cannot
-    // run has no business holding a session.
-    expect(host.invocations).toEqual([]);
-    expect(error).toHaveBeenCalledWith(
-      expect.stringContaining("invoked the command 'render-stemz', which this extension does not implement"),
-    );
-    expect(error).toHaveBeenCalledWith(expect.stringContaining("it implements render-stems"));
-    error.mockRestore();
-  });
-
-  it("refuses a run with neither a command nor an activate", async () => {
-    const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const { exitCode } = startRun({ manifest: ONE_SHOT, commands: { "render-stems": () => undefined } }, {
-      host: GRANTING_HOST,
-    });
-
-    await expect(exitCode).resolves.toBe(2);
-    expect(error).toHaveBeenCalledWith(
-      expect.stringContaining("no command to dispatch and the extension declares no activate"),
-    );
-    error.mockRestore();
-  });
-
   it("refuses an environment with no session token", async () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const { exitCode } = startRun(
-      { manifest: ONE_SHOT, commands: { "render-stems": () => undefined } },
-      { env: { [COMMAND_ENV]: "render-stems" } },
-    );
+    const { exitCode } = startRun({ manifest: ONE_SHOT, activate: () => undefined }, { env: {} });
 
     await expect(exitCode).resolves.toBe(2);
     expect(error).toHaveBeenCalledWith(expect.stringContaining(`no ${BRIDGE_TOKEN_ENV}`));
@@ -465,9 +330,9 @@ describe("a run that cannot start", () => {
   it("refuses an environment with no bridge endpoint, when it has no transport of its own", async () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const extension = defineExtension(
-      { manifest: ONE_SHOT, commands: { "render-stems": () => undefined } },
+      { manifest: ONE_SHOT, activate: () => undefined },
       {
-        env: { [BRIDGE_TOKEN_ENV]: AUTH_TOKEN, [COMMAND_ENV]: "render-stems" },
+        env: { [BRIDGE_TOKEN_ENV]: AUTH_TOKEN },
         exit: () => undefined,
       },
     );
@@ -479,31 +344,22 @@ describe("a run that cannot start", () => {
 
   it("reports a refused handshake rather than running a handler", async () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const command = vi.fn();
-    const { exitCode } = startRun(
-      { manifest: ONE_SHOT, commands: { "render-stems": command } },
-      { command: "render-stems", host: { authToken: "a-different-token" } },
-    );
+    const activate = vi.fn();
+    const { exitCode } = startRun({ manifest: ONE_SHOT, activate }, { host: { authToken: "a-different-token" } });
 
     await expect(exitCode).resolves.toBe(2);
-    expect(command).not.toHaveBeenCalled();
+    expect(activate).not.toHaveBeenCalled();
     expect(error).toHaveBeenCalledWith(expect.stringContaining("could not start"));
     error.mockRestore();
   });
 });
 
 describe("the spawn contract", () => {
-  it("reads the two variables ACE Studio's process host sets", () => {
+  it("reads the two variables ACE Studio's process host sets, and nothing else", () => {
     // Literals on purpose: these are the contract with the host, and a rename here
-    // is a rename there.
+    // is a rename there. Two variables is the whole of it — the process is told
+    // where the bridge is and who it is, never what to do.
     expect(BRIDGE_SOCKET_ENV).toBe("ACE_EXTENSION_BRIDGE_SOCKET");
     expect(BRIDGE_TOKEN_ENV).toBe("ACE_EXTENSION_BRIDGE_TOKEN");
-  });
-
-  it("names the command variable the host's invocation slice still owes", () => {
-    // Nothing sets this yet: manifest-declared command entry points and the
-    // variable naming the invoked one land with the host slice that surfaces
-    // workflows. Asserted here so the name is one place, not scattered.
-    expect(COMMAND_ENV).toBe("ACE_EXTENSION_COMMAND");
   });
 });

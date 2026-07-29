@@ -2,8 +2,8 @@
 
 The SDK for building ACE Studio workflow extensions — the extension layer above
 [`@timedomain/acestudio-bridge-core`](../acestudio-bridge-core). It owns the
-extension lifecycle choreography (connect, handshake, command dispatch, UI
-serving, shutdown) so an author writes only handlers.
+extension lifecycle choreography (connect, handshake, activate, UI serving,
+shutdown) so an author writes only handlers.
 
 - `.` — the process-side entry (Node).
 - `./page` — the browser-only page side of the UI channel.
@@ -34,14 +34,18 @@ import { manifest } from "./manifest.js";
 
 export default defineExtension({
   manifest,
-  commands: {
-    "render-stems": async (ctx) => {
-      const { clips } = await ctx.client.clip.list({ trackIndex: 0 });
-      console.log(`rendering ${clips.length} clips`);
-    },
+  activate: async (ctx) => {
+    const { clips } = await ctx.client.clip.list({ trackIndex: 0 });
+    console.log(`rendering ${clips.length} clips`);
   },
 });
 ```
+
+`activate` is the one entry point. What the extension does inside it is its own
+business: the interface it draws is where its user decides what to run, and the
+lifecycle policy decides how ACE Studio supervises the process — a `one-shot`
+run is over when `activate` resolves, a `persistent` peer stays up until it is
+stopped.
 
 ```ts
 // build script — emit manifest.json into the bundle

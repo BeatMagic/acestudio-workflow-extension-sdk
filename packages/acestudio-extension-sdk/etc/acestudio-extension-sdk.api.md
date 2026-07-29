@@ -11,8 +11,6 @@ import type { ProfileTokens } from '@timedomain/acestudio-bridge-core';
 import type { ScopedBindings } from '@timedomain/acestudio-bridge-core';
 import { Transport } from '@timedomain/acestudio-bridge-core';
 
-// Warning: (ae-forgotten-export) The symbol "DriveLetter" needs to be exported by the entry point index.d.ts
-//
 // @public
 export type AbsoluteFilesystemPath = `/${string}` | `\\\\${string}` | `${DriveLetter}:${"/" | "\\"}${string}`;
 
@@ -27,6 +25,9 @@ export type CapabilityTokensOf<C extends RequestedCapability> = C extends Profil
 
 // @public
 export function defineExtension<const M extends ExtensionManifest>(definition: ExtensionDefinition<M>, options?: ExtensionRuntimeOptions): Extension<M>;
+
+// @public
+export type DriveLetter = Lowercase<UppercaseDriveLetter> | UppercaseDriveLetter;
 
 // @public
 export type EnumeratedFilesystemScope = "projectMedia" | "home" | "documents" | "music" | "desktop" | "downloads" | "all";
@@ -133,6 +134,9 @@ export const SDK_API_VERSION = 1;
 
 // @public
 export function serializeManifest(manifest: ExtensionManifest): string;
+
+// @public
+export type UppercaseDriveLetter = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z";
 
 // @public
 export function writeManifestJson(manifest: ExtensionManifest, outputDir: string): Promise<string>;

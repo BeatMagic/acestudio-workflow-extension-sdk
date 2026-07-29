@@ -34,6 +34,7 @@ The browser-only page-side channel ships from the `./page` subpath.
 
 - [AbsoluteFilesystemPath](type-aliases/AbsoluteFilesystemPath.md)
 - [CapabilityTokensOf](type-aliases/CapabilityTokensOf.md)
+- [DriveLetter](type-aliases/DriveLetter.md)
 - [EnumeratedFilesystemScope](type-aliases/EnumeratedFilesystemScope.md)
 - [Environment](type-aliases/Environment.md)
 - [ExtensionHandler](type-aliases/ExtensionHandler.md)
@@ -41,6 +42,7 @@ The browser-only page-side channel ships from the `./page` subpath.
 - [FilesystemScope](type-aliases/FilesystemScope.md)
 - [ManifestClient](type-aliases/ManifestClient.md)
 - [RequestedCapability](type-aliases/RequestedCapability.md)
+- [UppercaseDriveLetter](type-aliases/UppercaseDriveLetter.md)
 
 ## Variables
 

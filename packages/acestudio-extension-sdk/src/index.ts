@@ -29,6 +29,7 @@ export { ExtensionError } from "./errors.js";
 export { MANIFEST_VERSION, SDK_API_VERSION } from "./manifest.js";
 export type {
   AbsoluteFilesystemPath,
+  DriveLetter,
   EnumeratedFilesystemScope,
   ExtensionLifecycle,
   ExtensionManifest,
@@ -37,6 +38,7 @@ export type {
   HostAccess,
   ManifestJson,
   RequestedCapability,
+  UppercaseDriveLetter,
 } from "./manifest.js";
 export { MANIFEST_FILENAME, serializeManifest, writeManifestJson } from "./manifest-json.js";
 export { BRIDGE_SOCKET_ENV, BRIDGE_TOKEN_ENV } from "./spawn-env.js";

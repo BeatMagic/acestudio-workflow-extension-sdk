@@ -11,7 +11,10 @@ optional pollIntervalMs?: number;
 ```
 
 Least time between polls, in milliseconds, when the host answers a poll
-immediately instead of holding it. Defaults to 250ms.
+immediately instead of holding it. Defaults to 250ms. An explicit `0` is
+honoured and means no floor; anything that is not an interval at all — a
+negative number, or the `NaN` a parsed configuration value can carry — falls
+back to the default, since an unbounded wait with no floor is a spin loop.
 
 ***
 

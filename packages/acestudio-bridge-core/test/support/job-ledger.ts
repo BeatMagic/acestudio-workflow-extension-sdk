@@ -166,9 +166,16 @@ export class ScriptedJobLedger {
     });
   }
 
-  /** The wait condition, evaluated against the ledger as it stands. */
+  /**
+   * The wait condition, evaluated against the ledger as it stands. An id the
+   * ledger does not hold raises rather than being dropped from `jobs`: the schema
+   * promises a snapshot of *each* waited-on job and declares no answer for an id
+   * that has none, so omitting it would hang the wait on a condition that can
+   * never be met, and faulting would put semantics on the wire the host has not
+   * promised. Raising says what it is — a script waiting on a job it never staged.
+   */
   private pollWait(params: JobWaitParams): JobWaitResult {
-    const jobs = params.ids.map((id) => this.jobs.get(id)).filter((job): job is ScriptedJob => job !== undefined);
+    const jobs = params.ids.map((id) => this.job(id));
     const finished = jobs.filter((job) => TERMINAL.has(job.lifecycle));
     return {
       done: params.any ? finished.length > 0 : finished.length === params.ids.length,

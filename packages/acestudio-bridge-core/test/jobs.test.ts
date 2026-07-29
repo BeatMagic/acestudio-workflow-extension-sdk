@@ -409,4 +409,18 @@ describe("the poll interval beside the wait's bound", () => {
     expect(Date.now() - startedAt).toBeLessThan(400);
     connection.close();
   });
+
+  it("falls back to the default floor when the interval is not an interval", async () => {
+    const ledger = new ScriptedJobLedger([scriptedJob({ id: "job-42", lifecycle: "running" })]);
+    const { connection, host } = await connectToLedger(ledger);
+
+    // A parsed configuration value that came out NaN must not read as "no floor":
+    // against a host that answers at once, that is a poll loop spinning as fast as
+    // the transport allows, for as long as the caller waits.
+    const outcome = await connection.job("job-42").wait({ timeoutMs: 120, pollIntervalMs: Number.NaN });
+
+    expect(outcome.status).toBe("timeout");
+    expect(host.invocations.length).toBeLessThanOrEqual(3);
+    connection.close();
+  });
 });

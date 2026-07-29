@@ -72,7 +72,10 @@ export interface JobWaitOptions {
   signal?: AbortSignal;
   /**
    * Least time between polls, in milliseconds, when the host answers a poll
-   * immediately instead of holding it. Defaults to 250ms.
+   * immediately instead of holding it. Defaults to 250ms. An explicit `0` is
+   * honoured and means no floor; anything that is not an interval at all — a
+   * negative number, or the `NaN` a parsed configuration value can carry — falls
+   * back to the default, since an unbounded wait with no floor is a spin loop.
    */
   pollIntervalMs?: number;
 }
@@ -312,7 +315,7 @@ class Handle<Result> implements JobHandle<Result> {
 
   async wait(options: JobWaitOptions = {}): Promise<JobWaitOutcome> {
     const startedAt = Date.now();
-    const floor = options.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS;
+    const floor = pollFloor(options.pollIntervalMs);
 
     for (;;) {
       if (options.signal?.aborted === true) {
@@ -472,11 +475,28 @@ function elapsed(since: number): number {
 }
 
 /**
+ * The floor to hold between polls. Only a finite, non-negative number is one:
+ * anything else falls back to the default rather than being taken literally,
+ * because a `NaN` interval compares false against every clamp and would leave an
+ * unbounded wait re-asking as fast as the host can answer.
+ */
+function pollFloor(requested: number | undefined): number {
+  return requested !== undefined && Number.isFinite(requested) && requested >= 0 ? requested : DEFAULT_POLL_INTERVAL_MS;
+}
+
+/**
  * Hold for `ms` before the next poll, cutting the wait short if the caller
  * aborts. A zero or negative wait is no wait at all — the host already spent the
  * interval holding the call.
+ *
+ * A signal that aborted before this was reached is answered here rather than a
+ * poll later: `addEventListener` on an already-aborted signal never fires, so the
+ * listener below cannot be what notices it.
  */
 async function pause(ms: number, signal: AbortSignal | undefined, id: string): Promise<void> {
+  if (signal?.aborted === true) {
+    throw waitAborted(id);
+  }
   if (ms <= 0) {
     return;
   }

@@ -5,13 +5,18 @@ file, in-repo and for published consumers.
 
 ## Mechanism
 
-Each package's `exports` map offers two targets:
+Each package's `exports` map resolves two ways — TypeScript source in-repo,
+built `dist/` for consumers:
 
 ```json
-".": {
-  "acestudio:source": "./src/index.ts",
-  "types": "./dist/src/index.d.ts",
-  "default": "./dist/index.js"
+{
+  "exports": {
+    ".": {
+      "acestudio:source": "./src/index.ts",
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  }
 }
 ```
 

@@ -7,23 +7,14 @@ import { publint } from "publint";
 import { formatMessage } from "publint/utils";
 import { abs, LIBRARY_PACKAGES } from "./_lib.mjs";
 
-// The packages resolve to their TypeScript source in-repo via a `development`
-// export condition (see CONTRIBUTING.md — it is what keeps tsc, esbuild, and
-// vitest on src/ instead of dist/). That condition intentionally points at a
-// path that is not published, so publint's "file not published" report for it
-// is expected; every other publint finding is a real error.
-const isIntentionalDevCondition = (message) =>
-  message.code === "FILE_NOT_PUBLISHED" && message.path.at(-1) === "development";
-
 let failed = false;
 
 for (const dir of LIBRARY_PACKAGES) {
   const { messages, pkg } = await publint({ pkgDir: abs(dir), strict: true });
-  const real = messages.filter((m) => !isIntentionalDevCondition(m));
-  if (real.length > 0) {
+  if (messages.length > 0) {
     failed = true;
     console.error(`publint: ${pkg.name}`);
-    for (const message of real) console.error(`  ${formatMessage(message, pkg)}`);
+    for (const message of messages) console.error(`  ${formatMessage(message, pkg)}`);
   } else {
     console.log(`publint: ${pkg.name} — ok`);
   }

@@ -29,9 +29,6 @@ day-to-day work.
 npm install       # install workspace dependencies
 npm run typecheck # tsc --noEmit
 npm test          # vitest
-npm run build     # bundle every package to dist/ (see CONTRIBUTING.md)
+npm run build     # bundle every package to dist/
 npm run validate  # the full quality pipeline CI runs
 ```
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for the development workflow, the
-validate pipeline, and build details.

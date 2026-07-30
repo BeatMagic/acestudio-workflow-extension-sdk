@@ -39,7 +39,7 @@ export class BridgeError<C extends AnyBridgeErrorCode = AnyBridgeErrorCode> exte
 }
 
 // @public
-export type BridgeErrorCode = 'ALREADY_RECORDING' | 'BAD_ARGS' | 'BRIDGE_UNREACHABLE' | 'CAPABILITY_DENIED' | 'CAPABILITY_OUT_OF_SURFACE' | 'CHAIN_NOT_GROWN' | 'COLLECT_FAILED' | 'CREATE_TIMEOUT' | 'CREDIT_INSUFFICIENT' | 'EDITOR_NOT_READY' | 'EDIT_TIMEOUT' | 'EXPORT_IN_PROGRESS' | 'EXPORT_START_FAILED' | 'FLUSH_TIMEOUT' | 'GESTURE_HELD' | 'HANDLER_FAILED' | 'INSERT_FAILED' | 'INVALID_ARG' | 'IO_ERROR' | 'JOB_NOT_CANCELLABLE' | 'MEMBERSHIP_REQUIRED' | 'NEW_FAILED' | 'NOTE_OVERLAP' | 'NOT_FOUND' | 'NO_GESTURE' | 'NO_MASTER_CHAIN' | 'NO_PATTERN_EDIT_OPEN' | 'NO_PROJECT' | 'NO_PROJECT_OPEN' | 'NO_SCENE' | 'NO_STATE' | 'NO_WINDOW' | 'OPEN_FAILED' | 'PLAYBACK_START_FAILED' | 'RECORD_START_FAILED' | 'SAVE_FAILED' | 'SCENARIO_FAILED' | 'SESSION_INVALID' | 'STALE_WRITE' | 'TIMEOUT' | 'TIME_UNIT_REQUIRED' | 'UNAVAILABLE' | 'UNKNOWN_CAPABILITY' | 'UNKNOWN_COMMAND' | 'UNKNOWN_SCENARIO' | 'UNSAVED_CHANGES' | 'USER_BUSY';
+export type BridgeErrorCode = 'ALREADY_RECORDING' | 'BAD_ARGS' | 'BRIDGE_UNREACHABLE' | 'CAPABILITY_DENIED' | 'CAPABILITY_OUT_OF_SURFACE' | 'CHAIN_NOT_GROWN' | 'COLLECT_FAILED' | 'CONFIRMATION_REQUIRED' | 'CREATE_TIMEOUT' | 'CREDIT_INSUFFICIENT' | 'EDITOR_NOT_READY' | 'EDIT_TIMEOUT' | 'EXPORT_IN_PROGRESS' | 'EXPORT_START_FAILED' | 'FILE_NOT_FOUND' | 'FINGERPRINT_SCOPE_MISMATCH' | 'FIXTURE_FAILED' | 'FLUSH_TIMEOUT' | 'GESTURE_HELD' | 'HANDLER_FAILED' | 'IMPORT_FAILED' | 'INSERT_FAILED' | 'INVALID_ARG' | 'IO_ERROR' | 'JOB_NOT_CANCELLABLE' | 'MEMBERSHIP_REQUIRED' | 'NEW_FAILED' | 'NOTE_OVERLAP' | 'NOT_FOUND' | 'NO_FIXTURE' | 'NO_GESTURE' | 'NO_MASTER_CHAIN' | 'NO_PATTERN_EDIT_OPEN' | 'NO_PROJECT' | 'NO_PROJECT_OPEN' | 'NO_SCENE' | 'NO_STATE' | 'NO_TRACK_VIEW' | 'NO_WINDOW' | 'OPEN_FAILED' | 'PLAYBACK_START_FAILED' | 'RECORD_START_FAILED' | 'SAVE_FAILED' | 'SCENARIO_FAILED' | 'SESSION_INVALID' | 'STALE_WRITE' | 'TIMEOUT' | 'TIME_UNIT_REQUIRED' | 'TRACK_CREATE_FAILED' | 'UNAVAILABLE' | 'UNKNOWN_CAPABILITY' | 'UNKNOWN_COMMAND' | 'UNKNOWN_SCENARIO' | 'UNSAVED_CHANGES' | 'USER_BUSY';
 
 // @public
 export interface BridgeErrorDetails {
@@ -85,10 +85,23 @@ export class BridgePeer {
 }
 
 // @public
-export const BULK_PARAM_FIELDS: {};
+export const BULK_PARAM_FIELDS: {
+    readonly 'vocalparam write': readonly [{
+        readonly field: "points";
+        readonly dtype: null;
+    }];
+};
 
 // @public
-export const BULK_RESULT_FIELDS: {};
+export const BULK_RESULT_FIELDS: {
+    readonly 'vocalparam read': readonly [{
+        readonly field: "effective.points";
+        readonly dtype: "f64le";
+    }, {
+        readonly field: "layers[].points";
+        readonly dtype: "f64le";
+    }];
+};
 
 // @public
 export interface BulkBlob<D extends Dtype = Dtype> {
@@ -116,10 +129,10 @@ export interface CallOptions {
 export type Camel<S extends string> = S extends `${infer Head}-${infer Tail}` ? `${Head}${Capitalize<Camel<Tail>>}` : S;
 
 // @public
-export const CAPABILITY_TOKENS: readonly ["caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "fx.read", "fx.write", "generative.add-layer", "generative.enhance", "generative.retake", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "session.handshake", "session.ping", "session.shutdown", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.read", "track.write", "transport.control", "transport.state", "ui.view", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write", "workflow.dev", "workflow.ui"];
+export const CAPABILITY_TOKENS: readonly ["caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "fx.read", "fx.write", "generative.add-layer", "generative.enhance", "generative.retake", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "session.handshake", "session.ping", "session.shutdown", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.read", "track.write", "transport.control", "transport.state", "ui.control", "ui.state", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write", "workflow.dev", "workflow.ui"];
 
 // @public
-export type CapabilityToken = 'caret.read' | 'caret.write' | 'chord.read' | 'chord.write' | 'clip.read' | 'clip.write' | 'device.read' | 'device.write' | 'editor.read' | 'editor.write' | 'export.invoke' | 'fx.read' | 'fx.write' | 'generative.add-layer' | 'generative.enhance' | 'generative.retake' | 'generative.seed-audio' | 'generative.song' | 'generative.sound-effects' | 'generative.stem-split' | 'generative.text2sample' | 'generative.vocal2midi' | 'generative.voice-change' | 'history.control' | 'history.read' | 'import.invoke' | 'job.control' | 'job.read' | 'lyric.read' | 'lyric.write' | 'note.read' | 'note.write' | 'project.lifecycle' | 'project.read' | 'recording.control' | 'selection.read' | 'selection.write' | 'session.handshake' | 'session.ping' | 'session.shutdown' | 'tempo.analyze' | 'tempo.applyV2' | 'tempo.read' | 'tempo.write' | 'timesig.read' | 'timesig.write' | 'track.read' | 'track.write' | 'transport.control' | 'transport.state' | 'ui.view' | 'vocalparam.read' | 'vocalparam.write' | 'voice.read' | 'voice.write' | 'workflow.dev' | 'workflow.ui';
+export type CapabilityToken = 'caret.read' | 'caret.write' | 'chord.read' | 'chord.write' | 'clip.read' | 'clip.write' | 'device.read' | 'device.write' | 'editor.read' | 'editor.write' | 'export.invoke' | 'fx.read' | 'fx.write' | 'generative.add-layer' | 'generative.enhance' | 'generative.retake' | 'generative.seed-audio' | 'generative.song' | 'generative.sound-effects' | 'generative.stem-split' | 'generative.text2sample' | 'generative.vocal2midi' | 'generative.voice-change' | 'history.control' | 'history.read' | 'import.invoke' | 'job.control' | 'job.read' | 'lyric.read' | 'lyric.write' | 'note.read' | 'note.write' | 'project.lifecycle' | 'project.read' | 'recording.control' | 'selection.read' | 'selection.write' | 'session.handshake' | 'session.ping' | 'session.shutdown' | 'tempo.analyze' | 'tempo.applyV2' | 'tempo.read' | 'tempo.write' | 'timesig.read' | 'timesig.write' | 'track.read' | 'track.write' | 'transport.control' | 'transport.state' | 'ui.control' | 'ui.state' | 'vocalparam.read' | 'vocalparam.write' | 'voice.read' | 'voice.write' | 'workflow.dev' | 'workflow.ui';
 
 // @public
 export interface CaretGetParams {
@@ -549,6 +562,21 @@ export interface DeviceListResult {
 export interface DeviceOperations {
     current(options?: CallOptions): Promise<DeviceCurrentResult>;
     list(options?: CallOptions): Promise<DeviceListResult>;
+    setAudio(params: DeviceSetAudioParams, options?: MutatingCallOptions): Promise<DeviceSetAudioResult>;
+}
+
+// @public
+export interface DeviceSetAudioParams {
+    deviceType?: string | null;
+    inputDevice?: string | null;
+    outputDevice?: string | null;
+}
+
+// @public
+export interface DeviceSetAudioResult {
+    deviceType: string;
+    inputDevice: string;
+    outputDevice: string;
 }
 
 // @public
@@ -647,6 +675,56 @@ export interface HandshakeResult {
     acceptedProtocolVersion: number;
     grantedTokens: string[];
     sessionId: string;
+}
+
+// @public
+export interface HistoryListParams {
+    limit?: number | null;
+}
+
+// @public
+export interface HistoryListResult {
+    canRedo: boolean;
+    canUndo: boolean;
+    count: number;
+    entries: {
+        actor: string;
+        applied: boolean;
+        index: number;
+        name: string;
+    }[];
+    index: number;
+}
+
+// @public
+export interface HistoryOperations {
+    list(params: HistoryListParams, options?: CallOptions): Promise<HistoryListResult>;
+    redo(options?: MutatingCallOptions): Promise<HistoryRedoResult>;
+    undo(options?: MutatingCallOptions): Promise<HistoryUndoResult>;
+}
+
+// @public
+export interface HistoryRedoResult {
+    canRedo: boolean;
+    canUndo: boolean;
+    count: number;
+    entry: {
+        actor: string;
+        name: string;
+    };
+    index: number;
+}
+
+// @public
+export interface HistoryUndoResult {
+    canRedo: boolean;
+    canUndo: boolean;
+    count: number;
+    entry: {
+        actor: string;
+        name: string;
+    };
+    index: number;
 }
 
 // @public
@@ -879,19 +957,6 @@ export class LocalSocketTransport implements Transport {
 }
 
 // @public
-export interface MixerGetResult {
-    animating: boolean;
-    visible: boolean;
-}
-
-// @public
-export interface MixerOperations {
-    get(options?: CallOptions): Promise<MixerGetResult>;
-    hide(options?: MutatingCallOptions): Promise<void>;
-    show(options?: MutatingCallOptions): Promise<void>;
-}
-
-// @public
 export interface MutatingCallOptions extends CallOptions {
     waitBusy?: number;
 }
@@ -1005,6 +1070,11 @@ export const NOTIFICATION_CHANNELS: readonly [{
     readonly domain: "job";
     readonly method: "onChanged";
     readonly capability: "job.read";
+}, {
+    readonly channel: "ui";
+    readonly domain: "ui";
+    readonly method: "onChanged";
+    readonly capability: "ui.state";
 }];
 
 // @public (undocumented)
@@ -1212,6 +1282,15 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
+    readonly path: "device set-audio";
+    readonly domain: "device";
+    readonly method: "setAudio";
+    readonly capability: "device.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
     readonly path: "editor current-clip";
     readonly domain: "editor";
     readonly method: "currentClip";
@@ -1245,6 +1324,33 @@ export const OPERATIONS: readonly [{
     readonly capability: "editor.read";
     readonly ungated: false;
     readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "history list";
+    readonly domain: "history";
+    readonly method: "list";
+    readonly capability: "history.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "history redo";
+    readonly domain: "history";
+    readonly method: "redo";
+    readonly capability: "history.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "history undo";
+    readonly domain: "history";
+    readonly method: "undo";
+    readonly capability: "history.control";
+    readonly ungated: false;
+    readonly mutating: true;
     readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
@@ -1310,33 +1416,6 @@ export const OPERATIONS: readonly [{
     readonly mutating: false;
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
-}, {
-    readonly path: "mixer get";
-    readonly domain: "mixer";
-    readonly method: "get";
-    readonly capability: "ui.view";
-    readonly ungated: false;
-    readonly mutating: false;
-    readonly fingerprintPrecondition: false;
-    readonly takesParams: false;
-}, {
-    readonly path: "mixer hide";
-    readonly domain: "mixer";
-    readonly method: "hide";
-    readonly capability: "ui.view";
-    readonly ungated: false;
-    readonly mutating: true;
-    readonly fingerprintPrecondition: false;
-    readonly takesParams: false;
-}, {
-    readonly path: "mixer show";
-    readonly domain: "mixer";
-    readonly method: "show";
-    readonly capability: "ui.view";
-    readonly ungated: false;
-    readonly mutating: true;
-    readonly fingerprintPrecondition: false;
-    readonly takesParams: false;
 }, {
     readonly path: "note add";
     readonly domain: "note";
@@ -1483,6 +1562,24 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
+    readonly path: "recording start";
+    readonly domain: "recording";
+    readonly method: "start";
+    readonly capability: "recording.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "recording stop";
+    readonly domain: "recording";
+    readonly method: "stop";
+    readonly capability: "recording.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: false;
+}, {
     readonly path: "selection get";
     readonly domain: "selection";
     readonly method: "get";
@@ -1496,33 +1593,6 @@ export const OPERATIONS: readonly [{
     readonly domain: "selection";
     readonly method: "set";
     readonly capability: "selection.write";
-    readonly ungated: false;
-    readonly mutating: true;
-    readonly fingerprintPrecondition: false;
-    readonly takesParams: true;
-}, {
-    readonly path: "special-tracks get";
-    readonly domain: "special-tracks";
-    readonly method: "get";
-    readonly capability: "ui.view";
-    readonly ungated: false;
-    readonly mutating: false;
-    readonly fingerprintPrecondition: false;
-    readonly takesParams: false;
-}, {
-    readonly path: "special-tracks hide";
-    readonly domain: "special-tracks";
-    readonly method: "hide";
-    readonly capability: "ui.view";
-    readonly ungated: false;
-    readonly mutating: true;
-    readonly fingerprintPrecondition: false;
-    readonly takesParams: true;
-}, {
-    readonly path: "special-tracks show";
-    readonly domain: "special-tracks";
-    readonly method: "show";
-    readonly capability: "ui.view";
     readonly ungated: false;
     readonly mutating: true;
     readonly fingerprintPrecondition: false;
@@ -1699,6 +1769,98 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
+    readonly path: "ui get";
+    readonly domain: "ui";
+    readonly method: "get";
+    readonly capability: "ui.state";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "ui hide-panel";
+    readonly domain: "ui";
+    readonly method: "hidePanel";
+    readonly capability: "ui.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "ui hide-special-track";
+    readonly domain: "ui";
+    readonly method: "hideSpecialTrack";
+    readonly capability: "ui.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "ui hide-window";
+    readonly domain: "ui";
+    readonly method: "hideWindow";
+    readonly capability: "ui.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "ui show-panel";
+    readonly domain: "ui";
+    readonly method: "showPanel";
+    readonly capability: "ui.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "ui show-special-track";
+    readonly domain: "ui";
+    readonly method: "showSpecialTrack";
+    readonly capability: "ui.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "ui show-window";
+    readonly domain: "ui";
+    readonly method: "showWindow";
+    readonly capability: "ui.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "vocalparam layers";
+    readonly domain: "vocalparam";
+    readonly method: "layers";
+    readonly capability: "vocalparam.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "vocalparam read";
+    readonly domain: "vocalparam";
+    readonly method: "read";
+    readonly capability: "vocalparam.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+    readonly bulkEncoding: "base64";
+}, {
+    readonly path: "vocalparam write";
+    readonly domain: "vocalparam";
+    readonly method: "write";
+    readonly capability: "vocalparam.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+    readonly bulkEncoding: "base64";
+}, {
     readonly path: "voice collect";
     readonly domain: "voice";
     readonly method: "collect";
@@ -1738,6 +1900,33 @@ export const OPERATIONS: readonly [{
     readonly path: "voice load";
     readonly domain: "voice";
     readonly method: "load";
+    readonly capability: "voice.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "voice mix-create";
+    readonly domain: "voice";
+    readonly method: "mixCreate";
+    readonly capability: "voice.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "voice mix-delete";
+    readonly domain: "voice";
+    readonly method: "mixDelete";
+    readonly capability: "voice.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "voice mix-edit";
+    readonly domain: "voice";
+    readonly method: "mixEdit";
     readonly capability: "voice.write";
     readonly ungated: false;
     readonly mutating: true;
@@ -1788,7 +1977,7 @@ export type ProfileName = keyof typeof PROFILES;
 
 // @public
 export const PROFILES: {
-    readonly 'surface.cli-mcp.v1': readonly ["caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "fx.read", "fx.write", "generative.add-layer", "generative.enhance", "generative.retake", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.read", "track.write", "transport.control", "transport.state", "ui.view", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write"];
+    readonly 'surface.cli-mcp.v1': readonly ["caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "fx.read", "fx.write", "generative.add-layer", "generative.enhance", "generative.retake", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.read", "track.write", "transport.control", "transport.state", "ui.control", "ui.state", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write"];
     readonly 'surface.extension-sdk.v1': readonly ["session.handshake", "session.ping", "session.shutdown", "workflow.dev", "workflow.ui"];
 };
 
@@ -1938,17 +2127,17 @@ export interface PublicBindings {
     // (undocumented)
     readonly editor: EditorOperations;
     // (undocumented)
-    readonly job: JobOperations;
+    readonly history: HistoryOperations;
     // (undocumented)
-    readonly mixer: MixerOperations;
+    readonly job: JobOperations;
     // (undocumented)
     readonly note: NoteOperations;
     // (undocumented)
     readonly project: ProjectOperations;
     // (undocumented)
-    readonly selection: SelectionOperations;
+    readonly recording: RecordingOperations;
     // (undocumented)
-    readonly specialTracks: SpecialTracksOperations;
+    readonly selection: SelectionOperations;
     // (undocumented)
     readonly tempo: TempoOperations;
     // (undocumented)
@@ -1957,6 +2146,10 @@ export interface PublicBindings {
     readonly track: TrackOperations;
     // (undocumented)
     readonly transport: TransportOperations;
+    // (undocumented)
+    readonly ui: UiOperations;
+    // (undocumented)
+    readonly vocalparam: VocalparamOperations;
     // (undocumented)
     readonly voice: VoiceOperations;
 }
@@ -1967,6 +2160,39 @@ export type Reachable<T extends CapabilityToken> = Extract<Descriptor, {
 } | {
     capability: T;
 }>;
+
+// @public
+export interface RecordingOperations {
+    start(options?: MutatingCallOptions): Promise<RecordingStartResult>;
+    stop(options?: MutatingCallOptions): Promise<RecordingStopResult>;
+}
+
+// @public
+export interface RecordingStartResult {
+    armedTracks: {
+        kind: string;
+        trackIndex: number;
+        trackName: string;
+        trackType: string;
+    }[];
+    beginTick: number;
+    countIn: boolean;
+    countInBars: number;
+    recording: boolean;
+}
+
+// @public
+export interface RecordingStopResult {
+    countInCancelled: boolean;
+    recording: boolean;
+    takes: {
+        kind: string;
+        path?: string;
+        trackIndex: number;
+        trackName: string;
+        trackType: string;
+    }[];
+}
 
 // @public
 export type RequestHandler = (params: unknown) => unknown;
@@ -1991,10 +2217,14 @@ export const REQUIRED_TOKENS: {
     readonly 'clip replace-content': "clip.write";
     readonly 'device current': "device.read";
     readonly 'device list': "device.read";
+    readonly 'device set-audio': "device.write";
     readonly 'editor current-clip': "editor.read";
     readonly 'editor open': "editor.write";
     readonly 'editor status': "editor.read";
     readonly 'editor tick-range': "editor.read";
+    readonly 'history list': "history.read";
+    readonly 'history redo': "history.control";
+    readonly 'history undo': "history.control";
     readonly 'job cancel': "job.control";
     readonly 'job discard-result': "job.control";
     readonly 'job get': "job.read";
@@ -2002,9 +2232,6 @@ export const REQUIRED_TOKENS: {
     readonly 'job place': "clip.write";
     readonly 'job results': "job.read";
     readonly 'job wait': "job.read";
-    readonly 'mixer get': "ui.view";
-    readonly 'mixer hide': "ui.view";
-    readonly 'mixer show': "ui.view";
     readonly 'note add': "note.write";
     readonly 'note delete': "note.write";
     readonly 'note move': "note.write";
@@ -2021,11 +2248,10 @@ export const REQUIRED_TOKENS: {
     readonly 'project save-as': "project.lifecycle";
     readonly 'project save-template': "project.lifecycle";
     readonly 'project synthesis-status': "project.read";
+    readonly 'recording start': "recording.control";
+    readonly 'recording stop': "recording.control";
     readonly 'selection get': "selection.read";
     readonly 'selection set': "selection.write";
-    readonly 'special-tracks get': "ui.view";
-    readonly 'special-tracks hide': "ui.view";
-    readonly 'special-tracks show': "ui.view";
     readonly 'tempo get': "tempo.read";
     readonly 'tempo set': "tempo.write";
     readonly 'timesig get': "timesig.read";
@@ -2045,11 +2271,24 @@ export const REQUIRED_TOKENS: {
     readonly 'transport state': "transport.state";
     readonly 'transport stop': "transport.control";
     readonly 'transport toggle': "transport.control";
+    readonly 'ui get': "ui.state";
+    readonly 'ui hide-panel': "ui.control";
+    readonly 'ui hide-special-track': "ui.control";
+    readonly 'ui hide-window': "ui.control";
+    readonly 'ui show-panel': "ui.control";
+    readonly 'ui show-special-track': "ui.control";
+    readonly 'ui show-window': "ui.control";
+    readonly 'vocalparam layers': "vocalparam.read";
+    readonly 'vocalparam read': "vocalparam.read";
+    readonly 'vocalparam write': "vocalparam.write";
     readonly 'voice collect': "voice.write";
     readonly 'voice community-list': "voice.read";
     readonly 'voice community-pages': "voice.read";
     readonly 'voice list': "voice.read";
     readonly 'voice load': "voice.write";
+    readonly 'voice mix-create': "voice.write";
+    readonly 'voice mix-delete': "voice.write";
+    readonly 'voice mix-edit': "voice.write";
     readonly 'voice tags': "voice.read";
     readonly 'voice unload': "voice.write";
 };
@@ -2211,36 +2450,7 @@ export interface ShutdownParams {
 }
 
 // @public
-export interface SpecialTracksGetResult {
-    chord: {
-        animating: boolean;
-        visible: boolean;
-    };
-    tempo_and_timesig: {
-        animating: boolean;
-        visible: boolean;
-    };
-}
-
-// @public
-export interface SpecialTracksHideParams {
-    track: string;
-}
-
-// @public
-export interface SpecialTracksOperations {
-    get(options?: CallOptions): Promise<SpecialTracksGetResult>;
-    hide(params: SpecialTracksHideParams, options?: MutatingCallOptions): Promise<void>;
-    show(params: SpecialTracksShowParams, options?: MutatingCallOptions): Promise<void>;
-}
-
-// @public
-export interface SpecialTracksShowParams {
-    track: string;
-}
-
-// @public
-export const SURFACE_VERSION = "3.1";
+export const SURFACE_VERSION = "4.0";
 
 // @public
 export interface TempoGetResult {
@@ -2494,7 +2704,197 @@ export interface TransportStateResult {
 export type TypedArrayFor<D extends Dtype> = D extends 'u8' ? Uint8Array : D extends 'i16le' ? Int16Array : D extends 'i32le' ? Int32Array : D extends 'i64le' ? BigInt64Array : D extends 'f32le' ? Float32Array : D extends 'f64le' ? Float64Array : never;
 
 // @public
+export interface UiGetResult {
+    panels: {
+        fx: {
+            animating: boolean;
+            visible: boolean;
+        };
+        mixer: {
+            animating: boolean;
+            visible: boolean;
+        };
+        mv: {
+            animating: boolean;
+            visible: boolean;
+        };
+        v2m: {
+            animating: boolean;
+            visible: boolean;
+        };
+    };
+    sharedPanelSlot: {
+        open: boolean;
+        selected: 'mv' | 'v2m';
+    };
+    specialTracks: {
+        chord: {
+            animating: boolean;
+            visible: boolean;
+        };
+        tempo_and_timesig: {
+            animating: boolean;
+            visible: boolean;
+        };
+    };
+    windows: {
+        'video-monitor': {
+            animating: boolean;
+            visible: boolean;
+        };
+    };
+}
+
+// @public
+export interface UiHidePanelParams {
+    panel: 'mixer' | 'fx' | 'mv' | 'v2m';
+}
+
+// @public
+export interface UiHideSpecialTrackParams {
+    specialTrack: 'chord' | 'tempo_and_timesig';
+}
+
+// @public
+export interface UiHideWindowParams {
+    window: 'video-monitor';
+}
+
+// @public
+export interface UiOperations {
+    get(options?: CallOptions): Promise<UiGetResult>;
+    hidePanel(params: UiHidePanelParams, options?: MutatingCallOptions): Promise<void>;
+    hideSpecialTrack(params: UiHideSpecialTrackParams, options?: MutatingCallOptions): Promise<void>;
+    hideWindow(params: UiHideWindowParams, options?: MutatingCallOptions): Promise<void>;
+    onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
+    showPanel(params: UiShowPanelParams, options?: MutatingCallOptions): Promise<void>;
+    showSpecialTrack(params: UiShowSpecialTrackParams, options?: MutatingCallOptions): Promise<void>;
+    showWindow(params: UiShowWindowParams, options?: MutatingCallOptions): Promise<void>;
+}
+
+// @public
+export interface UiShowPanelParams {
+    panel: 'mixer' | 'fx' | 'mv' | 'v2m';
+}
+
+// @public
+export interface UiShowSpecialTrackParams {
+    specialTrack: 'chord' | 'tempo_and_timesig';
+}
+
+// @public
+export interface UiShowWindowParams {
+    window: 'video-monitor';
+}
+
+// @public
 export type Unsubscribe = () => void;
+
+// @public
+export interface VocalparamLayersParams {
+    category?: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
+    clipUuid: string;
+}
+
+// @public
+export interface VocalparamLayersResult {
+    categories: {
+        available: boolean;
+        category: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
+        layers: {
+            access: 'read-only' | 'read-write';
+            layer: 'baseline' | 'user' | 'envelope' | 'direct' | 'effective';
+            role: string;
+            sparse: boolean;
+        }[];
+        scale?: string;
+        unavailableReason?: string;
+        valueRange?: {
+            max?: number;
+            min?: number;
+        };
+    }[];
+    categoryCount: number;
+    clipUuid: string;
+    engineGeneration: string;
+}
+
+// @public
+export interface VocalparamOperations {
+    layers(params: VocalparamLayersParams, options?: CallOptions): Promise<VocalparamLayersResult>;
+    read(params: VocalparamReadParams, options?: CallOptions): Promise<VocalparamReadResult>;
+    write(params: VocalparamWriteParams, options?: PreconditionCallOptions): Promise<VocalparamWriteResult>;
+}
+
+// @public
+export interface VocalparamReadParams {
+    category: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
+    clipUuid: string;
+    layer?: 'baseline' | 'user' | 'envelope' | 'direct' | 'effective';
+    rangeBegin?: number | null;
+    rangeEnd?: number | null;
+}
+
+// @public
+export interface VocalparamReadResult {
+    category: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
+    clipUuid: string;
+    count: number;
+    effective: {
+        access: 'read-only' | 'read-write';
+        drawnRanges?: {
+            begin: number;
+            end: number;
+        }[];
+        layer: 'baseline' | 'user' | 'envelope' | 'direct' | 'effective';
+        points: TypedArrayFor<'f64le'>;
+        role: string;
+        sparse: boolean;
+    };
+    engineGeneration: string;
+    fingerprint: Fingerprint;
+    layers: {
+        access: 'read-only' | 'read-write';
+        drawnRanges?: {
+            begin: number;
+            end: number;
+        }[];
+        layer: 'baseline' | 'user' | 'envelope' | 'direct' | 'effective';
+        points: TypedArrayFor<'f64le'>;
+        role: string;
+        sparse: boolean;
+    }[];
+    posBegin: number;
+    scale?: string;
+    unvoiced?: {
+        begin: number;
+        end: number;
+    }[];
+    valueRange?: {
+        max?: number;
+        min?: number;
+    };
+}
+
+// @public
+export interface VocalparamWriteParams {
+    category: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
+    clipUuid: string;
+    layer: 'baseline' | 'user' | 'envelope' | 'direct';
+    points: TypedArrayFor<Dtype>;
+    posBegin: number;
+}
+
+// @public
+export interface VocalparamWriteResult {
+    category: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
+    clearedCount?: number;
+    clipUuid: string;
+    count: number;
+    fingerprint: Fingerprint;
+    layer: 'baseline' | 'user' | 'envelope' | 'direct';
+    posBegin: number;
+}
 
 // @public
 export interface VoiceCollectParams {
@@ -2597,12 +2997,97 @@ export interface VoiceLoadResult {
 }
 
 // @public
+export interface VoiceMixCreateParams {
+    head?: number | null;
+    language?: string | null;
+    name: string;
+    routerId?: number | null;
+    seeds: {
+        code: number;
+        lock?: boolean | null;
+        style?: number | null;
+        timbre?: number | null;
+    }[];
+    tags?: string[] | null;
+}
+
+// @public
+export interface VoiceMixCreateResult {
+    group: string;
+    head: number;
+    id: number;
+    language: string;
+    name: string;
+    routerId: number;
+    routerName: string;
+    seeds: {
+        code: number;
+        lock: boolean;
+        name?: string;
+        style: number;
+        timbre: number;
+    }[];
+    tags: string[];
+}
+
+// @public
+export interface VoiceMixDeleteParams {
+    id: number;
+}
+
+// @public
+export interface VoiceMixDeleteResult {
+    id: number;
+    maximum: number;
+    name: string;
+    remaining: number;
+}
+
+// @public
+export interface VoiceMixEditParams {
+    head?: number | null;
+    id: number;
+    language?: string | null;
+    name?: string | null;
+    routerId?: number | null;
+    seeds?: {
+        code: number;
+        lock?: boolean | null;
+        style?: number | null;
+        timbre?: number | null;
+    }[] | null;
+    tags?: string[] | null;
+}
+
+// @public
+export interface VoiceMixEditResult {
+    group: string;
+    head: number;
+    id: number;
+    language: string;
+    name: string;
+    routerId: number;
+    routerName: string;
+    seeds: {
+        code: number;
+        lock: boolean;
+        name?: string;
+        style: number;
+        timbre: number;
+    }[];
+    tags: string[];
+}
+
+// @public
 export interface VoiceOperations {
     collect(params: VoiceCollectParams, options?: MutatingCallOptions): Promise<VoiceCollectResult>;
     communityList(params: VoiceCommunityListParams, options?: CallOptions): Promise<VoiceCommunityListResult>;
     communityPages(params: VoiceCommunityPagesParams, options?: CallOptions): Promise<VoiceCommunityPagesResult>;
     list(params: VoiceListParams, options?: CallOptions): Promise<VoiceListResult>;
     load(params: VoiceLoadParams, options?: MutatingCallOptions): Promise<VoiceLoadResult>;
+    mixCreate(params: VoiceMixCreateParams, options?: MutatingCallOptions): Promise<VoiceMixCreateResult>;
+    mixDelete(params: VoiceMixDeleteParams, options?: MutatingCallOptions): Promise<VoiceMixDeleteResult>;
+    mixEdit(params: VoiceMixEditParams, options?: MutatingCallOptions): Promise<VoiceMixEditResult>;
     tags(params: VoiceTagsParams, options?: CallOptions): Promise<VoiceTagsResult>;
     unload(params: VoiceUnloadParams, options?: MutatingCallOptions): Promise<VoiceUnloadResult>;
 }

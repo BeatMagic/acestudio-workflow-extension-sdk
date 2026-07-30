@@ -164,6 +164,15 @@ const OPERATIONS: readonly [{
   takesParams: false;
   ungated: false;
 }, {
+  capability: "device.write";
+  domain: "device";
+  fingerprintPrecondition: false;
+  method: "setAudio";
+  mutating: true;
+  path: "device set-audio";
+  takesParams: true;
+  ungated: false;
+}, {
   capability: "editor.read";
   domain: "editor";
   fingerprintPrecondition: false;
@@ -197,6 +206,33 @@ const OPERATIONS: readonly [{
   method: "tickRange";
   mutating: false;
   path: "editor tick-range";
+  takesParams: false;
+  ungated: false;
+}, {
+  capability: "history.read";
+  domain: "history";
+  fingerprintPrecondition: false;
+  method: "list";
+  mutating: false;
+  path: "history list";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "history.control";
+  domain: "history";
+  fingerprintPrecondition: false;
+  method: "redo";
+  mutating: true;
+  path: "history redo";
+  takesParams: false;
+  ungated: false;
+}, {
+  capability: "history.control";
+  domain: "history";
+  fingerprintPrecondition: false;
+  method: "undo";
+  mutating: true;
+  path: "history undo";
   takesParams: false;
   ungated: false;
 }, {
@@ -261,33 +297,6 @@ const OPERATIONS: readonly [{
   mutating: false;
   path: "job wait";
   takesParams: true;
-  ungated: false;
-}, {
-  capability: "ui.view";
-  domain: "mixer";
-  fingerprintPrecondition: false;
-  method: "get";
-  mutating: false;
-  path: "mixer get";
-  takesParams: false;
-  ungated: false;
-}, {
-  capability: "ui.view";
-  domain: "mixer";
-  fingerprintPrecondition: false;
-  method: "hide";
-  mutating: true;
-  path: "mixer hide";
-  takesParams: false;
-  ungated: false;
-}, {
-  capability: "ui.view";
-  domain: "mixer";
-  fingerprintPrecondition: false;
-  method: "show";
-  mutating: true;
-  path: "mixer show";
-  takesParams: false;
   ungated: false;
 }, {
   capability: "note.write";
@@ -435,6 +444,24 @@ const OPERATIONS: readonly [{
   takesParams: false;
   ungated: false;
 }, {
+  capability: "recording.control";
+  domain: "recording";
+  fingerprintPrecondition: false;
+  method: "start";
+  mutating: true;
+  path: "recording start";
+  takesParams: false;
+  ungated: false;
+}, {
+  capability: "recording.control";
+  domain: "recording";
+  fingerprintPrecondition: false;
+  method: "stop";
+  mutating: true;
+  path: "recording stop";
+  takesParams: false;
+  ungated: false;
+}, {
   capability: "selection.read";
   domain: "selection";
   fingerprintPrecondition: false;
@@ -450,33 +477,6 @@ const OPERATIONS: readonly [{
   method: "set";
   mutating: true;
   path: "selection set";
-  takesParams: true;
-  ungated: false;
-}, {
-  capability: "ui.view";
-  domain: "special-tracks";
-  fingerprintPrecondition: false;
-  method: "get";
-  mutating: false;
-  path: "special-tracks get";
-  takesParams: false;
-  ungated: false;
-}, {
-  capability: "ui.view";
-  domain: "special-tracks";
-  fingerprintPrecondition: false;
-  method: "hide";
-  mutating: true;
-  path: "special-tracks hide";
-  takesParams: true;
-  ungated: false;
-}, {
-  capability: "ui.view";
-  domain: "special-tracks";
-  fingerprintPrecondition: false;
-  method: "show";
-  mutating: true;
-  path: "special-tracks show";
   takesParams: true;
   ungated: false;
 }, {
@@ -651,6 +651,98 @@ const OPERATIONS: readonly [{
   takesParams: false;
   ungated: false;
 }, {
+  capability: "ui.state";
+  domain: "ui";
+  fingerprintPrecondition: false;
+  method: "get";
+  mutating: false;
+  path: "ui get";
+  takesParams: false;
+  ungated: false;
+}, {
+  capability: "ui.control";
+  domain: "ui";
+  fingerprintPrecondition: false;
+  method: "hidePanel";
+  mutating: true;
+  path: "ui hide-panel";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "ui.control";
+  domain: "ui";
+  fingerprintPrecondition: false;
+  method: "hideSpecialTrack";
+  mutating: true;
+  path: "ui hide-special-track";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "ui.control";
+  domain: "ui";
+  fingerprintPrecondition: false;
+  method: "hideWindow";
+  mutating: true;
+  path: "ui hide-window";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "ui.control";
+  domain: "ui";
+  fingerprintPrecondition: false;
+  method: "showPanel";
+  mutating: true;
+  path: "ui show-panel";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "ui.control";
+  domain: "ui";
+  fingerprintPrecondition: false;
+  method: "showSpecialTrack";
+  mutating: true;
+  path: "ui show-special-track";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "ui.control";
+  domain: "ui";
+  fingerprintPrecondition: false;
+  method: "showWindow";
+  mutating: true;
+  path: "ui show-window";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "vocalparam.read";
+  domain: "vocalparam";
+  fingerprintPrecondition: false;
+  method: "layers";
+  mutating: false;
+  path: "vocalparam layers";
+  takesParams: true;
+  ungated: false;
+}, {
+  bulkEncoding: "base64";
+  capability: "vocalparam.read";
+  domain: "vocalparam";
+  fingerprintPrecondition: false;
+  method: "read";
+  mutating: false;
+  path: "vocalparam read";
+  takesParams: true;
+  ungated: false;
+}, {
+  bulkEncoding: "base64";
+  capability: "vocalparam.write";
+  domain: "vocalparam";
+  fingerprintPrecondition: true;
+  method: "write";
+  mutating: true;
+  path: "vocalparam write";
+  takesParams: true;
+  ungated: false;
+}, {
   capability: "voice.write";
   domain: "voice";
   fingerprintPrecondition: false;
@@ -693,6 +785,33 @@ const OPERATIONS: readonly [{
   method: "load";
   mutating: true;
   path: "voice load";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "voice.write";
+  domain: "voice";
+  fingerprintPrecondition: false;
+  method: "mixCreate";
+  mutating: true;
+  path: "voice mix-create";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "voice.write";
+  domain: "voice";
+  fingerprintPrecondition: false;
+  method: "mixDelete";
+  mutating: true;
+  path: "voice mix-delete";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "voice.write";
+  domain: "voice";
+  fingerprintPrecondition: false;
+  method: "mixEdit";
+  mutating: true;
+  path: "voice mix-edit";
   takesParams: true;
   ungated: false;
 }, {

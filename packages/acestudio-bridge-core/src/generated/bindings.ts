@@ -3,10 +3,10 @@
 // The public capability bindings: the operations the capability registry
 // publishes (ADR 0094 §2), plus the scaffolding every consumer shares.
 //
-// Surface version: 3.1
+// Surface version: 4.0
 
 /** The contract surface version these bindings were generated from (`major.minor`). The handshake compares it against the host's: a major mismatch is a typed error at connect, minor drift is fine under the tolerant-reader rule. */
-export const SURFACE_VERSION = '3.1';
+export const SURFACE_VERSION = '4.0';
 
 /** Every canonical error code, as a string-literal union. `BridgeError.code` narrows against it, so error handling is exhaustiveness-checked by the compiler. Codes are a contract; the message beside one is not. */
 export type BridgeErrorCode =
@@ -17,15 +17,20 @@ export type BridgeErrorCode =
   | 'CAPABILITY_OUT_OF_SURFACE'
   | 'CHAIN_NOT_GROWN'
   | 'COLLECT_FAILED'
+  | 'CONFIRMATION_REQUIRED'
   | 'CREATE_TIMEOUT'
   | 'CREDIT_INSUFFICIENT'
   | 'EDITOR_NOT_READY'
   | 'EDIT_TIMEOUT'
   | 'EXPORT_IN_PROGRESS'
   | 'EXPORT_START_FAILED'
+  | 'FILE_NOT_FOUND'
+  | 'FINGERPRINT_SCOPE_MISMATCH'
+  | 'FIXTURE_FAILED'
   | 'FLUSH_TIMEOUT'
   | 'GESTURE_HELD'
   | 'HANDLER_FAILED'
+  | 'IMPORT_FAILED'
   | 'INSERT_FAILED'
   | 'INVALID_ARG'
   | 'IO_ERROR'
@@ -34,6 +39,7 @@ export type BridgeErrorCode =
   | 'NEW_FAILED'
   | 'NOTE_OVERLAP'
   | 'NOT_FOUND'
+  | 'NO_FIXTURE'
   | 'NO_GESTURE'
   | 'NO_MASTER_CHAIN'
   | 'NO_PATTERN_EDIT_OPEN'
@@ -41,6 +47,7 @@ export type BridgeErrorCode =
   | 'NO_PROJECT_OPEN'
   | 'NO_SCENE'
   | 'NO_STATE'
+  | 'NO_TRACK_VIEW'
   | 'NO_WINDOW'
   | 'OPEN_FAILED'
   | 'PLAYBACK_START_FAILED'
@@ -51,6 +58,7 @@ export type BridgeErrorCode =
   | 'STALE_WRITE'
   | 'TIMEOUT'
   | 'TIME_UNIT_REQUIRED'
+  | 'TRACK_CREATE_FAILED'
   | 'UNAVAILABLE'
   | 'UNKNOWN_CAPABILITY'
   | 'UNKNOWN_COMMAND'
@@ -115,7 +123,7 @@ export interface MutatingCallOptions extends CallOptions {
 
 /** Options a write that honors the stale-write precondition additionally accepts. Only those writes get `ifMatch`: an operation that has not opted into the fingerprint gate accepts a carried token and ignores it, so offering one here would type-check into a write that reads as guarded and is not. Omitting it is an unguarded write. */
 export interface PreconditionCallOptions extends MutatingCallOptions {
-    /** The fingerprint from a prior read; the write fails `STALE_WRITE` if content changed since. */
+    /** The fingerprint from a prior read of *this* operation's content; the write fails `STALE_WRITE` if it changed since, or `FINGERPRINT_SCOPE_MISMATCH` if the token came from a read of something else. */
     ifMatch?: Fingerprint;
 }
 
@@ -226,7 +234,8 @@ export type CapabilityToken =
   | 'track.write'
   | 'transport.control'
   | 'transport.state'
-  | 'ui.view'
+  | 'ui.control'
+  | 'ui.state'
   | 'vocalparam.read'
   | 'vocalparam.write'
   | 'voice.read'
@@ -286,7 +295,8 @@ export const CAPABILITY_TOKENS = [
     'track.write',
     'transport.control',
     'transport.state',
-    'ui.view',
+    'ui.control',
+    'ui.state',
     'vocalparam.read',
     'vocalparam.write',
     'voice.read',
@@ -919,6 +929,26 @@ export interface DeviceListResult {
     };
 }
 
+/** Arguments for `device set-audio`. */
+export interface DeviceSetAudioParams {
+    /** Audio backend to use, from `availableDeviceTypes` in `device list` (e.g. `CoreAudio`, `ASIO`, `Windows Audio`). */
+    deviceType?: string | null;
+    /** Input device name, from `inputDevices.devices` in `device list`. Recording needs one of these. */
+    inputDevice?: string | null;
+    /** Output device name, from `outputDevices.devices` in `device list`. */
+    outputDevice?: string | null;
+}
+
+/** Success payload of `device set-audio`. */
+export interface DeviceSetAudioResult {
+    /** Active audio device type/backend after the call. */
+    deviceType: string;
+    /** Selected input device after the call. May be empty when the backend has no separate input. */
+    inputDevice: string;
+    /** Selected output device after the call. */
+    outputDevice: string;
+}
+
 /** The `device` operations, mirroring the canonical operation tree 1:1. */
 export interface DeviceOperations {
     /**
@@ -934,6 +964,13 @@ export interface DeviceOperations {
      * Requires the `device.read` capability.
      */
     list(options?: CallOptions): Promise<DeviceListResult>;
+
+    /**
+     * Select the audio backend, output device, and input device by name.
+     *
+     * Requires the `device.write` capability.
+     */
+    setAudio(params: DeviceSetAudioParams, options?: MutatingCallOptions): Promise<DeviceSetAudioResult>;
 }
 
 // --- editor ----------------------------------------------------------------
@@ -1021,6 +1058,99 @@ export interface EditorOperations {
      * Requires the `editor.read` capability.
      */
     tickRange(options?: CallOptions): Promise<EditorTickRangeResult>;
+}
+
+// --- history ---------------------------------------------------------------
+
+/** Arguments for `history list`. */
+export interface HistoryListParams {
+    /** Return only the newest N entries, at least 1. Omit for the whole stack, which has no size cap and grows for as long as the project stays open. */
+    limit?: number | null;
+}
+
+/** Success payload of `history list`. */
+export interface HistoryListResult {
+    /** Whether `history redo` has an entry to re-apply. */
+    canRedo: boolean;
+    /** Whether `history undo` has an entry to take back. */
+    canUndo: boolean;
+    /** Total entries on the stack, ignoring any `limit`. */
+    count: number;
+    /** Stack entries newest first (descending index). Truncated to `limit` when one was given; `count` always reports the full stack. */
+    entries: {
+        /** The peer that authored the entry, or empty when the user authored it in Studio directly. */
+        actor: string;
+        /** True when the entry is currently applied to the project (undoable); false when it sits on the redo branch. */
+        applied: boolean;
+        /** The entry's 0-based position on the stack, oldest = 0. */
+        index: number;
+        /** The entry's user-readable name, as shown in Studio's Undo menu. Localized to the app language. */
+        name: string;
+    }[];
+    /** How many entries are applied; entries at index and above are the redo branch. */
+    index: number;
+}
+
+/** Success payload of `history redo`. */
+export interface HistoryRedoResult {
+    /** Whether an entry can be redone afterwards. */
+    canRedo: boolean;
+    /** Whether another entry can be undone afterwards. */
+    canUndo: boolean;
+    /** Total entries on the stack afterwards. Unchanged by undo/redo, which never push. */
+    count: number;
+    /** The entry this call moved over: undone by `history undo`, re-applied by `history redo`. */
+    entry: {
+        /** The peer that authored the entry, or empty when the user authored it in Studio directly. */
+        actor: string;
+        /** The entry's user-readable name, as shown in Studio's Undo menu. Localized to the app language. */
+        name: string;
+    };
+    /** How many entries are applied afterwards; entries at index and above are the redo branch. */
+    index: number;
+}
+
+/** Success payload of `history undo`. */
+export interface HistoryUndoResult {
+    /** Whether an entry can be redone afterwards. */
+    canRedo: boolean;
+    /** Whether another entry can be undone afterwards. */
+    canUndo: boolean;
+    /** Total entries on the stack afterwards. Unchanged by undo/redo, which never push. */
+    count: number;
+    /** The entry this call moved over: undone by `history undo`, re-applied by `history redo`. */
+    entry: {
+        /** The peer that authored the entry, or empty when the user authored it in Studio directly. */
+        actor: string;
+        /** The entry's user-readable name, as shown in Studio's Undo menu. Localized to the app language. */
+        name: string;
+    };
+    /** How many entries are applied afterwards; entries at index and above are the redo branch. */
+    index: number;
+}
+
+/** The `history` operations, mirroring the canonical operation tree 1:1. */
+export interface HistoryOperations {
+    /**
+     * List undo-stack entries newest first, with their names and authors.
+     *
+     * Requires the `history.read` capability.
+     */
+    list(params: HistoryListParams, options?: CallOptions): Promise<HistoryListResult>;
+
+    /**
+     * Redo the entry the last undo took back, whoever authored it.
+     *
+     * Requires the `history.control` capability.
+     */
+    redo(options?: MutatingCallOptions): Promise<HistoryRedoResult>;
+
+    /**
+     * Undo the top entry of the shared undo stack, whoever authored it.
+     *
+     * Requires the `history.control` capability.
+     */
+    undo(options?: MutatingCallOptions): Promise<HistoryUndoResult>;
 }
 
 // --- job -------------------------------------------------------------------
@@ -1255,40 +1385,6 @@ export interface JobOperations {
      * Requires the `job.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
      */
     onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
-}
-
-// --- mixer -----------------------------------------------------------------
-
-/** Success payload of `mixer get`. */
-export interface MixerGetResult {
-    /** Whether the panel is mid-animation (opening or closing). */
-    animating: boolean;
-    /** Whether the mixer panel is currently shown. */
-    visible: boolean;
-}
-
-/** The `mixer` operations, mirroring the canonical operation tree 1:1. */
-export interface MixerOperations {
-    /**
-     * Read the mixer panel visibility state (visible + animating flags).
-     *
-     * Requires the `ui.view` capability.
-     */
-    get(options?: CallOptions): Promise<MixerGetResult>;
-
-    /**
-     * Hide the mixer panel.
-     *
-     * Requires the `ui.view` capability.
-     */
-    hide(options?: MutatingCallOptions): Promise<void>;
-
-    /**
-     * Show the mixer panel.
-     *
-     * Requires the `ui.view` capability.
-     */
-    show(options?: MutatingCallOptions): Promise<void>;
 }
 
 // --- note ------------------------------------------------------------------
@@ -1726,6 +1822,69 @@ export interface ProjectOperations {
     synthesisStatus(options?: CallOptions): Promise<ProjectSynthesisStatusResult>;
 }
 
+// --- recording -------------------------------------------------------------
+
+/** Success payload of `recording start`. */
+export interface RecordingStartResult {
+    /** Every armed track, and so every candidate for a take. Reported because the arm is derived from the caret rather than passed in, so this is what confirms the call recorded what the caller meant. */
+    armedTracks: {
+        /** Which recorder the track feeds: 'audio' for an Audio track, 'midi' for a note track. */
+        kind: string;
+        /** 0-based track index (users see tracks numbered from 1). */
+        trackIndex: number;
+        /** The track's display name. */
+        trackName: string;
+        /** Track type: Audio, Sing, Instrument, or GenericMidi. */
+        trackType: string;
+    }[];
+    /** Tick the take starts at: the caret, or the live playback position when the transport was already rolling. */
+    beginTick: number;
+    /** True when a count-in is still counting, so nothing is being captured yet. */
+    countIn: boolean;
+    /** Bars of count-in this call will play: the user's preference, or 0 when the transport was already rolling (which skips it). */
+    countInBars: number;
+    /** True once capture (or its count-in) is under way. Recording is a busy state, so other remote writes are refused with USER_BUSY until `recording stop`. */
+    recording: boolean;
+}
+
+/** Success payload of `recording stop`. */
+export interface RecordingStopResult {
+    /** True when the call only cancelled a count-in: capture had not begun, so no take landed and no undo entry was pushed. */
+    countInCancelled: boolean;
+    /** False after a successful stop. Reported so a caller can confirm the busy window closed. */
+    recording: boolean;
+    /** The takes this call landed, one per recording track. Together they form the single attributed undo entry. */
+    takes: {
+        /** Which recorder the track feeds: 'audio' for an Audio track, 'midi' for a note track. */
+        kind: string;
+        /** Absolute path of the recorded wav inside the project's Samples folder. Audio takes only. */
+        path?: string;
+        /** 0-based track index (users see tracks numbered from 1). */
+        trackIndex: number;
+        /** The track's display name. */
+        trackName: string;
+        /** Track type: Audio, Sing, Instrument, or GenericMidi. */
+        trackType: string;
+    }[];
+}
+
+/** The `recording` operations, mirroring the canonical operation tree 1:1. */
+export interface RecordingOperations {
+    /**
+     * Start recording the armed track (the caret's track).
+     *
+     * Requires the `recording.control` capability.
+     */
+    start(options?: MutatingCallOptions): Promise<RecordingStartResult>;
+
+    /**
+     * Stop recording and land the take as one attributed undo entry.
+     *
+     * Requires the `recording.control` capability.
+     */
+    stop(options?: MutatingCallOptions): Promise<RecordingStopResult>;
+}
+
 // --- selection -------------------------------------------------------------
 
 /** Arguments for `selection get`. */
@@ -1885,62 +2044,6 @@ export interface SelectionOperations {
      * Requires the `selection.write` capability.
      */
     set(params: SelectionSetParams, options?: MutatingCallOptions): Promise<SelectionSetResult>;
-}
-
-// --- special-tracks --------------------------------------------------------
-
-/** Success payload of `special-tracks get`. */
-export interface SpecialTracksGetResult {
-    /** Visibility state of the chord progression track. */
-    chord: {
-        /** Whether the track is mid-animation (opening or closing). */
-        animating: boolean;
-        /** Whether the track is currently shown. */
-        visible: boolean;
-    };
-    /** Visibility state of the combined tempo and time-signature tracks (toggled together in the UI). */
-    tempo_and_timesig: {
-        /** Whether the track is mid-animation (opening or closing). */
-        animating: boolean;
-        /** Whether the track is currently shown. */
-        visible: boolean;
-    };
-}
-
-/** Arguments for `special-tracks hide`. */
-export interface SpecialTracksHideParams {
-    /** Which special track: `chord` or `tempo_and_timesig`. */
-    track: string;
-}
-
-/** Arguments for `special-tracks show`. */
-export interface SpecialTracksShowParams {
-    /** Which special track: `chord` or `tempo_and_timesig`. */
-    track: string;
-}
-
-/** The `special-tracks` operations, mirroring the canonical operation tree 1:1. */
-export interface SpecialTracksOperations {
-    /**
-     * Read visibility state for all special tracks (chord, tempo_and_timesig).
-     *
-     * Requires the `ui.view` capability.
-     */
-    get(options?: CallOptions): Promise<SpecialTracksGetResult>;
-
-    /**
-     * Hide a named special track (chord or tempo_and_timesig).
-     *
-     * Requires the `ui.view` capability.
-     */
-    hide(params: SpecialTracksHideParams, options?: MutatingCallOptions): Promise<void>;
-
-    /**
-     * Show a named special track (chord or tempo_and_timesig).
-     *
-     * Requires the `ui.view` capability.
-     */
-    show(params: SpecialTracksShowParams, options?: MutatingCallOptions): Promise<void>;
 }
 
 // --- tempo -----------------------------------------------------------------
@@ -2412,6 +2515,364 @@ export interface TransportOperations {
     toggle(options?: MutatingCallOptions): Promise<void>;
 }
 
+// --- ui --------------------------------------------------------------------
+
+/** Success payload of `ui get`. */
+export interface UiGetResult {
+    /** Dockable panels, keyed by the selector `ui show-panel` takes. */
+    panels: {
+        /** The track-config / FX panel for the selected track. */
+        fx: {
+            /** Whether it is mid-transition (opening or closing). */
+            animating: boolean;
+            /** Whether the citizen is currently on screen. */
+            visible: boolean;
+        };
+        /** The mixer panel: track volume, pan, mute, solo, and effect controls. */
+        mixer: {
+            /** Whether it is mid-transition (opening or closing). */
+            animating: boolean;
+            /** Whether the citizen is currently on screen. */
+            visible: boolean;
+        };
+        /** The MV creator panel. Shares one slot with `v2m` - see `sharedPanelSlot`. */
+        mv: {
+            /** Whether it is mid-transition (opening or closing). */
+            animating: boolean;
+            /** Whether the citizen is currently on screen. */
+            visible: boolean;
+        };
+        /** The video-composer (V2M) panel. Shares one slot with `mv` - see `sharedPanelSlot`. */
+        v2m: {
+            /** Whether it is mid-transition (opening or closing). */
+            animating: boolean;
+            /** Whether the citizen is currently on screen. */
+            visible: boolean;
+        };
+    };
+    /** The one slot `mv` and `v2m` take turns holding: showing one closes the other. */
+    sharedPanelSlot: {
+        /** Whether the slot is on screen. `panels.\<selected\>.visible` is this flag; the other member is always hidden. */
+        open: boolean;
+        /** Which of the two currently holds the slot. Survives the slot closing, so it is also which one a bare re-open would show. */
+        selected: 'mv' | 'v2m';
+    };
+    /** Arrangement-view special-track rows, keyed by the selector `ui show-special-track` takes. */
+    specialTracks: {
+        /** The chord progression row. */
+        chord: {
+            /** Whether it is mid-transition (opening or closing). */
+            animating: boolean;
+            /** Whether the citizen is currently on screen. */
+            visible: boolean;
+        };
+        /** The combined tempo and time-signature rows (they toggle together). */
+        tempo_and_timesig: {
+            /** Whether it is mid-transition (opening or closing). */
+            animating: boolean;
+            /** Whether the citizen is currently on screen. */
+            visible: boolean;
+        };
+    };
+    /** Tool windows, keyed by the selector `ui show-window` takes. */
+    windows: {
+        /** The floating video-monitor window. */
+        'video-monitor': {
+            /** Whether it is mid-transition (opening or closing). */
+            animating: boolean;
+            /** Whether the citizen is currently on screen. */
+            visible: boolean;
+        };
+    };
+}
+
+/** Arguments for `ui hide-panel`. */
+export interface UiHidePanelParams {
+    /** Which dockable panel: `mixer`, `fx`, `mv`, or `v2m`. */
+    panel: 'mixer' | 'fx' | 'mv' | 'v2m';
+}
+
+/** Arguments for `ui hide-special-track`. */
+export interface UiHideSpecialTrackParams {
+    /** Which arrangement-view row: `chord` or `tempo_and_timesig`. */
+    specialTrack: 'chord' | 'tempo_and_timesig';
+}
+
+/** Arguments for `ui hide-window`. */
+export interface UiHideWindowParams {
+    /** Which tool window: `video-monitor`. */
+    window: 'video-monitor';
+}
+
+/** Arguments for `ui show-panel`. */
+export interface UiShowPanelParams {
+    /** Which dockable panel: `mixer`, `fx`, `mv`, or `v2m`. */
+    panel: 'mixer' | 'fx' | 'mv' | 'v2m';
+}
+
+/** Arguments for `ui show-special-track`. */
+export interface UiShowSpecialTrackParams {
+    /** Which arrangement-view row: `chord` or `tempo_and_timesig`. */
+    specialTrack: 'chord' | 'tempo_and_timesig';
+}
+
+/** Arguments for `ui show-window`. */
+export interface UiShowWindowParams {
+    /** Which tool window: `video-monitor`. */
+    window: 'video-monitor';
+}
+
+/** The `ui` operations, mirroring the canonical operation tree 1:1, and the subscription that reports when the subject changes. */
+export interface UiOperations {
+    /**
+     * Read the state of every Studio chrome citizen: panels, tool windows, and special-track rows.
+     *
+     * Requires the `ui.state` capability.
+     */
+    get(options?: CallOptions): Promise<UiGetResult>;
+
+    /**
+     * Hide a dockable panel (mixer, fx, mv, v2m).
+     *
+     * Requires the `ui.control` capability.
+     */
+    hidePanel(params: UiHidePanelParams, options?: MutatingCallOptions): Promise<void>;
+
+    /**
+     * Hide an arrangement-view special-track row (chord, tempo_and_timesig).
+     *
+     * Requires the `ui.control` capability.
+     */
+    hideSpecialTrack(params: UiHideSpecialTrackParams, options?: MutatingCallOptions): Promise<void>;
+
+    /**
+     * Hide a tool window (video-monitor).
+     *
+     * Requires the `ui.control` capability.
+     */
+    hideWindow(params: UiHideWindowParams, options?: MutatingCallOptions): Promise<void>;
+
+    /**
+     * Show a dockable panel (mixer, fx, mv, v2m). Showing mv or v2m closes the other.
+     *
+     * Requires the `ui.control` capability.
+     */
+    showPanel(params: UiShowPanelParams, options?: MutatingCallOptions): Promise<void>;
+
+    /**
+     * Show an arrangement-view special-track row (chord, tempo_and_timesig).
+     *
+     * Requires the `ui.control` capability.
+     */
+    showSpecialTrack(params: UiShowSpecialTrackParams, options?: MutatingCallOptions): Promise<void>;
+
+    /**
+     * Show a tool window (video-monitor).
+     *
+     * Requires the `ui.control` capability.
+     */
+    showWindow(params: UiShowWindowParams, options?: MutatingCallOptions): Promise<void>;
+
+    /**
+     * Studio chrome (spec 1501 §4): a panel, tool window, or arrangement-view row
+     * was shown or hidden. `changes` carries the affected citizens as their paths
+     * in the `ui get` payload — `panels.mixer`, `specialTracks.chord`,
+     * `windows.video-monitor` — plus `sharedPanelSlot.selected` when MV and V2M
+     * swap the slot without either becoming visible. A peer re-fetches with
+     * `ui get`.
+     *
+     * Listen for changes on the `ui` channel. The event is a hint to re-read, not the new state.
+     *
+     * Requires the `ui.state` capability — an ungranted subscription is refused at this call, not silently never delivered.
+     */
+    onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
+}
+
+// --- vocalparam ------------------------------------------------------------
+
+/** Arguments for `vocalparam layers`. */
+export interface VocalparamLayersParams {
+    /** Report only this category instead of the whole matrix. One of `pitch`, `energy`, `tension`, `air`, `falsetto`, `formant`. */
+    category?: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
+    /** Clip id, as reported by `clip list` (braced form, e.g. `\{6f1c...\}`). */
+    clipUuid: string;
+}
+
+/** Success payload of `vocalparam layers`. */
+export interface VocalparamLayersResult {
+    /** One row per parameter category, in canonical order. A category this generation does not support is present with an empty `layers` list, so the matrix stays a full grid rather than a set a consumer has to diff. */
+    categories: {
+        /** False when the category cannot be read or written on this clip; `layers` is then empty and `unavailableReason` says why. Either the engine generation has no such parameter, or this surface does not carry it yet. */
+        available: boolean;
+        /** Parameter category. */
+        category: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
+        /** The layers this (generation x category) has, merge order first. `effective` is not listed here: it exists for every available category and is what `vocalparam read` returns beside the layers. */
+        layers: {
+            /** `read-write` for a layer a write may target, `read-only` otherwise. The effective curve is always read-only. */
+            access: 'read-only' | 'read-write';
+            /** Layer name. */
+            layer: 'baseline' | 'user' | 'envelope' | 'direct' | 'effective';
+            /** What the layer contributes to the merge: `analyzed-pristine` (the model's unconditioned production), `synthesized-default` (the engine's own curve), `override` (drawn values that win where present), `multiplier` (scales what is under it), or `merged` (the effective curve). */
+            role: string;
+            /** True when the layer carries values only where drawn, with gaps elsewhere (a gap is `null` under `encoding: json`, a NaN bit pattern under `base64`). */
+            sparse: boolean;
+        }[];
+        /** Which value space the numbers live in. `model` is SingingMamba's [0,1] model scale; `envelope` is Verse24's multiplier space; `semitones` is pitch delta. Never conflate them (ADR 0073 §3). */
+        scale?: string;
+        /** Present only when `available` is false: why the category cannot be used here, in one sentence. Read this rather than inferring a cause from the generation. */
+        unavailableReason?: string;
+        /** Inclusive bounds of a legal value in this category's scale. */
+        valueRange?: {
+            max?: number;
+            min?: number;
+        };
+    }[];
+    /** Number of entries in `categories` (convenience field). */
+    categoryCount: number;
+    /** The clip the matrix describes. */
+    clipUuid: string;
+    /** The clip's singer engine generation, which is half of what decides layer availability. */
+    engineGeneration: string;
+}
+
+/** Arguments for `vocalparam read`. */
+export interface VocalparamReadParams {
+    /** Parameter category to read: `pitch`, `energy`, `tension`, `air`, `falsetto`, or `formant`. See `vocalparam layers` for what this clip's singer generation supports. */
+    category: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
+    /** Clip id, as reported by `clip list` (braced form, e.g. `\{6f1c...\}`). */
+    clipUuid: string;
+    /** Return only this layer instead of every layer. `effective` is accepted here (unlike on a write) and returns the merged curve alone. */
+    layer?: 'baseline' | 'user' | 'envelope' | 'direct' | 'effective';
+    /** First clip-local tick to read. Defaults to the clip's visible start. */
+    rangeBegin?: number | null;
+    /** Clip-local tick to read up to, exclusive. Defaults to the clip's visible end. */
+    rangeEnd?: number | null;
+}
+
+/** Success payload of `vocalparam read`. */
+export interface VocalparamReadResult {
+    /** The category read. */
+    category: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
+    /** The clip read from. */
+    clipUuid: string;
+    /** Elements per layer: one per clip-local tick, so the last covers tick `posBegin + count - 1`. */
+    count: number;
+    /** The merged final curve the synth consumes. Engine-computed and always read-only; never reconstruct it from the layers. */
+    effective: {
+        /** `read-write` for a layer a write may target, `read-only` otherwise. The effective curve is always read-only. */
+        access: 'read-only' | 'read-write';
+        /** For a sparse layer, the clip-local tick ranges that carry drawn values. Absent on a dense layer. Reading this is cheaper than scanning the points for gaps. */
+        drawnRanges?: {
+            begin: number;
+            end: number;
+        }[];
+        /** Layer name. */
+        layer: 'baseline' | 'user' | 'envelope' | 'direct' | 'effective';
+        /** The layer's values, one per clip-local tick from `posBegin`. Under `encoding: json` (the default) this field is instead a plain array of numbers, `null` at a gap. */
+        points: TypedArrayFor<'f64le'>;
+        /** What the layer contributes to the merge: `analyzed-pristine` (the model's unconditioned production), `synthesized-default` (the engine's own curve), `override` (drawn values that win where present), `multiplier` (scales what is under it), or `merged` (the effective curve). */
+        role: string;
+        /** True when the layer carries values only where drawn, with gaps elsewhere (a gap is `null` under `encoding: json`, a NaN bit pattern under `base64`). */
+        sparse: boolean;
+    };
+    /** The clip's singer engine generation. */
+    engineGeneration: string;
+    /** Content token for this category's writable layers (ADR 0088 §5). Carry it into `vocalparam write --if-match` to fail STALE_WRITE rather than overwrite an edit that landed in between. */
+    fingerprint: Fingerprint;
+    /** Every layer this (generation x category) has, merge order first. */
+    layers: {
+        /** `read-write` for a layer a write may target, `read-only` otherwise. The effective curve is always read-only. */
+        access: 'read-only' | 'read-write';
+        /** For a sparse layer, the clip-local tick ranges that carry drawn values. Absent on a dense layer. Reading this is cheaper than scanning the points for gaps. */
+        drawnRanges?: {
+            begin: number;
+            end: number;
+        }[];
+        /** Layer name. */
+        layer: 'baseline' | 'user' | 'envelope' | 'direct' | 'effective';
+        /** The layer's values, one per clip-local tick from `posBegin`. Under `encoding: json` (the default) this field is instead a plain array of numbers, `null` at a gap. */
+        points: TypedArrayFor<'f64le'>;
+        /** What the layer contributes to the merge: `analyzed-pristine` (the model's unconditioned production), `synthesized-default` (the engine's own curve), `override` (drawn values that win where present), `multiplier` (scales what is under it), or `merged` (the effective curve). */
+        role: string;
+        /** True when the layer carries values only where drawn, with gaps elsewhere (a gap is `null` under `encoding: json`, a NaN bit pattern under `base64`). */
+        sparse: boolean;
+    }[];
+    /** Clip-local tick of element 0. Shared by every layer and by the effective curve, and the value a write restates. */
+    posBegin: number;
+    /** The value space these numbers live in. See `vocalparam layers`. */
+    scale?: string;
+    /** Clip-local tick ranges the singer produces no voiced sound in. Parameter values there reach no synth, so a consumer computing a transformation can skip them. */
+    unvoiced?: {
+        begin: number;
+        end: number;
+    }[];
+    /** Inclusive bounds of a legal value in this scale. */
+    valueRange?: {
+        max?: number;
+        min?: number;
+    };
+}
+
+/** Arguments for `vocalparam write`. */
+export interface VocalparamWriteParams {
+    /** Parameter category to write: `pitch`, `energy`, `tension`, `air`, `falsetto`, or `formant`. */
+    category: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
+    /** Clip id, as reported by `clip list` (braced form, e.g. `\{6f1c...\}`). */
+    clipUuid: string;
+    /** The writable layer to replace — required, and never `effective`: the merge is engine-owned (ADR 0085). `vocalparam layers` marks which layers this clip's generation lets you write. */
+    layer: 'baseline' | 'user' | 'envelope' | 'direct';
+    /**
+     * The replacement values, one per clip-local tick from `--pos-begin`.
+     *
+     * A JSON array of numbers (`null` clears a tick back to undrawn), or the base64 envelope `\{"dtype":"f64le","count":N,"data":"..."\}` with `--encoding base64`. Read it from a file with `\@curve.json` or from a pipe with `\@-` — a curve does not belong on a command line.
+     */
+    points: TypedArrayFor<Dtype>;
+    /** Clip-local tick the written span starts at — element 0 of `--points` lands here. Pass back the `posBegin` from the read you transformed. */
+    posBegin: number;
+}
+
+/** Success payload of `vocalparam write`. */
+export interface VocalparamWriteResult {
+    /** The category written. */
+    category: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
+    /** How many of those values were gaps (`null` / NaN) and so returned the tick to undrawn rather than setting a value. */
+    clearedCount?: number;
+    /** The clip written to. */
+    clipUuid: string;
+    /** Values written: the span covers ticks `posBegin` through `posBegin + count - 1`. */
+    count: number;
+    /** The category's content token *after* the write — what to carry into the next guarded write without re-reading. */
+    fingerprint: Fingerprint;
+    /** The layer written. Never `effective`. */
+    layer: 'baseline' | 'user' | 'envelope' | 'direct';
+    /** Clip-local tick the written span starts at. */
+    posBegin: number;
+}
+
+/** The `vocalparam` operations, mirroring the canonical operation tree 1:1. */
+export interface VocalparamOperations {
+    /**
+     * Report which parameter layers exist for a clip, per category.
+     *
+     * Requires the `vocalparam.read` capability.
+     */
+    layers(params: VocalparamLayersParams, options?: CallOptions): Promise<VocalparamLayersResult>;
+
+    /**
+     * Read a parameter category's layers and its effective curve.
+     *
+     * Requires the `vocalparam.read` capability.
+     */
+    read(params: VocalparamReadParams, options?: CallOptions): Promise<VocalparamReadResult>;
+
+    /**
+     * Replace a named writable layer's points over a tick range.
+     *
+     * Requires the `vocalparam.write` capability.
+     */
+    write(params: VocalparamWriteParams, options?: PreconditionCallOptions): Promise<VocalparamWriteResult>;
+}
+
 // --- voice -----------------------------------------------------------------
 
 /** Arguments for `voice collect`. */
@@ -2454,7 +2915,7 @@ export interface VoiceCommunityListResult {
     page: number;
     /** Community voices on this page (up to 30). Empty on fetch timeout. */
     voices: {
-        /** Group identifier: empty for official, '#' for custom, other values for community. */
+        /** Which source the voice comes from. Empty for official, '#' for custom, '\@' for community, the account's blended-voice library id for a blend. Ids repeat across sources, so (group, id) identifies a voice and id alone does not. */
         group: string;
         /** Numeric voice ID. */
         id: number;
@@ -2519,7 +2980,7 @@ export interface VoiceListResult {
         category?: string;
         /** Category ID. Instrument only. */
         categoryId?: number;
-        /** Group identifier (voice, choir, ensemble): empty for official, '#' for custom, other values for community. */
+        /** Which source the voice, choir or ensemble comes from. Empty for official, '#' for custom, '\@' for community, the account's blended-voice library id for a blend. Ids repeat across sources, so (group, id) identifies one and id alone does not. */
         group?: string;
         /** Numeric sound source ID. */
         id: number;
@@ -2548,7 +3009,7 @@ export interface VoiceListResult {
 
 /** Arguments for `voice load`. */
 export interface VoiceLoadParams {
-    /** Group identifier. Empty string for official sources, `#` for custom, any other value for community. Required for singer, choir, ensemble. */
+    /** Which source it comes from: empty string for official, `#` for custom, `\@` for community, the account's blended-voice library id for a blend. Ids repeat across sources, so this is needed to disambiguate. Required for singer, choir, ensemble. */
     group?: string | null;
     /** Sound source ID. */
     id: number;
@@ -2570,6 +3031,142 @@ export interface VoiceLoadResult {
     soundSourceType: string;
     /** 0-based index of the track the source was loaded onto. */
     trackIndex: number;
+}
+
+/** Arguments for `voice mix-create`. */
+export interface VoiceMixCreateParams {
+    /** Avatar id. Omit to take the library's first avatar. */
+    head?: number | null;
+    /** Language the voice sings, as a full English name (e.g. `Chinese`). Omit to take the first one the seeds and router allow. */
+    language?: string | null;
+    /** Display name for the new blended voice. */
+    name: string;
+    /** Synthesis router id. Omit to let Studio pick one that carries every seed — which is what you want unless you have a specific reason. */
+    routerId?: number | null;
+    /** JSON array of seed entries, e.g. `[\{"code":1001,"timbre":0.6,"style":0.4\}]`. Each entry needs a `code`; `timbre`, `style`, and `lock` default to 1, 1, and true. Every seed must be owned and blendable. */
+    seeds: {
+        /** The seed voice's code. Must name a seed this account owns and that is allowed in a blend. */
+        code: number;
+        /** Whether the seed's weights are locked against redistribution when other weights change. Defaults to true. */
+        lock?: boolean | null;
+        /** Style weight, defaulting to 1. */
+        style?: number | null;
+        /** Timbre weight, defaulting to 1. */
+        timbre?: number | null;
+    }[];
+    /** Tag names to attach, for filtering in `voice list`. */
+    tags?: string[] | null;
+}
+
+/** Success payload of `voice mix-create`. */
+export interface VoiceMixCreateResult {
+    /** Group identifier of the blended-voice library the voice belongs to. */
+    group: string;
+    /** Avatar id, or -1 when the voice falls back to its first seed's avatar. */
+    head: number;
+    /** The blended voice's library id. Pass it to `voice mix-edit --id`, or to `voice load --id` with group '#'. */
+    id: number;
+    /** Full English name of the voice's language. */
+    language: string;
+    /** Display name. */
+    name: string;
+    /** Id of the synthesis router the blend sings through. */
+    routerId: number;
+    /** Name of that router. */
+    routerName: string;
+    /** The recipe, one entry per seed voice. */
+    seeds: {
+        /** The seed voice's code. */
+        code: number;
+        /** Whether the seed's weights are locked against redistribution when other weights change. */
+        lock: boolean;
+        /** The seed voice's name. Omitted when the seed is no longer in the local registry. */
+        name?: string;
+        /** The seed's style weight in the blend. */
+        style: number;
+        /** The seed's timbre weight in the blend. */
+        timbre: number;
+    }[];
+    /** Tag names attached to the voice. */
+    tags: string[];
+}
+
+/** Arguments for `voice mix-delete`. */
+export interface VoiceMixDeleteParams {
+    /** Library id of the blended voice to delete, from `voice mix-create` or `voice list`. */
+    id: number;
+}
+
+/** Success payload of `voice mix-delete`. */
+export interface VoiceMixDeleteResult {
+    /** Library id of the deleted blended voice. */
+    id: number;
+    /** The library's ceiling, so a caller can tell whether a `voice mix-create` will now fit. */
+    maximum: number;
+    /** Display name it had when it was deleted. */
+    name: string;
+    /** How many blended voices the library still holds. */
+    remaining: number;
+}
+
+/** Arguments for `voice mix-edit`. */
+export interface VoiceMixEditParams {
+    /** New avatar id. */
+    head?: number | null;
+    /** Library id of the blended voice to edit, from `voice mix-create` or `voice list`. */
+    id: number;
+    /** New language, as a full English name. */
+    language?: string | null;
+    /** New display name. */
+    name?: string | null;
+    /** New synthesis router id. Omit and Studio re-picks one only when a new recipe leaves the current router unable to carry every seed. */
+    routerId?: number | null;
+    /** Replacement recipe, same shape as `voice mix-create --seeds`. Replaces the whole recipe rather than merging into it. */
+    seeds?: {
+        /** The seed voice's code. Must name a seed this account owns and that is allowed in a blend. */
+        code: number;
+        /** Whether the seed's weights are locked against redistribution when other weights change. Defaults to true. */
+        lock?: boolean | null;
+        /** Style weight, defaulting to 1. */
+        style?: number | null;
+        /** Timbre weight, defaulting to 1. */
+        timbre?: number | null;
+    }[] | null;
+    /** Replacement tag list. Replaces the existing tags rather than adding to them; pass no values to clear them. */
+    tags?: string[] | null;
+}
+
+/** Success payload of `voice mix-edit`. */
+export interface VoiceMixEditResult {
+    /** Group identifier of the blended-voice library the voice belongs to. */
+    group: string;
+    /** Avatar id, or -1 when the voice falls back to its first seed's avatar. */
+    head: number;
+    /** The blended voice's library id. Pass it to `voice mix-edit --id`, or to `voice load --id` with group '#'. */
+    id: number;
+    /** Full English name of the voice's language. */
+    language: string;
+    /** Display name. */
+    name: string;
+    /** Id of the synthesis router the blend sings through. */
+    routerId: number;
+    /** Name of that router. */
+    routerName: string;
+    /** The recipe, one entry per seed voice. */
+    seeds: {
+        /** The seed voice's code. */
+        code: number;
+        /** Whether the seed's weights are locked against redistribution when other weights change. */
+        lock: boolean;
+        /** The seed voice's name. Omitted when the seed is no longer in the local registry. */
+        name?: string;
+        /** The seed's style weight in the blend. */
+        style: number;
+        /** The seed's timbre weight in the blend. */
+        timbre: number;
+    }[];
+    /** Tag names attached to the voice. */
+    tags: string[];
 }
 
 /** Arguments for `voice tags`. */
@@ -2654,6 +3251,27 @@ export interface VoiceOperations {
     load(params: VoiceLoadParams, options?: MutatingCallOptions): Promise<VoiceLoadResult>;
 
     /**
+     * Create a blended voice in the library from a recipe of seed voices.
+     *
+     * Requires the `voice.write` capability.
+     */
+    mixCreate(params: VoiceMixCreateParams, options?: MutatingCallOptions): Promise<VoiceMixCreateResult>;
+
+    /**
+     * Delete a blended voice from the library.
+     *
+     * Requires the `voice.write` capability.
+     */
+    mixDelete(params: VoiceMixDeleteParams, options?: MutatingCallOptions): Promise<VoiceMixDeleteResult>;
+
+    /**
+     * Edit an existing blended voice: its recipe, name, tags, language, or avatar.
+     *
+     * Requires the `voice.write` capability.
+     */
+    mixEdit(params: VoiceMixEditParams, options?: MutatingCallOptions): Promise<VoiceMixEditResult>;
+
+    /**
      * Return the tag taxonomy / filter options for sound sources.
      *
      * Requires the `voice.read` capability.
@@ -2675,16 +3293,18 @@ export interface PublicBindings {
     readonly convert: ConvertOperations;
     readonly device: DeviceOperations;
     readonly editor: EditorOperations;
+    readonly history: HistoryOperations;
     readonly job: JobOperations;
-    readonly mixer: MixerOperations;
     readonly note: NoteOperations;
     readonly project: ProjectOperations;
+    readonly recording: RecordingOperations;
     readonly selection: SelectionOperations;
-    readonly specialTracks: SpecialTracksOperations;
     readonly tempo: TempoOperations;
     readonly timesig: TimesigOperations;
     readonly track: TrackOperations;
     readonly transport: TransportOperations;
+    readonly ui: UiOperations;
+    readonly vocalparam: VocalparamOperations;
     readonly voice: VoiceOperations;
 }
 
@@ -2708,10 +3328,14 @@ export const OPERATIONS = [
     { path: 'convert time-to-tick', domain: 'convert', method: 'timeToTick', capability: 'convert.time-to-tick', ungated: true, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'device current', domain: 'device', method: 'current', capability: 'device.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
     { path: 'device list', domain: 'device', method: 'list', capability: 'device.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'device set-audio', domain: 'device', method: 'setAudio', capability: 'device.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'editor current-clip', domain: 'editor', method: 'currentClip', capability: 'editor.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
     { path: 'editor open', domain: 'editor', method: 'open', capability: 'editor.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
     { path: 'editor status', domain: 'editor', method: 'status', capability: 'editor.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
     { path: 'editor tick-range', domain: 'editor', method: 'tickRange', capability: 'editor.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'history list', domain: 'history', method: 'list', capability: 'history.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'history redo', domain: 'history', method: 'redo', capability: 'history.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'history undo', domain: 'history', method: 'undo', capability: 'history.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
     { path: 'job cancel', domain: 'job', method: 'cancel', capability: 'job.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'job discard-result', domain: 'job', method: 'discardResult', capability: 'job.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'job get', domain: 'job', method: 'get', capability: 'job.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
@@ -2719,9 +3343,6 @@ export const OPERATIONS = [
     { path: 'job place', domain: 'job', method: 'place', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'job results', domain: 'job', method: 'results', capability: 'job.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'job wait', domain: 'job', method: 'wait', capability: 'job.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'mixer get', domain: 'mixer', method: 'get', capability: 'ui.view', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
-    { path: 'mixer hide', domain: 'mixer', method: 'hide', capability: 'ui.view', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
-    { path: 'mixer show', domain: 'mixer', method: 'show', capability: 'ui.view', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
     { path: 'note add', domain: 'note', method: 'add', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
     { path: 'note delete', domain: 'note', method: 'delete', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
     { path: 'note move', domain: 'note', method: 'move', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
@@ -2738,11 +3359,10 @@ export const OPERATIONS = [
     { path: 'project save-as', domain: 'project', method: 'saveAs', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'project save-template', domain: 'project', method: 'saveTemplate', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'membership' },
     { path: 'project synthesis-status', domain: 'project', method: 'synthesisStatus', capability: 'project.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'recording start', domain: 'recording', method: 'start', capability: 'recording.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'recording stop', domain: 'recording', method: 'stop', capability: 'recording.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
     { path: 'selection get', domain: 'selection', method: 'get', capability: 'selection.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'selection set', domain: 'selection', method: 'set', capability: 'selection.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'special-tracks get', domain: 'special-tracks', method: 'get', capability: 'ui.view', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
-    { path: 'special-tracks hide', domain: 'special-tracks', method: 'hide', capability: 'ui.view', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'special-tracks show', domain: 'special-tracks', method: 'show', capability: 'ui.view', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'tempo get', domain: 'tempo', method: 'get', capability: 'tempo.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
     { path: 'tempo set', domain: 'tempo', method: 'set', capability: 'tempo.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'timesig get', domain: 'timesig', method: 'get', capability: 'timesig.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
@@ -2762,11 +3382,24 @@ export const OPERATIONS = [
     { path: 'transport state', domain: 'transport', method: 'state', capability: 'transport.state', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
     { path: 'transport stop', domain: 'transport', method: 'stop', capability: 'transport.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
     { path: 'transport toggle', domain: 'transport', method: 'toggle', capability: 'transport.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'ui get', domain: 'ui', method: 'get', capability: 'ui.state', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'ui hide-panel', domain: 'ui', method: 'hidePanel', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'ui hide-special-track', domain: 'ui', method: 'hideSpecialTrack', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'ui hide-window', domain: 'ui', method: 'hideWindow', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'ui show-panel', domain: 'ui', method: 'showPanel', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'ui show-special-track', domain: 'ui', method: 'showSpecialTrack', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'ui show-window', domain: 'ui', method: 'showWindow', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'vocalparam layers', domain: 'vocalparam', method: 'layers', capability: 'vocalparam.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'vocalparam read', domain: 'vocalparam', method: 'read', capability: 'vocalparam.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true, bulkEncoding: 'base64' },
+    { path: 'vocalparam write', domain: 'vocalparam', method: 'write', capability: 'vocalparam.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true, bulkEncoding: 'base64' },
     { path: 'voice collect', domain: 'voice', method: 'collect', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'voice community-list', domain: 'voice', method: 'communityList', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'voice community-pages', domain: 'voice', method: 'communityPages', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'voice list', domain: 'voice', method: 'list', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'voice load', domain: 'voice', method: 'load', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'voice mix-create', domain: 'voice', method: 'mixCreate', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'voice mix-delete', domain: 'voice', method: 'mixDelete', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'voice mix-edit', domain: 'voice', method: 'mixEdit', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'voice tags', domain: 'voice', method: 'tags', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'voice unload', domain: 'voice', method: 'unload', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
 ] as const satisfies readonly OperationDescriptor[];
@@ -2774,6 +3407,7 @@ export const OPERATIONS = [
 /** Every observable channel in this artifact, sorted by channel. The runtime builds one subscription per row and guards it with the row's capability; a channel absent from this table is not observable from this artifact at all. */
 export const NOTIFICATION_CHANNELS = [
     { channel: 'jobs', domain: 'job', method: 'onChanged', capability: 'job.read' },
+    { channel: 'ui', domain: 'ui', method: 'onChanged', capability: 'ui.state' },
 ] as const satisfies readonly ChannelDescriptor[];
 
 /** The token each operation requires, for the pre-wire guard: a call the session's grant cannot reach fails locally with the identical typed `CAPABILITY_DENIED` the host would have returned. Ungated operations are absent — they need no token. */
@@ -2790,10 +3424,14 @@ export const REQUIRED_TOKENS = {
     'clip replace-content': 'clip.write',
     'device current': 'device.read',
     'device list': 'device.read',
+    'device set-audio': 'device.write',
     'editor current-clip': 'editor.read',
     'editor open': 'editor.write',
     'editor status': 'editor.read',
     'editor tick-range': 'editor.read',
+    'history list': 'history.read',
+    'history redo': 'history.control',
+    'history undo': 'history.control',
     'job cancel': 'job.control',
     'job discard-result': 'job.control',
     'job get': 'job.read',
@@ -2801,9 +3439,6 @@ export const REQUIRED_TOKENS = {
     'job place': 'clip.write',
     'job results': 'job.read',
     'job wait': 'job.read',
-    'mixer get': 'ui.view',
-    'mixer hide': 'ui.view',
-    'mixer show': 'ui.view',
     'note add': 'note.write',
     'note delete': 'note.write',
     'note move': 'note.write',
@@ -2820,11 +3455,10 @@ export const REQUIRED_TOKENS = {
     'project save-as': 'project.lifecycle',
     'project save-template': 'project.lifecycle',
     'project synthesis-status': 'project.read',
+    'recording start': 'recording.control',
+    'recording stop': 'recording.control',
     'selection get': 'selection.read',
     'selection set': 'selection.write',
-    'special-tracks get': 'ui.view',
-    'special-tracks hide': 'ui.view',
-    'special-tracks show': 'ui.view',
     'tempo get': 'tempo.read',
     'tempo set': 'tempo.write',
     'timesig get': 'timesig.read',
@@ -2844,18 +3478,31 @@ export const REQUIRED_TOKENS = {
     'transport state': 'transport.state',
     'transport stop': 'transport.control',
     'transport toggle': 'transport.control',
+    'ui get': 'ui.state',
+    'ui hide-panel': 'ui.control',
+    'ui hide-special-track': 'ui.control',
+    'ui hide-window': 'ui.control',
+    'ui show-panel': 'ui.control',
+    'ui show-special-track': 'ui.control',
+    'ui show-window': 'ui.control',
+    'vocalparam layers': 'vocalparam.read',
+    'vocalparam read': 'vocalparam.read',
+    'vocalparam write': 'vocalparam.write',
     'voice collect': 'voice.write',
     'voice community-list': 'voice.read',
     'voice community-pages': 'voice.read',
     'voice list': 'voice.read',
     'voice load': 'voice.write',
+    'voice mix-create': 'voice.write',
+    'voice mix-delete': 'voice.write',
+    'voice mix-edit': 'voice.write',
     'voice tags': 'voice.read',
     'voice unload': 'voice.write',
 } as const satisfies Readonly<Record<string, CapabilityToken>>;
 
 /** Each published Capability Profile's transitive token expansion (ADR 0093 §1): a named bundle a grant is measured against, rather than a set the consumer hand-lists. A profile is met when every token here is granted. The expansion is the registry's and moves with it, and a profile the registry still marks draft may yet be re-cut (ADR 0093 §6). */
 export const PROFILES = {
-    'surface.cli-mcp.v1': ['caret.read', 'caret.write', 'chord.read', 'chord.write', 'clip.read', 'clip.write', 'device.read', 'device.write', 'editor.read', 'editor.write', 'export.invoke', 'fx.read', 'fx.write', 'generative.add-layer', 'generative.enhance', 'generative.retake', 'generative.seed-audio', 'generative.song', 'generative.sound-effects', 'generative.stem-split', 'generative.text2sample', 'generative.vocal2midi', 'generative.voice-change', 'history.control', 'history.read', 'import.invoke', 'job.control', 'job.read', 'lyric.read', 'lyric.write', 'note.read', 'note.write', 'project.lifecycle', 'project.read', 'recording.control', 'selection.read', 'selection.write', 'tempo.analyze', 'tempo.applyV2', 'tempo.read', 'tempo.write', 'timesig.read', 'timesig.write', 'track.read', 'track.write', 'transport.control', 'transport.state', 'ui.view', 'vocalparam.read', 'vocalparam.write', 'voice.read', 'voice.write'],
+    'surface.cli-mcp.v1': ['caret.read', 'caret.write', 'chord.read', 'chord.write', 'clip.read', 'clip.write', 'device.read', 'device.write', 'editor.read', 'editor.write', 'export.invoke', 'fx.read', 'fx.write', 'generative.add-layer', 'generative.enhance', 'generative.retake', 'generative.seed-audio', 'generative.song', 'generative.sound-effects', 'generative.stem-split', 'generative.text2sample', 'generative.vocal2midi', 'generative.voice-change', 'history.control', 'history.read', 'import.invoke', 'job.control', 'job.read', 'lyric.read', 'lyric.write', 'note.read', 'note.write', 'project.lifecycle', 'project.read', 'recording.control', 'selection.read', 'selection.write', 'tempo.analyze', 'tempo.applyV2', 'tempo.read', 'tempo.write', 'timesig.read', 'timesig.write', 'track.read', 'track.write', 'transport.control', 'transport.state', 'ui.control', 'ui.state', 'vocalparam.read', 'vocalparam.write', 'voice.read', 'voice.write'],
     'surface.extension-sdk.v1': ['session.handshake', 'session.ping', 'session.shutdown', 'workflow.dev', 'workflow.ui'],
 } as const satisfies Readonly<Record<string, readonly CapabilityToken[]>>;
 
@@ -2868,7 +3515,16 @@ export const DRAFT_PROFILES = [
 export const FIELD_CAPABILITIES = {} as const satisfies Readonly<Record<string, Readonly<Record<string, CapabilityToken>>>>;
 
 /** Where the bulk fields sit in each operation's arguments object, for the encode/decode pass that swaps typed arrays for the base64 envelope. */
-export const BULK_PARAM_FIELDS = {} as const satisfies Readonly<Record<string, readonly BulkFieldDescriptor[]>>;
+export const BULK_PARAM_FIELDS = {
+    'vocalparam write': [
+        { field: 'points', dtype: null },
+    ],
+} as const satisfies Readonly<Record<string, readonly BulkFieldDescriptor[]>>;
 
 /** Where the bulk fields sit in each operation's result object, for the encode/decode pass that swaps typed arrays for the base64 envelope. */
-export const BULK_RESULT_FIELDS = {} as const satisfies Readonly<Record<string, readonly BulkFieldDescriptor[]>>;
+export const BULK_RESULT_FIELDS = {
+    'vocalparam read': [
+        { field: 'effective.points', dtype: 'f64le' },
+        { field: 'layers[].points', dtype: 'f64le' },
+    ],
+} as const satisfies Readonly<Record<string, readonly BulkFieldDescriptor[]>>;

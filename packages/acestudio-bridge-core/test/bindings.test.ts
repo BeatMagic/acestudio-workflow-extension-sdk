@@ -56,10 +56,11 @@ describe("the operation surface", () => {
   it("mirrors the canonical operation tree, one method per operation", async () => {
     const { connection } = await connectToScriptedHost();
     // Spot-check the shape rather than every method: what matters is that the
-    // runtime nests by domain and camelCases a hyphenated one the same way the
-    // generated interface spells it.
+    // runtime nests by domain and camelCases a hyphenated name the same way the
+    // generated interface spells it. No domain is hyphenated today, so the
+    // camelCase half rides on a command name (`ui show-special-track`).
     expect(typeof connection.client.track.list).toBe("function");
-    expect(typeof connection.client.specialTracks.show).toBe("function");
+    expect(typeof connection.client.ui.showSpecialTrack).toBe("function");
     expect(Object.keys(connection.client).length).toBeGreaterThan(0);
     connection.close();
   });

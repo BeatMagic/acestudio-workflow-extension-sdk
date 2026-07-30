@@ -58,7 +58,7 @@ Category ID. Instrument only.
 optional group?: string;
 ```
 
-Group identifier (voice, choir, ensemble): empty for official, '#' for custom, other values for community.
+Which source the voice, choir or ensemble comes from. Empty for official, '#' for custom, '@' for community, the account's blended-voice library id for a blend. Ids repeat across sources, so (group, id) identifies one and id alone does not.
 
 #### id
 

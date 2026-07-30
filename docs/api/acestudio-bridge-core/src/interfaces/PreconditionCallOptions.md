@@ -14,7 +14,7 @@ Options a write that honors the stale-write precondition additionally accepts. O
 optional ifMatch?: Fingerprint;
 ```
 
-The fingerprint from a prior read; the write fails `STALE_WRITE` if content changed since.
+The fingerprint from a prior read of *this* operation's content; the write fails `STALE_WRITE` if it changed since, or `FINGERPRINT_SCOPE_MISMATCH` if the token came from a read of something else.
 
 ***
 

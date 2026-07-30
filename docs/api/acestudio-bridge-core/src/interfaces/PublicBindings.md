@@ -44,18 +44,18 @@ readonly editor: EditorOperations;
 
 ***
 
-### job
+### history
 
 ```ts
-readonly job: JobOperations;
+readonly history: HistoryOperations;
 ```
 
 ***
 
-### mixer
+### job
 
 ```ts
-readonly mixer: MixerOperations;
+readonly job: JobOperations;
 ```
 
 ***
@@ -76,18 +76,18 @@ readonly project: ProjectOperations;
 
 ***
 
-### selection
+### recording
 
 ```ts
-readonly selection: SelectionOperations;
+readonly recording: RecordingOperations;
 ```
 
 ***
 
-### specialTracks
+### selection
 
 ```ts
-readonly specialTracks: SpecialTracksOperations;
+readonly selection: SelectionOperations;
 ```
 
 ***
@@ -120,6 +120,22 @@ readonly track: TrackOperations;
 
 ```ts
 readonly transport: TransportOperations;
+```
+
+***
+
+### ui
+
+```ts
+readonly ui: UiOperations;
+```
+
+***
+
+### vocalparam
+
+```ts
+readonly vocalparam: VocalparamOperations;
 ```
 
 ***

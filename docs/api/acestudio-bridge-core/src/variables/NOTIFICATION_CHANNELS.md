@@ -6,6 +6,11 @@ const NOTIFICATION_CHANNELS: readonly [{
   channel: "jobs";
   domain: "job";
   method: "onChanged";
+}, {
+  capability: "ui.state";
+  channel: "ui";
+  domain: "ui";
+  method: "onChanged";
 }];
 ```
 

@@ -58,7 +58,7 @@ Community voices on this page (up to 30). Empty on fetch timeout.
 group: string;
 ```
 
-Group identifier: empty for official, '#' for custom, other values for community.
+Which source the voice comes from. Empty for official, '#' for custom, '@' for community, the account's blended-voice library id for a blend. Ids repeat across sources, so (group, id) identifies a voice and id alone does not.
 
 #### id
 

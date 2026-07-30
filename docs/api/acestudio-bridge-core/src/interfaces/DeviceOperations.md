@@ -45,3 +45,29 @@ Requires the `device.read` capability.
 #### Returns
 
 `Promise`\<[`DeviceListResult`](DeviceListResult.md)\>
+
+***
+
+### setAudio()
+
+```ts
+setAudio(params, options?): Promise<DeviceSetAudioResult>;
+```
+
+Select the audio backend, output device, and input device by name.
+
+Requires the `device.write` capability.
+
+#### Parameters
+
+##### params
+
+[`DeviceSetAudioParams`](DeviceSetAudioParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`DeviceSetAudioResult`](DeviceSetAudioResult.md)\>

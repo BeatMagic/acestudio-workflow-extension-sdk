@@ -56,9 +56,9 @@ for (const pkg of PACKAGES) {
       platform,
       format: "esm",
       target,
-      // Resolve @timedomain peers to their source (the packages' dev entry), the
-      // same as tsc's customConditions and vitest's alias.
-      conditions: ["development"],
+      // Resolve @timedomain peers to their source, the same condition tsc
+      // (customConditions) and vitest (ssr.resolve.conditions) use.
+      conditions: ["acestudio:source"],
       external: pkg.external,
       logLevel: "info",
     });

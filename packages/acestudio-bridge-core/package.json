@@ -10,12 +10,12 @@
   "types": "./dist/src/index.d.ts",
   "exports": {
     ".": {
-      "development": "./src/index.ts",
+      "acestudio:source": "./src/index.ts",
       "types": "./dist/src/index.d.ts",
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": ["dist", "src"],
   "scripts": {
     "prepack": "node ../../scripts/build.mjs"
   },

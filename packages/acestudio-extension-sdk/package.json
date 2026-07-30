@@ -10,12 +10,12 @@
   "types": "./dist/src/index.d.ts",
   "exports": {
     ".": {
-      "development": "./src/index.ts",
+      "acestudio:source": "./src/index.ts",
       "types": "./dist/src/index.d.ts",
       "default": "./dist/index.js"
     },
     "./page": {
-      "development": "./src/page/index.ts",
+      "acestudio:source": "./src/page/index.ts",
       "types": "./dist/src/page/index.d.ts",
       "default": "./dist/page/index.js"
     }
@@ -23,7 +23,7 @@
   "dependencies": {
     "@timedomain/acestudio-bridge-core": "^0.0.0"
   },
-  "files": ["dist"],
+  "files": ["dist", "src"],
   "scripts": {
     "prepack": "node ../../scripts/build.mjs"
   },

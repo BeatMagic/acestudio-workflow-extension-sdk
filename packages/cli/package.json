@@ -12,7 +12,7 @@
   "main": "./dist/index.js",
   "exports": {
     ".": {
-      "development": "./src/index.ts",
+      "acestudio:source": "./src/index.ts",
       "default": "./dist/index.js"
     }
   },
@@ -24,7 +24,7 @@
     "@timedomain/workflowext-verifier": "*",
     "@timedomain/workflowext-wire-schemas": "*"
   },
-  "files": ["dist"],
+  "files": ["dist", "src"],
   "scripts": {
     "prepack": "node ../../scripts/build.mjs"
   },

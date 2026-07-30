@@ -118,6 +118,7 @@ describe("the descriptor rows behind all of it", () => {
       "note resize",
       "note set-lyric",
       "transport set-loop",
+      "vocalparam write",
     ]);
   });
 });

@@ -10,7 +10,7 @@ Arguments for `voice load`.
 optional group?: string | null;
 ```
 
-Group identifier. Empty string for official sources, `#` for custom, any other value for community. Required for singer, choir, ensemble.
+Which source it comes from: empty string for official, `#` for custom, `\@` for community, the account's blended-voice library id for a blend. Ids repeat across sources, so this is needed to disambiguate. Required for singer, choir, ensemble.
 
 ***
 

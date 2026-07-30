@@ -134,6 +134,84 @@ Requires the `voice.write` capability.
 
 ***
 
+### mixCreate()
+
+```ts
+mixCreate(params, options?): Promise<VoiceMixCreateResult>;
+```
+
+Create a blended voice in the library from a recipe of seed voices.
+
+Requires the `voice.write` capability.
+
+#### Parameters
+
+##### params
+
+[`VoiceMixCreateParams`](VoiceMixCreateParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`VoiceMixCreateResult`](VoiceMixCreateResult.md)\>
+
+***
+
+### mixDelete()
+
+```ts
+mixDelete(params, options?): Promise<VoiceMixDeleteResult>;
+```
+
+Delete a blended voice from the library.
+
+Requires the `voice.write` capability.
+
+#### Parameters
+
+##### params
+
+[`VoiceMixDeleteParams`](VoiceMixDeleteParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`VoiceMixDeleteResult`](VoiceMixDeleteResult.md)\>
+
+***
+
+### mixEdit()
+
+```ts
+mixEdit(params, options?): Promise<VoiceMixEditResult>;
+```
+
+Edit an existing blended voice: its recipe, name, tags, language, or avatar.
+
+Requires the `voice.write` capability.
+
+#### Parameters
+
+##### params
+
+[`VoiceMixEditParams`](VoiceMixEditParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`VoiceMixEditResult`](VoiceMixEditResult.md)\>
+
+***
+
 ### tags()
 
 ```ts

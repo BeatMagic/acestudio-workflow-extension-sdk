@@ -14,10 +14,14 @@ const REQUIRED_TOKENS: {
   clip replace-content: "clip.write";
   device current: "device.read";
   device list: "device.read";
+  device set-audio: "device.write";
   editor current-clip: "editor.read";
   editor open: "editor.write";
   editor status: "editor.read";
   editor tick-range: "editor.read";
+  history list: "history.read";
+  history redo: "history.control";
+  history undo: "history.control";
   job cancel: "job.control";
   job discard-result: "job.control";
   job get: "job.read";
@@ -25,9 +29,6 @@ const REQUIRED_TOKENS: {
   job place: "clip.write";
   job results: "job.read";
   job wait: "job.read";
-  mixer get: "ui.view";
-  mixer hide: "ui.view";
-  mixer show: "ui.view";
   note add: "note.write";
   note delete: "note.write";
   note move: "note.write";
@@ -44,11 +45,10 @@ const REQUIRED_TOKENS: {
   project save-as: "project.lifecycle";
   project save-template: "project.lifecycle";
   project synthesis-status: "project.read";
+  recording start: "recording.control";
+  recording stop: "recording.control";
   selection get: "selection.read";
   selection set: "selection.write";
-  special-tracks get: "ui.view";
-  special-tracks hide: "ui.view";
-  special-tracks show: "ui.view";
   tempo get: "tempo.read";
   tempo set: "tempo.write";
   timesig get: "timesig.read";
@@ -68,11 +68,24 @@ const REQUIRED_TOKENS: {
   transport state: "transport.state";
   transport stop: "transport.control";
   transport toggle: "transport.control";
+  ui get: "ui.state";
+  ui hide-panel: "ui.control";
+  ui hide-special-track: "ui.control";
+  ui hide-window: "ui.control";
+  ui show-panel: "ui.control";
+  ui show-special-track: "ui.control";
+  ui show-window: "ui.control";
+  vocalparam layers: "vocalparam.read";
+  vocalparam read: "vocalparam.read";
+  vocalparam write: "vocalparam.write";
   voice collect: "voice.write";
   voice community-list: "voice.read";
   voice community-pages: "voice.read";
   voice list: "voice.read";
   voice load: "voice.write";
+  voice mix-create: "voice.write";
+  voice mix-delete: "voice.write";
+  voice mix-edit: "voice.write";
   voice tags: "voice.read";
   voice unload: "voice.write";
 };
@@ -154,6 +167,12 @@ readonly device current: "device.read" = 'device.read';
 readonly device list: "device.read" = 'device.read';
 ```
 
+### device set-audio
+
+```ts
+readonly device set-audio: "device.write" = 'device.write';
+```
+
 ### editor current-clip
 
 ```ts
@@ -176,6 +195,24 @@ readonly editor status: "editor.read" = 'editor.read';
 
 ```ts
 readonly editor tick-range: "editor.read" = 'editor.read';
+```
+
+### history list
+
+```ts
+readonly history list: "history.read" = 'history.read';
+```
+
+### history redo
+
+```ts
+readonly history redo: "history.control" = 'history.control';
+```
+
+### history undo
+
+```ts
+readonly history undo: "history.control" = 'history.control';
 ```
 
 ### job cancel
@@ -218,24 +255,6 @@ readonly job results: "job.read" = 'job.read';
 
 ```ts
 readonly job wait: "job.read" = 'job.read';
-```
-
-### mixer get
-
-```ts
-readonly mixer get: "ui.view" = 'ui.view';
-```
-
-### mixer hide
-
-```ts
-readonly mixer hide: "ui.view" = 'ui.view';
-```
-
-### mixer show
-
-```ts
-readonly mixer show: "ui.view" = 'ui.view';
 ```
 
 ### note add
@@ -334,6 +353,18 @@ readonly project save-template: "project.lifecycle" = 'project.lifecycle';
 readonly project synthesis-status: "project.read" = 'project.read';
 ```
 
+### recording start
+
+```ts
+readonly recording start: "recording.control" = 'recording.control';
+```
+
+### recording stop
+
+```ts
+readonly recording stop: "recording.control" = 'recording.control';
+```
+
 ### selection get
 
 ```ts
@@ -344,24 +375,6 @@ readonly selection get: "selection.read" = 'selection.read';
 
 ```ts
 readonly selection set: "selection.write" = 'selection.write';
-```
-
-### special-tracks get
-
-```ts
-readonly special-tracks get: "ui.view" = 'ui.view';
-```
-
-### special-tracks hide
-
-```ts
-readonly special-tracks hide: "ui.view" = 'ui.view';
-```
-
-### special-tracks show
-
-```ts
-readonly special-tracks show: "ui.view" = 'ui.view';
 ```
 
 ### tempo get
@@ -478,6 +491,66 @@ readonly transport stop: "transport.control" = 'transport.control';
 readonly transport toggle: "transport.control" = 'transport.control';
 ```
 
+### ui get
+
+```ts
+readonly ui get: "ui.state" = 'ui.state';
+```
+
+### ui hide-panel
+
+```ts
+readonly ui hide-panel: "ui.control" = 'ui.control';
+```
+
+### ui hide-special-track
+
+```ts
+readonly ui hide-special-track: "ui.control" = 'ui.control';
+```
+
+### ui hide-window
+
+```ts
+readonly ui hide-window: "ui.control" = 'ui.control';
+```
+
+### ui show-panel
+
+```ts
+readonly ui show-panel: "ui.control" = 'ui.control';
+```
+
+### ui show-special-track
+
+```ts
+readonly ui show-special-track: "ui.control" = 'ui.control';
+```
+
+### ui show-window
+
+```ts
+readonly ui show-window: "ui.control" = 'ui.control';
+```
+
+### vocalparam layers
+
+```ts
+readonly vocalparam layers: "vocalparam.read" = 'vocalparam.read';
+```
+
+### vocalparam read
+
+```ts
+readonly vocalparam read: "vocalparam.read" = 'vocalparam.read';
+```
+
+### vocalparam write
+
+```ts
+readonly vocalparam write: "vocalparam.write" = 'vocalparam.write';
+```
+
 ### voice collect
 
 ```ts
@@ -506,6 +579,24 @@ readonly voice list: "voice.read" = 'voice.read';
 
 ```ts
 readonly voice load: "voice.write" = 'voice.write';
+```
+
+### voice mix-create
+
+```ts
+readonly voice mix-create: "voice.write" = 'voice.write';
+```
+
+### voice mix-delete
+
+```ts
+readonly voice mix-delete: "voice.write" = 'voice.write';
+```
+
+### voice mix-edit
+
+```ts
+readonly voice mix-edit: "voice.write" = 'voice.write';
 ```
 
 ### voice tags

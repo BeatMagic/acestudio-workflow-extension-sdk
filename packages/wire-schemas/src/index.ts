@@ -43,11 +43,19 @@ export type UnixSeconds = number;
  */
 export type ChainlessEnvelope = Omit<SignedEnvelope, "chain"> & { chain?: never };
 
+/**
+ * Provenance mark stamped into the signed payload (ADR 0098 §2). Clients
+ * resolve the trust tier from this verified field, never from registry
+ * absence; future identity tiers extend the union without re-signing.
+ */
+export type ProvenanceClass = "registered" | "ad-hoc";
+
 export interface SignatureBlockPayload {
   format: typeof SIGNATURE_BLOCK_FORMAT;
   formatVersion: 1;
   extensionId: string;
   developerId: string;
+  class: ProvenanceClass;
   /** SemVer 2.0.0. */
   version: string;
   /** Server-clock signing time — the signer is the timestamp authority. */

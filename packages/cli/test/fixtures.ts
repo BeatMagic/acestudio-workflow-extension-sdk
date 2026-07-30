@@ -61,6 +61,7 @@ export async function signFiles(
     formatVersion: 1,
     extensionId: identity.extensionId,
     developerId: identity.developerId,
+    class: "registered",
     version: identity.version,
     signedAt: FIXTURE_SIGNED_AT,
     files: sorted,

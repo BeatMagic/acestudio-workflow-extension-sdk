@@ -1,5 +1,6 @@
 export { resolveChain, type ChainResolution } from "./chain";
 export {
+  isRevocationEntry,
   parseRevocationListPayload,
   parseTrustRegistryPayload,
   verifyRevocationList,
@@ -22,6 +23,7 @@ export {
   isValidSemver,
   parseSignatureBlockPayload,
 } from "./payload";
+export { compareSemver, findRevocationMatches, type RevocationQuery } from "./revocation-match";
 export {
   KEY_ID_PATTERN,
   verifyKeyDirectory,

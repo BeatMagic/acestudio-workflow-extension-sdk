@@ -35,6 +35,16 @@ function scopeMatches(entry: RevocationEntry, query: RevocationQuery): boolean {
       );
     case "developer":
       return entry.developerId === query.developerId;
+    default: {
+      // A scope added to the schema must be handled above, not fall through
+      // here: an unmatched entry reads as "not revoked", so silence would let
+      // a bundle the publisher meant to block keep running. `never` makes that
+      // omission a compile error — `strict` alone does not (no
+      // `noImplicitReturns`), so an exhaustive switch is not self-guarding.
+      const unhandled: never = entry;
+      void unhandled;
+      return false;
+    }
   }
 }
 

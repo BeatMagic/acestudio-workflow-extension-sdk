@@ -153,7 +153,8 @@ export function parseRevocationListPayload(payloadBytes: Uint8Array): Revocation
   return candidate as unknown as RevocationListPayload;
 }
 
-function isRevocationEntry(value: unknown): value is RevocationEntry {
+/** Structural gate for one entry — the shape an issuer validates against before signing a list. */
+export function isRevocationEntry(value: unknown): value is RevocationEntry {
   if (typeof value !== "object" || value === null) return false;
   const entry = value as Record<string, unknown>;
 

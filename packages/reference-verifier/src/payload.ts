@@ -49,12 +49,13 @@ export function parseSignatureBlockPayload(payloadBytes: Uint8Array): SignatureB
   }
   if (typeof value !== "object" || value === null) return null;
   const candidate = value as Record<string, unknown>;
-  const knownKeys = ["format", "formatVersion", "extensionId", "developerId", "version", "signedAt", "files"];
+  const knownKeys = ["format", "formatVersion", "extensionId", "developerId", "class", "version", "signedAt", "files"];
   if (Object.keys(candidate).some((key) => !knownKeys.includes(key))) return null;
   if (candidate.format !== SIGNATURE_BLOCK_FORMAT) return null;
   if (candidate.formatVersion !== 1) return null;
   if (typeof candidate.extensionId !== "string" || !isValidExtensionId(candidate.extensionId)) return null;
   if (typeof candidate.developerId !== "string" || !isValidDeveloperSlug(candidate.developerId)) return null;
+  if (candidate.class !== "registered" && candidate.class !== "ad-hoc") return null;
   if (typeof candidate.version !== "string" || !isValidSemver(candidate.version)) return null;
   if (!isUnixSeconds(candidate.signedAt)) return null;
 

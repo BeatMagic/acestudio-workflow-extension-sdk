@@ -59,6 +59,7 @@ export async function buildSignedBundle(
     formatVersion: 1,
     extensionId: "acestudio.mv-runtime",
     developerId: "acestudio",
+    class: "registered",
     version: "1.2.3",
     signedAt: SIGNED_AT,
     files: fileHashes,

@@ -21,7 +21,7 @@
     "payload": {
       "description": "Decoded signed payload. `signedAt` is stamped from the server clock at signing (the signer is the timestamp authority).",
       "type": "object",
-      "required": ["format", "formatVersion", "extensionId", "developerId", "version", "signedAt", "files"],
+      "required": ["format", "formatVersion", "extensionId", "developerId", "class", "version", "signedAt", "files"],
       "additionalProperties": false,
       "properties": {
         "format": { "const": "acestudio.workflowext.signature-block" },
@@ -33,6 +33,10 @@
           "pattern": "^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$"
         },
         "developerId": { "$ref": "#/$defs/developerSlug" },
+        "class": {
+          "description": "Provenance mark stamped by the service. A verifier resolves the trust tier from this verified field, never from registry absence; future identity tiers extend the enum without re-signing anything.",
+          "enum": ["registered", "ad-hoc"]
+        },
         "version": { "$ref": "#/$defs/semver" },
         "signedAt": { "$ref": "#/$defs/unixSeconds" },
         "files": {

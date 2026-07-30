@@ -56,6 +56,7 @@ describe("signature block schema", () => {
     formatVersion: 1,
     extensionId: "acestudio.mv-runtime",
     developerId: "acestudio",
+    class: "registered",
     version: "1.2.3",
     signedAt: 1752710400,
     files: {
@@ -77,6 +78,14 @@ describe("signature block schema", () => {
     const validate = compilePayload(signatureBlockSchema);
     expect(validate({ ...validPayload, extensionId: "com.example.tool" })).toBe(false);
     expect(validate({ ...validPayload, extensionId: "no-dot" })).toBe(false);
+  });
+
+  it("accepts the ad-hoc provenance class and rejects unknown ones", () => {
+    const validate = compilePayload(signatureBlockSchema);
+    expect(validate({ ...validPayload, class: "ad-hoc" })).toBe(true);
+    expect(validate({ ...validPayload, class: "notarized" })).toBe(false);
+    const { class: _, ...withoutClass } = validPayload;
+    expect(validate(withoutClass)).toBe(false);
   });
 
   it("rejects non-SemVer versions", () => {

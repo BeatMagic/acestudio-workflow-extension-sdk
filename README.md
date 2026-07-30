@@ -32,3 +32,6 @@ npm test          # vitest
 npm run build     # bundle every package to dist/
 npm run validate  # the full quality pipeline CI runs
 ```
+
+How cross-package imports resolve to source:
+[docs/source-resolution.md](./docs/source-resolution.md).

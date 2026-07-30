@@ -60,7 +60,7 @@ export * from "./generated/Operation.acerpc.js";
 // as the surfaces above — regenerated in the Studio repo, committed here.
 export * from "./generated/Change.acerpc.js";
 
-// The generated capability bindings (ADR 0094 §2). Regenerated in the Studio
-// repo by `cargo run -p ace_command_catalog --bin gen_sdk_bindings`; this copy
-// arrives by regen PR and is drift-gated there. Do not edit it here.
+// The generated capability bindings (ADR 0094 §2). Same provenance as the
+// surfaces above — regenerated in the Studio repo, committed here, and
+// drift-gated there. Do not edit it here.
 export * from "./generated/bindings.js";

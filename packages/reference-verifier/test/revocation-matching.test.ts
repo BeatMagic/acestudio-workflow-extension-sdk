@@ -61,6 +61,12 @@ describe("compareSemver", () => {
     expect(compareSemver("1.2.3+build.5", "1.2.3+other")).toBe(0);
     expect(compareSemver("1.2.3-rc.1+build", "1.2.3-rc.1")).toBe(0);
   });
+
+  it("keeps precedence exact past Number.MAX_SAFE_INTEGER", () => {
+    // Both cores are schema-valid; as doubles they collapse to one value.
+    expect(compareSemver("9007199254740993.0.0", "9007199254740992.0.0")).toBe(1);
+    expect(compareSemver("1.0.0-9007199254740993", "1.0.0-9007199254740992")).toBe(1);
+  });
 });
 
 describe("findRevocationMatches", () => {

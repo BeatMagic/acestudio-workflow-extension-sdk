@@ -75,12 +75,14 @@ export function compareSemver(a: string, b: string): -1 | 0 | 1 {
   return idsA.length === idsB.length ? 0 : idsA.length < idsB.length ? -1 : 1;
 }
 
-function splitSemver(version: string): [[number, number, number], string | null] {
+// SemVer bounds numeric identifiers only by string length, so a schema-valid
+// version can exceed Number.MAX_SAFE_INTEGER; bigint keeps precedence exact.
+function splitSemver(version: string): [[bigint, bigint, bigint], string | null] {
   const withoutBuild = version.split("+", 1)[0]!;
   const dash = withoutBuild.indexOf("-");
   const core = dash === -1 ? withoutBuild : withoutBuild.slice(0, dash);
   const prerelease = dash === -1 ? null : withoutBuild.slice(dash + 1);
-  const [major, minor, patch] = core.split(".").map(Number);
+  const [major, minor, patch] = core.split(".").map((part) => BigInt(part));
   return [[major!, minor!, patch!], prerelease];
 }
 
@@ -91,8 +93,8 @@ function comparePrereleaseIdentifier(a: string, b: string): -1 | 0 | 1 {
   const numericB = NUMERIC_IDENTIFIER.test(b);
   // Numeric identifiers compare numerically and always below alphanumeric.
   if (numericA && numericB) {
-    const valueA = Number(a);
-    const valueB = Number(b);
+    const valueA = BigInt(a);
+    const valueB = BigInt(b);
     return valueA === valueB ? 0 : valueA < valueB ? -1 : 1;
   }
   if (numericA !== numericB) return numericA ? -1 : 1;

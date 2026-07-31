@@ -1,6 +1,6 @@
 {
   "name": "@timedomain/acestudio-workflow-extension-sdk",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "Build workflow extensions for ACE Studio, the all-in-one AI music studio.",
   "license": "MIT",

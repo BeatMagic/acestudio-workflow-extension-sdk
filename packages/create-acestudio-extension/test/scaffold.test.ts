@@ -54,6 +54,7 @@ test("emits the whole working extension, sorted and archive-relative", async () 
     "src/manifest.ts",
     "src/protocol.ts",
     "tsconfig.json",
+    "tsconfig.ui.json",
     "ui/index.html",
     "ui/main.ts",
   ]);

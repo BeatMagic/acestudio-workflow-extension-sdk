@@ -1,0 +1,13 @@
+// The page half: browser globals, and none of Node's. A `process` or `Buffer` in `ui/`
+// is a typecheck error here rather than a blank window later — the bundler catches a Node
+// *import* that reaches the page, but a bare global is not an import and would sail past.
+// `src/protocol.ts` is in scope because the page imports the type, and nothing else from
+// the process side is.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2024", "DOM"],
+    "types": []
+  },
+  "include": ["ui", "src/protocol.ts"]
+}

@@ -79,7 +79,10 @@ try {
 
   console.log("smoke: scaffolding");
   const identity = ["--id", EXTENSION_ID, "--name", "Stem Tools", "--publisher", "Acme Audio"];
-  run("npx", ["create-acestudio-extension", "stem-tools", ...identity], runner);
+  // `--no-install` is what keeps this test honest: without it, an npx that failed to find
+  // the bin just installed by name would fetch a published one from the registry and pass,
+  // reporting a green smoke for a tarball it never ran.
+  run("npx", ["--no-install", "create-acestudio-extension", "stem-tools", ...identity], runner);
 
   const project = join(runner, "stem-tools");
   // The scaffold asks for the published SDK; point it at this commit's instead. The

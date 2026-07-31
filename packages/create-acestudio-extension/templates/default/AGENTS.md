@@ -47,7 +47,10 @@ editing, you build, you reload — deterministically, in that order.
 3. emits `dist/manifest.json` from `src/manifest.ts`, running ACE Studio's own
    manifest checks — an id, version, or path the host would refuse fails the build.
 
-`npm run typecheck` alone is the fast gate while you are mid-edit.
+`npm run typecheck` alone is the fast gate while you are mid-edit. It runs once per half,
+because the page is checked without Node's globals: a `process` or `Buffer` in `ui/` fails
+there instead of in the browser, which item 2 above cannot catch — a bare global is not an
+import.
 
 ## Load into a running ACE Studio
 

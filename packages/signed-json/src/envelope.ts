@@ -1,5 +1,5 @@
-import { fromBase64, toBase64, utf8Decode } from "./bytes";
-import { sign, verifySignature } from "./ed25519";
+import { fromBase64, toBase64, utf8Decode } from "./bytes.js";
+import { sign, verifySignature } from "./ed25519.js";
 
 /**
  * The uniform container for every signed artifact on the wire (ADR 0089 §5).

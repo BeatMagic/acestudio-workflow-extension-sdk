@@ -1,4 +1,4 @@
-export { resolveChain, type ChainResolution } from "./chain";
+export { resolveChain, type ChainResolution } from "./chain.js";
 export {
   isRevocationEntry,
   parseRevocationListPayload,
@@ -8,22 +8,22 @@ export {
   type ChainedTrustFileRejectReason,
   type RevocationListVerdict,
   type TrustRegistryVerdict,
-} from "./chained-trust-files";
+} from "./chained-trust-files.js";
 export {
   checkCoverage,
   digestFiles,
   SIGNATURE_BLOCK_PATH,
   type ArchiveFile,
   type CoverageVerdict,
-} from "./coverage";
+} from "./coverage.js";
 export {
   isValidArchivePath,
   isValidDeveloperSlug,
   isValidExtensionId,
   isValidSemver,
   parseSignatureBlockPayload,
-} from "./payload";
-export { compareSemver, findRevocationMatches, type RevocationQuery } from "./revocation-match";
+} from "./payload.js";
+export { compareSemver, findRevocationMatches, type RevocationQuery } from "./revocation-match.js";
 export {
   KEY_ID_PATTERN,
   verifyKeyDirectory,
@@ -31,6 +31,6 @@ export {
   type KeyDirectoryVerdict,
   type RootRevocationVerdict,
   type TrustFileRejectReason,
-} from "./trust-files";
-export type { BundleVerdict, RejectReason, TrustedRoot } from "./verdict";
-export { verifySignedBundle } from "./verifier";
+} from "./trust-files.js";
+export type { BundleVerdict, RejectReason, TrustedRoot } from "./verdict.js";
+export { verifySignedBundle } from "./verifier.js";

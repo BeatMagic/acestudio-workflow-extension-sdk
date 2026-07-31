@@ -6,8 +6,8 @@ export {
   toHex,
   utf8Decode,
   utf8Encode,
-} from "./bytes";
-export { sha256Hex } from "./sha256";
+} from "./bytes.js";
+export { sha256Hex } from "./sha256.js";
 export {
   CERTIFICATE_FORMAT,
   createCertificate,
@@ -16,7 +16,7 @@ export {
   type CertificateFields,
   type CertificatePayload,
   type KeyRole,
-} from "./certificate";
+} from "./certificate.js";
 export {
   createSignedEnvelope,
   parseEnvelope,
@@ -25,11 +25,11 @@ export {
   type EnvelopeVerdict,
   type JsonVerdict,
   type SignedEnvelope,
-} from "./envelope";
+} from "./envelope.js";
 export {
   generateSigningKey,
   importSigningKeyFromSeed,
   sign,
   verifySignature,
   type SigningKey,
-} from "./ed25519";
+} from "./ed25519.js";

@@ -141,6 +141,19 @@ test("the pinned SDK range tracks the SDK package beside it", async () => {
   expect(SDK_VERSION_RANGE).toBe(`^${sdk.version}`);
 });
 
+// Tracking the SDK is not enough on its own, because there is a version it can track that
+// makes the caret meaningless: `^0.0.x` is `>=0.0.x <0.0.(x+1)`, a range satisfied by the one
+// version it names. An SDK on a 0.0.x line would therefore emit scaffolds that no published
+// fix can ever reach, and the smoke check cannot see that either, since it swaps this
+// dependency for a local tarball on purpose. So the floor is asserted here, where it is cheap.
+test("the SDK line the range points at is one a caret can actually widen over", async () => {
+  const sdk = JSON.parse(
+    await readFile(new URL("../../acestudio-extension-sdk/package.json", import.meta.url), "utf8"),
+  ) as { version: string };
+
+  expect(sdk.version.startsWith("0.0.")).toBe(false);
+});
+
 test("fits a value to the file it lands in, rather than refusing the characters", async () => {
   const directory = target();
 

@@ -15,7 +15,7 @@ import {
   signatureBlockSchema,
 } from "@timedomain/workflowext-wire-schemas";
 import { verifySignedBundle, type TrustedRoot } from "@timedomain/workflowext-verifier";
-import { buildSignedBundle, makeTestKeys, SIGNED_AT } from "./helpers";
+import { buildSignedBundle, makeTestKeys, SIGNED_AT } from "./helpers.js";
 
 /**
  * Golden byte-stability vectors: signatures cover exact stored bytes, so byte

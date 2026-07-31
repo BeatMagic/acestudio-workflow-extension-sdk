@@ -32,14 +32,15 @@ export interface RunDeps {
   configDir?: string;
 }
 
-const USAGE = `aceworkflow — pack, submit, and verify .aceworkflow bundles
+const USAGE = `aceworkflow — the ACE Studio workflow-extension toolchain
 
-Usage:
+Bundles:
   aceworkflow pack   <dir> [-o <out.aceworkflow>]
   aceworkflow submit <bundle.aceworkflow> [-o <out>] [--ad-hoc]
   aceworkflow verify <bundle.aceworkflow> [--roots <file>]
   aceworkflow sign   <dir|bundle> [-o <out>] [--ad-hoc] [--no-verify] [--roots <file>]
 
+Credentials:
   aceworkflow login  [--token <bearer> | --ad-hoc]
   aceworkflow logout
   aceworkflow whoami

@@ -12,7 +12,7 @@ import {
   makeTestKeys,
   type BundleFile,
   type TestKeys,
-} from "./helpers";
+} from "./helpers.js";
 
 let keys: TestKeys;
 let trustedRoots: TrustedRoot[];

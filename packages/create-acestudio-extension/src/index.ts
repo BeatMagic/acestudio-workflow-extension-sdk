@@ -31,7 +31,7 @@ import { fileURLToPath } from "node:url";
  *
  * @public
  */
-export const SDK_VERSION_RANGE = "^0.0.0";
+export const SDK_VERSION_RANGE = "^0.1.0";
 
 /**
  * `developer-slug.extension-slug`, the id grammar the host enforces.

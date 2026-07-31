@@ -2,7 +2,13 @@
   "name": "@timedomain/aceworkflow",
   "version": "0.1.0",
   "type": "module",
-  "description": "The ACE Studio workflow-extension CLI: pack, submit, and verify .aceworkflow bundles against the signing service. A pure client of the submission API.",
+  "description": "Development tooling for ACE Studio workflow extensions: pack, submit, verify, and sign .aceworkflow bundles. A pure client of the submission API.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BeatMagic/acestudio-workflow-extension-sdk.git",
+    "directory": "packages/cli"
+  },
   "engines": {
     "node": ">=24"
   },
@@ -24,7 +30,7 @@
     "@timedomain/workflowext-verifier": "*",
     "@timedomain/workflowext-wire-schemas": "*"
   },
-  "files": ["dist", "src"],
+  "files": ["LICENSE", "dist", "src"],
   "scripts": {
     "prepack": "node ../../scripts/build.mjs"
   },

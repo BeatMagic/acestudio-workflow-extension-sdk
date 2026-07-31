@@ -1,8 +1,8 @@
 import { parseEnvelope, verifyEnvelope, fromBase64 } from "@timedomain/workflowext-signed-json";
-import { resolveChain } from "./chain";
-import { checkCoverage, digestFiles, SIGNATURE_BLOCK_PATH, type ArchiveFile } from "./coverage";
-import { parseSignatureBlockPayload } from "./payload";
-import type { BundleVerdict, TrustedRoot } from "./verdict";
+import { resolveChain } from "./chain.js";
+import { checkCoverage, digestFiles, SIGNATURE_BLOCK_PATH, type ArchiveFile } from "./coverage.js";
+import { parseSignatureBlockPayload } from "./payload.js";
+import type { BundleVerdict, TrustedRoot } from "./verdict.js";
 
 /**
  * The client's verdict on a bundle, per ADR 0089 §4-5: resolve the chain to

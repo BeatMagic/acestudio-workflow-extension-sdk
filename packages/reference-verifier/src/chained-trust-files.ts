@@ -13,10 +13,10 @@ import {
   type RevocationListPayload,
   type TrustRegistryPayload,
 } from "@timedomain/workflowext-wire-schemas";
-import { resolveChain } from "./chain";
-import { DEVELOPER_SLUG_PATTERN, EXTENSION_ID_PATTERN, SEMVER_PATTERN } from "./payload";
-import { hasExactKeys, KEY_ID_PATTERN } from "./trust-files";
-import type { TrustedRoot } from "./verdict";
+import { resolveChain } from "./chain.js";
+import { DEVELOPER_SLUG_PATTERN, EXTENSION_ID_PATTERN, SEMVER_PATTERN } from "./payload.js";
+import { hasExactKeys, KEY_ID_PATTERN } from "./trust-files.js";
+import type { TrustedRoot } from "./verdict.js";
 
 /**
  * Client policy for the two intermediate-signed served files (ADR 0089 §3-4):

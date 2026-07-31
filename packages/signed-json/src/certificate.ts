@@ -1,5 +1,5 @@
-import { fromBase64, toBase64, utf8Decode, utf8Encode } from "./bytes";
-import { createSignedEnvelope, type SignedEnvelope } from "./envelope";
+import { fromBase64, toBase64, utf8Decode, utf8Encode } from "./bytes.js";
+import { createSignedEnvelope, type SignedEnvelope } from "./envelope.js";
 
 // Every signed payload carries a format discriminator so a signature over one
 // statement type can never be replayed as another (domain separation).

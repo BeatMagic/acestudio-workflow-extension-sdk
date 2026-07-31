@@ -1,8 +1,14 @@
 {
   "name": "@timedomain/workflowext-wire-schemas",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "Versioned JSON Schemas for the six ACE Studio extension-signing wire formats — the normative contract consumed by the Studio client verification module.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BeatMagic/acestudio-workflow-extension-sdk.git",
+    "directory": "packages/wire-schemas"
+  },
   "engines": {
     "node": ">=24"
   },
@@ -14,7 +20,7 @@
       "types": "./dist/src/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./schemas/*": "./schemas/*"
+    "./schemas/*": "./dist/schemas/*"
   },
   "dependencies": {
     "@timedomain/workflowext-signed-json": "^0.1.0"
@@ -22,7 +28,7 @@
   "devDependencies": {
     "ajv": "^8"
   },
-  "files": ["dist", "schemas", "src"],
+  "files": ["LICENSE", "dist", "src"],
   "scripts": {
     "prepack": "node ../../scripts/build.mjs"
   },

@@ -13,7 +13,7 @@ import {
   verifyRootRevocation,
   type TrustedRoot,
 } from "@timedomain/workflowext-verifier";
-import { INTERMEDIATE_SEED, makeTestKeys, ROOT_SEED } from "./helpers";
+import { INTERMEDIATE_SEED, makeTestKeys, ROOT_SEED } from "./helpers.js";
 
 const NOW = 1_752_969_600;
 

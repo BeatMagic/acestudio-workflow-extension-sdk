@@ -7,6 +7,10 @@ dist/
 # one under etc/; only etc/ is committed.
 temp/
 
+# The license is committed once, at the root. The build stages a copy into each
+# published package so it reaches the tarball; those copies are generated.
+packages/*/LICENSE
+
 # Golden test vectors are wire-contract fixtures — never ignore them,
 # even when their bundle layout contains dist/.
 !packages/reference-verifier/vectors/**

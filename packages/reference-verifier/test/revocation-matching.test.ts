@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { RevocationEntry } from "@timedomain/workflowext-wire-schemas";
-import { compareSemver, findRevocationMatches, type RevocationQuery } from "../src/index";
+import { compareSemver, findRevocationMatches, type RevocationQuery } from "../src/index.js";
 
 const QUERY: RevocationQuery = {
   extensionId: "dev.tool",

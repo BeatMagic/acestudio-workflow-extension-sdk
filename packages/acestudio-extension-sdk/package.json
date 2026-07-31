@@ -1,8 +1,14 @@
 {
   "name": "@timedomain/acestudio-extension-sdk",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "description": "The SDK for building ACE Studio workflow extensions: defineExtension, a TypeScript manifest with a manifest-scoped typed client, lifecycle choreography, and the optional UI paved road.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BeatMagic/acestudio-workflow-extension-sdk.git",
+    "directory": "packages/acestudio-extension-sdk"
+  },
   "engines": {
     "node": ">=24"
   },
@@ -21,9 +27,9 @@
     }
   },
   "dependencies": {
-    "@timedomain/acestudio-bridge-core": "^0.0.0"
+    "@timedomain/acestudio-bridge-core": "^0.1.0"
   },
-  "files": ["dist", "src"],
+  "files": ["LICENSE", "dist", "src"],
   "scripts": {
     "prepack": "node ../../scripts/build.mjs"
   },

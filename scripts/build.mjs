@@ -6,7 +6,7 @@
 //
 // Bundling only settles the JS. A .d.ts is emitted per source file with its specifiers
 // copied through verbatim, so anything a declaration points at has to resolve from where
-// that declaration lands in the tarball — which is why the libraries write `./x.js` in
+// that declaration lands in the tarball, which is why the libraries write `./x.js` in
 // full, and why the schemas are staged under dist/ below.
 //
 // This is also the prepack hook, so it owes the tarball every file the manifest promises:
@@ -89,7 +89,7 @@ for (const pkg of PACKAGES) {
     await bundle(pkg.browserEntries, "browser", "es2023");
   }
   for (const asset of pkg.assets ?? []) {
-    await cp(abs(`${pkg.dir}/${asset}`), `${outdir}/${asset}`, { recursive: true });
+    await cp(abs(`${pkg.dir}/${asset}`), abs(`${pkg.dir}/dist/${asset}`), { recursive: true });
   }
   if (pkg.types) {
     // Run tsc via `node <tsc entry>` rather than the .bin shim, so the build
@@ -100,7 +100,7 @@ for (const pkg of PACKAGES) {
   }
 }
 
-// The terms are the repo's, so the file is the repo's — one copy, at the root, staged into
+// The terms are the repo's, so the file is the repo's: one copy, at the root, staged into
 // each package rather than committed seven times. Derived from the same list the publish
 // workflow stages, so a package cannot become publishable without being covered here.
 //

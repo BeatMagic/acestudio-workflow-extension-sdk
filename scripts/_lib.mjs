@@ -17,13 +17,13 @@ const ALL_PACKAGES = readdirSync(abs("packages"))
 
 // The three scopes the surface gates apply to. Each is *derived* rather than listed,
 // because a hand-maintained list is how a published package comes to sit outside the
-// gate that exists to check it — silently, and for as many releases as nobody looks.
+// gate that exists to check it, silently, and for as many releases as nobody looks.
 //
-// Everything that goes to npm — what publint judges, since its subject is the manifest
+// Everything that goes to npm. This is what publint judges, since its subject is the manifest
 // and every published manifest has one to get wrong.
 export const PUBLISHED_PACKAGES = ALL_PACKAGES.filter((dir) => manifest(dir).private !== true);
 
-// Of those, the ones that ship type declarations — what attw judges, since it asks
+// Of those, the ones that ship type declarations. This is what attw judges, since it asks
 // whether a consumer's resolver can follow them. A bin has none to follow.
 export const TYPED_PACKAGES = PUBLISHED_PACKAGES.filter((dir) => manifest(dir).types !== undefined);
 

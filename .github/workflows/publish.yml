@@ -60,7 +60,7 @@ jobs:
               continue
             fi
             # `npm view` exits non-zero for an unpublished name as well as an unpublished
-            # version, and both mean "go ahead" — so only a clean exit is a reason to skip.
+            # version, and both mean "go ahead", so only a clean exit is a reason to skip.
             if npm view "${name}@${version}" version >/dev/null 2>&1; then
               echo "skip ${name}@${version} (already on the registry)"
               continue

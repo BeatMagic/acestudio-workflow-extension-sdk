@@ -1,6 +1,6 @@
 // Validates the surface of every package that goes to npm: publint lints the manifest,
 // and are-the-types-wrong (attw) checks that each exports entry resolves to types that
-// match under each module resolution mode — including the ./page subpath split of the
+// match under each module resolution mode, including the ./page subpath split of the
 // extension SDK.
 //
 // attw is the gate that matters most here and reads least like it. The repo typechecks

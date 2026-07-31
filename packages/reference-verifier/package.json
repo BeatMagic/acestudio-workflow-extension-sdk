@@ -2,7 +2,7 @@
   "name": "@timedomain/workflowext-verifier",
   "version": "0.1.2",
   "type": "module",
-  "description": "Reference verifier for ACE Studio extension signatures — implements the client verification policy so tests assert what a real client will conclude. Ships the golden test vectors.",
+  "description": "Reference verifier for ACE Studio extension signatures: it implements the client verification policy so tests assert what a real client will conclude. Its golden byte-stability vectors live in the repository.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -28,7 +28,7 @@
   "devDependencies": {
     "ajv": "^8"
   },
-  "files": ["LICENSE", "dist", "src", "vectors"],
+  "files": ["LICENSE", "dist", "src"],
   "scripts": {
     "prepack": "node ../../scripts/build.mjs"
   },

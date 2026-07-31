@@ -50,20 +50,17 @@ my-extension/
 
 ## Why a separate package and not an `aceworkflow` verb
 
-Because that is how the ecosystem draws the line, and because npm gives no choice.
+Mostly because npm gives no choice. `npm create x` is an alias for `npm init x`, which
+resolves **by package name**: `npm create @timedomain/acestudio-extension` executes
+`@timedomain/create-acestudio-extension` and can execute nothing else. That entry point
+cannot be served from a package named `@timedomain/aceworkflow`, so this package existing
+is what makes the command exist at all.
 
-Scaffolding a new project from a template is the initializer's job; building and shipping
-it is the CLI's. Raycast splits it exactly so (`npm init raycast-extension` to start, `ray
-build` / `ray publish` to ship), as does VS Code (`yo code` versus `@vscode/vsce`), and
-both Cloudflare and Expo *removed* the CLI verb they once had in favour of an initializer.
-The CLI `init` verbs that persist elsewhere — `firebase init`, `supabase init` — almost
-always mean "configure the directory I am already in," which is a different act.
-
-The mechanical half: `npm create x` is an alias for `npm init x`, which resolves **by
-package name**. `npm create @timedomain/acestudio-extension` executes
-`@timedomain/create-acestudio-extension` and can execute nothing else — that entry point
-cannot be served from a package named `@timedomain/aceworkflow`. Keeping this package is
-what makes the command exist at all.
+Which side holds the code is a real choice, and it lives here so scaffolding stays
+dependency-free — the CLI carries a native keychain binding with no business on the path of
+writing a text tree. Platforms of a similar shape split it the same way: Raycast
+(`npm init raycast-extension` to start, `ray build` / `ray publish` to ship) and VS Code
+(`yo code` versus `@vscode/vsce`).
 
 So you meet three commands, each at its own moment: `npm create …` once, to start;
 `acestudio-cli workflow dev …` while you iterate against a running Studio; `aceworkflow`

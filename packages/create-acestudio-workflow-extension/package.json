@@ -1,27 +1,28 @@
 {
-  "name": "@timedomain/acestudio-bridge-core",
-  "version": "0.1.1",
+  "name": "@timedomain/create-acestudio-workflow-extension",
+  "version": "0.1.0",
   "type": "module",
-  "description": "The connection core for programming against a running ACE Studio: the canonical handshake over a pluggable message-port transport, the generated capability bindings, grants, jobs, and one typed error.",
+  "description": "The npm create-native scaffolder for ACE Studio workflow extensions: emits a working extension and its AGENTS.md, no running Studio required.",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/BeatMagic/acestudio-workflow-extension-sdk.git",
-    "directory": "packages/acestudio-bridge-core"
+    "directory": "packages/create-acestudio-workflow-extension"
   },
   "engines": {
     "node": ">=24"
   },
+  "bin": {
+    "create-acestudio-workflow-extension": "./dist/cli.js"
+  },
   "main": "./dist/index.js",
-  "types": "./dist/src/index.d.ts",
   "exports": {
     ".": {
       "acestudio:source": "./src/index.ts",
-      "types": "./dist/src/index.d.ts",
       "default": "./dist/index.js"
     }
   },
-  "files": ["LICENSE", "dist", "src"],
+  "files": ["LICENSE", "TEMPLATE-LICENSE", "dist", "src", "templates"],
   "scripts": {
     "prepack": "node ../../scripts/build.mjs"
   },

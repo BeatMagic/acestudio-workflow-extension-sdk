@@ -40,17 +40,31 @@ jobs:
       # Stage each non-private workspace. Private packages (internal/fixtures) are skipped, and
       # newly added public packages are picked up automatically — but note each package name still
       # needs its own stage-only trusted publisher configured on npmjs.com before this can succeed.
+      #
+      # A package whose current version is already on the registry is skipped rather than
+      # attempted. The workspace versions move independently, so most tags change only some of
+      # them; without this the first unchanged package would be refused as a duplicate and take
+      # the rest of the run down with it, leaving a release that is half staged for reasons the
+      # log makes look like a registry fault. Skipping also makes a re-run of a partly failed
+      # tag safe, which is the state you most want to be able to retry.
       - name: Stage publishable workspaces
         run: |
           set -euo pipefail
           for dir in packages/*/; do
             name=$(node -p "require('./${dir}package.json').name")
+            version=$(node -p "require('./${dir}package.json').version")
             # String(): a bare boolean gets ANSI-colored under FORCE_COLOR and would never match below.
             private=$(node -p "String(!!require('./${dir}package.json').private)")
             if [ "$private" = "true" ]; then
               echo "skip ${name} (private)"
               continue
             fi
-            echo "staging ${name}"
+            # `npm view` exits non-zero for an unpublished name as well as an unpublished
+            # version, and both mean "go ahead" — so only a clean exit is a reason to skip.
+            if npm view "${name}@${version}" version >/dev/null 2>&1; then
+              echo "skip ${name}@${version} (already on the registry)"
+              continue
+            fi
+            echo "staging ${name}@${version}"
             ( cd "$dir" && npm stage publish )
           done

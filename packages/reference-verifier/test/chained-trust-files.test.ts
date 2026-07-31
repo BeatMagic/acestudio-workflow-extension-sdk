@@ -13,7 +13,7 @@ import {
   verifyTrustRegistry,
   type TrustedRoot,
 } from "@timedomain/workflowext-verifier";
-import { CERT_VALID_FROM, makeTestKeys, type TestKeys } from "./helpers";
+import { CERT_VALID_FROM, makeTestKeys, type TestKeys } from "./helpers.js";
 
 const NOW = 1_752_969_600;
 

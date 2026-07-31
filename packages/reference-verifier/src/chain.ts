@@ -4,7 +4,7 @@ import {
   type CertificatePayload,
   type SignedEnvelope,
 } from "@timedomain/workflowext-signed-json";
-import type { TrustedRoot } from "./verdict";
+import type { TrustedRoot } from "./verdict.js";
 
 export type ChainResolution =
   | { ok: true; certificate: CertificatePayload; root: TrustedRoot }

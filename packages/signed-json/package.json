@@ -1,8 +1,14 @@
 {
   "name": "@timedomain/workflowext-signed-json",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "Signed-JSON primitives for ACE Studio extension signing: Ed25519 over exact stored bytes, verify-before-parse, no canonicalization.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BeatMagic/acestudio-workflow-extension-sdk.git",
+    "directory": "packages/signed-json"
+  },
   "engines": {
     "node": ">=24"
   },
@@ -15,7 +21,7 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "src"],
+  "files": ["LICENSE", "dist", "src"],
   "scripts": {
     "prepack": "node ../../scripts/build.mjs"
   },

@@ -11,7 +11,7 @@ import {
   type KeyDirectoryPayload,
   type RootRevocationPayload,
 } from "@timedomain/workflowext-wire-schemas";
-import type { TrustedRoot } from "./verdict";
+import type { TrustedRoot } from "./verdict.js";
 
 /**
  * Client policy for the two root-signed files (ADR 0089 §2-3): a key

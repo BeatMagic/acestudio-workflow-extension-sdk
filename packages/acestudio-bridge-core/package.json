@@ -1,8 +1,14 @@
 {
   "name": "@timedomain/acestudio-bridge-core",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "description": "The connection core for programming against a running ACE Studio: the canonical handshake over a pluggable message-port transport, the generated capability bindings, grants, jobs, and one typed error.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BeatMagic/acestudio-workflow-extension-sdk.git",
+    "directory": "packages/acestudio-bridge-core"
+  },
   "engines": {
     "node": ">=24"
   },
@@ -15,7 +21,7 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "src"],
+  "files": ["LICENSE", "dist", "src"],
   "scripts": {
     "prepack": "node ../../scripts/build.mjs"
   },

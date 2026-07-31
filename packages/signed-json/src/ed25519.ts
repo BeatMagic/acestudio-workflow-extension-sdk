@@ -1,4 +1,4 @@
-import { concatBytes, fromBase64, fromHex } from "./bytes";
+import { concatBytes, fromBase64, fromHex } from "./bytes.js";
 
 export interface SigningKey {
   privateKey: CryptoKey;

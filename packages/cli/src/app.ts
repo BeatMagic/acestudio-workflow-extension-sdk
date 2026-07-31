@@ -32,14 +32,19 @@ export interface RunDeps {
   configDir?: string;
 }
 
-const USAGE = `aceworkflow — pack, submit, and verify .aceworkflow bundles
+// The first line names the toolchain, not signing. `aceworkflow` is the toolchain's command
+// surface and signing is the cluster it was bootstrapped with, so the verbs are grouped by
+// cluster: what the binary is stays separate from what it currently does, and a later cluster
+// is an added group rather than a rewritten identity.
+const USAGE = `aceworkflow — the ACE Studio workflow-extension toolchain
 
-Usage:
+Bundles:
   aceworkflow pack   <dir> [-o <out.aceworkflow>]
   aceworkflow submit <bundle.aceworkflow> [-o <out>] [--ad-hoc]
   aceworkflow verify <bundle.aceworkflow> [--roots <file>]
   aceworkflow sign   <dir|bundle> [-o <out>] [--ad-hoc] [--no-verify] [--roots <file>]
 
+Credentials:
   aceworkflow login  [--token <bearer> | --ad-hoc]
   aceworkflow logout
   aceworkflow whoami

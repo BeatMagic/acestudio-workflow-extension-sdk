@@ -3,10 +3,18 @@
 // shared contract code the CLI needs to run standalone — and tsc emits the .d.ts
 // for every package with a public type surface. Same esbuild approach as the
 // signing-service repo's ceremony bundle.
+//
+// Bundling only settles the JS. A .d.ts is emitted per source file with its specifiers
+// copied through verbatim, so anything a declaration points at has to resolve from where
+// that declaration lands in the tarball — which is why the libraries write `./x.js` in
+// full, and why the schemas are staged under dist/ below.
+//
+// This is also the prepack hook, so it owes the tarball every file the manifest promises:
+// hence the license, which lives once at the repo root and is staged into each package.
 import { execFileSync } from "node:child_process";
-import { rm } from "node:fs/promises";
+import { cp, rm } from "node:fs/promises";
 import { build } from "esbuild";
-import { abs } from "./_lib.mjs";
+import { abs, PUBLISHED_PACKAGES } from "./_lib.mjs";
 
 // The contract packages layer on each other; a library keeps its peers external
 // so consumers share one copy (and one class identity) rather than inlined dupes.
@@ -18,7 +26,17 @@ const CONTRACT_PACKAGES = [
 
 const PACKAGES = [
   { dir: "packages/signed-json", entries: ["src/index.ts"], external: CONTRACT_PACKAGES, types: true },
-  { dir: "packages/wire-schemas", entries: ["src/index.ts"], external: CONTRACT_PACKAGES, types: true },
+  // The schemas are staged into dist/ so one copy serves both readers: the emitted
+  // declarations, which point at `../schemas/…` from dist/src/, and the `./schemas/*`
+  // export a consumer reads the raw JSON through. esbuild inlines them into the bundle
+  // as well; that is the JS path, and neither of those two is the JS path.
+  {
+    dir: "packages/wire-schemas",
+    entries: ["src/index.ts"],
+    assets: ["schemas"],
+    external: CONTRACT_PACKAGES,
+    types: true,
+  },
   { dir: "packages/reference-verifier", entries: ["src/index.ts"], external: CONTRACT_PACKAGES, types: true },
   // The CLI inlines the contract packages so its bin runs from a packed tarball
   // with only the one native dependency installed. It ships as a binary — no .d.ts.
@@ -70,6 +88,9 @@ for (const pkg of PACKAGES) {
     // engine version the SDK has no business naming.
     await bundle(pkg.browserEntries, "browser", "es2023");
   }
+  for (const asset of pkg.assets ?? []) {
+    await cp(abs(`${pkg.dir}/${asset}`), `${outdir}/${asset}`, { recursive: true });
+  }
   if (pkg.types) {
     // Run tsc via `node <tsc entry>` rather than the .bin shim, so the build
     // works on Windows too (where the shim is tsc.cmd, not an execFile target).
@@ -77,4 +98,15 @@ for (const pkg of PACKAGES) {
       stdio: "inherit",
     });
   }
+}
+
+// The terms are the repo's, so the file is the repo's — one copy, at the root, staged into
+// each package rather than committed seven times. Derived from the same list the publish
+// workflow stages, so a package cannot become publishable without being covered here.
+//
+// npm drops a `files` entry that does not exist without complaining, so the manifest naming
+// it is not what guarantees it is there; this loop running before pack is. That is why the
+// staging belongs in the prepack hook rather than in a release step someone has to remember.
+for (const dir of PUBLISHED_PACKAGES) {
+  await cp(abs("LICENSE"), abs(`${dir}/LICENSE`));
 }

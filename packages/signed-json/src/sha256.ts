@@ -1,4 +1,4 @@
-import { toHex } from "./bytes";
+import { toHex } from "./bytes.js";
 
 // Per-file hashes on the wire are lowercase-hex SHA-256 (the schemas pin it).
 export async function sha256Hex(bytes: Uint8Array): Promise<string> {

@@ -48,7 +48,7 @@ my-extension/
 
 `dist/` is the extension — the folder ACE Studio dev-loads and `aceworkflow` seals.
 
-## Why a separate package and not an `aceworkflow` verb
+## Why a separate package
 
 Mostly because npm gives no choice. `npm create x` is an alias for `npm init x`, which
 resolves **by package name**: `npm create @timedomain/acestudio-extension` executes
@@ -62,9 +62,13 @@ writing a text tree. Platforms of a similar shape split it the same way: Raycast
 (`npm init raycast-extension` to start, `ray build` / `ray publish` to ship) and VS Code
 (`yo code` versus `@vscode/vsce`).
 
-So you meet three commands, each at its own moment: `npm create …` once, to start;
-`acestudio-cli workflow dev …` while you iterate against a running Studio; `aceworkflow`
-to check and ship what you built.
+`aceworkflow init` is the same act under the name you already have installed — a direct call
+into this package's `scaffold()`, not a shell-out. Use whichever you reach for first: this
+one needs nothing installed, that one needs no second name to remember.
+
+So you meet three commands, each at its own moment: `npm create …` (or `aceworkflow init`)
+once, to start; `acestudio-cli workflow dev …` while you iterate against a running Studio;
+`aceworkflow` to check and ship what you built.
 
 ## The template's license
 

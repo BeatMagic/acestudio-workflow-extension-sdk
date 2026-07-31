@@ -59,14 +59,15 @@ test("emits the whole working extension, sorted and archive-relative", async () 
   ]);
 });
 
-// Exhaustive above, which is the point for one absence in particular: no LICENSE. The
-// template's MIT-0 grant is recorded in this package, not shipped into a tree where git
-// and GitHub would read it as the author's own choice of license.
+// The list is exhaustive, and one thing it must not grow is a LICENSE. Choosing a
+// license is the author's to do, and a license file sitting in a fresh tree is what
+// git, GitHub's detector, and every scanner read as the choice they made. The terms the
+// template itself is offered under are recorded in this package's TEMPLATE-LICENSE.
 
-// An import rather than the symlink that would also work: a plain file survives being
-// committed here and cloned on Windows, where git would otherwise leave a text file
-// holding the word "AGENTS.md". It also keeps the emitted tree the same on every
-// platform, which is what lets a second front door promise to match this one.
+// A written line, and specifically not a symlink: this tree gets committed, and git on
+// Windows leaves core.symlinks off, so a clone there would hold the word "AGENTS.md"
+// where the instructions should be. Writing it also keeps the emitted tree identical on
+// every platform, which is what lets a second front door promise to match it.
 test("gives the agent instructions the second name Claude Code looks for", async () => {
   const directory = target();
 

@@ -192,12 +192,14 @@ export async function scaffold(options: ScaffoldOptions): Promise<ScaffoldResult
 /**
  * Give the agent instructions the second name Claude Code looks for.
  *
- * An import rather than a symlink, which is the other documented way and the one that
- * does not survive this scaffold's own life: the author commits it, and a clone on
- * Windows — where git leaves `core.symlinks` off — turns the link into a file whose
- * contents are the literal text `AGENTS.md`, broken on a machine that never ran this.
- * The import is one line that clones the same everywhere, and leaves room below it for
- * instructions meant only for Claude.
+ * One line importing `AGENTS.md`, so both names reach the same text with nothing to
+ * drift, and the space below the import stays free for anything meant only for Claude.
+ *
+ * A symlink says the same thing on the machine that runs the scaffolder, and not on the
+ * author's next one: this tree gets committed, git on Windows leaves `core.symlinks`
+ * off, and the clone there holds a file whose contents are the word `AGENTS.md`. A
+ * written line clones identically everywhere, which also keeps the emitted tree free of
+ * anything platform-shaped for a second front door to have to reproduce.
  */
 async function writeAgentInstructionsAlias(directory: string): Promise<string> {
   const emitted = "CLAUDE.md";

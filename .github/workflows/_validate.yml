@@ -1,9 +1,10 @@
 name: validate
 
 # The full quality pipeline — lint → typecheck → test → build → api:check →
-# check:exports → docs:check (see the root `validate` script) — plus the CLI
-# pack-and-run smoke check. Reused by ci.yml (pull requests) and publish.yml
-# (release tags) so both gate on the identical checks.
+# check:exports → docs:check (see the root `validate` script) — plus the two
+# pack-and-run smoke checks, which stay out of `validate` because they install
+# from the network and it does not. Reused by ci.yml (pull requests) and
+# publish.yml (release tags) so both gate on the identical checks.
 #
 # Node is gated in CI only; it is not part of the published contract. Node 24 is
 # the required leg; 26 runs as a non-blocking canary.
@@ -44,3 +45,8 @@ jobs:
           npm init -y >/dev/null
           npm install "$RUNNER_TEMP/$tgz"
           npx aceworkflow --help
+
+      # The scaffold's "works without a running Studio" promise: scaffold from the
+      # packed scaffolder into a temp dir, then install, typecheck, and build it.
+      - name: Verify the scaffolder emits an extension that builds
+        run: npm run smoke:scaffold

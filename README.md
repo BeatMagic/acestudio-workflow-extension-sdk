@@ -1,6 +1,16 @@
 # acestudio-workflow-extension-sdk
 The official open-source SDK and tooling for building ACE Studio workflow extensions.
 
+## Getting started
+
+```sh
+npm create @timedomain/acestudio-extension@latest my-extension
+```
+
+That emits a working extension — TypeScript manifest, typed-channel hello-world UI,
+build scripts — plus an `AGENTS.md` for whichever code agent you point at it. Nothing
+about scaffolding, installing, typechecking, or building it needs a running ACE Studio.
+
 ## Packages
 
 The extension SDK:

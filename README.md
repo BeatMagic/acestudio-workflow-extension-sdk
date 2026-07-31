@@ -4,7 +4,7 @@ The official open-source SDK and tooling for building ACE Studio workflow extens
 ## Getting started
 
 ```sh
-npm create @timedomain/acestudio-extension@latest my-extension
+npm create @timedomain/acestudio-workflow-extension@latest my-extension
 ```
 
 That emits a working extension — TypeScript manifest, typed-channel hello-world UI,
@@ -17,9 +17,9 @@ The extension SDK:
 
 | Package                                 | Role                                                                    |
 | --------------------------------------- | ----------------------------------------------------------------------- |
-| `@timedomain/acestudio-extension-sdk`   | The SDK for building extensions: `defineExtension`, lifecycle, UI       |
+| `@timedomain/acestudio-workflow-extension-sdk`   | The SDK for building extensions: `defineExtension`, lifecycle, UI       |
 | `@timedomain/acestudio-bridge-core`     | The connection core beneath the SDK: handshake, bindings, jobs, errors  |
-| `@timedomain/create-acestudio-extension`| The `npm create`-native scaffolder for a new extension                  |
+| `@timedomain/create-acestudio-workflow-extension`| The `npm create`-native scaffolder for a new extension                  |
 
 The toolchain CLI:
 

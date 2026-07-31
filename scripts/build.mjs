@@ -51,13 +51,13 @@ const PACKAGES = [
   // no .d.ts.
   { dir: "packages/acestudio-bridge-core", entries: ["src/index.ts"], external: [], types: true },
   {
-    dir: "packages/acestudio-extension-sdk",
+    dir: "packages/acestudio-workflow-extension-sdk",
     entries: ["src/index.ts"],
     browserEntries: ["src/page/index.ts"],
     external: ["@timedomain/acestudio-bridge-core"],
     types: true,
   },
-  { dir: "packages/create-acestudio-extension", entries: ["src/index.ts", "src/cli.ts"], external: [], types: false },
+  { dir: "packages/create-acestudio-workflow-extension", entries: ["src/index.ts", "src/cli.ts"], external: [], types: false },
 ];
 
 for (const pkg of PACKAGES) {

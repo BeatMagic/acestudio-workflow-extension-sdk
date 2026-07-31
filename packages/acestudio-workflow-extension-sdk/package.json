@@ -1,13 +1,13 @@
 {
-  "name": "@timedomain/acestudio-bridge-core",
-  "version": "0.1.1",
+  "name": "@timedomain/acestudio-workflow-extension-sdk",
+  "version": "0.1.0",
   "type": "module",
-  "description": "The connection core for programming against a running ACE Studio: the canonical handshake over a pluggable message-port transport, the generated capability bindings, grants, jobs, and one typed error.",
+  "description": "The SDK for building ACE Studio workflow extensions: defineExtension, a TypeScript manifest with a manifest-scoped typed client, lifecycle choreography, and the optional UI paved road.",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/BeatMagic/acestudio-workflow-extension-sdk.git",
-    "directory": "packages/acestudio-bridge-core"
+    "directory": "packages/acestudio-workflow-extension-sdk"
   },
   "engines": {
     "node": ">=24"
@@ -19,7 +19,15 @@
       "acestudio:source": "./src/index.ts",
       "types": "./dist/src/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./page": {
+      "acestudio:source": "./src/page/index.ts",
+      "types": "./dist/src/page/index.d.ts",
+      "default": "./dist/page/index.js"
     }
+  },
+  "dependencies": {
+    "@timedomain/acestudio-bridge-core": "^0.1.0"
   },
   "files": ["LICENSE", "dist", "src"],
   "scripts": {

@@ -67,8 +67,8 @@ const exitCodeOfEntry = (dist) => {
 try {
   console.log(`smoke: packing the workspace into ${work}`);
   const core = pack("@timedomain/acestudio-bridge-core");
-  const sdk = pack("@timedomain/acestudio-extension-sdk");
-  const scaffolder = pack("@timedomain/create-acestudio-extension");
+  const sdk = pack("@timedomain/acestudio-workflow-extension-sdk");
+  const scaffolder = pack("@timedomain/create-acestudio-workflow-extension");
 
   // The scaffolder, installed the way a developer gets it: from the tarball, into an
   // empty project, and invoked through its bin.
@@ -82,13 +82,13 @@ try {
   // `--no-install` is what keeps this test honest: without it, an npx that failed to find
   // the bin just installed by name would fetch a published one from the registry and pass,
   // reporting a green smoke for a tarball it never ran.
-  run("npx", ["--no-install", "create-acestudio-extension", "stem-tools", ...identity], runner);
+  run("npx", ["--no-install", "create-acestudio-workflow-extension", "stem-tools", ...identity], runner);
 
   const project = join(runner, "stem-tools");
   // The scaffold asks for the published SDK; point it at this commit's instead. The
   // direct dependency is replaced outright and its own peer overridden, because npm
   // refuses an override that contradicts a direct dependency.
-  run("npm", ["pkg", "set", `dependencies.@timedomain/acestudio-extension-sdk=file:${sdk}`], project);
+  run("npm", ["pkg", "set", `dependencies.@timedomain/acestudio-workflow-extension-sdk=file:${sdk}`], project);
   run("npm", ["pkg", "set", `overrides.@timedomain/acestudio-bridge-core=file:${core}`], project);
 
   console.log("smoke: install → typecheck → build");

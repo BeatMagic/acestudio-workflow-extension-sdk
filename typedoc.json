@@ -5,8 +5,8 @@
   ],
   "entryPoints": [
     "packages/acestudio-bridge-core/src/index.ts",
-    "packages/acestudio-extension-sdk/src/index.ts",
-    "packages/acestudio-extension-sdk/src/page/index.ts"
+    "packages/acestudio-workflow-extension-sdk/src/index.ts",
+    "packages/acestudio-workflow-extension-sdk/src/page/index.ts"
   ],
   "out": "docs/api",
   "readme": "none",

@@ -65,7 +65,9 @@ package name**. `npm create @timedomain/acestudio-extension` executes
 cannot be served from a package named `@timedomain/aceworkflow`. Keeping this package is
 what makes the command exist at all.
 
-Full reasoning, and where the rest of the toolchain's verbs live, is in ADR 0113.
+So you meet three commands, each at its own moment: `npm create …` once, to start;
+`acestudio-cli workflow dev …` while you iterate against a running Studio; `aceworkflow`
+to check and ship what you built.
 
 ## The template's license
 

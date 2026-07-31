@@ -11,11 +11,16 @@ The extension SDK:
 | `@timedomain/acestudio-bridge-core`     | The connection core beneath the SDK: handshake, bindings, jobs, errors  |
 | `@timedomain/create-acestudio-extension`| The `npm create`-native scaffolder for a new extension                  |
 
-Signing and submission tooling:
+The toolchain CLI:
 
 | Package                                 | Role                                                                    |
 | --------------------------------------- | ----------------------------------------------------------------------- |
-| `@timedomain/aceworkflow`               | The `aceworkflow` CLI: pack, submit, and verify bundles                 |
+| `@timedomain/aceworkflow`               | The `aceworkflow` CLI: pack, submit, verify, and sign extension bundles |
+
+Signing libraries, used by the CLI and by the service:
+
+| Package                                 | Role                                                                    |
+| --------------------------------------- | ----------------------------------------------------------------------- |
 | `@timedomain/workflowext-verifier`      | Reference verifier for the client verification policy                   |
 | `@timedomain/workflowext-signed-json`   | Signed-JSON primitives (Ed25519 over exact stored bytes)                |
 | `@timedomain/workflowext-wire-schemas`  | Versioned JSON Schemas for the wire formats                             |

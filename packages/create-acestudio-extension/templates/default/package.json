@@ -1,0 +1,27 @@
+{
+  "name": "{{packageName}}",
+  "version": "0.1.0",
+  "private": true,
+  "description": "{{description}}",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.ui.json",
+    "check": "npm run typecheck && npm run build",
+    "load": "acestudio-cli workflow dev load ./dist",
+    "reload": "acestudio-cli workflow dev reload {{extensionId}}",
+    "logs": "acestudio-cli workflow dev logs {{extensionId}} --follow",
+    "package": "npm run build && npx --yes @timedomain/aceworkflow sign ./dist --ad-hoc"
+  },
+  "dependencies": {
+    "@timedomain/acestudio-extension-sdk": "{{sdkVersionRange}}"
+  },
+  "devDependencies": {
+    "@types/node": "^24",
+    "esbuild": "^0.28.1",
+    "typescript": "^5.9.3"
+  }
+}

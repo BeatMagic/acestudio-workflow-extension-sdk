@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{extensionName}}</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+      body {
+        font: 15px/1.6 system-ui, sans-serif;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+      }
+      main {
+        padding: 2rem;
+        text-align: center;
+      }
+      h1 {
+        font-size: 1.4rem;
+        margin: 0 0 1rem;
+      }
+      p {
+        margin: 0.4rem 0;
+      }
+      .muted {
+        opacity: 0.6;
+        font-size: 0.85em;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>{{extensionName}}</h1>
+      <p id="project">Asking the process…</p>
+      <p id="heartbeat" class="muted">Waiting for the first tick…</p>
+    </main>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

@@ -18,6 +18,7 @@
     "check:exports": "node scripts/check-exports.mjs",
     "docs": "typedoc",
     "docs:check": "node scripts/check-docs.mjs",
+    "smoke:scaffold": "node scripts/smoke-scaffold.mjs",
     "validate": "npm run lint && npm run typecheck && npm test && npm run build && npm run api:check && npm run check:exports && npm run docs:check"
   },
   "devDependencies": {

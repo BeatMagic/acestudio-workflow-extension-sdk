@@ -48,16 +48,24 @@ my-extension/
 
 `dist/` is the extension — the folder ACE Studio dev-loads and `aceworkflow` seals.
 
-## Why this and not an `aceworkflow` verb
+## Why a separate package and not an `aceworkflow` verb
 
-`aceworkflow` is the signing CLI; you reach for it at the end, to seal a bundle you
-already have. Scaffolding is the other end of the same story, and `npm create` runs it
-with nothing installed at all — which is the promise (ADR 0091 §9): the first build
-succeeds before the developer has installed anything else. Putting a second front door
-on the signing CLI would mean installing a signing tool to create a project, and two
-surfaces to keep behaving identically for a command each developer runs once. The dev
-*loop* verbs are a third thing again: they are Capability Core operations gated by
-`workflow.dev`, so they live in ACE Studio's own CLI (ADR 0091 §3), not here.
+Because that is how the ecosystem draws the line, and because npm gives no choice.
+
+Scaffolding a new project from a template is the initializer's job; building and shipping
+it is the CLI's. Raycast splits it exactly so (`npm init raycast-extension` to start, `ray
+build` / `ray publish` to ship), as does VS Code (`yo code` versus `@vscode/vsce`), and
+both Cloudflare and Expo *removed* the CLI verb they once had in favour of an initializer.
+The CLI `init` verbs that persist elsewhere — `firebase init`, `supabase init` — almost
+always mean "configure the directory I am already in," which is a different act.
+
+The mechanical half: `npm create x` is an alias for `npm init x`, which resolves **by
+package name**. `npm create @timedomain/acestudio-extension` executes
+`@timedomain/create-acestudio-extension` and can execute nothing else — that entry point
+cannot be served from a package named `@timedomain/aceworkflow`. Keeping this package is
+what makes the command exist at all.
+
+Full reasoning, and where the rest of the toolchain's verbs live, is in ADR 0113.
 
 ## The template's license
 

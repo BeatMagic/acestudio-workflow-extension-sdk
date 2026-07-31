@@ -1,9 +1,8 @@
 # @timedomain/aceworkflow
 
-The ACE Studio workflow-extension CLI. A pure client of the signing service's
-submission API: it packs a `.aceworkflow` bundle, submits it to be signed, and
-verifies the signed result with the reference verifier — nothing the API
-cannot already do.
+The toolchain for ACE Studio workflow extensions. It packs a source tree into a
+`.aceworkflow` bundle, gets it signed, and checks a signed bundle against a
+trust anchor.
 
 ## Commands
 

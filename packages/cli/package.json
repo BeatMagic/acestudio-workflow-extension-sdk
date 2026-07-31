@@ -1,8 +1,8 @@
 {
   "name": "@timedomain/aceworkflow",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
-  "description": "Development tooling for ACE Studio workflow extensions: pack, submit, verify, and sign .aceworkflow bundles. A pure client of the submission API.",
+  "description": "Package, sign, and verify your ACE Studio extension before publishing it.",
   "license": "MIT",
   "repository": {
     "type": "git",

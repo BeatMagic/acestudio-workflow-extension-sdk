@@ -2,7 +2,7 @@
   "name": "@timedomain/acestudio-bridge-core",
   "version": "0.1.1",
   "type": "module",
-  "description": "The connection core for programming against a running ACE Studio: the canonical handshake over a pluggable message-port transport, the generated capability bindings, grants, jobs, and one typed error.",
+  "description": "Control a running ACE Studio from your own code. The layer under the workflow extension SDK.",
   "license": "MIT",
   "repository": {
     "type": "git",

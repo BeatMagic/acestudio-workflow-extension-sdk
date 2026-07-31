@@ -83,6 +83,14 @@ test("points at AGENTS.md once it is done", async () => {
   expect(session.out).toContain("AGENTS.md");
 });
 
+// The next step is meant to be pasted, and a directory name is whatever the author typed
+// at the prompt — so a name a shell would split has to come back quoted.
+test("quotes the suggested cd when the directory name would not survive a shell", async () => {
+  const session = await cli(["stem tools", "-y"]);
+
+  expect(session.out).toContain("cd 'stem tools'");
+});
+
 test("derives everything from the directory when there is nobody to ask", async () => {
   const session = await cli(["stem-tools"]);
 

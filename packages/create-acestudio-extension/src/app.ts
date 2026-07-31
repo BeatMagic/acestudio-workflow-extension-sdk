@@ -127,11 +127,19 @@ export async function run(deps: RunDeps): Promise<number> {
   }
 }
 
+/**
+ * A path as the reader can paste it. Quoted only when a shell would otherwise split it or
+ * read something into it, so the ordinary case stays the bare name it was typed as.
+ */
+function shellArgument(path: string): string {
+  return /^[\w./-]+$/.test(path) ? path : `'${path.replaceAll("'", `'\\''`)}'`;
+}
+
 function report(deps: RunDeps, directory: string, fileCount: number): void {
   const where = relative(deps.cwd, directory) || ".";
   deps.out(`Scaffolded ${String(fileCount)} files into ${where}\n\n`);
   deps.out("Next:\n");
-  deps.out(`  cd ${where}\n`);
+  deps.out(`  cd ${shellArgument(where)}\n`);
   deps.out("  npm install\n");
   deps.out("  npm run check     # typecheck + build, with no ACE Studio running\n\n");
   deps.out("Then read AGENTS.md — it is the whole build/load/observe/debug loop, and\n");

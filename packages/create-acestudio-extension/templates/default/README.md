@@ -20,6 +20,10 @@ npm run load     # dev-load dist/
 npm run logs     # follow this extension's logs
 ```
 
+Those scripts drive `acestudio-cli`, which ships with ACE Studio — so unlike
+`npm run check`, they need it installed and on your `PATH`. Run
+`acestudio-cli workflow dev --help` if one of them is not recognised.
+
 Edit, `npm run check`, `npm run reload`. There is no file watcher — you build, then
 you reload, so a reload never catches half an edit.
 

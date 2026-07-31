@@ -14,10 +14,18 @@ import { defaultsFor, scaffold, ScaffoldError } from "./index.js";
 /** Where a directory is scaffolded when the caller names none. */
 const DEFAULT_DIRECTORY = "my-extension";
 
+/** What the process exits with. */
+const EXIT = { scaffolded: 0, refused: 1, usage: 2 } as const;
+
+// Both invocations are spelled out because npm's `--` is not this parser's: npm eats
+// the first one and forwards the rest, while a `--` that does reach the parser means
+// what it means everywhere else — the tokens after it are not options.
 const USAGE = `create-acestudio-extension — scaffold an ACE Studio workflow extension
 
 Usage:
-  npm create @timedomain/acestudio-extension@latest [directory] -- [options]
+  npm create @timedomain/acestudio-extension@latest [directory]
+  npm create @timedomain/acestudio-extension@latest -- [directory] [options]
+  npx create-acestudio-extension [directory] [options]
 
 Options:
   --id <developer.extension>  the extension id, two lowercase slugs joined by a dot
@@ -40,9 +48,13 @@ export interface RunDeps {
   readonly cwd: string;
   readonly out: (text: string) => void;
   readonly err: (text: string) => void;
-  /** Whether there is somebody there to answer a question. */
-  readonly interactive?: boolean;
-  /** Asks one question and returns the answer, or the fallback when it is blank. */
+  /**
+   * Asks one question and returns the answer, or the fallback when it is blank.
+   *
+   * Its presence *is* "there is somebody there to ask": a caller with no terminal —
+   * or one told `--yes` — passes nothing, and every question takes its default. A
+   * separate `interactive` flag beside it would only make the two disagree.
+   */
   readonly ask?: (question: string, fallback: string) => Promise<string>;
   /** This package's version, for `--version`. */
   readonly version?: string;
@@ -71,22 +83,24 @@ export async function run(deps: RunDeps): Promise<number> {
   try {
     args = parse(deps.argv);
   } catch (error) {
-    deps.err(`error: ${(error as Error).message}\n\n`);
+    // Only a usage error is the caller's fault. Anything else is this program's, and
+    // dressing a bug up as "you typed it wrong" sends the reader after the wrong thing.
+    if (!(error instanceof UsageError)) throw error;
+    deps.err(`error: ${error.message}\n\n`);
     deps.err(USAGE);
-    return 2;
+    return EXIT.usage;
   }
 
   if (args.help) {
     deps.out(USAGE);
-    return 0;
+    return EXIT.scaffolded;
   }
   if (args.version) {
     deps.out(`${deps.version ?? "0.0.0"}\n`);
-    return 0;
+    return EXIT.scaffolded;
   }
 
-  const interactive = (deps.interactive ?? false) && !args.yes && deps.ask !== undefined;
-  const ask = interactive ? (deps.ask as NonNullable<RunDeps["ask"]>) : async (_q: string, f: string) => f;
+  const ask = args.yes || deps.ask === undefined ? async (_question: string, fallback: string) => fallback : deps.ask;
 
   const directoryName = args.directory ?? (await ask("Directory", DEFAULT_DIRECTORY));
   const directory = resolve(deps.cwd, directoryName);
@@ -103,11 +117,11 @@ export async function run(deps: RunDeps): Promise<number> {
   try {
     const result = await scaffold({ directory, id, name, publisher, description });
     report(deps, result.directory, result.files.length);
-    return 0;
+    return EXIT.scaffolded;
   } catch (error) {
     if (error instanceof ScaffoldError) {
       deps.err(`error: ${error.message}\n`);
-      return 1;
+      return EXIT.refused;
     }
     throw error;
   }
@@ -127,8 +141,9 @@ function report(deps: RunDeps, directory: string, fileCount: number): void {
 /**
  * A small hand-rolled parser — no dependency for a handful of flags, matching the
  * `aceworkflow` CLI beside it. Supports `--flag value`, `--flag=value`, `-y`, and `--`
- * to end option parsing. The first bare token is the directory; a second is a usage
- * error rather than something quietly ignored.
+ * to end option parsing, after which a token is a directory even if it starts with a
+ * dash. The first bare token is the directory; a second is a usage error rather than
+ * something quietly ignored.
  */
 function parse(argv: readonly string[]): ParsedArgs {
   const parsed: {

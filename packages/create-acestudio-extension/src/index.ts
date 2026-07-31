@@ -17,8 +17,21 @@
  */
 
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
-import { basename, dirname, join, sep } from "node:path";
+import { basename, dirname, extname, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+
+/**
+ * The `@timedomain/acestudio-extension-sdk` release line a scaffold is built against.
+ *
+ * Pinned rather than derived. This scaffolder has no dependency on the SDK — that is
+ * what lets `npm create` run it with nothing installed — so it cannot read the SDK's
+ * version, and its own is not a stand-in: the workspace's packages carry independent
+ * version lines. A test pins this to the SDK package beside it, so a bump that forgets
+ * this constant fails there rather than in a scaffold whose `npm install` 404s.
+ *
+ * @public
+ */
+export const SDK_VERSION_RANGE = "^0.0.0";
 
 /**
  * `developer-slug.extension-slug`, the id grammar the host enforces.
@@ -78,11 +91,8 @@ export interface ScaffoldOptions {
   /** One line about what it does, for the install dialog. */
   readonly description?: string;
   /**
-   * The SDK dependency range to write into the scaffold's `package.json`.
-   *
-   * Defaults to a caret on this scaffolder's own version: the packages release
-   * together out of one repository, so the SDK line a scaffold should build against
-   * is the one this scaffolder shipped alongside.
+   * The SDK dependency range to write into the scaffold's `package.json`. Defaults to
+   * {@link SDK_VERSION_RANGE}.
    */
   readonly sdkVersionRange?: string;
 }
@@ -154,12 +164,13 @@ export async function scaffold(options: ScaffoldOptions): Promise<ScaffoldResult
   await requireEmptyDirectory(directory);
 
   const root = templateRoot();
-  const substitutions = await substitutionsFor(options);
+  const substitutions = substitutionsFor(options);
   const written: string[] = [];
 
   for (const relative of await templateFiles(root)) {
     const emitted = emittedPath(relative);
-    const contents = substitute(await readFile(join(root, ...relative.split("/")), "utf8"), substitutions);
+    const template = await readFile(join(root, ...relative.split("/")), "utf8");
+    const contents = substitute(template, substitutions, escapeFor(emitted));
     const destination = join(directory, ...emitted.split("/"));
     await mkdir(dirname(destination), { recursive: true });
     await writeFile(destination, contents, "utf8");
@@ -229,7 +240,7 @@ function emittedPath(relative: string): string {
   return segments.join("/");
 }
 
-async function substitutionsFor(options: ScaffoldOptions): Promise<Record<string, string>> {
+function substitutionsFor(options: ScaffoldOptions): Record<string, string> {
   const name = options.name.trim();
   const extensionSlug = options.id.split(".")[1] as string;
   const description = options.description?.trim();
@@ -241,25 +252,54 @@ async function substitutionsFor(options: ScaffoldOptions): Promise<Record<string
     protocolType: protocolTypeName(extensionSlug),
     publisher: options.publisher.trim(),
     description: description === undefined || description.length === 0 ? `${name} for ACE Studio` : description,
-    sdkVersionRange: options.sdkVersionRange ?? `^${await ownVersion()}`,
+    sdkVersionRange: options.sdkVersionRange ?? SDK_VERSION_RANGE,
   };
 }
 
+/** How a substituted value is made safe for the file it is landing in. */
+type Escape = (value: string) => string;
+
 /**
- * Replace every `{{name}}` with its substitution. A token nobody supplied is left
- * as it was rather than blanked, so a typo in a template shows up as itself in the
- * output — which is what lets a test catch it by grepping the emitted tree.
+ * The escaping each kind of template file needs. A display name is the author's to
+ * write, quotes and angle brackets included, so the value is fitted to its
+ * destination rather than the author being told what characters they may use.
  *
- * Values are escaped for a double-quoted string, which is the same escaping in JSON
- * and in TypeScript: the two places a stray quote in a display name would stop the
- * scaffold from building are `package.json` and `src/manifest.ts`, and one rule covers
- * both. The remaining sites are prose, where an escaped quote is a cosmetic blemish on
- * a name that had one rather than a broken file.
+ * JSON and TypeScript agree about double-quoted strings, which is every substitution
+ * site in `package.json` and `src/manifest.ts`. HTML gets entities. Markdown and the
+ * rest take the value as written: it is prose there, and escaping it would show.
  */
-function substitute(contents: string, substitutions: Readonly<Record<string, string>>): string {
+const ESCAPES: Readonly<Record<string, Escape>> = {
+  ".json": (value) => JSON.stringify(value).slice(1, -1),
+  ".ts": (value) => JSON.stringify(value).slice(1, -1),
+  ".mjs": (value) => JSON.stringify(value).slice(1, -1),
+  // Quotes as well as brackets, though today's sites are all element text where a
+  // quote is harmless: a later template that puts a name in an attribute should not
+  // have to remember to come back here.
+  ".html": (value) =>
+    value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;"),
+};
+
+const VERBATIM: Escape = (value) => value;
+
+function escapeFor(path: string): Escape {
+  return ESCAPES[extname(path)] ?? VERBATIM;
+}
+
+/**
+ * Replace every `{{name}}` with its substitution, escaped for where it lands. A token
+ * nobody supplied is left as it was rather than blanked, so a typo in a template shows
+ * up as itself in the output — which is what lets a test catch it by grepping the
+ * emitted tree.
+ */
+function substitute(contents: string, substitutions: Readonly<Record<string, string>>, escape: Escape): string {
   return contents.replace(/\{\{(\w+)\}\}/g, (whole: string, name: string) => {
     const value = substitutions[name];
-    return value === undefined ? whole : JSON.stringify(value).slice(1, -1);
+    return value === undefined ? whole : escape(value);
   });
 }
 
@@ -271,14 +311,6 @@ function substitute(contents: string, substitutions: Readonly<Record<string, str
 function protocolTypeName(extensionSlug: string): string {
   const pascal = titleCase(extensionSlug).replace(/ /g, "");
   return `${/^\d/.test(pascal) ? "Ext" : ""}${pascal}Ui`;
-}
-
-/** This package's version — the SDK line a scaffold is pointed at by default. */
-async function ownVersion(): Promise<string> {
-  const manifest = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8")) as {
-    version?: string;
-  };
-  return manifest.version ?? "0.0.0";
 }
 
 /** `stem-tools` → `Stem Tools`. Only ever a suggestion the author can overwrite. */

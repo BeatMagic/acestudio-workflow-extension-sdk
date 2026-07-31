@@ -1,19 +1,28 @@
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { mkdir } from "node:fs/promises";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdir, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { expect, test } from "vitest";
+import { afterAll, expect, test } from "vitest";
 import {
   defaultsFor,
   scaffold,
   ScaffoldError,
+  SDK_VERSION_RANGE,
   toSlug,
   type ScaffoldOptions,
 } from "@timedomain/create-acestudio-extension";
 
-/** A fresh empty directory to scaffold into, cleaned up with the temp root. */
+/** One root for the file's temp directories, so nothing is left in $TMPDIR after a run. */
+const root = mkdtempSync(join(tmpdir(), "create-ace-ext-"));
+let taken = 0;
+
+afterAll(() => {
+  rmSync(root, { recursive: true, force: true });
+});
+
+/** A fresh empty directory to scaffold into. */
 function target(name = "my-extension"): string {
-  return join(mkdtempSync(join(tmpdir(), "create-ace-ext-")), name);
+  return join(root, `t${String(taken++)}`, name);
 }
 
 function options(directory: string, overrides: Partial<ScaffoldOptions> = {}): ScaffoldOptions {
@@ -93,13 +102,36 @@ test("depends on the SDK line this scaffolder was released alongside", async () 
   expect(pkg.dependencies["@timedomain/acestudio-extension-sdk"]).toBe("^1.2.3");
 });
 
-test("defaults the SDK range to this package's own version", async () => {
+test("defaults the SDK range to the pinned one", async () => {
   const directory = target();
 
   await scaffold(options(directory));
 
   const pkg = JSON.parse(read(directory, "package.json")) as { dependencies: Record<string, string> };
-  expect(pkg.dependencies["@timedomain/acestudio-extension-sdk"]).toMatch(/^\^\d+\.\d+\.\d+/);
+  expect(pkg.dependencies["@timedomain/acestudio-extension-sdk"]).toBe(SDK_VERSION_RANGE);
+});
+
+// The drift gate behind that pin. The scaffolder cannot read the SDK's version at run
+// time — it deliberately does not depend on it — so an SDK release that forgets to
+// bump the constant would emit scaffolds pinned to a version that no longer exists.
+test("the pinned SDK range tracks the SDK package beside it", async () => {
+  const sdk = JSON.parse(
+    await readFile(new URL("../../acestudio-extension-sdk/package.json", import.meta.url), "utf8"),
+  ) as { version: string };
+
+  expect(SDK_VERSION_RANGE).toBe(`^${sdk.version}`);
+});
+
+test("fits a value to the file it lands in, rather than refusing the characters", async () => {
+  const directory = target();
+
+  await scaffold(options(directory, { name: 'Stem "Pro" <Tools>' }));
+
+  // JSON and TypeScript agree about a double-quoted string…
+  expect(JSON.parse(read(directory, "package.json"))).toMatchObject({ description: 'Stem "Pro" <Tools> for ACE Studio' });
+  expect(read(directory, "src/manifest.ts")).toContain('name: "Stem \\"Pro\\" <Tools>"');
+  // …and the page gets entities, so a name with a bracket does not become markup.
+  expect(read(directory, "ui/index.html")).toContain("<title>Stem &quot;Pro&quot; &lt;Tools&gt;</title>");
 });
 
 test("scaffolds into a directory that exists but is empty", async () => {

@@ -1,8 +1,16 @@
-import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { expect, test } from "vitest";
+import { afterAll, expect, test } from "vitest";
 import { run, type RunDeps } from "../src/app.js";
+
+/** One root for the file's temp directories, so nothing is left in $TMPDIR after a run. */
+const root = mkdtempSync(join(tmpdir(), "create-ace-cli-"));
+let taken = 0;
+
+afterAll(() => {
+  rmSync(root, { recursive: true, force: true });
+});
 
 interface Session {
   readonly code: number;
@@ -12,7 +20,8 @@ interface Session {
 }
 
 async function cli(argv: readonly string[], overrides: Partial<RunDeps> = {}): Promise<Session> {
-  const cwd = mkdtempSync(join(tmpdir(), "create-ace-cli-"));
+  const cwd = join(root, `t${String(taken++)}`);
+  mkdirSync(cwd);
   let out = "";
   let err = "";
   const code = await run({
@@ -86,7 +95,7 @@ test("derives everything from the directory when there is nobody to ask", async 
 test("asks for what was not given, in the order the answers build on each other", async () => {
   const { ask, asked } = answering(["stems", "Acme Audio", "Stem Tools", "", "Splits stems."]);
 
-  const session = await cli([], { interactive: true, ask });
+  const session = await cli([], { ask });
 
   expect(session.code).toBe(0);
   expect(asked).toEqual(["Directory", "Publisher", "Display name", "Extension id", "Description"]);
@@ -99,10 +108,17 @@ test("asks for what was not given, in the order the answers build on each other"
 test("-y takes the defaults even with a terminal there to ask in", async () => {
   const { ask, asked } = answering(["never asked"]);
 
-  const session = await cli(["stems", "-y"], { interactive: true, ask });
+  const session = await cli(["stems", "-y"], { ask });
 
   expect(session.code).toBe(0);
   expect(asked).toEqual([]);
+});
+
+test("after -- a dashed token is the directory, not an option", async () => {
+  const session = await cli(["--", "-stems"]);
+
+  expect(session.code).toBe(0);
+  expect(existsSync(join(session.cwd, "-stems", "AGENTS.md"))).toBe(true);
 });
 
 test("a flag the parser does not know is a usage error, not a directory", async () => {

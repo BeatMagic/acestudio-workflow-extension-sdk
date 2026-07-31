@@ -16,7 +16,8 @@ Everything not given on the command line is asked for, or derived from the direc
 name when there is no terminal to ask in:
 
 ```
-npm create @timedomain/acestudio-extension@latest [directory] -- [options]
+npm create @timedomain/acestudio-extension@latest -- [directory] [options]
+npx create-acestudio-extension [directory] [options]
 
   --id <developer.extension>  the extension id, two lowercase slugs joined by a dot
   --name <text>               the name ACE Studio shows the user
@@ -24,6 +25,9 @@ npm create @timedomain/acestudio-extension@latest [directory] -- [options]
   --description <text>        one line for the install dialog
   -y, --yes                   take the defaults; never prompt
 ```
+
+(npm eats that first `--` and forwards the rest; it is only needed when you are
+passing options.)
 
 The scaffold refuses to write into a directory that already holds anything — a
 scaffold is a whole tree, not a merge.

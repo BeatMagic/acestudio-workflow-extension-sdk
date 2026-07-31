@@ -61,6 +61,12 @@ const PLACEHOLDER_PUBLISHER = "Example Developer";
 const DOTFILES: Readonly<Record<string, string>> = { _gitignore: ".gitignore" };
 
 /**
+ * The agent instructions the scaffold emits, and the link target every other agent
+ * filename points at. `AGENTS.md` is the cross-vendor name, so it holds the bytes.
+ */
+const AGENT_INSTRUCTIONS = "AGENTS.md";
+
+/**
  * Something the scaffold will not do: a directory that is not the caller's to fill,
  * or an identity ACE Studio would refuse.
  *
@@ -177,8 +183,26 @@ export async function scaffold(options: ScaffoldOptions): Promise<ScaffoldResult
     written.push(emitted);
   }
 
+  written.push(await writeAgentInstructionsAlias(directory));
+
   written.sort();
   return { directory, files: written };
+}
+
+/**
+ * Give the agent instructions the second name Claude Code looks for.
+ *
+ * An import rather than a symlink, which is the other documented way and the one that
+ * does not survive this scaffold's own life: the author commits it, and a clone on
+ * Windows — where git leaves `core.symlinks` off — turns the link into a file whose
+ * contents are the literal text `AGENTS.md`, broken on a machine that never ran this.
+ * The import is one line that clones the same everywhere, and leaves room below it for
+ * instructions meant only for Claude.
+ */
+async function writeAgentInstructionsAlias(directory: string): Promise<string> {
+  const emitted = "CLAUDE.md";
+  await writeFile(join(directory, emitted), `@${AGENT_INSTRUCTIONS}\n`, "utf8");
+  return emitted;
 }
 
 /** Everything the author can be wrong about, checked before anything is written. */

@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { lstatSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { mkdir, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -46,7 +46,7 @@ test("emits the whole working extension, sorted and archive-relative", async () 
   expect(result.files).toEqual([
     ".gitignore",
     "AGENTS.md",
-    "LICENSE",
+    "CLAUDE.md",
     "README.md",
     "build.mjs",
     "package.json",
@@ -57,6 +57,23 @@ test("emits the whole working extension, sorted and archive-relative", async () 
     "ui/index.html",
     "ui/main.ts",
   ]);
+});
+
+// Exhaustive above, which is the point for one absence in particular: no LICENSE. The
+// template's MIT-0 grant is recorded in this package, not shipped into a tree where git
+// and GitHub would read it as the author's own choice of license.
+
+// An import rather than the symlink that would also work: a plain file survives being
+// committed here and cloned on Windows, where git would otherwise leave a text file
+// holding the word "AGENTS.md". It also keeps the emitted tree the same on every
+// platform, which is what lets a second front door promise to match this one.
+test("gives the agent instructions the second name Claude Code looks for", async () => {
+  const directory = target();
+
+  await scaffold(options(directory));
+
+  expect(lstatSync(join(directory, "CLAUDE.md")).isSymbolicLink()).toBe(false);
+  expect(read(directory, "CLAUDE.md")).toBe("@AGENTS.md\n");
 });
 
 test("the dotfile npm would have stripped from the tarball lands as a dotfile", async () => {

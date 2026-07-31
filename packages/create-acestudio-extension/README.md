@@ -37,6 +37,7 @@ scaffold is a whole tree, not a merge.
 ```
 my-extension/
 ├── AGENTS.md          the build/load/observe/debug loop, written for a code agent
+├── CLAUDE.md          one line importing AGENTS.md, the name Claude Code reads
 ├── README.md          the same, for a human
 ├── build.mjs          bundles both halves into dist/ and emits dist/manifest.json
 ├── src/
@@ -72,6 +73,7 @@ once, to start; `acestudio-cli workflow dev …` while you iterate against a run
 
 ## The template's license
 
-The emitted scaffold is [MIT-0](./templates/default/LICENSE) — it belongs to whoever
-runs the scaffolder, with no attribution required. This package itself is MIT, like the
-rest of the repository.
+The emitted scaffold is [MIT No Attribution](./TEMPLATE-LICENSE) — it belongs to whoever
+runs the scaffolder, with no attribution required and no license file of ours left in
+their tree to delete. Picking a license is theirs to do, once they know what they are
+shipping. This package itself is MIT, like the rest of the repository.

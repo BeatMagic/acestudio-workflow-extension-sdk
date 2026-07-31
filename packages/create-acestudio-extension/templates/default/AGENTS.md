@@ -18,6 +18,7 @@ change things.
 | `ui/`             | The page — plain TypeScript and one HTML file.                        |
 | `build.mjs`       | Builds all of it into `dist/`.                                        |
 | `dist/`           | **Generated.** Never edit it; it is deleted on every build.           |
+| `CLAUDE.md`       | One line importing this file, for Claude Code. Not a second document. |
 
 `dist/` *is* the extension: `manifest.json` at its root, `index.js` beside it, the
 page under `ui/`. That folder is what you dev-load, and what gets sealed and signed.
@@ -154,12 +155,3 @@ signature is bound to, so settle on it before you publish anything.
 
 Sealing is the final check that the real install path works — not part of the loop.
 Iterate dev-loaded.
-
-## House rules
-
-- Never hand-edit `dist/`. Every build deletes it.
-- Never commit `dist/`, `node_modules/`, or `*.aceworkflow`.
-- Never widen `capabilities` or `hostAccess` to make an error go away. Read the error:
-  the grant is deliberately exactly what the manifest asked for.
-- Keep `AGENTS.md` true. If you change the build, the scripts, or the layout, fix this
-  file in the same change.

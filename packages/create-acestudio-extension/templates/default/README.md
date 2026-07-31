@@ -36,6 +36,8 @@ you reload, so a reload never catches half an edit.
 - `src/index.ts` — the process.
 - `ui/` — the page.
 - `dist/` — generated, and deleted on every build. Do not edit it.
+- `AGENTS.md` — the loop above in the detail a code agent needs. `CLAUDE.md` imports it,
+  so Claude Code reads the same file. Start whichever agent you like in this directory.
 
 ## Shipping
 
@@ -45,14 +47,3 @@ npm run package   # build, then pack + sign dist/, and verify the result
 
 The developer slug in `src/manifest.ts` (`{{extensionId}}`) is yours to choose, and it
 is what the signature binds to — settle on it before you publish.
-
-## Working with a code agent
-
-`AGENTS.md` is the full loop — build, load, observe, debug — written for a code agent
-to follow without being primed. Point yours at it.
-
-## License
-
-This scaffold was emitted under [MIT-0](./LICENSE): it is yours, with no attribution
-required. Replace `LICENSE` and `package.json`'s `license` field with whatever you ship
-your own extension under.

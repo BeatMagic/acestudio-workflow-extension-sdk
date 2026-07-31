@@ -2,7 +2,7 @@
   "name": "@timedomain/workflowext-signed-json",
   "version": "0.1.2",
   "type": "module",
-  "description": "Signed-JSON primitives for ACE Studio extension signing: Ed25519 over exact stored bytes, verify-before-parse, no canonicalization.",
+  "description": "Ed25519 signatures over JSON documents, the building block behind ACE Studio's signed extensions.",
   "license": "MIT",
   "repository": {
     "type": "git",

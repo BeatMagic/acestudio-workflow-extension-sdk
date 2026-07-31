@@ -1,8 +1,8 @@
 {
   "name": "@timedomain/acestudio-workflow-extension-sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
-  "description": "The SDK for building ACE Studio workflow extensions: defineExtension, a TypeScript manifest with a manifest-scoped typed client, lifecycle choreography, and the optional UI paved road.",
+  "description": "Build workflow extensions for ACE Studio, the all-in-one AI music studio.",
   "license": "MIT",
   "repository": {
     "type": "git",

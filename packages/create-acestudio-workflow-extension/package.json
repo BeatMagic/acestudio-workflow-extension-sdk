@@ -1,8 +1,8 @@
 {
   "name": "@timedomain/create-acestudio-workflow-extension",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
-  "description": "The npm create-native scaffolder for ACE Studio workflow extensions: emits a working extension and its AGENTS.md, no running Studio required.",
+  "description": "Scaffold a new ACE Studio workflow extension.",
   "license": "MIT",
   "repository": {
     "type": "git",

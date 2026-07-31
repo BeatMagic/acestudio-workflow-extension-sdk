@@ -2,7 +2,7 @@
   "name": "@timedomain/workflowext-verifier",
   "version": "0.1.2",
   "type": "module",
-  "description": "Reference verifier for ACE Studio extension signatures: it implements the client verification policy so tests assert what a real client will conclude. Its golden byte-stability vectors live in the repository.",
+  "description": "Checks that an ACE Studio extension really came from its publisher and was not altered.",
   "license": "MIT",
   "repository": {
     "type": "git",

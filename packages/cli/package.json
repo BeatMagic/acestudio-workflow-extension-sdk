@@ -2,7 +2,7 @@
   "name": "@timedomain/aceworkflow",
   "version": "0.1.1",
   "type": "module",
-  "description": "The toolchain for ACE Studio workflow extensions: pack, sign, and verify .aceworkflow bundles.",
+  "description": "Package, sign, and verify your ACE Studio extension before publishing it.",
   "license": "MIT",
   "repository": {
     "type": "git",

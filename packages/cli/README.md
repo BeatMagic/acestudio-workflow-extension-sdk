@@ -1,8 +1,8 @@
 # @timedomain/aceworkflow
 
-The toolchain for ACE Studio workflow extensions. It packs a source tree into a
-`.aceworkflow` bundle, gets it signed, and checks a signed bundle against a
-trust anchor.
+The toolchain for ACE Studio extensions. It packs your source tree into a
+`.aceworkflow` bundle, gets that bundle signed so ACE Studio will load it, and checks
+a signed bundle the way the app will before you hand it to anyone.
 
 ## Commands
 

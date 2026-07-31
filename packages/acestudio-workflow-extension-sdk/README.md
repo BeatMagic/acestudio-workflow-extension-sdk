@@ -1,9 +1,14 @@
 # @timedomain/acestudio-workflow-extension-sdk
 
-The SDK for building ACE Studio workflow extensions — the extension layer above
-[`@timedomain/acestudio-bridge-core`](../acestudio-bridge-core). It owns the
-extension lifecycle choreography (connect, handshake, activate, UI serving,
-shutdown) so an author writes only handlers.
+Build an extension for ACE Studio, the all-in-one AI music studio. You declare what
+your extension is allowed to do, write one `activate` function, and draw its interface
+as a web page the app puts in a window for you. Connecting, the lifecycle, and the
+channel between that page and your code are the SDK's job.
+
+It is the extension layer above
+[`@timedomain/acestudio-bridge-core`](../acestudio-bridge-core), and it owns the
+lifecycle choreography (connect, handshake, activate, UI serving, shutdown) so an
+author writes only handlers.
 
 - `.` — the process-side entry (Node).
 - `./page` — the browser-only page side of the UI channel.

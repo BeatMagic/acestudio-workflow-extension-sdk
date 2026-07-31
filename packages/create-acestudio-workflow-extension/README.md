@@ -1,9 +1,12 @@
 # @timedomain/create-acestudio-workflow-extension
 
-The `npm create`-native scaffolder for ACE Studio workflow extensions. It emits a
-working extension — TypeScript manifest, typed-channel hello-world UI, build scripts —
-plus an `AGENTS.md` telling a code agent how to build, load, observe, and debug against
-a running Studio. No running Studio required.
+Start an ACE Studio extension from one that already works. It writes the whole
+project: a TypeScript manifest, a hello-world UI already talking to the extension
+process over a typed channel, and build scripts you can run before ACE Studio is even
+open.
+
+It also writes the new project an `AGENTS.md`, which is the build, load, observe, and
+debug loop spelled out for a code agent to follow.
 
 ```sh
 npm create @timedomain/acestudio-workflow-extension@latest my-extension

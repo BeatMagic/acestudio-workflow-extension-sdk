@@ -1,10 +1,13 @@
 # @timedomain/workflowext-wire-schemas
 
-Versioned JSON Schemas for the six ACE Studio extension-signing wire formats —
-the **normative contract** consumed by the Studio client verification module.
-Treat any change to a published schema as breaking for that consumer: schemas
-are frozen once consumed; evolution means a new `*.v2.schema.json`, never an
-edit to v1.
+The JSON Schemas for the files that let ACE Studio tell a genuine extension from a
+tampered one: the signature that travels with a bundle, the certificates behind that
+signature, and the trust and revocation files the app reads to decide who it believes.
+
+A supporting package, and the **normative contract**: ACE Studio's own verification
+module is written against these schemas, so treat any change to a published one as
+breaking for it. A schema is frozen once something consumes it, and evolution means a
+new `*.v2.schema.json`, never an edit to v1.
 
 ## The six formats
 

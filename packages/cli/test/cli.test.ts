@@ -83,6 +83,14 @@ describe("help and version", () => {
     expect(await run(deps([]))).toBe(ExitCode.Usage);
   });
 
+  // This binary has no scaffolding verb, so the help is the only place someone
+  // holding it learns where scaffolding lives. The spelling is exact because it is
+  // one npm resolves by package name and nothing else.
+  it("points at the scaffolder it does not contain", async () => {
+    await run(deps(["--help"]));
+    expect(out.join("")).toContain("npm create @timedomain/acestudio-workflow-extension@latest");
+  });
+
   it("rejects an unknown command with usage exit", async () => {
     expect(await run(deps(["frobnicate"]))).toBe(ExitCode.Usage);
   });

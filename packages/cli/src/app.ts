@@ -54,6 +54,10 @@ Global options:
   -y, --yes         never prompt (assume non-interactive)
   -h, --help        show this help
   --version         print the version
+
+Starting a new extension is a separate tool, so that it works before anything is
+installed:
+  npm create @timedomain/acestudio-workflow-extension@latest my-extension
 `;
 
 /** True in a CI environment. Any non-falsey CI value counts — not just "true". */

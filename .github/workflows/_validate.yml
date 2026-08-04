@@ -41,12 +41,20 @@ jobs:
           # `npm run validate` already produced dist/; --ignore-scripts skips the
           # prepack hook so pack reuses it instead of rebuilding everything again.
           tgz=$(npm pack -w @timedomain/aceworkflow --ignore-scripts --pack-destination "$RUNNER_TEMP" | tail -1)
+          # `init` calls its sibling scaffolder in-process, so the CLI declares it as a
+          # dependency — and the version it declares only reaches the registry when the
+          # tag that stages them both goes out. So this install is handed the local one,
+          # which is the tarball the check wanted anyway: the subject is this commit.
+          seed=$(npm pack -w @timedomain/create-acestudio-workflow-extension --ignore-scripts --pack-destination "$RUNNER_TEMP" | tail -1)
           mkdir -p "$RUNNER_TEMP/packtest" && cd "$RUNNER_TEMP/packtest"
           npm init -y >/dev/null
+          npm pkg set "overrides.@timedomain/create-acestudio-workflow-extension=file:$RUNNER_TEMP/$seed"
           npm install "$RUNNER_TEMP/$tgz"
           npx aceworkflow --help
+          npx aceworkflow init --help
 
       # The scaffold's "works without a running Studio" promise: scaffold from the
-      # packed scaffolder into a temp dir, then install, typecheck, and build it.
+      # packed scaffolder into a temp dir, then install, typecheck, and build it — and
+      # the same tree again through the packed CLI's `init`.
       - name: Verify the scaffolder emits an extension that builds
         run: npm run smoke:scaffold

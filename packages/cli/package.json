@@ -23,7 +23,8 @@
     }
   },
   "dependencies": {
-    "@napi-rs/keyring": "^1.3.0"
+    "@napi-rs/keyring": "^1.3.0",
+    "@timedomain/create-acestudio-workflow-extension": "^0.1.2"
   },
   "devDependencies": {
     "@timedomain/workflowext-signed-json": "*",

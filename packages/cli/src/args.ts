@@ -5,6 +5,11 @@ export interface CliOptions {
   out?: string;
   roots?: string;
   token?: string;
+  /** `init`'s identity fields, each the initializer's own option under the same name. */
+  id?: string;
+  name?: string;
+  publisher?: string;
+  description?: string;
   json: boolean;
   quiet: boolean;
   yes: boolean;
@@ -80,6 +85,18 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
         break;
       case "--token":
         options.token = takeValue();
+        break;
+      case "--id":
+        options.id = takeValue();
+        break;
+      case "--name":
+        options.name = takeValue();
+        break;
+      case "--publisher":
+        options.publisher = takeValue();
+        break;
+      case "--description":
+        options.description = takeValue();
         break;
       case "--json":
         noValue();

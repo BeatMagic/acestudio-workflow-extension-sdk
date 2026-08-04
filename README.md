@@ -11,6 +11,10 @@ That emits a working extension — TypeScript manifest, typed-channel hello-worl
 build scripts — plus an `AGENTS.md` for whichever code agent you point at it. Nothing
 about scaffolding, installing, typechecking, or building it needs a running ACE Studio.
 
+Already have the toolchain? `aceworkflow init my-extension` is the same scaffolder,
+under the command already on your `PATH`. The `npm create` spelling above stays the one
+to reach for first, because it is the one that works before anything is installed.
+
 ## Packages
 
 The extension SDK:
@@ -25,7 +29,7 @@ The toolchain CLI:
 
 | Package                                 | Role                                                                    |
 | --------------------------------------- | ----------------------------------------------------------------------- |
-| `@timedomain/aceworkflow`               | The `aceworkflow` CLI: pack, submit, verify, and sign extension bundles |
+| `@timedomain/aceworkflow`               | The `aceworkflow` CLI: init, pack, submit, verify, and sign bundles     |
 
 Signing libraries, used by the CLI and by the service:
 

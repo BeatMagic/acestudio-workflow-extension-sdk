@@ -14,6 +14,7 @@ import type { Ctx } from "./context";
 import { defaultCredentialStore } from "./credentials/keychain";
 import type { CredentialStore } from "./credentials/store";
 import { ExitCode } from "./exit-codes";
+import { cmdInit, INIT_USAGE } from "./init";
 import { stdioPrompter, type Prompter } from "./prompt";
 import { Reporter } from "./reporter";
 import { resolveService, ServiceUrlError } from "./service";
@@ -33,6 +34,9 @@ export interface RunDeps {
 }
 
 const USAGE = `aceworkflow — the ACE Studio workflow-extension toolchain
+
+Projects:
+  aceworkflow init   [dir] [--id <developer.extension>] [--name <text>] [--publisher <text>]
 
 Bundles:
   aceworkflow pack   <dir> [-o <out.aceworkflow>]
@@ -55,6 +59,12 @@ Global options:
   -h, --help        show this help
   --version         print the version
 `;
+
+/**
+ * Commands with options of their own, and so with their own help. Everything else is
+ * fully described by the summary above, and falls back to it.
+ */
+const COMMAND_USAGE: Readonly<Record<string, string>> = { init: INIT_USAGE };
 
 /** True in a CI environment. Any non-falsey CI value counts — not just "true". */
 function isCI(env: NodeJS.ProcessEnv): boolean {
@@ -103,7 +113,12 @@ export async function run(deps: RunDeps): Promise<number> {
     return ExitCode.Success;
   }
   if (options.help || command === "help") {
-    deps.out(USAGE);
+    // `aceworkflow init --help` and `aceworkflow help init` reach the same text.
+    // `hasOwn`, not `?? USAGE`: `help toString` would otherwise find a method on the
+    // record's prototype and hand a function to a stream.
+    const topic = command === "help" ? positionals[0] : command;
+    const own = topic !== undefined && topic !== null && Object.hasOwn(COMMAND_USAGE, topic);
+    deps.out(own ? (COMMAND_USAGE[topic as string] as string) : USAGE);
     return ExitCode.Success;
   }
   if (command === null) {
@@ -154,6 +169,8 @@ export async function run(deps: RunDeps): Promise<number> {
 
   try {
     switch (command) {
+      case "init":
+        return await cmdInit(ctx);
       case "pack":
         return await cmdPack(ctx);
       case "submit":

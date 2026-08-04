@@ -1,5 +1,6 @@
 // The scaffolder's promise, asserted mechanically: `npm create` emits an extension
-// that installs, typechecks, and builds with no ACE Studio anywhere.
+// that installs, typechecks, and builds with no ACE Studio anywhere — and
+// `aceworkflow init`, the CLI's door onto the same scaffolder, emits that same tree.
 //
 // Everything runs from packed tarballs rather than from the workspace, so the check
 // also covers what actually ships — a template file missing from `files` would emit a
@@ -8,12 +9,17 @@
 // the unpublished packages: the scaffold this commit emits belongs against the SDK
 // this commit builds, which is the drift a released version could not catch.
 //
+// The `init` leg is here for the same reason and not out of symmetry. The CLI's bundle
+// keeps the scaffolder external precisely because the templates are read relative to
+// the scaffolder's own module, and nothing that runs from source can tell whether that
+// held: in-repo, the import resolves to the scaffolder either way.
+//
 // Run it standalone (`node scripts/smoke-scaffold.mjs`) after `npm run build`; CI runs
 // it as the last leg of validate.
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, relative, sep } from "node:path";
 import { abs } from "./_lib.mjs";
 
 const EXTENSION_ID = "acme.stem-tools";
@@ -42,6 +48,32 @@ const pack = (name) => {
     { cwd: abs("."), encoding: "utf8", shell },
   );
   return join(work, out.trim().split("\n").at(-1));
+};
+
+/** Every file under `root`, as POSIX path → bytes. */
+const treeOf = (root, dir = root, files = new Map()) => {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) treeOf(root, full, files);
+    else files.set(relative(root, full).split(sep).join("/"), readFileSync(full));
+  }
+  return files;
+};
+
+/** Throws unless the two trees hold the same paths with the same bytes. */
+const assertSameTree = (left, right) => {
+  const [a, b] = [treeOf(left), treeOf(right)];
+  const paths = [...new Set([...a.keys(), ...b.keys()])].sort();
+  for (const path of paths) {
+    if (!a.has(path) || !b.has(path)) {
+      throw new Error(`${path} was emitted by only one of the two doors`);
+    }
+    if (!a.get(path).equals(b.get(path))) {
+      throw new Error(`${path} differs between the two doors`);
+    }
+  }
+  if (paths.length === 0) throw new Error("neither door emitted anything");
+  return paths.length;
 };
 
 /**
@@ -85,6 +117,26 @@ try {
   run("npx", ["--no-install", "create-acestudio-workflow-extension", "stem-tools", ...identity], runner);
 
   const project = join(runner, "stem-tools");
+
+  // The CLI's second door onto the same scaffolder, from the packed CLI. The override
+  // pins the scaffolder it reaches to this commit's tarball rather than whatever the
+  // registry hands back for the declared range — which is also the only way to install
+  // the CLI before the tag that stages them both has gone out.
+  //
+  // Scaffolded under the same basename, in its own parent: the emitted package name
+  // comes from the directory's basename, so a differing name would leave the
+  // comparison below reporting a difference that is only the two names.
+  console.log("smoke: scaffolding again through `aceworkflow init`");
+  const cli = pack("@timedomain/aceworkflow");
+  const door = join(work, "door");
+  mkdirSync(door);
+  run("npm", ["init", "-y", "--loglevel", "error"], door);
+  run("npm", ["pkg", "set", `overrides.@timedomain/create-acestudio-workflow-extension=file:${scaffolder}`], door);
+  run("npm", ["install", cli, "--loglevel", "error"], door);
+  run("npx", ["--no-install", "aceworkflow", "init", "stem-tools", ...identity, "-y"], door);
+
+  const shared = assertSameTree(project, join(door, "stem-tools"));
+  console.log(`smoke: both doors emitted the same ${shared} files`);
   // The scaffold asks for the published SDK; point it at this commit's instead. The
   // direct dependency is replaced outright and its own peer overridden, because npm
   // refuses an override that contradicts a direct dependency.

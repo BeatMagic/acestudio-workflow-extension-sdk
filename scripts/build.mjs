@@ -38,9 +38,20 @@ const PACKAGES = [
     types: true,
   },
   { dir: "packages/reference-verifier", entries: ["src/index.ts"], external: CONTRACT_PACKAGES, types: true },
-  // The CLI inlines the contract packages so its bin runs from a packed tarball
-  // with only the one native dependency installed. It ships as a binary — no .d.ts.
-  { dir: "packages/cli", entries: ["src/index.ts", "src/cli.ts"], external: ["@napi-rs/keyring"], types: false },
+  // The CLI inlines the contract packages so its bin runs from a packed tarball with
+  // only its declared dependencies installed. It ships as a binary — no .d.ts.
+  //
+  // The scaffolder `init` calls is the exception that must stay external. It reads its
+  // templates off disk relative to its own module (`import.meta.url`), so inlining it
+  // here would send that lookup into packages/cli/dist/, where no templates live — a
+  // break that only the shipped artifact shows, since in-repo the same code resolves
+  // to the scaffolder's own source. scripts/smoke-scaffold.mjs is what catches it.
+  {
+    dir: "packages/cli",
+    entries: ["src/index.ts", "src/cli.ts"],
+    external: ["@napi-rs/keyring", "@timedomain/create-acestudio-workflow-extension"],
+    types: false,
+  },
 
   // The extension SDK packages. bridge-core is the connection layer; the
   // extension SDK sits above it, and keeps it external so consumers share one

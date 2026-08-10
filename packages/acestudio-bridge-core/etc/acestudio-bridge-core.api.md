@@ -13,6 +13,246 @@ export type AtRoot<T extends CapabilityToken> = Extract<Reachable<T>, {
 }>;
 
 // @public
+export interface BlendAddParams {
+    at?: number | null;
+    blend: string;
+    link?: boolean | null;
+    seed: string;
+    style?: number | null;
+    timbre?: number | null;
+}
+
+// @public
+export interface BlendAddResult {
+    avatar?: number;
+    group: string;
+    id: number;
+    language?: string;
+    modelId: number;
+    modelName: string;
+    name: string;
+    ref: string;
+    seedCount: number;
+    seeds: {
+        code: number;
+        index: number;
+        link: boolean;
+        name?: string;
+        style?: number;
+        timbre: number;
+    }[];
+    supportedLanguages?: string[];
+    tags?: string[];
+    timbreOnly?: boolean;
+}
+
+// @public
+export interface BlendCreateParams {
+    avatar?: number | null;
+    language?: string | null;
+    model: string;
+    name: string;
+    tags?: string[] | null;
+}
+
+// @public
+export interface BlendCreateResult {
+    avatar?: number;
+    group: string;
+    id: number;
+    language?: string;
+    modelId: number;
+    modelName: string;
+    name: string;
+    ref: string;
+    seedCount: number;
+    seeds: {
+        code: number;
+        index: number;
+        link: boolean;
+        name?: string;
+        style?: number;
+        timbre: number;
+    }[];
+    supportedLanguages?: string[];
+    tags?: string[];
+    timbreOnly?: boolean;
+}
+
+// @public
+export interface BlendDeleteParams {
+    blend: string;
+}
+
+// @public
+export interface BlendDeleteResult {
+    id: number;
+    maximum: number;
+    name: string;
+    remaining: number;
+}
+
+// @public
+export interface BlendGetParams {
+    blend: string;
+}
+
+// @public
+export interface BlendGetResult {
+    avatar?: number;
+    group: string;
+    id: number;
+    language?: string;
+    modelId: number;
+    modelName: string;
+    name: string;
+    ref: string;
+    seedCount: number;
+    seeds: {
+        code: number;
+        index: number;
+        link: boolean;
+        name?: string;
+        style?: number;
+        timbre: number;
+    }[];
+    supportedLanguages?: string[];
+    tags?: string[];
+    timbreOnly?: boolean;
+}
+
+// @public
+export interface BlendListParams {
+    keyword?: string | null;
+    showRefs?: boolean | null;
+}
+
+// @public
+export interface BlendListResult {
+    blends: {
+        id: number;
+        language?: string;
+        modelName?: string;
+        name: string;
+        ref: string;
+        seedCount: number;
+        tags?: string[];
+    }[];
+    count: number;
+    maximum: number;
+}
+
+// @public
+export interface BlendOperations {
+    add(params: BlendAddParams, options?: MutatingCallOptions): Promise<BlendAddResult>;
+    create(params: BlendCreateParams, options?: MutatingCallOptions): Promise<BlendCreateResult>;
+    delete(params: BlendDeleteParams, options?: MutatingCallOptions): Promise<BlendDeleteResult>;
+    get(params: BlendGetParams, options?: CallOptions): Promise<BlendGetResult>;
+    list(params: BlendListParams, options?: CallOptions): Promise<BlendListResult>;
+    remove(params: BlendRemoveParams, options?: MutatingCallOptions): Promise<BlendRemoveResult>;
+    reorder(params: BlendReorderParams, options?: MutatingCallOptions): Promise<BlendReorderResult>;
+    set(params: BlendSetParams, options?: MutatingCallOptions): Promise<BlendSetResult>;
+}
+
+// @public
+export interface BlendRemoveParams {
+    blend: string;
+    member: number;
+}
+
+// @public
+export interface BlendRemoveResult {
+    avatar?: number;
+    group: string;
+    id: number;
+    language?: string;
+    modelId: number;
+    modelName: string;
+    name: string;
+    ref: string;
+    seedCount: number;
+    seeds: {
+        code: number;
+        index: number;
+        link: boolean;
+        name?: string;
+        style?: number;
+        timbre: number;
+    }[];
+    supportedLanguages?: string[];
+    tags?: string[];
+    timbreOnly?: boolean;
+}
+
+// @public
+export interface BlendReorderParams {
+    blend: string;
+    member: number;
+    to: number;
+}
+
+// @public
+export interface BlendReorderResult {
+    avatar?: number;
+    group: string;
+    id: number;
+    language?: string;
+    modelId: number;
+    modelName: string;
+    name: string;
+    ref: string;
+    seedCount: number;
+    seeds: {
+        code: number;
+        index: number;
+        link: boolean;
+        name?: string;
+        style?: number;
+        timbre: number;
+    }[];
+    supportedLanguages?: string[];
+    tags?: string[];
+    timbreOnly?: boolean;
+}
+
+// @public
+export interface BlendSetParams {
+    avatar?: number | null;
+    blend: string;
+    language?: string | null;
+    link?: boolean | null;
+    member?: number | null;
+    name?: string | null;
+    style?: number | null;
+    tags?: string[] | null;
+    timbre?: number | null;
+}
+
+// @public
+export interface BlendSetResult {
+    avatar?: number;
+    group: string;
+    id: number;
+    language?: string;
+    modelId: number;
+    modelName: string;
+    name: string;
+    ref: string;
+    seedCount: number;
+    seeds: {
+        code: number;
+        index: number;
+        link: boolean;
+        name?: string;
+        style?: number;
+        timbre: number;
+    }[];
+    supportedLanguages?: string[];
+    tags?: string[];
+    timbreOnly?: boolean;
+}
+
+// @public
 export interface BridgeConnection {
     readonly client: PublicBindings;
     close(): void;
@@ -39,7 +279,7 @@ export class BridgeError<C extends AnyBridgeErrorCode = AnyBridgeErrorCode> exte
 }
 
 // @public
-export type BridgeErrorCode = 'ALREADY_RECORDING' | 'BAD_ARGS' | 'BRIDGE_UNREACHABLE' | 'CAPABILITY_DENIED' | 'CAPABILITY_OUT_OF_SURFACE' | 'CHAIN_NOT_GROWN' | 'COLLECT_FAILED' | 'CONFIRMATION_REQUIRED' | 'CREATE_TIMEOUT' | 'CREDIT_INSUFFICIENT' | 'EDITOR_NOT_READY' | 'EDIT_TIMEOUT' | 'EXPORT_IN_PROGRESS' | 'EXPORT_START_FAILED' | 'FILE_NOT_FOUND' | 'FINGERPRINT_SCOPE_MISMATCH' | 'FIXTURE_FAILED' | 'FLUSH_TIMEOUT' | 'GESTURE_HELD' | 'HANDLER_FAILED' | 'IMPORT_FAILED' | 'INSERT_FAILED' | 'INVALID_ARG' | 'IO_ERROR' | 'JOB_NOT_CANCELLABLE' | 'MEMBERSHIP_REQUIRED' | 'NEW_FAILED' | 'NOTE_OVERLAP' | 'NOT_FOUND' | 'NO_FIXTURE' | 'NO_GESTURE' | 'NO_MASTER_CHAIN' | 'NO_PATTERN_EDIT_OPEN' | 'NO_PROJECT' | 'NO_PROJECT_OPEN' | 'NO_SCENE' | 'NO_STATE' | 'NO_TRACK_VIEW' | 'NO_WINDOW' | 'OPEN_FAILED' | 'PLAYBACK_START_FAILED' | 'RECORD_START_FAILED' | 'SAVE_FAILED' | 'SCENARIO_FAILED' | 'SESSION_INVALID' | 'STALE_WRITE' | 'TIMEOUT' | 'TIME_UNIT_REQUIRED' | 'TRACK_CREATE_FAILED' | 'UNAVAILABLE' | 'UNKNOWN_CAPABILITY' | 'UNKNOWN_COMMAND' | 'UNKNOWN_SCENARIO' | 'UNSAVED_CHANGES' | 'USER_BUSY';
+export type BridgeErrorCode = 'ALREADY_RECORDING' | 'AMBIGUOUS_SOURCE' | 'ANALYSIS_UNUSABLE' | 'BAD_ARGS' | 'BRIDGE_UNREACHABLE' | 'CAPABILITY_DENIED' | 'CAPABILITY_OUT_OF_SURFACE' | 'CHAIN_NOT_GROWN' | 'CLIP_OVERLAP' | 'COLLECT_FAILED' | 'CONFIRMATION_REQUIRED' | 'CREATE_TIMEOUT' | 'CREDIT_INSUFFICIENT' | 'EDITOR_NOT_READY' | 'EDIT_TIMEOUT' | 'EXPORT_IN_PROGRESS' | 'EXPORT_START_FAILED' | 'FILE_NOT_FOUND' | 'FINGERPRINT_SCOPE_MISMATCH' | 'FIXTURE_FAILED' | 'FLUSH_TIMEOUT' | 'FORMAT_UNAVAILABLE' | 'GESTURE_HELD' | 'HANDLER_FAILED' | 'IMPORT_FAILED' | 'INSERT_FAILED' | 'INVALID_ARG' | 'IO_ERROR' | 'JOB_NOT_CANCELLABLE' | 'MEMBERSHIP_REQUIRED' | 'NEW_FAILED' | 'NOTE_OVERLAP' | 'NOT_FOUND' | 'NO_FIXTURE' | 'NO_GESTURE' | 'NO_MASTER_CHAIN' | 'NO_PATTERN_EDIT_OPEN' | 'NO_PROJECT' | 'NO_PROJECT_OPEN' | 'NO_SCENE' | 'NO_STATE' | 'NO_TRACK_VIEW' | 'NO_WINDOW' | 'OPEN_FAILED' | 'PLAYBACK_START_FAILED' | 'RECORD_START_FAILED' | 'SAVE_FAILED' | 'SCENARIO_FAILED' | 'SESSION_INVALID' | 'STALE_WRITE' | 'TIMEOUT' | 'TIME_UNIT_REQUIRED' | 'TRACK_CREATE_FAILED' | 'UNAVAILABLE' | 'UNKNOWN_CAPABILITY' | 'UNKNOWN_COMMAND' | 'UNKNOWN_SCENARIO' | 'UNSAVED_CHANGES' | 'USER_BUSY';
 
 // @public
 export interface BridgeErrorDetails {
@@ -129,10 +369,10 @@ export interface CallOptions {
 export type Camel<S extends string> = S extends `${infer Head}-${infer Tail}` ? `${Head}${Capitalize<Camel<Tail>>}` : S;
 
 // @public
-export const CAPABILITY_TOKENS: readonly ["caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "fx.read", "fx.write", "generative.add-layer", "generative.enhance", "generative.retake", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "session.handshake", "session.ping", "session.shutdown", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.read", "track.write", "transport.control", "transport.state", "ui.control", "ui.state", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write", "workflow.dev", "workflow.ui"];
+export const CAPABILITY_TOKENS: readonly ["caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "fx.read", "fx.write", "generative.add-layer", "generative.enhance", "generative.retake", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "session.handshake", "session.ping", "session.shutdown", "soundsource.read", "soundsource.write", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.read", "track.write", "transport.control", "transport.state", "ui.control", "ui.state", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write", "workflow.dev", "workflow.ui"];
 
 // @public
-export type CapabilityToken = 'caret.read' | 'caret.write' | 'chord.read' | 'chord.write' | 'clip.read' | 'clip.write' | 'device.read' | 'device.write' | 'editor.read' | 'editor.write' | 'export.invoke' | 'fx.read' | 'fx.write' | 'generative.add-layer' | 'generative.enhance' | 'generative.retake' | 'generative.seed-audio' | 'generative.song' | 'generative.sound-effects' | 'generative.stem-split' | 'generative.text2sample' | 'generative.vocal2midi' | 'generative.voice-change' | 'history.control' | 'history.read' | 'import.invoke' | 'job.control' | 'job.read' | 'lyric.read' | 'lyric.write' | 'note.read' | 'note.write' | 'project.lifecycle' | 'project.read' | 'recording.control' | 'selection.read' | 'selection.write' | 'session.handshake' | 'session.ping' | 'session.shutdown' | 'tempo.analyze' | 'tempo.applyV2' | 'tempo.read' | 'tempo.write' | 'timesig.read' | 'timesig.write' | 'track.read' | 'track.write' | 'transport.control' | 'transport.state' | 'ui.control' | 'ui.state' | 'vocalparam.read' | 'vocalparam.write' | 'voice.read' | 'voice.write' | 'workflow.dev' | 'workflow.ui';
+export type CapabilityToken = 'caret.read' | 'caret.write' | 'chord.read' | 'chord.write' | 'clip.read' | 'clip.write' | 'device.read' | 'device.write' | 'editor.read' | 'editor.write' | 'export.invoke' | 'fx.read' | 'fx.write' | 'generative.add-layer' | 'generative.enhance' | 'generative.retake' | 'generative.seed-audio' | 'generative.song' | 'generative.sound-effects' | 'generative.stem-split' | 'generative.text2sample' | 'generative.vocal2midi' | 'generative.voice-change' | 'history.control' | 'history.read' | 'import.invoke' | 'job.control' | 'job.read' | 'lyric.read' | 'lyric.write' | 'note.read' | 'note.write' | 'project.lifecycle' | 'project.read' | 'recording.control' | 'selection.read' | 'selection.write' | 'session.handshake' | 'session.ping' | 'session.shutdown' | 'soundsource.read' | 'soundsource.write' | 'tempo.analyze' | 'tempo.applyV2' | 'tempo.read' | 'tempo.write' | 'timesig.read' | 'timesig.write' | 'track.read' | 'track.write' | 'transport.control' | 'transport.state' | 'ui.control' | 'ui.state' | 'vocalparam.read' | 'vocalparam.write' | 'voice.read' | 'voice.write' | 'workflow.dev' | 'workflow.ui';
 
 // @public
 export interface CaretGetParams {
@@ -213,6 +453,137 @@ export interface ChannelDescriptor {
 }
 
 // @public
+export interface ChoirAddParams {
+    at?: number | null;
+    model?: string | null;
+    source: string;
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+}
+
+// @public
+export interface ChoirAddResult {
+    leaderName?: string;
+    memberCount: number;
+    memberIndex?: number;
+    memberName?: string;
+    trackIndex: number;
+    trackUuid: string;
+}
+
+// @public
+export interface ChoirDisableParams {
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+}
+
+// @public
+export interface ChoirDisableResult {
+    leaderName: string;
+    removedCount: number;
+    trackIndex: number;
+    trackUuid: string;
+}
+
+// @public
+export interface ChoirEnableParams {
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+}
+
+// @public
+export interface ChoirEnableResult {
+    memberCount: number;
+    trackIndex: number;
+    trackName?: string;
+    trackUuid: string;
+}
+
+// @public
+export interface ChoirGetParams {
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+}
+
+// @public
+export interface ChoirGetResult {
+    enabled: boolean;
+    maxMembers?: number;
+    memberCount: number;
+    members: {
+        gain: number;
+        index: number;
+        isLeader: boolean;
+        isVoiceBlend?: boolean;
+        modelName?: string;
+        mute: boolean;
+        name: string;
+        ref?: string;
+    }[];
+    offset?: number;
+    spread?: number;
+    trackIndex: number;
+    trackUuid: string;
+}
+
+// @public
+export interface ChoirOperations {
+    add(params: ChoirAddParams, options?: MutatingCallOptions): Promise<ChoirAddResult>;
+    disable(params: ChoirDisableParams, options?: MutatingCallOptions): Promise<ChoirDisableResult>;
+    enable(params: ChoirEnableParams, options?: MutatingCallOptions): Promise<ChoirEnableResult>;
+    get(params: ChoirGetParams, options?: CallOptions): Promise<ChoirGetResult>;
+    remove(params: ChoirRemoveParams, options?: MutatingCallOptions): Promise<ChoirRemoveResult>;
+    reorder(params: ChoirReorderParams, options?: MutatingCallOptions): Promise<ChoirReorderResult>;
+    set(params: ChoirSetParams, options?: MutatingCallOptions): Promise<void>;
+}
+
+// @public
+export interface ChoirRemoveParams {
+    member: number;
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+}
+
+// @public
+export interface ChoirRemoveResult {
+    leaderName?: string;
+    memberCount: number;
+    memberIndex?: number;
+    memberName?: string;
+    trackIndex: number;
+    trackUuid: string;
+}
+
+// @public
+export interface ChoirReorderParams {
+    member: number;
+    to: number;
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+}
+
+// @public
+export interface ChoirReorderResult {
+    leaderName?: string;
+    memberCount: number;
+    memberIndex?: number;
+    memberName?: string;
+    trackIndex: number;
+    trackUuid: string;
+}
+
+// @public
+export interface ChoirSetParams {
+    gain?: number | null;
+    member?: number | null;
+    mute?: boolean | null;
+    offset?: number | null;
+    spread?: number | null;
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+}
+
+// @public
 export interface ClipAudioContentParams {
     clipIndex: number;
     trackIndex: number;
@@ -221,7 +592,32 @@ export interface ClipAudioContentParams {
 // @public
 export interface ClipAudioContentResult {
     audioFileName: string;
+    fingerprint: Fingerprint;
     loadingState: string;
+}
+
+// @public
+export interface ClipConsolidateParams {
+    name?: string | null;
+    rangeBegin: number;
+    rangeEnd: number;
+    trackUuids: string[];
+}
+
+// @public
+export interface ClipConsolidateResult {
+    clips: {
+        clipName: string;
+        clipType: string;
+        clipUuid: string;
+        consolidatedClipCount: number;
+        geometry: Record<string, unknown>;
+        trackName: string;
+        trackUuid: string;
+    }[];
+    rangeBegin: number;
+    rangeEnd: number;
+    trackCount: number;
 }
 
 // @public
@@ -236,8 +632,9 @@ export interface ClipCreateParams {
         pitch: number;
         pos: number;
     }[] | null;
+    onOccupied?: string | null;
     pos: number;
-    trackIndex: number;
+    trackIndex?: number | null;
     type: string;
 }
 
@@ -250,6 +647,57 @@ export interface ClipCreateResult {
     clipUuid: string;
     noteCount: number;
     noteUuids: string[];
+    trackName: string;
+}
+
+// @public
+export interface ClipDeleteParams {
+    clipUuids: string[];
+}
+
+// @public
+export interface ClipDeleteResult {
+    clipUuids: string[];
+    deletedCount: number;
+}
+
+// @public
+export interface ClipDetachAudioParams {
+    clipUuids: string[];
+}
+
+// @public
+export interface ClipDetachAudioResult {
+    clipUuids: string[];
+    detachedClipUuids: string[];
+    detachedCount: number;
+    trackName: string;
+    trackUuid: string;
+}
+
+// @public
+export interface ClipDuplicateParams {
+    clipUuid: string;
+    onOccupied?: string | null;
+    pos?: number | null;
+    trackIndex?: number | null;
+}
+
+// @public
+export interface ClipDuplicateResult {
+    clipName: string;
+    clipType: string;
+    clipUuid: string;
+    geometry: {
+        clipBegin: number;
+        clipDur: number;
+        clipEnd: number;
+        clipPos: number;
+        dur: number;
+        end: number;
+        pos: number;
+    };
+    sourceClipUuid: string;
     trackName: string;
 }
 
@@ -316,6 +764,7 @@ export interface ClipLyricsResult {
         end: number;
         scope: string;
     };
+    fingerprint: Fingerprint;
     sentenceCount: number;
     sentences: {
         lyric: string;
@@ -325,15 +774,16 @@ export interface ClipLyricsResult {
 }
 
 // @public
-export interface ClipMoveEdgesParams {
+export interface ClipMoveParams {
     clipUuid: string;
-    mode: string;
-    side: string;
-    value: number;
+    moveEarlier?: number | null;
+    moveLater?: number | null;
+    onOccupied?: string | null;
+    pos?: number | null;
 }
 
 // @public
-export interface ClipMoveEdgesResult {
+export interface ClipMoveResult {
     clipName: string;
     clipType: string;
     clipUuid: string;
@@ -384,13 +834,36 @@ export interface ClipNoteContentResult {
 // @public
 export interface ClipOperations {
     audioContent(params: ClipAudioContentParams, options?: CallOptions): Promise<ClipAudioContentResult>;
+    consolidate(params: ClipConsolidateParams, options?: MutatingCallOptions): Promise<ClipConsolidateResult>;
     create(params: ClipCreateParams, options?: MutatingCallOptions): Promise<ClipCreateResult>;
+    delete(params: ClipDeleteParams, options?: MutatingCallOptions): Promise<ClipDeleteResult>;
+    detachAudio(params: ClipDetachAudioParams, options?: MutatingCallOptions): Promise<ClipDetachAudioResult>;
+    duplicate(params: ClipDuplicateParams, options?: MutatingCallOptions): Promise<ClipDuplicateResult>;
     get(params: ClipGetParams, options?: CallOptions): Promise<ClipGetResult>;
     list(params: ClipListParams, options?: CallOptions): Promise<ClipListResult>;
     lyrics(params: ClipLyricsParams, options?: CallOptions): Promise<ClipLyricsResult>;
-    moveEdges(params: ClipMoveEdgesParams, options?: MutatingCallOptions): Promise<ClipMoveEdgesResult>;
+    move(params: ClipMoveParams, options?: MutatingCallOptions): Promise<ClipMoveResult>;
     noteContent(params: ClipNoteContentParams, options?: CallOptions): Promise<ClipNoteContentResult>;
+    reattachAudio(params: ClipReattachAudioParams, options?: MutatingCallOptions): Promise<ClipReattachAudioResult>;
     replaceContent(params: ClipReplaceContentParams, options?: PreconditionCallOptions): Promise<ClipReplaceContentResult>;
+    resize(params: ClipResizeParams, options?: MutatingCallOptions): Promise<ClipResizeResult>;
+    set(params: ClipSetParams, options?: MutatingCallOptions): Promise<ClipSetResult>;
+    setEnabled(params: ClipSetEnabledParams, options?: MutatingCallOptions): Promise<ClipSetEnabledResult>;
+    setFades(params: ClipSetFadesParams, options?: MutatingCallOptions): Promise<ClipSetFadesResult>;
+    setGain(params: ClipSetGainParams, options?: MutatingCallOptions): Promise<ClipSetGainResult>;
+    setMuted(params: ClipSetMutedParams, options?: MutatingCallOptions): Promise<ClipSetMutedResult>;
+    split(params: ClipSplitParams, options?: MutatingCallOptions): Promise<ClipSplitResult>;
+}
+
+// @public
+export interface ClipReattachAudioParams {
+    clipUuids: string[];
+}
+
+// @public
+export interface ClipReattachAudioResult {
+    clipUuids: string[];
+    reattachedCount: number;
 }
 
 // @public
@@ -413,6 +886,159 @@ export interface ClipReplaceContentResult {
     noteCount: number;
     noteUuids: string[];
     previousNoteCount: number;
+}
+
+// @public
+export interface ClipResizeParams {
+    clipIn?: number | null;
+    clipUuid: string;
+    dur?: number | null;
+    onOccupied?: string | null;
+    pos?: number | null;
+}
+
+// @public
+export interface ClipResizeResult {
+    clipName: string;
+    clipType: string;
+    clipUuid: string;
+    geometry: {
+        clipBegin: number;
+        clipDur: number;
+        clipEnd: number;
+        clipPos: number;
+        dur: number;
+        end: number;
+        pos: number;
+    };
+}
+
+// @public
+export interface ClipSetEnabledParams {
+    clipUuids: string[];
+    enabled: boolean;
+}
+
+// @public
+export interface ClipSetEnabledResult {
+    clips: {
+        clipUuid: string;
+        enabled: boolean;
+    }[];
+    updatedCount: number;
+}
+
+// @public
+export interface ClipSetFadesParams {
+    clipUuids: string[];
+    crossfade?: number | null;
+    fadeIn?: number | null;
+    fadeInShape?: number[] | null;
+    fadeOut?: number | null;
+    fadeOutShape?: number[] | null;
+}
+
+// @public
+export interface ClipSetFadesResult {
+    clipUuid: string;
+    crossfade: boolean;
+    fadeIn?: number;
+    fadeOut: number;
+    nextClipUuid?: string;
+}
+
+// @public
+export interface ClipSetGainParams {
+    clipUuid: string;
+    gain: number;
+}
+
+// @public
+export interface ClipSetGainResult {
+    clipType: string;
+    clipUuid: string;
+    gain: number;
+}
+
+// @public
+export interface ClipSetMutedParams {
+    clipUuids: string[];
+    muted: boolean;
+}
+
+// @public
+export interface ClipSetMutedResult {
+    clips: {
+        clipUuid: string;
+        muted: boolean;
+    }[];
+    updatedCount: number;
+}
+
+// @public
+export interface ClipSetParams {
+    clipUuid: string;
+    color?: string | null;
+    colorLinkToTrack?: boolean | null;
+    name?: string | null;
+}
+
+// @public
+export interface ClipSetResult {
+    clipName: string;
+    clipType: string;
+    clipUuid: string;
+    color: string;
+    geometry?: {
+        clipBegin: number;
+        clipDur: number;
+        clipEnd: number;
+        clipPos: number;
+        dur: number;
+        end: number;
+        pos: number;
+    };
+    isColorLinkToTrack: boolean;
+    rawName: string;
+}
+
+// @public
+export interface ClipSplitParams {
+    clipUuid: string;
+    pos: number;
+}
+
+// @public
+export interface ClipSplitResult {
+    clipUuids: string[];
+    head: {
+        clipName: string;
+        clipType: string;
+        clipUuid: string;
+        geometry: {
+            clipBegin: number;
+            clipDur: number;
+            clipEnd: number;
+            clipPos: number;
+            dur: number;
+            end: number;
+            pos: number;
+        };
+    };
+    tail: {
+        clipName: string;
+        clipType: string;
+        clipUuid: string;
+        geometry: {
+            clipBegin: number;
+            clipDur: number;
+            clipEnd: number;
+            clipPos: number;
+            dur: number;
+            end: number;
+            pos: number;
+        };
+    };
 }
 
 // @public
@@ -580,7 +1206,7 @@ export interface DeviceSetAudioResult {
 }
 
 // @public
-export const DRAFT_PROFILES: readonly ["surface.extension-sdk.v1"];
+export const DRAFT_PROFILES: readonly ["surface.extension-sdk"];
 
 // @public
 export type Dtype = 'u8' | 'i16le' | 'i32le' | 'i64le' | 'f32le' | 'f64le';
@@ -633,6 +1259,260 @@ export interface EditorTickRangeResult {
 
 // @public
 export function encodeFrame(message: string): Buffer;
+
+// @public
+export interface EnsembleAddParams {
+    at?: number | null;
+    source: string;
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+}
+
+// @public
+export interface EnsembleAddResult {
+    leaderName?: string;
+    memberCount: number;
+    memberIndex?: number;
+    memberName?: string;
+    trackIndex: number;
+    trackUuid: string;
+}
+
+// @public
+export interface EnsembleDisableParams {
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+}
+
+// @public
+export interface EnsembleDisableResult {
+    leaderName: string;
+    removedCount: number;
+    trackIndex: number;
+    trackUuid: string;
+}
+
+// @public
+export interface EnsembleEnableParams {
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+}
+
+// @public
+export interface EnsembleEnableResult {
+    memberCount: number;
+    trackIndex: number;
+    trackName?: string;
+    trackUuid: string;
+}
+
+// @public
+export interface EnsembleGetParams {
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+}
+
+// @public
+export interface EnsembleGetResult {
+    enabled: boolean;
+    maxMembers?: number;
+    memberCount: number;
+    members: {
+        category?: string;
+        gain: number;
+        index: number;
+        isLeader: boolean;
+        mute: boolean;
+        name: string;
+        ref?: string;
+    }[];
+    offset?: number;
+    spread?: number;
+    trackIndex: number;
+    trackUuid: string;
+}
+
+// @public
+export interface EnsembleOperations {
+    add(params: EnsembleAddParams, options?: MutatingCallOptions): Promise<EnsembleAddResult>;
+    disable(params: EnsembleDisableParams, options?: MutatingCallOptions): Promise<EnsembleDisableResult>;
+    enable(params: EnsembleEnableParams, options?: MutatingCallOptions): Promise<EnsembleEnableResult>;
+    get(params: EnsembleGetParams, options?: CallOptions): Promise<EnsembleGetResult>;
+    remove(params: EnsembleRemoveParams, options?: MutatingCallOptions): Promise<EnsembleRemoveResult>;
+    reorder(params: EnsembleReorderParams, options?: MutatingCallOptions): Promise<EnsembleReorderResult>;
+    set(params: EnsembleSetParams, options?: MutatingCallOptions): Promise<void>;
+}
+
+// @public
+export interface EnsembleRemoveParams {
+    member: number;
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+}
+
+// @public
+export interface EnsembleRemoveResult {
+    leaderName?: string;
+    memberCount: number;
+    memberIndex?: number;
+    memberName?: string;
+    trackIndex: number;
+    trackUuid: string;
+}
+
+// @public
+export interface EnsembleReorderParams {
+    member: number;
+    to: number;
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+}
+
+// @public
+export interface EnsembleReorderResult {
+    leaderName?: string;
+    memberCount: number;
+    memberIndex?: number;
+    memberName?: string;
+    trackIndex: number;
+    trackUuid: string;
+}
+
+// @public
+export interface EnsembleSetParams {
+    gain?: number | null;
+    member?: number | null;
+    mute?: boolean | null;
+    offset?: number | null;
+    spread?: number | null;
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+}
+
+// @public
+export interface ExportAudioParams {
+    bitDepth?: number | null;
+    bitRate?: number | null;
+    channels?: number | null;
+    format?: 'wav' | 'mp3';
+    from?: number | null;
+    path: string;
+    sampleRate?: number | null;
+    scope?: 'master' | 'selected-tracks' | 'all-tracks' | 'tracks';
+    to?: number | null;
+    trackUuids?: string[] | null;
+    withoutEffects?: boolean | null;
+}
+
+// @public
+export interface ExportAudioResult {
+    cancellable?: boolean;
+    jobClass?: string;
+    jobId: string;
+    paths: string[];
+    scope?: string;
+    trackCount?: number;
+}
+
+// @public
+export interface ExportFcpxmlParams {
+    path: string;
+}
+
+// @public
+export interface ExportFcpxmlResult {
+    format?: string;
+    paths: string[];
+    trackCount?: number;
+}
+
+// @public
+export interface ExportLrcParams {
+    path: string;
+    trackUuid: string;
+}
+
+// @public
+export interface ExportLrcResult {
+    lineCount?: number;
+    paths: string[];
+    trackName?: string;
+}
+
+// @public
+export interface ExportMidiParams {
+    format?: 'midi' | 'ufdata';
+    from?: number | null;
+    path: string;
+    splitTracks?: boolean | null;
+    to?: number | null;
+    trackUuids?: string[] | null;
+    withLyrics?: boolean | null;
+    withSyllables?: boolean | null;
+}
+
+// @public
+export interface ExportMidiResult {
+    format?: string;
+    paths: string[];
+    trackCount?: number;
+}
+
+// @public
+export interface ExportOperations {
+    audio(params: ExportAudioParams, options?: MutatingCallOptions): Promise<ExportAudioResult>;
+    fcpxml(params: ExportFcpxmlParams, options?: MutatingCallOptions): Promise<ExportFcpxmlResult>;
+    lrc(params: ExportLrcParams, options?: MutatingCallOptions): Promise<ExportLrcResult>;
+    midi(params: ExportMidiParams, options?: MutatingCallOptions): Promise<ExportMidiResult>;
+    songTemplate(params: ExportSongTemplateParams, options?: MutatingCallOptions): Promise<ExportSongTemplateResult>;
+    video(params: ExportVideoParams, options?: MutatingCallOptions): Promise<ExportVideoResult>;
+    vocalSample(params: ExportVocalSampleParams, options?: MutatingCallOptions): Promise<ExportVocalSampleResult>;
+}
+
+// @public
+export interface ExportSongTemplateParams {
+    path: string;
+}
+
+// @public
+export interface ExportSongTemplateResult {
+    templatePath: string;
+}
+
+// @public
+export interface ExportVideoParams {
+    bitRate?: number | null;
+    fps?: number | null;
+    from?: number | null;
+    height?: number | null;
+    path: string;
+    to?: number | null;
+    width?: number | null;
+}
+
+// @public
+export interface ExportVideoResult {
+    cancellable?: boolean;
+    fps?: number;
+    height?: number;
+    jobClass?: string;
+    jobId: string;
+    path: string;
+    width?: number;
+}
+
+// @public
+export interface ExportVocalSampleParams {
+    clipUuids: string[];
+    path: string;
+}
+
+// @public
+export interface ExportVocalSampleResult {
+    clipCount?: number;
+    paths: string[];
+    trackCount?: number;
+}
 
 // @public
 export const FIELD_CAPABILITIES: {};
@@ -728,9 +1608,105 @@ export interface HistoryUndoResult {
 }
 
 // @public
+export interface ImportFileParams {
+    clipIn?: number | null;
+    dur?: number | null;
+    muted?: boolean | null;
+    onOccupied?: string | null;
+    path: string;
+    pos?: number | null;
+    splitPolyphonic?: boolean | null;
+    trackIndex?: number | null;
+    withTempo?: boolean | null;
+    withTimeSignatures?: boolean | null;
+}
+
+// @public
+export interface ImportFileResult {
+    clipCount?: number;
+    clipName?: string;
+    clips?: Record<string, unknown>[];
+    clipType?: string;
+    clipUuid?: string;
+    geometry?: Record<string, unknown>;
+    loadingState?: string;
+    naturalDur?: number;
+    sourceFormat?: string;
+    sourcePath: string;
+    tempoImported?: boolean;
+    timeSignaturesImported?: boolean;
+    trackCount?: number;
+    trackName?: string;
+}
+
+// @public
+export interface ImportOperations {
+    file(params: ImportFileParams, options?: MutatingCallOptions): Promise<ImportFileResult>;
+}
+
+// @public
 export type InDomain<T extends CapabilityToken> = Exclude<Reachable<T>, {
     domain: "";
 }>;
+
+// @public
+export interface InstrumentDisableParams {
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+}
+
+// @public
+export interface InstrumentDisableResult {
+    enabled: boolean;
+    format?: 'vst3' | 'vst2' | 'au';
+    midiChannel: string;
+    name: string;
+    trackIndex: number;
+    trackUuid: string;
+    vendor?: string;
+}
+
+// @public
+export interface InstrumentEnableParams {
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+}
+
+// @public
+export interface InstrumentEnableResult {
+    enabled: boolean;
+    format?: 'vst3' | 'vst2' | 'au';
+    midiChannel: string;
+    name: string;
+    trackIndex: number;
+    trackUuid: string;
+    vendor?: string;
+}
+
+// @public
+export interface InstrumentOperations {
+    disable(params: InstrumentDisableParams, options?: MutatingCallOptions): Promise<InstrumentDisableResult>;
+    enable(params: InstrumentEnableParams, options?: MutatingCallOptions): Promise<InstrumentEnableResult>;
+    set(params: InstrumentSetParams, options?: MutatingCallOptions): Promise<InstrumentSetResult>;
+}
+
+// @public
+export interface InstrumentSetParams {
+    midiChannel: string;
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+}
+
+// @public
+export interface InstrumentSetResult {
+    enabled: boolean;
+    format?: 'vst3' | 'vst2' | 'au';
+    midiChannel: string;
+    name: string;
+    trackIndex: number;
+    trackUuid: string;
+    vendor?: string;
+}
 
 // @public
 export interface InvokeParams {
@@ -995,6 +1971,29 @@ export interface NoteDeleteResult {
 }
 
 // @public
+export interface NoteGetParams {
+    noteUuids: string[];
+}
+
+// @public
+export interface NoteGetResult {
+    articulation?: string;
+    clipType: string;
+    clipUuid: string;
+    dur: number;
+    endPos: number;
+    fingerprint: Fingerprint;
+    headConsonants?: number[];
+    language?: string;
+    lyric?: string;
+    noteUuid: string;
+    pitch: number;
+    pos: number;
+    syllable?: string;
+    tailConsonants?: number[];
+}
+
+// @public
 export interface NoteMoveParams {
     moveEarlier?: number | null;
     moveLater?: number | null;
@@ -1022,9 +2021,12 @@ export interface NoteMoveResult {
 export interface NoteOperations {
     add(params: NoteAddParams, options?: PreconditionCallOptions): Promise<NoteAddResult>;
     delete(params: NoteDeleteParams, options?: PreconditionCallOptions): Promise<NoteDeleteResult>;
+    get(params: NoteGetParams, options?: CallOptions): Promise<NoteGetResult>;
     move(params: NoteMoveParams, options?: PreconditionCallOptions): Promise<NoteMoveResult>;
     resize(params: NoteResizeParams, options?: PreconditionCallOptions): Promise<NoteResizeResult>;
+    setArticulation(params: NoteSetArticulationParams, options?: PreconditionCallOptions): Promise<NoteSetArticulationResult>;
     setLyric(params: NoteSetLyricParams, options?: PreconditionCallOptions): Promise<NoteSetLyricResult>;
+    split(params: NoteSplitParams, options?: PreconditionCallOptions): Promise<NoteSplitResult>;
 }
 
 // @public
@@ -1047,6 +2049,31 @@ export interface NoteResizeResult {
 }
 
 // @public
+export interface NoteSetArticulationParams {
+    articulation: string;
+    noteUuids: string[];
+}
+
+// @public
+export interface NoteSetArticulationResult {
+    clipUuid: string;
+    notes: {
+        articulation?: string;
+        dur: number;
+        endPos: number;
+        headConsonants?: number[];
+        language?: string;
+        lyric?: string;
+        noteUuid: string;
+        pitch: number;
+        pos: number;
+        syllable?: string;
+        tailConsonants?: number[];
+    }[];
+    updatedCount: number;
+}
+
+// @public
 export interface NoteSetLyricParams {
     language?: string | null;
     lyric?: string | null;
@@ -1062,6 +2089,47 @@ export interface NoteSetLyricResult {
         noteUuid: string;
     }[];
     updatedCount: number;
+}
+
+// @public
+export interface NoteSplitParams {
+    noteUuids: string[];
+    pos: number;
+}
+
+// @public
+export interface NoteSplitResult {
+    clipType: string;
+    clipUuid: string;
+    // (undocumented)
+    head: {
+        articulation?: string;
+        dur: number;
+        endPos: number;
+        headConsonants?: number[];
+        language?: string;
+        lyric?: string;
+        noteUuid: string;
+        pitch: number;
+        pos: number;
+        syllable?: string;
+        tailConsonants?: number[];
+    };
+    noteUuids: string[];
+    // (undocumented)
+    tail: {
+        articulation?: string;
+        dur: number;
+        endPos: number;
+        headConsonants?: number[];
+        language?: string;
+        lyric?: string;
+        noteUuid: string;
+        pitch: number;
+        pos: number;
+        syllable?: string;
+        tailConsonants?: number[];
+    };
 }
 
 // @public
@@ -1120,6 +2188,78 @@ export interface OperationPeer {
 
 // @public
 export const OPERATIONS: readonly [{
+    readonly path: "blend add";
+    readonly domain: "blend";
+    readonly method: "add";
+    readonly capability: "voice.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "blend create";
+    readonly domain: "blend";
+    readonly method: "create";
+    readonly capability: "voice.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "blend delete";
+    readonly domain: "blend";
+    readonly method: "delete";
+    readonly capability: "voice.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "blend get";
+    readonly domain: "blend";
+    readonly method: "get";
+    readonly capability: "voice.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "blend list";
+    readonly domain: "blend";
+    readonly method: "list";
+    readonly capability: "voice.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "blend remove";
+    readonly domain: "blend";
+    readonly method: "remove";
+    readonly capability: "voice.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "blend reorder";
+    readonly domain: "blend";
+    readonly method: "reorder";
+    readonly capability: "voice.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "blend set";
+    readonly domain: "blend";
+    readonly method: "set";
+    readonly capability: "voice.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
     readonly path: "caret get";
     readonly domain: "caret";
     readonly method: "get";
@@ -1138,6 +2278,69 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
+    readonly path: "choir add";
+    readonly domain: "choir";
+    readonly method: "add";
+    readonly capability: "soundsource.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "choir disable";
+    readonly domain: "choir";
+    readonly method: "disable";
+    readonly capability: "soundsource.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "choir enable";
+    readonly domain: "choir";
+    readonly method: "enable";
+    readonly capability: "soundsource.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "choir get";
+    readonly domain: "choir";
+    readonly method: "get";
+    readonly capability: "soundsource.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "choir remove";
+    readonly domain: "choir";
+    readonly method: "remove";
+    readonly capability: "soundsource.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "choir reorder";
+    readonly domain: "choir";
+    readonly method: "reorder";
+    readonly capability: "soundsource.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "choir set";
+    readonly domain: "choir";
+    readonly method: "set";
+    readonly capability: "soundsource.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
     readonly path: "clip audio-content";
     readonly domain: "clip";
     readonly method: "audioContent";
@@ -1147,9 +2350,45 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
+    readonly path: "clip consolidate";
+    readonly domain: "clip";
+    readonly method: "consolidate";
+    readonly capability: "clip.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
     readonly path: "clip create";
     readonly domain: "clip";
     readonly method: "create";
+    readonly capability: "clip.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "clip delete";
+    readonly domain: "clip";
+    readonly method: "delete";
+    readonly capability: "clip.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "clip detach-audio";
+    readonly domain: "clip";
+    readonly method: "detachAudio";
+    readonly capability: "clip.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "clip duplicate";
+    readonly domain: "clip";
+    readonly method: "duplicate";
     readonly capability: "clip.write";
     readonly ungated: false;
     readonly mutating: true;
@@ -1183,9 +2422,9 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
-    readonly path: "clip move-edges";
+    readonly path: "clip move";
     readonly domain: "clip";
-    readonly method: "moveEdges";
+    readonly method: "move";
     readonly capability: "clip.write";
     readonly ungated: false;
     readonly mutating: true;
@@ -1201,6 +2440,15 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
+    readonly path: "clip reattach-audio";
+    readonly domain: "clip";
+    readonly method: "reattachAudio";
+    readonly capability: "clip.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
     readonly path: "clip replace-content";
     readonly domain: "clip";
     readonly method: "replaceContent";
@@ -1208,6 +2456,69 @@ export const OPERATIONS: readonly [{
     readonly ungated: false;
     readonly mutating: true;
     readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "clip resize";
+    readonly domain: "clip";
+    readonly method: "resize";
+    readonly capability: "clip.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "clip set";
+    readonly domain: "clip";
+    readonly method: "set";
+    readonly capability: "clip.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "clip set-enabled";
+    readonly domain: "clip";
+    readonly method: "setEnabled";
+    readonly capability: "clip.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "clip set-fades";
+    readonly domain: "clip";
+    readonly method: "setFades";
+    readonly capability: "clip.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "clip set-gain";
+    readonly domain: "clip";
+    readonly method: "setGain";
+    readonly capability: "clip.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "clip set-muted";
+    readonly domain: "clip";
+    readonly method: "setMuted";
+    readonly capability: "clip.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "clip split";
+    readonly domain: "clip";
+    readonly method: "split";
+    readonly capability: "clip.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "convert editor-to-global";
@@ -1327,6 +2638,134 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
+    readonly path: "ensemble add";
+    readonly domain: "ensemble";
+    readonly method: "add";
+    readonly capability: "soundsource.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "ensemble disable";
+    readonly domain: "ensemble";
+    readonly method: "disable";
+    readonly capability: "soundsource.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "ensemble enable";
+    readonly domain: "ensemble";
+    readonly method: "enable";
+    readonly capability: "soundsource.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "ensemble get";
+    readonly domain: "ensemble";
+    readonly method: "get";
+    readonly capability: "soundsource.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "ensemble remove";
+    readonly domain: "ensemble";
+    readonly method: "remove";
+    readonly capability: "soundsource.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "ensemble reorder";
+    readonly domain: "ensemble";
+    readonly method: "reorder";
+    readonly capability: "soundsource.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "ensemble set";
+    readonly domain: "ensemble";
+    readonly method: "set";
+    readonly capability: "soundsource.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "export audio";
+    readonly domain: "export";
+    readonly method: "audio";
+    readonly capability: "export.invoke";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "export fcpxml";
+    readonly domain: "export";
+    readonly method: "fcpxml";
+    readonly capability: "export.invoke";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "export lrc";
+    readonly domain: "export";
+    readonly method: "lrc";
+    readonly capability: "export.invoke";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "export midi";
+    readonly domain: "export";
+    readonly method: "midi";
+    readonly capability: "export.invoke";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "export song-template";
+    readonly domain: "export";
+    readonly method: "songTemplate";
+    readonly capability: "export.invoke";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+    readonly entitlement: "membership";
+}, {
+    readonly path: "export video";
+    readonly domain: "export";
+    readonly method: "video";
+    readonly capability: "export.invoke";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "export vocal-sample";
+    readonly domain: "export";
+    readonly method: "vocalSample";
+    readonly capability: "export.invoke";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+    readonly entitlement: "membership";
+}, {
     readonly path: "history list";
     readonly domain: "history";
     readonly method: "list";
@@ -1353,6 +2792,42 @@ export const OPERATIONS: readonly [{
     readonly mutating: true;
     readonly fingerprintPrecondition: false;
     readonly takesParams: false;
+}, {
+    readonly path: "import file";
+    readonly domain: "import";
+    readonly method: "file";
+    readonly capability: "import.invoke";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "instrument disable";
+    readonly domain: "instrument";
+    readonly method: "disable";
+    readonly capability: "soundsource.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "instrument enable";
+    readonly domain: "instrument";
+    readonly method: "enable";
+    readonly capability: "soundsource.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "instrument set";
+    readonly domain: "instrument";
+    readonly method: "set";
+    readonly capability: "soundsource.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
 }, {
     readonly path: "job cancel";
     readonly domain: "job";
@@ -1435,6 +2910,15 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: true;
     readonly takesParams: true;
 }, {
+    readonly path: "note get";
+    readonly domain: "note";
+    readonly method: "get";
+    readonly capability: "note.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
     readonly path: "note move";
     readonly domain: "note";
     readonly method: "move";
@@ -1453,9 +2937,27 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: true;
     readonly takesParams: true;
 }, {
+    readonly path: "note set-articulation";
+    readonly domain: "note";
+    readonly method: "setArticulation";
+    readonly capability: "note.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
     readonly path: "note set-lyric";
     readonly domain: "note";
     readonly method: "setLyric";
+    readonly capability: "note.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "note split";
+    readonly domain: "note";
+    readonly method: "split";
     readonly capability: "note.write";
     readonly ungated: false;
     readonly mutating: true;
@@ -1543,16 +3045,6 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
-    readonly path: "project save-template";
-    readonly domain: "project";
-    readonly method: "saveTemplate";
-    readonly capability: "project.lifecycle";
-    readonly ungated: false;
-    readonly mutating: true;
-    readonly fingerprintPrecondition: false;
-    readonly takesParams: true;
-    readonly entitlement: "membership";
-}, {
     readonly path: "project synthesis-status";
     readonly domain: "project";
     readonly method: "synthesisStatus";
@@ -1598,6 +3090,78 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
+    readonly path: "sound-source get";
+    readonly domain: "sound-source";
+    readonly method: "get";
+    readonly capability: "soundsource.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "sound-source list";
+    readonly domain: "sound-source";
+    readonly method: "list";
+    readonly capability: "soundsource.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "sound-source load";
+    readonly domain: "sound-source";
+    readonly method: "load";
+    readonly capability: "soundsource.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "sound-source set";
+    readonly domain: "sound-source";
+    readonly method: "set";
+    readonly capability: "soundsource.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "sound-source tags";
+    readonly domain: "sound-source";
+    readonly method: "tags";
+    readonly capability: "soundsource.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "sound-source unload";
+    readonly domain: "sound-source";
+    readonly method: "unload";
+    readonly capability: "soundsource.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "tempo analyze";
+    readonly domain: "tempo";
+    readonly method: "analyze";
+    readonly capability: "tempo.analyze";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "tempo apply-beat-analysis";
+    readonly domain: "tempo";
+    readonly method: "applyBeatAnalysis";
+    readonly capability: "tempo.applyV2";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
     readonly path: "tempo get";
     readonly domain: "tempo";
     readonly method: "get";
@@ -1607,13 +3171,49 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
+    readonly path: "tempo points";
+    readonly domain: "tempo";
+    readonly method: "points";
+    readonly capability: "tempo.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "tempo remove-point";
+    readonly domain: "tempo";
+    readonly method: "removePoint";
+    readonly capability: "tempo.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
     readonly path: "tempo set";
     readonly domain: "tempo";
     readonly method: "set";
     readonly capability: "tempo.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "tempo set-display-range";
+    readonly domain: "tempo";
+    readonly method: "setDisplayRange";
+    readonly capability: "tempo.write";
+    readonly ungated: false;
+    readonly mutating: true;
     readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "tempo set-point";
+    readonly domain: "tempo";
+    readonly method: "setPoint";
+    readonly capability: "tempo.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
     readonly takesParams: true;
 }, {
     readonly path: "timesig get";
@@ -1625,10 +3225,46 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
+    readonly path: "timesig list";
+    readonly domain: "timesig";
+    readonly method: "list";
+    readonly capability: "timesig.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "timesig remove-at";
+    readonly domain: "timesig";
+    readonly method: "removeAt";
+    readonly capability: "timesig.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
     readonly path: "timesig set";
     readonly domain: "timesig";
     readonly method: "set";
     readonly capability: "timesig.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "timesig set-at";
+    readonly domain: "timesig";
+    readonly method: "setAt";
+    readonly capability: "timesig.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "track create";
+    readonly domain: "track";
+    readonly method: "create";
+    readonly capability: "track.write";
     readonly ungated: false;
     readonly mutating: true;
     readonly fingerprintPrecondition: false;
@@ -1642,6 +3278,15 @@ export const OPERATIONS: readonly [{
     readonly mutating: true;
     readonly fingerprintPrecondition: false;
     readonly takesParams: false;
+}, {
+    readonly path: "track duplicate";
+    readonly domain: "track";
+    readonly method: "duplicate";
+    readonly capability: "track.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
 }, {
     readonly path: "track get";
     readonly domain: "track";
@@ -1670,6 +3315,15 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
+    readonly path: "track reorder";
+    readonly domain: "track";
+    readonly method: "reorder";
+    readonly capability: "track.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
     readonly path: "track set";
     readonly domain: "track";
     readonly method: "set";
@@ -1679,21 +3333,21 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
-    readonly path: "track set-record";
+    readonly path: "track set-input";
     readonly domain: "track";
-    readonly method: "setRecord";
+    readonly method: "setInput";
     readonly capability: "track.write";
     readonly ungated: false;
     readonly mutating: true;
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
-    readonly path: "track singer-recipe";
+    readonly path: "track set-language";
     readonly domain: "track";
-    readonly method: "singerRecipe";
-    readonly capability: "track.read";
+    readonly method: "setLanguage";
+    readonly capability: "track.write";
     readonly ungated: false;
-    readonly mutating: false;
+    readonly mutating: true;
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
@@ -1870,84 +3524,30 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
-    readonly path: "voice community-list";
+    readonly path: "voice community";
     readonly domain: "voice";
-    readonly method: "communityList";
+    readonly method: "community";
     readonly capability: "voice.read";
     readonly ungated: false;
     readonly mutating: false;
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
-    readonly path: "voice community-pages";
+    readonly path: "voice seeds";
     readonly domain: "voice";
-    readonly method: "communityPages";
+    readonly method: "seeds";
     readonly capability: "voice.read";
     readonly ungated: false;
     readonly mutating: false;
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
-    readonly path: "voice list";
+    readonly path: "voice synth-models";
     readonly domain: "voice";
-    readonly method: "list";
+    readonly method: "synthModels";
     readonly capability: "voice.read";
     readonly ungated: false;
     readonly mutating: false;
-    readonly fingerprintPrecondition: false;
-    readonly takesParams: true;
-}, {
-    readonly path: "voice load";
-    readonly domain: "voice";
-    readonly method: "load";
-    readonly capability: "voice.write";
-    readonly ungated: false;
-    readonly mutating: true;
-    readonly fingerprintPrecondition: false;
-    readonly takesParams: true;
-}, {
-    readonly path: "voice mix-create";
-    readonly domain: "voice";
-    readonly method: "mixCreate";
-    readonly capability: "voice.write";
-    readonly ungated: false;
-    readonly mutating: true;
-    readonly fingerprintPrecondition: false;
-    readonly takesParams: true;
-}, {
-    readonly path: "voice mix-delete";
-    readonly domain: "voice";
-    readonly method: "mixDelete";
-    readonly capability: "voice.write";
-    readonly ungated: false;
-    readonly mutating: true;
-    readonly fingerprintPrecondition: false;
-    readonly takesParams: true;
-}, {
-    readonly path: "voice mix-edit";
-    readonly domain: "voice";
-    readonly method: "mixEdit";
-    readonly capability: "voice.write";
-    readonly ungated: false;
-    readonly mutating: true;
-    readonly fingerprintPrecondition: false;
-    readonly takesParams: true;
-}, {
-    readonly path: "voice tags";
-    readonly domain: "voice";
-    readonly method: "tags";
-    readonly capability: "voice.read";
-    readonly ungated: false;
-    readonly mutating: false;
-    readonly fingerprintPrecondition: false;
-    readonly takesParams: true;
-}, {
-    readonly path: "voice unload";
-    readonly domain: "voice";
-    readonly method: "unload";
-    readonly capability: "voice.write";
-    readonly ungated: false;
-    readonly mutating: true;
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }];
@@ -1977,8 +3577,8 @@ export type ProfileName = keyof typeof PROFILES;
 
 // @public
 export const PROFILES: {
-    readonly 'surface.cli-mcp.v1': readonly ["caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "fx.read", "fx.write", "generative.add-layer", "generative.enhance", "generative.retake", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.read", "track.write", "transport.control", "transport.state", "ui.control", "ui.state", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write"];
-    readonly 'surface.extension-sdk.v1': readonly ["session.handshake", "session.ping", "session.shutdown", "workflow.dev", "workflow.ui"];
+    readonly 'surface.cli-mcp': readonly ["caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "fx.read", "fx.write", "generative.add-layer", "generative.enhance", "generative.retake", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "soundsource.read", "soundsource.write", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.read", "track.write", "transport.control", "transport.state", "ui.control", "ui.state", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write"];
+    readonly 'surface.extension-sdk': readonly ["session.handshake", "session.ping", "session.shutdown", "workflow.dev", "workflow.ui"];
 };
 
 // @public
@@ -2058,7 +3658,6 @@ export interface ProjectOperations {
     recentClear(options?: MutatingCallOptions): Promise<void>;
     save(options?: MutatingCallOptions): Promise<ProjectSaveResult>;
     saveAs(params: ProjectSaveAsParams, options?: MutatingCallOptions): Promise<ProjectSaveAsResult>;
-    saveTemplate(params: ProjectSaveTemplateParams, options?: MutatingCallOptions): Promise<ProjectSaveTemplateResult>;
     synthesisStatus(options?: CallOptions): Promise<ProjectSynthesisStatusResult>;
 }
 
@@ -2097,16 +3696,6 @@ export interface ProjectSaveResult {
 }
 
 // @public
-export interface ProjectSaveTemplateParams {
-    path: string;
-}
-
-// @public
-export interface ProjectSaveTemplateResult {
-    templatePath: string;
-}
-
-// @public
 export interface ProjectSynthesisStatusResult {
     isSynthesizing: boolean;
 }
@@ -2117,7 +3706,11 @@ export const PROTOCOL_VERSION = 1;
 // @public
 export interface PublicBindings {
     // (undocumented)
+    readonly blend: BlendOperations;
+    // (undocumented)
     readonly caret: CaretOperations;
+    // (undocumented)
+    readonly choir: ChoirOperations;
     // (undocumented)
     readonly clip: ClipOperations;
     // (undocumented)
@@ -2127,7 +3720,15 @@ export interface PublicBindings {
     // (undocumented)
     readonly editor: EditorOperations;
     // (undocumented)
+    readonly ensemble: EnsembleOperations;
+    // (undocumented)
+    readonly export: ExportOperations;
+    // (undocumented)
     readonly history: HistoryOperations;
+    // (undocumented)
+    readonly import: ImportOperations;
+    // (undocumented)
+    readonly instrument: InstrumentOperations;
     // (undocumented)
     readonly job: JobOperations;
     // (undocumented)
@@ -2138,6 +3739,8 @@ export interface PublicBindings {
     readonly recording: RecordingOperations;
     // (undocumented)
     readonly selection: SelectionOperations;
+    // (undocumented)
+    readonly soundSource: SoundSourceOperations;
     // (undocumented)
     readonly tempo: TempoOperations;
     // (undocumented)
@@ -2205,16 +3808,43 @@ export interface RequestOptions {
 
 // @public
 export const REQUIRED_TOKENS: {
+    readonly 'blend add': "voice.write";
+    readonly 'blend create': "voice.write";
+    readonly 'blend delete': "voice.write";
+    readonly 'blend get': "voice.read";
+    readonly 'blend list': "voice.read";
+    readonly 'blend remove': "voice.write";
+    readonly 'blend reorder': "voice.write";
+    readonly 'blend set': "voice.write";
     readonly 'caret get': "caret.read";
     readonly 'caret set': "caret.write";
+    readonly 'choir add': "soundsource.write";
+    readonly 'choir disable': "soundsource.write";
+    readonly 'choir enable': "soundsource.write";
+    readonly 'choir get': "soundsource.read";
+    readonly 'choir remove': "soundsource.write";
+    readonly 'choir reorder': "soundsource.write";
+    readonly 'choir set': "soundsource.write";
     readonly 'clip audio-content': "clip.read";
+    readonly 'clip consolidate': "clip.write";
     readonly 'clip create': "clip.write";
+    readonly 'clip delete': "clip.write";
+    readonly 'clip detach-audio': "clip.write";
+    readonly 'clip duplicate': "clip.write";
     readonly 'clip get': "clip.read";
     readonly 'clip list': "clip.read";
     readonly 'clip lyrics': "clip.read";
-    readonly 'clip move-edges': "clip.write";
+    readonly 'clip move': "clip.write";
     readonly 'clip note-content': "clip.read";
+    readonly 'clip reattach-audio': "clip.write";
     readonly 'clip replace-content': "clip.write";
+    readonly 'clip resize': "clip.write";
+    readonly 'clip set': "clip.write";
+    readonly 'clip set-enabled': "clip.write";
+    readonly 'clip set-fades': "clip.write";
+    readonly 'clip set-gain': "clip.write";
+    readonly 'clip set-muted': "clip.write";
+    readonly 'clip split': "clip.write";
     readonly 'device current': "device.read";
     readonly 'device list': "device.read";
     readonly 'device set-audio': "device.write";
@@ -2222,9 +3852,27 @@ export const REQUIRED_TOKENS: {
     readonly 'editor open': "editor.write";
     readonly 'editor status': "editor.read";
     readonly 'editor tick-range': "editor.read";
+    readonly 'ensemble add': "soundsource.write";
+    readonly 'ensemble disable': "soundsource.write";
+    readonly 'ensemble enable': "soundsource.write";
+    readonly 'ensemble get': "soundsource.read";
+    readonly 'ensemble remove': "soundsource.write";
+    readonly 'ensemble reorder': "soundsource.write";
+    readonly 'ensemble set': "soundsource.write";
+    readonly 'export audio': "export.invoke";
+    readonly 'export fcpxml': "export.invoke";
+    readonly 'export lrc': "export.invoke";
+    readonly 'export midi': "export.invoke";
+    readonly 'export song-template': "export.invoke";
+    readonly 'export video': "export.invoke";
+    readonly 'export vocal-sample': "export.invoke";
     readonly 'history list': "history.read";
     readonly 'history redo': "history.control";
     readonly 'history undo': "history.control";
+    readonly 'import file': "import.invoke";
+    readonly 'instrument disable': "soundsource.write";
+    readonly 'instrument enable': "soundsource.write";
+    readonly 'instrument set': "soundsource.write";
     readonly 'job cancel': "job.control";
     readonly 'job discard-result': "job.control";
     readonly 'job get': "job.read";
@@ -2234,9 +3882,12 @@ export const REQUIRED_TOKENS: {
     readonly 'job wait': "job.read";
     readonly 'note add': "note.write";
     readonly 'note delete': "note.write";
+    readonly 'note get': "note.read";
     readonly 'note move': "note.write";
     readonly 'note resize': "note.write";
+    readonly 'note set-articulation': "note.write";
     readonly 'note set-lyric': "note.write";
+    readonly 'note split': "note.write";
     readonly 'project collect-save': "project.lifecycle";
     readonly 'project dirty': "project.read";
     readonly 'project info': "project.read";
@@ -2246,23 +3897,40 @@ export const REQUIRED_TOKENS: {
     readonly 'project recent-clear': "project.lifecycle";
     readonly 'project save': "project.lifecycle";
     readonly 'project save-as': "project.lifecycle";
-    readonly 'project save-template': "project.lifecycle";
     readonly 'project synthesis-status': "project.read";
     readonly 'recording start': "recording.control";
     readonly 'recording stop': "recording.control";
     readonly 'selection get': "selection.read";
     readonly 'selection set': "selection.write";
+    readonly 'sound-source get': "soundsource.read";
+    readonly 'sound-source list': "soundsource.read";
+    readonly 'sound-source load': "soundsource.write";
+    readonly 'sound-source set': "soundsource.write";
+    readonly 'sound-source tags': "soundsource.read";
+    readonly 'sound-source unload': "soundsource.write";
+    readonly 'tempo analyze': "tempo.analyze";
+    readonly 'tempo apply-beat-analysis': "tempo.applyV2";
     readonly 'tempo get': "tempo.read";
+    readonly 'tempo points': "tempo.read";
+    readonly 'tempo remove-point': "tempo.write";
     readonly 'tempo set': "tempo.write";
+    readonly 'tempo set-display-range': "tempo.write";
+    readonly 'tempo set-point': "tempo.write";
     readonly 'timesig get': "timesig.read";
+    readonly 'timesig list': "timesig.read";
+    readonly 'timesig remove-at': "timesig.write";
     readonly 'timesig set': "timesig.write";
+    readonly 'timesig set-at': "timesig.write";
+    readonly 'track create': "track.write";
     readonly 'track delete': "track.write";
+    readonly 'track duplicate': "track.write";
     readonly 'track get': "track.read";
     readonly 'track list': "track.read";
     readonly 'track rename': "track.write";
+    readonly 'track reorder': "track.write";
     readonly 'track set': "track.write";
-    readonly 'track set-record': "track.write";
-    readonly 'track singer-recipe': "track.read";
+    readonly 'track set-input': "track.write";
+    readonly 'track set-language': "track.write";
     readonly 'transport loop': "transport.state";
     readonly 'transport metronome': "transport.control";
     readonly 'transport play': "transport.control";
@@ -2282,15 +3950,9 @@ export const REQUIRED_TOKENS: {
     readonly 'vocalparam read': "vocalparam.read";
     readonly 'vocalparam write': "vocalparam.write";
     readonly 'voice collect': "voice.write";
-    readonly 'voice community-list': "voice.read";
-    readonly 'voice community-pages': "voice.read";
-    readonly 'voice list': "voice.read";
-    readonly 'voice load': "voice.write";
-    readonly 'voice mix-create': "voice.write";
-    readonly 'voice mix-delete': "voice.write";
-    readonly 'voice mix-edit': "voice.write";
-    readonly 'voice tags': "voice.read";
-    readonly 'voice unload': "voice.write";
+    readonly 'voice community': "voice.read";
+    readonly 'voice seeds': "voice.read";
+    readonly 'voice synth-models': "voice.read";
 };
 
 // @public
@@ -2450,7 +4112,203 @@ export interface ShutdownParams {
 }
 
 // @public
-export const SURFACE_VERSION = "4.0";
+export interface SoundSourceGetParams {
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+}
+
+// @public
+export interface SoundSourceGetResult {
+    choirEnabled?: boolean;
+    ensembleEnabled?: boolean;
+    hasSource: boolean;
+    midiChannel?: string;
+    model?: {
+        id?: number;
+        name?: string;
+        supportedLanguages?: string[];
+        timbreOnly?: boolean;
+    };
+    soundSource?: {
+        category?: string;
+        categoryId?: number;
+        formats?: ('vst3' | 'vst2' | 'au')[];
+        generations?: ('v1' | 'v2')[];
+        group?: string;
+        id?: number;
+        isCollected?: boolean;
+        kind?: 'voice' | 'choir' | 'instrument' | 'ensemble' | 'external-instrument';
+        memberCount?: number;
+        modelId?: number;
+        modelName?: string;
+        name?: string;
+        nativeLanguage?: string;
+        origin?: 'premade' | 'cloned' | 'community' | 'blended';
+        ref?: string;
+        seedCount?: number;
+        supportedLanguages?: string[];
+        tags?: string[];
+        vendor?: string;
+        version?: string;
+    };
+    state?: 'ready' | 'mounted' | 'disabled' | 'missing';
+    trackIndex: number;
+    trackType: string;
+    trackUuid: string;
+}
+
+// @public
+export interface SoundSourceListParams {
+    category?: string | null;
+    keyword?: string | null;
+    kind?: ('voice' | 'choir' | 'instrument' | 'ensemble' | 'external-instrument')[] | null;
+    language?: string | null;
+    model?: string | null;
+    origin?: ('premade' | 'cloned' | 'community' | 'blended')[] | null;
+    showRefs?: boolean | null;
+    tags?: string[] | null;
+    vendor?: string | null;
+}
+
+// @public
+export interface SoundSourceListResult {
+    count: number;
+    soundSources: {
+        category?: string;
+        categoryId?: number;
+        formats?: ('vst3' | 'vst2' | 'au')[];
+        generations?: ('v1' | 'v2')[];
+        group?: string;
+        id?: number;
+        isCollected?: boolean;
+        kind: 'voice' | 'choir' | 'instrument' | 'ensemble' | 'external-instrument';
+        memberCount?: number;
+        modelId?: number;
+        modelName?: string;
+        name: string;
+        nativeLanguage?: string;
+        origin?: 'premade' | 'cloned' | 'community' | 'blended';
+        ref: string;
+        seedCount?: number;
+        supportedLanguages?: string[];
+        tags: string[];
+        vendor?: string;
+        version?: string;
+    }[];
+}
+
+// @public
+export interface SoundSourceLoadParams {
+    format?: 'vst3' | 'vst2' | 'au';
+    model?: string | null;
+    source: string;
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+    vendor?: string | null;
+}
+
+// @public
+export interface SoundSourceLoadResult {
+    format?: 'vst3' | 'vst2' | 'au';
+    kind: 'voice' | 'choir' | 'instrument' | 'ensemble' | 'external-instrument';
+    language?: string;
+    modelName?: string;
+    name: string;
+    ref: string;
+    trackIndex: number;
+    trackType: string;
+    trackUuid: string;
+    vendor?: string;
+}
+
+// @public
+export interface SoundSourceOperations {
+    get(params: SoundSourceGetParams, options?: CallOptions): Promise<SoundSourceGetResult>;
+    list(params: SoundSourceListParams, options?: CallOptions): Promise<SoundSourceListResult>;
+    load(params: SoundSourceLoadParams, options?: MutatingCallOptions): Promise<SoundSourceLoadResult>;
+    set(params: SoundSourceSetParams, options?: MutatingCallOptions): Promise<SoundSourceSetResult>;
+    tags(params: SoundSourceTagsParams, options?: CallOptions): Promise<SoundSourceTagsResult>;
+    unload(params: SoundSourceUnloadParams, options?: MutatingCallOptions): Promise<SoundSourceUnloadResult>;
+}
+
+// @public
+export interface SoundSourceSetParams {
+    member?: number | null;
+    model: string;
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+}
+
+// @public
+export interface SoundSourceSetResult {
+    modelId: number;
+    modelName: string;
+    supportedLanguages?: string[];
+    trackIndex: number;
+    trackUuid: string;
+}
+
+// @public
+export interface SoundSourceTagsParams {
+    kind?: ('voice' | 'choir' | 'instrument' | 'ensemble' | 'external-instrument')[] | null;
+}
+
+// @public
+export interface SoundSourceTagsResult {
+    categories?: {
+        id: number;
+        name: string;
+    }[];
+    languages?: {
+        code: string;
+        name: string;
+    }[];
+    tags?: string[];
+    vendors?: string[];
+}
+
+// @public
+export interface SoundSourceUnloadParams {
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+}
+
+// @public
+export interface SoundSourceUnloadResult {
+    newType: string;
+    trackIndex: number;
+    trackName: string;
+    trackUuid: string;
+}
+
+// @public
+export const SURFACE_VERSION = "6.1";
+
+// @public
+export interface TempoAnalyzeParams {
+    clipUuid: string;
+}
+
+// @public
+export interface TempoAnalyzeResult {
+    analysisId: string;
+    jobClassId: 'tempo-analyze';
+    jobId: string;
+}
+
+// @public
+export interface TempoApplyBeatAnalysisParams {
+    analysisId: string;
+    anchor?: number | null;
+}
+
+// @public
+export interface TempoApplyBeatAnalysisResult {
+    movedClipCount: number;
+    offsetSec: number;
+    pointCount: number;
+    signatureCount: number;
+}
 
 // @public
 export interface TempoGetResult {
@@ -2464,8 +4322,51 @@ export interface TempoGetResult {
 
 // @public
 export interface TempoOperations {
+    analyze(params: TempoAnalyzeParams, options?: MutatingCallOptions): Promise<TempoAnalyzeResult>;
+    applyBeatAnalysis(params: TempoApplyBeatAnalysisParams, options?: MutatingCallOptions): Promise<TempoApplyBeatAnalysisResult>;
     get(options?: CallOptions): Promise<TempoGetResult>;
-    set(params: TempoSetParams, options?: MutatingCallOptions): Promise<void>;
+    points(options?: CallOptions): Promise<TempoPointsResult>;
+    removePoint(params: TempoRemovePointParams, options?: PreconditionCallOptions): Promise<TempoRemovePointResult>;
+    set(params: TempoSetParams, options?: PreconditionCallOptions): Promise<void>;
+    setDisplayRange(params: TempoSetDisplayRangeParams, options?: MutatingCallOptions): Promise<TempoSetDisplayRangeResult>;
+    setPoint(params: TempoSetPointParams, options?: PreconditionCallOptions): Promise<TempoSetPointResult>;
+}
+
+// @public
+export interface TempoPointsResult {
+    fingerprint: Fingerprint;
+    nativeUnit: 'tick';
+    pointCount: number;
+    points: {
+        bend: number;
+        pos: number;
+        posSec: number;
+        value: number;
+    }[];
+}
+
+// @public
+export interface TempoRemovePointParams {
+    pos: number;
+}
+
+// @public
+export interface TempoRemovePointResult {
+    pointCount: number;
+    pos: number;
+    replaced: boolean;
+}
+
+// @public
+export interface TempoSetDisplayRangeParams {
+    maxBpm?: number | null;
+    minBpm?: number | null;
+}
+
+// @public
+export interface TempoSetDisplayRangeResult {
+    maxBpm: number;
+    minBpm: number;
 }
 
 // @public
@@ -2475,6 +4376,20 @@ export interface TempoSetParams {
         pos: number;
         value: number;
     }[];
+}
+
+// @public
+export interface TempoSetPointParams {
+    bend?: number | null;
+    bpm: number;
+    pos: number;
+}
+
+// @public
+export interface TempoSetPointResult {
+    pointCount: number;
+    pos: number;
+    replaced: boolean;
 }
 
 // @public
@@ -2488,9 +4403,52 @@ export interface TimesigGetResult {
 }
 
 // @public
+export interface TimesigListResult {
+    fingerprint: Fingerprint;
+    nativeUnit: 'bar';
+    signatureCount: number;
+    signatures: {
+        barPos: number;
+        denominator: number;
+        numerator: number;
+        sec: number;
+        tick: number;
+    }[];
+}
+
+// @public
 export interface TimesigOperations {
     get(options?: CallOptions): Promise<TimesigGetResult>;
-    set(params: TimesigSetParams, options?: MutatingCallOptions): Promise<void>;
+    list(options?: CallOptions): Promise<TimesigListResult>;
+    removeAt(params: TimesigRemoveAtParams, options?: PreconditionCallOptions): Promise<TimesigRemoveAtResult>;
+    set(params: TimesigSetParams, options?: PreconditionCallOptions): Promise<void>;
+    setAt(params: TimesigSetAtParams, options?: PreconditionCallOptions): Promise<TimesigSetAtResult>;
+}
+
+// @public
+export interface TimesigRemoveAtParams {
+    barPos: number;
+}
+
+// @public
+export interface TimesigRemoveAtResult {
+    barPos: number;
+    replaced: boolean;
+    signatureCount: number;
+}
+
+// @public
+export interface TimesigSetAtParams {
+    barPos: number;
+    denominator: number;
+    numerator: number;
+}
+
+// @public
+export interface TimesigSetAtResult {
+    barPos: number;
+    replaced: boolean;
+    signatureCount: number;
 }
 
 // @public
@@ -2500,6 +4458,42 @@ export interface TimesigSetParams {
         denominator: number;
         numerator: number;
     }[];
+}
+
+// @public
+export interface TrackCreateParams {
+    index?: number | null;
+    name?: string | null;
+    source?: string | null;
+    type?: string | null;
+}
+
+// @public
+export interface TrackCreateResult {
+    language?: string;
+    region: string;
+    soundSourceName?: string;
+    trackIndex: number;
+    trackName: string;
+    trackType: string;
+    trackUuid: string;
+}
+
+// @public
+export interface TrackDuplicateParams {
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+}
+
+// @public
+export interface TrackDuplicateResult {
+    language?: string;
+    region: string;
+    soundSourceName?: string;
+    trackIndex: number;
+    trackName: string;
+    trackType: string;
+    trackUuid: string;
 }
 
 // @public
@@ -2572,13 +4566,16 @@ export interface TrackListResult {
 
 // @public
 export interface TrackOperations {
+    create(params: TrackCreateParams, options?: MutatingCallOptions): Promise<TrackCreateResult>;
     delete(options?: MutatingCallOptions): Promise<void>;
+    duplicate(params: TrackDuplicateParams, options?: MutatingCallOptions): Promise<TrackDuplicateResult>;
     get(params: TrackGetParams, options?: CallOptions): Promise<TrackGetResult>;
     list(options?: CallOptions): Promise<TrackListResult>;
     rename(params: TrackRenameParams, options?: MutatingCallOptions): Promise<void>;
+    reorder(params: TrackReorderParams, options?: MutatingCallOptions): Promise<TrackReorderResult>;
     set(params: TrackSetParams, options?: MutatingCallOptions): Promise<void>;
-    setRecord(params: TrackSetRecordParams, options?: MutatingCallOptions): Promise<void>;
-    singerRecipe(params: TrackSingerRecipeParams, options?: CallOptions): Promise<TrackSingerRecipeResult>;
+    setInput(params: TrackSetInputParams, options?: MutatingCallOptions): Promise<TrackSetInputResult>;
+    setLanguage(params: TrackSetLanguageParams, options?: MutatingCallOptions): Promise<void>;
 }
 
 // @public
@@ -2588,58 +4585,61 @@ export interface TrackRenameParams {
 }
 
 // @public
-export interface TrackSetParams {
-    color?: string | null;
-    gain?: number | null;
-    mute?: boolean | null;
-    pan?: number | null;
-    solo?: boolean | null;
-    trackIndex: number;
+export interface TrackReorderParams {
+    toIndex: number;
+    trackIndex?: number | null;
+    trackUuid?: string | null;
 }
 
 // @public
-export interface TrackSetRecordParams {
-    inputChannelIndex?: number | null;
-    listen?: boolean | null;
-    midiInputChannel?: number | null;
-    midiInputDeviceName?: string | null;
-    midiInputSourceType?: string | null;
+export interface TrackReorderResult {
+    language?: string;
+    region: string;
+    soundSourceName?: string;
+    trackIndex: number;
+    trackName: string;
+    trackType: string;
+    trackUuid: string;
+}
+
+// @public
+export interface TrackSetInputParams {
+    inputChannel?: string | null;
+    midiChannel?: string | null;
+    midiDevice?: string | null;
     recordMode?: string | null;
     trackIndex: number;
 }
 
 // @public
-export interface TrackSingerRecipeParams {
-    singerIndex?: number | null;
+export interface TrackSetInputResult {
+    inputChannelName?: string;
+    midiInput?: {
+        channel?: string;
+        deviceName?: string;
+        sourceType?: 'none' | 'all' | 'keyboard' | 'custom';
+    };
+    recordMode?: 'monophonic' | 'polyphonic';
     trackIndex: number;
 }
 
 // @public
-export interface TrackSingerRecipeResult {
-    isVoiceBlend: boolean;
-    router: {
-        id: number;
-        isSingingMamba: boolean;
-        isTimbreOnly: boolean;
-        name: string;
-        supportedLanguages: string[];
-        version: number;
-    };
-    saveState: string;
-    seedCount: number;
-    seeds: {
-        code: number;
-        labels: string[];
-        lock: boolean;
-        name: string;
-        style?: number;
-        timbre: number;
-    }[];
-    singerName: string;
-    vocalControls?: {
-        defaultValue: number | null;
-        name: string;
-    }[];
+export interface TrackSetLanguageParams {
+    language: string;
+    trackIndex?: number | null;
+    trackUuid?: string | null;
+}
+
+// @public
+export interface TrackSetParams {
+    color?: string | null;
+    gain?: number | null;
+    monitor?: boolean | null;
+    mute?: boolean | null;
+    pan?: number | null;
+    solo?: boolean | null;
+    trackIndex?: number | null;
+    trackUuid?: string | null;
 }
 
 // @public
@@ -2898,7 +4898,7 @@ export interface VocalparamWriteResult {
 
 // @public
 export interface VoiceCollectParams {
-    id: number;
+    source: string;
 }
 
 // @public
@@ -2906,221 +4906,80 @@ export interface VoiceCollectResult {
     collected: boolean;
     id: number;
     name: string;
+    ref: string;
 }
 
 // @public
-export interface VoiceCommunityListParams {
+export interface VoiceCommunityParams {
     isMyCollection?: boolean | null;
     keyword?: string | null;
     language?: string | null;
-    page: number;
+    page?: number | null;
     tags?: string[] | null;
 }
 
 // @public
-export interface VoiceCommunityListResult {
+export interface VoiceCommunityResult {
     count?: number;
     error?: string;
     page: number;
+    pageSize?: number;
+    totalPages?: number;
     voices: {
-        group: string;
         id: number;
-        isCollected?: boolean;
-        name: string;
-        nativeLanguage: string;
-        routerId: number;
-        routerName: string;
-        supportedLanguages: string[];
-        tags: string[];
-    }[];
-}
-
-// @public
-export interface VoiceCommunityPagesParams {
-    isMyCollection?: boolean | null;
-    keyword?: string | null;
-    language?: string | null;
-    tags?: string[] | null;
-}
-
-// @public
-export interface VoiceCommunityPagesResult {
-    pageSize: number;
-    totalPages: number;
-}
-
-// @public
-export interface VoiceListParams {
-    category?: string | null;
-    keyword?: string | null;
-    language?: string | null;
-    tags?: string[] | null;
-    type: string;
-}
-
-// @public
-export interface VoiceListResult {
-    count: number;
-    soundSources: {
-        category?: string;
-        categoryId?: number;
-        group?: string;
-        id: number;
-        isCollected?: boolean;
-        memberCount?: number;
+        isCollected: boolean;
+        modelId?: number;
+        modelName?: string;
         name: string;
         nativeLanguage?: string;
-        routerId?: number;
-        routerName?: string;
+        ref: string;
         supportedLanguages?: string[];
         tags: string[];
-        type?: string;
     }[];
-    type: string;
-}
-
-// @public
-export interface VoiceLoadParams {
-    group?: string | null;
-    id: number;
-    routerId?: number | null;
-    soundSourceType: string;
-    trackIndex: number;
-}
-
-// @public
-export interface VoiceLoadResult {
-    id: number;
-    name: string;
-    soundSourceType: string;
-    trackIndex: number;
-}
-
-// @public
-export interface VoiceMixCreateParams {
-    head?: number | null;
-    language?: string | null;
-    name: string;
-    routerId?: number | null;
-    seeds: {
-        code: number;
-        lock?: boolean | null;
-        style?: number | null;
-        timbre?: number | null;
-    }[];
-    tags?: string[] | null;
-}
-
-// @public
-export interface VoiceMixCreateResult {
-    group: string;
-    head: number;
-    id: number;
-    language: string;
-    name: string;
-    routerId: number;
-    routerName: string;
-    seeds: {
-        code: number;
-        lock: boolean;
-        name?: string;
-        style: number;
-        timbre: number;
-    }[];
-    tags: string[];
-}
-
-// @public
-export interface VoiceMixDeleteParams {
-    id: number;
-}
-
-// @public
-export interface VoiceMixDeleteResult {
-    id: number;
-    maximum: number;
-    name: string;
-    remaining: number;
-}
-
-// @public
-export interface VoiceMixEditParams {
-    head?: number | null;
-    id: number;
-    language?: string | null;
-    name?: string | null;
-    routerId?: number | null;
-    seeds?: {
-        code: number;
-        lock?: boolean | null;
-        style?: number | null;
-        timbre?: number | null;
-    }[] | null;
-    tags?: string[] | null;
-}
-
-// @public
-export interface VoiceMixEditResult {
-    group: string;
-    head: number;
-    id: number;
-    language: string;
-    name: string;
-    routerId: number;
-    routerName: string;
-    seeds: {
-        code: number;
-        lock: boolean;
-        name?: string;
-        style: number;
-        timbre: number;
-    }[];
-    tags: string[];
 }
 
 // @public
 export interface VoiceOperations {
     collect(params: VoiceCollectParams, options?: MutatingCallOptions): Promise<VoiceCollectResult>;
-    communityList(params: VoiceCommunityListParams, options?: CallOptions): Promise<VoiceCommunityListResult>;
-    communityPages(params: VoiceCommunityPagesParams, options?: CallOptions): Promise<VoiceCommunityPagesResult>;
-    list(params: VoiceListParams, options?: CallOptions): Promise<VoiceListResult>;
-    load(params: VoiceLoadParams, options?: MutatingCallOptions): Promise<VoiceLoadResult>;
-    mixCreate(params: VoiceMixCreateParams, options?: MutatingCallOptions): Promise<VoiceMixCreateResult>;
-    mixDelete(params: VoiceMixDeleteParams, options?: MutatingCallOptions): Promise<VoiceMixDeleteResult>;
-    mixEdit(params: VoiceMixEditParams, options?: MutatingCallOptions): Promise<VoiceMixEditResult>;
-    tags(params: VoiceTagsParams, options?: CallOptions): Promise<VoiceTagsResult>;
-    unload(params: VoiceUnloadParams, options?: MutatingCallOptions): Promise<VoiceUnloadResult>;
+    community(params: VoiceCommunityParams, options?: CallOptions): Promise<VoiceCommunityResult>;
+    seeds(params: VoiceSeedsParams, options?: CallOptions): Promise<VoiceSeedsResult>;
+    synthModels(params: VoiceSynthModelsParams, options?: CallOptions): Promise<VoiceSynthModelsResult>;
 }
 
 // @public
-export interface VoiceTagsParams {
-    type: string;
+export interface VoiceSeedsParams {
+    community?: boolean | null;
+    keyword?: string | null;
+    model?: string | null;
 }
 
 // @public
-export interface VoiceTagsResult {
-    categories?: {
+export interface VoiceSeedsResult {
+    count: number;
+    seeds: {
+        code: number;
+        labels?: string[];
+        name: string;
+        origin?: 'premade' | 'cloned' | 'community';
+        ref: string;
+    }[];
+}
+
+// @public
+export interface VoiceSynthModelsParams {
+    language?: string | null;
+}
+
+// @public
+export interface VoiceSynthModelsResult {
+    count: number;
+    models: {
         id: number;
         name: string;
+        supportedLanguages: string[];
+        timbreOnly?: boolean;
+        voiceCount: number;
     }[];
-    languages?: {
-        code: string;
-        name: string;
-    }[];
-    note?: string;
-    tagGroups?: unknown[];
-}
-
-// @public
-export interface VoiceUnloadParams {
-    trackIndex: number;
-}
-
-// @public
-export interface VoiceUnloadResult {
-    newType: string;
-    trackIndex: number;
-    trackName: string;
 }
 
 ```

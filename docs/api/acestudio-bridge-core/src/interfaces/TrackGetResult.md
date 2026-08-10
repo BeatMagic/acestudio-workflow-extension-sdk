@@ -223,7 +223,7 @@ Instrument category name. Instrument (non-ensemble) mode only.
 optional hasSource?: boolean;
 ```
 
-False for GenericMidi tracks, which have no sound source. Other keys are absent when present.
+Whether the track carries a sound source. A GenericMidi track with an external instrument mounted reports true: the slot is a sound source in every sense that matters, and reporting it empty made a mounted plugin indistinguishable from no plugin at all. Other keys are absent when this is false. `sound-source get` reports the same thing in more detail.
 
 #### isVoiceBlend?
 

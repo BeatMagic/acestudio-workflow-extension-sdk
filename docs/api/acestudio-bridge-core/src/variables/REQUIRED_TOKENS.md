@@ -2,16 +2,43 @@
 
 ```ts
 const REQUIRED_TOKENS: {
+  blend add: "voice.write";
+  blend create: "voice.write";
+  blend delete: "voice.write";
+  blend get: "voice.read";
+  blend list: "voice.read";
+  blend remove: "voice.write";
+  blend reorder: "voice.write";
+  blend set: "voice.write";
   caret get: "caret.read";
   caret set: "caret.write";
+  choir add: "soundsource.write";
+  choir disable: "soundsource.write";
+  choir enable: "soundsource.write";
+  choir get: "soundsource.read";
+  choir remove: "soundsource.write";
+  choir reorder: "soundsource.write";
+  choir set: "soundsource.write";
   clip audio-content: "clip.read";
+  clip consolidate: "clip.write";
   clip create: "clip.write";
+  clip delete: "clip.write";
+  clip detach-audio: "clip.write";
+  clip duplicate: "clip.write";
   clip get: "clip.read";
   clip list: "clip.read";
   clip lyrics: "clip.read";
-  clip move-edges: "clip.write";
+  clip move: "clip.write";
   clip note-content: "clip.read";
+  clip reattach-audio: "clip.write";
   clip replace-content: "clip.write";
+  clip resize: "clip.write";
+  clip set: "clip.write";
+  clip set-enabled: "clip.write";
+  clip set-fades: "clip.write";
+  clip set-gain: "clip.write";
+  clip set-muted: "clip.write";
+  clip split: "clip.write";
   device current: "device.read";
   device list: "device.read";
   device set-audio: "device.write";
@@ -19,9 +46,27 @@ const REQUIRED_TOKENS: {
   editor open: "editor.write";
   editor status: "editor.read";
   editor tick-range: "editor.read";
+  ensemble add: "soundsource.write";
+  ensemble disable: "soundsource.write";
+  ensemble enable: "soundsource.write";
+  ensemble get: "soundsource.read";
+  ensemble remove: "soundsource.write";
+  ensemble reorder: "soundsource.write";
+  ensemble set: "soundsource.write";
+  export audio: "export.invoke";
+  export fcpxml: "export.invoke";
+  export lrc: "export.invoke";
+  export midi: "export.invoke";
+  export song-template: "export.invoke";
+  export video: "export.invoke";
+  export vocal-sample: "export.invoke";
   history list: "history.read";
   history redo: "history.control";
   history undo: "history.control";
+  import file: "import.invoke";
+  instrument disable: "soundsource.write";
+  instrument enable: "soundsource.write";
+  instrument set: "soundsource.write";
   job cancel: "job.control";
   job discard-result: "job.control";
   job get: "job.read";
@@ -31,9 +76,12 @@ const REQUIRED_TOKENS: {
   job wait: "job.read";
   note add: "note.write";
   note delete: "note.write";
+  note get: "note.read";
   note move: "note.write";
   note resize: "note.write";
+  note set-articulation: "note.write";
   note set-lyric: "note.write";
+  note split: "note.write";
   project collect-save: "project.lifecycle";
   project dirty: "project.read";
   project info: "project.read";
@@ -43,23 +91,40 @@ const REQUIRED_TOKENS: {
   project recent-clear: "project.lifecycle";
   project save: "project.lifecycle";
   project save-as: "project.lifecycle";
-  project save-template: "project.lifecycle";
   project synthesis-status: "project.read";
   recording start: "recording.control";
   recording stop: "recording.control";
   selection get: "selection.read";
   selection set: "selection.write";
+  sound-source get: "soundsource.read";
+  sound-source list: "soundsource.read";
+  sound-source load: "soundsource.write";
+  sound-source set: "soundsource.write";
+  sound-source tags: "soundsource.read";
+  sound-source unload: "soundsource.write";
+  tempo analyze: "tempo.analyze";
+  tempo apply-beat-analysis: "tempo.applyV2";
   tempo get: "tempo.read";
+  tempo points: "tempo.read";
+  tempo remove-point: "tempo.write";
   tempo set: "tempo.write";
+  tempo set-display-range: "tempo.write";
+  tempo set-point: "tempo.write";
   timesig get: "timesig.read";
+  timesig list: "timesig.read";
+  timesig remove-at: "timesig.write";
   timesig set: "timesig.write";
+  timesig set-at: "timesig.write";
+  track create: "track.write";
   track delete: "track.write";
+  track duplicate: "track.write";
   track get: "track.read";
   track list: "track.read";
   track rename: "track.write";
+  track reorder: "track.write";
   track set: "track.write";
-  track set-record: "track.write";
-  track singer-recipe: "track.read";
+  track set-input: "track.write";
+  track set-language: "track.write";
   transport loop: "transport.state";
   transport metronome: "transport.control";
   transport play: "transport.control";
@@ -79,21 +144,63 @@ const REQUIRED_TOKENS: {
   vocalparam read: "vocalparam.read";
   vocalparam write: "vocalparam.write";
   voice collect: "voice.write";
-  voice community-list: "voice.read";
-  voice community-pages: "voice.read";
-  voice list: "voice.read";
-  voice load: "voice.write";
-  voice mix-create: "voice.write";
-  voice mix-delete: "voice.write";
-  voice mix-edit: "voice.write";
-  voice tags: "voice.read";
-  voice unload: "voice.write";
+  voice community: "voice.read";
+  voice seeds: "voice.read";
+  voice synth-models: "voice.read";
 };
 ```
 
 The token each operation requires, for the pre-wire guard: a call the session's grant cannot reach fails locally with the identical typed `CAPABILITY_DENIED` the host would have returned. Ungated operations are absent — they need no token.
 
 ## Type Declaration
+
+### blend add
+
+```ts
+readonly blend add: "voice.write" = 'voice.write';
+```
+
+### blend create
+
+```ts
+readonly blend create: "voice.write" = 'voice.write';
+```
+
+### blend delete
+
+```ts
+readonly blend delete: "voice.write" = 'voice.write';
+```
+
+### blend get
+
+```ts
+readonly blend get: "voice.read" = 'voice.read';
+```
+
+### blend list
+
+```ts
+readonly blend list: "voice.read" = 'voice.read';
+```
+
+### blend remove
+
+```ts
+readonly blend remove: "voice.write" = 'voice.write';
+```
+
+### blend reorder
+
+```ts
+readonly blend reorder: "voice.write" = 'voice.write';
+```
+
+### blend set
+
+```ts
+readonly blend set: "voice.write" = 'voice.write';
+```
 
 ### caret get
 
@@ -107,16 +214,82 @@ readonly caret get: "caret.read" = 'caret.read';
 readonly caret set: "caret.write" = 'caret.write';
 ```
 
+### choir add
+
+```ts
+readonly choir add: "soundsource.write" = 'soundsource.write';
+```
+
+### choir disable
+
+```ts
+readonly choir disable: "soundsource.write" = 'soundsource.write';
+```
+
+### choir enable
+
+```ts
+readonly choir enable: "soundsource.write" = 'soundsource.write';
+```
+
+### choir get
+
+```ts
+readonly choir get: "soundsource.read" = 'soundsource.read';
+```
+
+### choir remove
+
+```ts
+readonly choir remove: "soundsource.write" = 'soundsource.write';
+```
+
+### choir reorder
+
+```ts
+readonly choir reorder: "soundsource.write" = 'soundsource.write';
+```
+
+### choir set
+
+```ts
+readonly choir set: "soundsource.write" = 'soundsource.write';
+```
+
 ### clip audio-content
 
 ```ts
 readonly clip audio-content: "clip.read" = 'clip.read';
 ```
 
+### clip consolidate
+
+```ts
+readonly clip consolidate: "clip.write" = 'clip.write';
+```
+
 ### clip create
 
 ```ts
 readonly clip create: "clip.write" = 'clip.write';
+```
+
+### clip delete
+
+```ts
+readonly clip delete: "clip.write" = 'clip.write';
+```
+
+### clip detach-audio
+
+```ts
+readonly clip detach-audio: "clip.write" = 'clip.write';
+```
+
+### clip duplicate
+
+```ts
+readonly clip duplicate: "clip.write" = 'clip.write';
 ```
 
 ### clip get
@@ -137,10 +310,10 @@ readonly clip list: "clip.read" = 'clip.read';
 readonly clip lyrics: "clip.read" = 'clip.read';
 ```
 
-### clip move-edges
+### clip move
 
 ```ts
-readonly clip move-edges: "clip.write" = 'clip.write';
+readonly clip move: "clip.write" = 'clip.write';
 ```
 
 ### clip note-content
@@ -149,10 +322,58 @@ readonly clip move-edges: "clip.write" = 'clip.write';
 readonly clip note-content: "clip.read" = 'clip.read';
 ```
 
+### clip reattach-audio
+
+```ts
+readonly clip reattach-audio: "clip.write" = 'clip.write';
+```
+
 ### clip replace-content
 
 ```ts
 readonly clip replace-content: "clip.write" = 'clip.write';
+```
+
+### clip resize
+
+```ts
+readonly clip resize: "clip.write" = 'clip.write';
+```
+
+### clip set
+
+```ts
+readonly clip set: "clip.write" = 'clip.write';
+```
+
+### clip set-enabled
+
+```ts
+readonly clip set-enabled: "clip.write" = 'clip.write';
+```
+
+### clip set-fades
+
+```ts
+readonly clip set-fades: "clip.write" = 'clip.write';
+```
+
+### clip set-gain
+
+```ts
+readonly clip set-gain: "clip.write" = 'clip.write';
+```
+
+### clip set-muted
+
+```ts
+readonly clip set-muted: "clip.write" = 'clip.write';
+```
+
+### clip split
+
+```ts
+readonly clip split: "clip.write" = 'clip.write';
 ```
 
 ### device current
@@ -197,6 +418,90 @@ readonly editor status: "editor.read" = 'editor.read';
 readonly editor tick-range: "editor.read" = 'editor.read';
 ```
 
+### ensemble add
+
+```ts
+readonly ensemble add: "soundsource.write" = 'soundsource.write';
+```
+
+### ensemble disable
+
+```ts
+readonly ensemble disable: "soundsource.write" = 'soundsource.write';
+```
+
+### ensemble enable
+
+```ts
+readonly ensemble enable: "soundsource.write" = 'soundsource.write';
+```
+
+### ensemble get
+
+```ts
+readonly ensemble get: "soundsource.read" = 'soundsource.read';
+```
+
+### ensemble remove
+
+```ts
+readonly ensemble remove: "soundsource.write" = 'soundsource.write';
+```
+
+### ensemble reorder
+
+```ts
+readonly ensemble reorder: "soundsource.write" = 'soundsource.write';
+```
+
+### ensemble set
+
+```ts
+readonly ensemble set: "soundsource.write" = 'soundsource.write';
+```
+
+### export audio
+
+```ts
+readonly export audio: "export.invoke" = 'export.invoke';
+```
+
+### export fcpxml
+
+```ts
+readonly export fcpxml: "export.invoke" = 'export.invoke';
+```
+
+### export lrc
+
+```ts
+readonly export lrc: "export.invoke" = 'export.invoke';
+```
+
+### export midi
+
+```ts
+readonly export midi: "export.invoke" = 'export.invoke';
+```
+
+### export song-template
+
+```ts
+readonly export song-template: "export.invoke" = 'export.invoke';
+```
+
+### export video
+
+```ts
+readonly export video: "export.invoke" = 'export.invoke';
+```
+
+### export vocal-sample
+
+```ts
+readonly export vocal-sample: "export.invoke" = 'export.invoke';
+```
+
 ### history list
 
 ```ts
@@ -213,6 +518,30 @@ readonly history redo: "history.control" = 'history.control';
 
 ```ts
 readonly history undo: "history.control" = 'history.control';
+```
+
+### import file
+
+```ts
+readonly import file: "import.invoke" = 'import.invoke';
+```
+
+### instrument disable
+
+```ts
+readonly instrument disable: "soundsource.write" = 'soundsource.write';
+```
+
+### instrument enable
+
+```ts
+readonly instrument enable: "soundsource.write" = 'soundsource.write';
+```
+
+### instrument set
+
+```ts
+readonly instrument set: "soundsource.write" = 'soundsource.write';
 ```
 
 ### job cancel
@@ -269,6 +598,12 @@ readonly note add: "note.write" = 'note.write';
 readonly note delete: "note.write" = 'note.write';
 ```
 
+### note get
+
+```ts
+readonly note get: "note.read" = 'note.read';
+```
+
 ### note move
 
 ```ts
@@ -281,10 +616,22 @@ readonly note move: "note.write" = 'note.write';
 readonly note resize: "note.write" = 'note.write';
 ```
 
+### note set-articulation
+
+```ts
+readonly note set-articulation: "note.write" = 'note.write';
+```
+
 ### note set-lyric
 
 ```ts
 readonly note set-lyric: "note.write" = 'note.write';
+```
+
+### note split
+
+```ts
+readonly note split: "note.write" = 'note.write';
 ```
 
 ### project collect-save
@@ -341,12 +688,6 @@ readonly project save: "project.lifecycle" = 'project.lifecycle';
 readonly project save-as: "project.lifecycle" = 'project.lifecycle';
 ```
 
-### project save-template
-
-```ts
-readonly project save-template: "project.lifecycle" = 'project.lifecycle';
-```
-
 ### project synthesis-status
 
 ```ts
@@ -377,10 +718,70 @@ readonly selection get: "selection.read" = 'selection.read';
 readonly selection set: "selection.write" = 'selection.write';
 ```
 
+### sound-source get
+
+```ts
+readonly sound-source get: "soundsource.read" = 'soundsource.read';
+```
+
+### sound-source list
+
+```ts
+readonly sound-source list: "soundsource.read" = 'soundsource.read';
+```
+
+### sound-source load
+
+```ts
+readonly sound-source load: "soundsource.write" = 'soundsource.write';
+```
+
+### sound-source set
+
+```ts
+readonly sound-source set: "soundsource.write" = 'soundsource.write';
+```
+
+### sound-source tags
+
+```ts
+readonly sound-source tags: "soundsource.read" = 'soundsource.read';
+```
+
+### sound-source unload
+
+```ts
+readonly sound-source unload: "soundsource.write" = 'soundsource.write';
+```
+
+### tempo analyze
+
+```ts
+readonly tempo analyze: "tempo.analyze" = 'tempo.analyze';
+```
+
+### tempo apply-beat-analysis
+
+```ts
+readonly tempo apply-beat-analysis: "tempo.applyV2" = 'tempo.applyV2';
+```
+
 ### tempo get
 
 ```ts
 readonly tempo get: "tempo.read" = 'tempo.read';
+```
+
+### tempo points
+
+```ts
+readonly tempo points: "tempo.read" = 'tempo.read';
+```
+
+### tempo remove-point
+
+```ts
+readonly tempo remove-point: "tempo.write" = 'tempo.write';
 ```
 
 ### tempo set
@@ -389,10 +790,34 @@ readonly tempo get: "tempo.read" = 'tempo.read';
 readonly tempo set: "tempo.write" = 'tempo.write';
 ```
 
+### tempo set-display-range
+
+```ts
+readonly tempo set-display-range: "tempo.write" = 'tempo.write';
+```
+
+### tempo set-point
+
+```ts
+readonly tempo set-point: "tempo.write" = 'tempo.write';
+```
+
 ### timesig get
 
 ```ts
 readonly timesig get: "timesig.read" = 'timesig.read';
+```
+
+### timesig list
+
+```ts
+readonly timesig list: "timesig.read" = 'timesig.read';
+```
+
+### timesig remove-at
+
+```ts
+readonly timesig remove-at: "timesig.write" = 'timesig.write';
 ```
 
 ### timesig set
@@ -401,10 +826,28 @@ readonly timesig get: "timesig.read" = 'timesig.read';
 readonly timesig set: "timesig.write" = 'timesig.write';
 ```
 
+### timesig set-at
+
+```ts
+readonly timesig set-at: "timesig.write" = 'timesig.write';
+```
+
+### track create
+
+```ts
+readonly track create: "track.write" = 'track.write';
+```
+
 ### track delete
 
 ```ts
 readonly track delete: "track.write" = 'track.write';
+```
+
+### track duplicate
+
+```ts
+readonly track duplicate: "track.write" = 'track.write';
 ```
 
 ### track get
@@ -425,22 +868,28 @@ readonly track list: "track.read" = 'track.read';
 readonly track rename: "track.write" = 'track.write';
 ```
 
+### track reorder
+
+```ts
+readonly track reorder: "track.write" = 'track.write';
+```
+
 ### track set
 
 ```ts
 readonly track set: "track.write" = 'track.write';
 ```
 
-### track set-record
+### track set-input
 
 ```ts
-readonly track set-record: "track.write" = 'track.write';
+readonly track set-input: "track.write" = 'track.write';
 ```
 
-### track singer-recipe
+### track set-language
 
 ```ts
-readonly track singer-recipe: "track.read" = 'track.read';
+readonly track set-language: "track.write" = 'track.write';
 ```
 
 ### transport loop
@@ -557,56 +1006,20 @@ readonly vocalparam write: "vocalparam.write" = 'vocalparam.write';
 readonly voice collect: "voice.write" = 'voice.write';
 ```
 
-### voice community-list
+### voice community
 
 ```ts
-readonly voice community-list: "voice.read" = 'voice.read';
+readonly voice community: "voice.read" = 'voice.read';
 ```
 
-### voice community-pages
+### voice seeds
 
 ```ts
-readonly voice community-pages: "voice.read" = 'voice.read';
+readonly voice seeds: "voice.read" = 'voice.read';
 ```
 
-### voice list
+### voice synth-models
 
 ```ts
-readonly voice list: "voice.read" = 'voice.read';
-```
-
-### voice load
-
-```ts
-readonly voice load: "voice.write" = 'voice.write';
-```
-
-### voice mix-create
-
-```ts
-readonly voice mix-create: "voice.write" = 'voice.write';
-```
-
-### voice mix-delete
-
-```ts
-readonly voice mix-delete: "voice.write" = 'voice.write';
-```
-
-### voice mix-edit
-
-```ts
-readonly voice mix-edit: "voice.write" = 'voice.write';
-```
-
-### voice tags
-
-```ts
-readonly voice tags: "voice.read" = 'voice.read';
-```
-
-### voice unload
-
-```ts
-readonly voice unload: "voice.write" = 'voice.write';
+readonly voice synth-models: "voice.read" = 'voice.read';
 ```

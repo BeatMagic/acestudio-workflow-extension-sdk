@@ -3,19 +3,22 @@
 // The public capability bindings: the operations the capability registry
 // publishes (ADR 0094 §2), plus the scaffolding every consumer shares.
 //
-// Surface version: 4.0
+// Surface version: 6.1
 
 /** The contract surface version these bindings were generated from (`major.minor`). The handshake compares it against the host's: a major mismatch is a typed error at connect, minor drift is fine under the tolerant-reader rule. */
-export const SURFACE_VERSION = '4.0';
+export const SURFACE_VERSION = '6.1';
 
 /** Every canonical error code, as a string-literal union. `BridgeError.code` narrows against it, so error handling is exhaustiveness-checked by the compiler. Codes are a contract; the message beside one is not. */
 export type BridgeErrorCode =
     'ALREADY_RECORDING'
+  | 'AMBIGUOUS_SOURCE'
+  | 'ANALYSIS_UNUSABLE'
   | 'BAD_ARGS'
   | 'BRIDGE_UNREACHABLE'
   | 'CAPABILITY_DENIED'
   | 'CAPABILITY_OUT_OF_SURFACE'
   | 'CHAIN_NOT_GROWN'
+  | 'CLIP_OVERLAP'
   | 'COLLECT_FAILED'
   | 'CONFIRMATION_REQUIRED'
   | 'CREATE_TIMEOUT'
@@ -28,6 +31,7 @@ export type BridgeErrorCode =
   | 'FINGERPRINT_SCOPE_MISMATCH'
   | 'FIXTURE_FAILED'
   | 'FLUSH_TIMEOUT'
+  | 'FORMAT_UNAVAILABLE'
   | 'GESTURE_HELD'
   | 'HANDLER_FAILED'
   | 'IMPORT_FAILED'
@@ -224,6 +228,8 @@ export type CapabilityToken =
   | 'session.handshake'
   | 'session.ping'
   | 'session.shutdown'
+  | 'soundsource.read'
+  | 'soundsource.write'
   | 'tempo.analyze'
   | 'tempo.applyV2'
   | 'tempo.read'
@@ -285,6 +291,8 @@ export const CAPABILITY_TOKENS = [
     'session.handshake',
     'session.ping',
     'session.shutdown',
+    'soundsource.read',
+    'soundsource.write',
     'tempo.analyze',
     'tempo.applyV2',
     'tempo.read',
@@ -304,6 +312,452 @@ export const CAPABILITY_TOKENS = [
     'workflow.dev',
     'workflow.ui',
 ] as const satisfies readonly CapabilityToken[];
+
+// --- blend -----------------------------------------------------------------
+
+/** Arguments for `blend add`. */
+export interface BlendAddParams {
+    /** Where to insert the seed. Defaults to the end of the recipe. */
+    at?: number | null;
+    /** *Required.** Which blend to add to, by display name or ref. */
+    blend: string;
+    /** Whether Style should follow Timbre for this seed. */
+    link?: boolean | null;
+    /** **Required.** Which voice seed to add, by seed name or ref. Use `voice seeds --model \<name\>` to see what the blend's model allows. */
+    seed: string;
+    /** Style weight for the new seed, 0 to 1. Defaults to 0.2. An error on a timbre-only model, which has no Style axis. */
+    style?: number | null;
+    /** Timbre weight for the new seed, 0 to 1. Defaults to 0.2, matching the app: a seed you add is an alteration to the blend's base voice, not an equal partner in it. */
+    timbre?: number | null;
+}
+
+/** Success payload of `blend add`. */
+export interface BlendAddResult {
+    /** Avatar id, or -1 when the blend falls back to its first seed's avatar. */
+    avatar?: number;
+    /** Group discriminator of the blended-voice library this blend belongs to. */
+    group: string;
+    /** The blend's library id. */
+    id: number;
+    /** Full English name of the blend's native language. */
+    language?: string;
+    /** Id of the vocal synth model the blend sings through. Fixed when the blend was created. */
+    modelId: number;
+    /** Name of that model. */
+    modelName: string;
+    /** Display name. */
+    name: string;
+    /** Ref for this blend, accepted by `--blend` here and by `sound-source load --source`. */
+    ref: string;
+    /** How many seeds the recipe holds. */
+    seedCount: number;
+    /** The recipe, in order. */
+    seeds: {
+        /** The voice seed's code. */
+        code: number;
+        /** 0-based position in the recipe, which is what `blend set --member` and `blend remove --member` address. */
+        index: number;
+        /** Whether Style follows Timbre for this seed. The UI shows this as the link between the two sliders. */
+        link: boolean;
+        /** The seed's display name. Absent when the seed is no longer in the local registry, which can happen to a blend saved against a voice you no longer have. */
+        name?: string;
+        /** This seed's Style weight, 0 to 1. Absent on a timbre-only model, which has no Style axis at all. */
+        style?: number;
+        /** This seed's Timbre weight, 0 to 1. The UI calls this Timbre. */
+        timbre: number;
+    }[];
+    /** Every language this blend can sing, which is what its model and seeds allow between them. */
+    supportedLanguages?: string[];
+    /** Tag names attached to the blend. */
+    tags?: string[];
+    /** True when the model carries no Style axis. Seeds on such a blend report no `style`, and passing `--style` is an error rather than a value that quietly does nothing. */
+    timbreOnly?: boolean;
+}
+
+/** Arguments for `blend create`. */
+export interface BlendCreateParams {
+    /** Avatar id. Omit to fall back to the first seed's avatar. */
+    avatar?: number | null;
+    /** The blend's native language, as a full English name. Omit to take the first one the model and seeds allow. */
+    language?: string | null;
+    /** **Required.** Which vocal synth model the blend sings through, by model name or generation. Fixed for the life of the blend: it decides which seeds are available, which languages the blend can sing, and whether the Style axis exists at all. */
+    model: string;
+    /** *Required.** Display name for the new blend. */
+    name: string;
+    /** Tag names to attach, for filtering in `sound-source list`. */
+    tags?: string[] | null;
+}
+
+/** Success payload of `blend create`. */
+export interface BlendCreateResult {
+    /** Avatar id, or -1 when the blend falls back to its first seed's avatar. */
+    avatar?: number;
+    /** Group discriminator of the blended-voice library this blend belongs to. */
+    group: string;
+    /** The blend's library id. */
+    id: number;
+    /** Full English name of the blend's native language. */
+    language?: string;
+    /** Id of the vocal synth model the blend sings through. Fixed when the blend was created. */
+    modelId: number;
+    /** Name of that model. */
+    modelName: string;
+    /** Display name. */
+    name: string;
+    /** Ref for this blend, accepted by `--blend` here and by `sound-source load --source`. */
+    ref: string;
+    /** How many seeds the recipe holds. */
+    seedCount: number;
+    /** The recipe, in order. */
+    seeds: {
+        /** The voice seed's code. */
+        code: number;
+        /** 0-based position in the recipe, which is what `blend set --member` and `blend remove --member` address. */
+        index: number;
+        /** Whether Style follows Timbre for this seed. The UI shows this as the link between the two sliders. */
+        link: boolean;
+        /** The seed's display name. Absent when the seed is no longer in the local registry, which can happen to a blend saved against a voice you no longer have. */
+        name?: string;
+        /** This seed's Style weight, 0 to 1. Absent on a timbre-only model, which has no Style axis at all. */
+        style?: number;
+        /** This seed's Timbre weight, 0 to 1. The UI calls this Timbre. */
+        timbre: number;
+    }[];
+    /** Every language this blend can sing, which is what its model and seeds allow between them. */
+    supportedLanguages?: string[];
+    /** Tag names attached to the blend. */
+    tags?: string[];
+    /** True when the model carries no Style axis. Seeds on such a blend report no `style`, and passing `--style` is an error rather than a value that quietly does nothing. */
+    timbreOnly?: boolean;
+}
+
+/** Arguments for `blend delete`. */
+export interface BlendDeleteParams {
+    /** *Required.** Which blend to delete, by display name or ref. */
+    blend: string;
+}
+
+/** Success payload of `blend delete`. */
+export interface BlendDeleteResult {
+    /** Library id of the deleted blend. */
+    id: number;
+    /** The library's ceiling. */
+    maximum: number;
+    /** Display name it had when deleted. */
+    name: string;
+    /** How many blends the library still holds. */
+    remaining: number;
+}
+
+/** Arguments for `blend get`. */
+export interface BlendGetParams {
+    /** **Required.** Which blend, by display name or ref. A name matching more than one blend is an error listing the candidates. */
+    blend: string;
+}
+
+/** Success payload of `blend get`. */
+export interface BlendGetResult {
+    /** Avatar id, or -1 when the blend falls back to its first seed's avatar. */
+    avatar?: number;
+    /** Group discriminator of the blended-voice library this blend belongs to. */
+    group: string;
+    /** The blend's library id. */
+    id: number;
+    /** Full English name of the blend's native language. */
+    language?: string;
+    /** Id of the vocal synth model the blend sings through. Fixed when the blend was created. */
+    modelId: number;
+    /** Name of that model. */
+    modelName: string;
+    /** Display name. */
+    name: string;
+    /** Ref for this blend, accepted by `--blend` here and by `sound-source load --source`. */
+    ref: string;
+    /** How many seeds the recipe holds. */
+    seedCount: number;
+    /** The recipe, in order. */
+    seeds: {
+        /** The voice seed's code. */
+        code: number;
+        /** 0-based position in the recipe, which is what `blend set --member` and `blend remove --member` address. */
+        index: number;
+        /** Whether Style follows Timbre for this seed. The UI shows this as the link between the two sliders. */
+        link: boolean;
+        /** The seed's display name. Absent when the seed is no longer in the local registry, which can happen to a blend saved against a voice you no longer have. */
+        name?: string;
+        /** This seed's Style weight, 0 to 1. Absent on a timbre-only model, which has no Style axis at all. */
+        style?: number;
+        /** This seed's Timbre weight, 0 to 1. The UI calls this Timbre. */
+        timbre: number;
+    }[];
+    /** Every language this blend can sing, which is what its model and seeds allow between them. */
+    supportedLanguages?: string[];
+    /** Tag names attached to the blend. */
+    tags?: string[];
+    /** True when the model carries no Style axis. Seeds on such a blend report no `style`, and passing `--style` is an error rather than a value that quietly does nothing. */
+    timbreOnly?: boolean;
+}
+
+/** Arguments for `blend list`. */
+export interface BlendListParams {
+    /** Filter by name substring, case-insensitive. */
+    keyword?: string | null;
+    /** Show each blend's `ref` in the human listing. Refs are always present in the JSON payload; this is for reading them without first provoking an ambiguity error. Blend names collide as readily as any other sound source's, so the same escape hatch belongs here. */
+    showRefs?: boolean | null;
+}
+
+/** Success payload of `blend list`. */
+export interface BlendListResult {
+    /** Every blended voice in the library. */
+    blends: {
+        /** Library id. */
+        id: number;
+        /** Native language, full English name. */
+        language?: string;
+        /** The model it sings through. */
+        modelName?: string;
+        /** Display name. */
+        name: string;
+        /** Ref for this blend. */
+        ref: string;
+        /** How many seeds the recipe holds. */
+        seedCount: number;
+        /** Tag names attached to the blend. */
+        tags?: string[];
+    }[];
+    /** How many blends the library holds. */
+    count: number;
+    /** The library's ceiling, so a caller can tell whether another `blend create` will fit. */
+    maximum: number;
+}
+
+/** Arguments for `blend remove`. */
+export interface BlendRemoveParams {
+    /** *Required.** Which blend, by display name or ref. */
+    blend: string;
+    /** *Required.** Which seed to remove, by 0-based position in the recipe. */
+    member: number;
+}
+
+/** Success payload of `blend remove`. */
+export interface BlendRemoveResult {
+    /** Avatar id, or -1 when the blend falls back to its first seed's avatar. */
+    avatar?: number;
+    /** Group discriminator of the blended-voice library this blend belongs to. */
+    group: string;
+    /** The blend's library id. */
+    id: number;
+    /** Full English name of the blend's native language. */
+    language?: string;
+    /** Id of the vocal synth model the blend sings through. Fixed when the blend was created. */
+    modelId: number;
+    /** Name of that model. */
+    modelName: string;
+    /** Display name. */
+    name: string;
+    /** Ref for this blend, accepted by `--blend` here and by `sound-source load --source`. */
+    ref: string;
+    /** How many seeds the recipe holds. */
+    seedCount: number;
+    /** The recipe, in order. */
+    seeds: {
+        /** The voice seed's code. */
+        code: number;
+        /** 0-based position in the recipe, which is what `blend set --member` and `blend remove --member` address. */
+        index: number;
+        /** Whether Style follows Timbre for this seed. The UI shows this as the link between the two sliders. */
+        link: boolean;
+        /** The seed's display name. Absent when the seed is no longer in the local registry, which can happen to a blend saved against a voice you no longer have. */
+        name?: string;
+        /** This seed's Style weight, 0 to 1. Absent on a timbre-only model, which has no Style axis at all. */
+        style?: number;
+        /** This seed's Timbre weight, 0 to 1. The UI calls this Timbre. */
+        timbre: number;
+    }[];
+    /** Every language this blend can sing, which is what its model and seeds allow between them. */
+    supportedLanguages?: string[];
+    /** Tag names attached to the blend. */
+    tags?: string[];
+    /** True when the model carries no Style axis. Seeds on such a blend report no `style`, and passing `--style` is an error rather than a value that quietly does nothing. */
+    timbreOnly?: boolean;
+}
+
+/** Arguments for `blend reorder`. */
+export interface BlendReorderParams {
+    /** *Required.** Which blend, by display name or ref. */
+    blend: string;
+    /** *Required.** Which seed to move, by 0-based position. */
+    member: number;
+    /** *Required.** Where to move it. */
+    to: number;
+}
+
+/** Success payload of `blend reorder`. */
+export interface BlendReorderResult {
+    /** Avatar id, or -1 when the blend falls back to its first seed's avatar. */
+    avatar?: number;
+    /** Group discriminator of the blended-voice library this blend belongs to. */
+    group: string;
+    /** The blend's library id. */
+    id: number;
+    /** Full English name of the blend's native language. */
+    language?: string;
+    /** Id of the vocal synth model the blend sings through. Fixed when the blend was created. */
+    modelId: number;
+    /** Name of that model. */
+    modelName: string;
+    /** Display name. */
+    name: string;
+    /** Ref for this blend, accepted by `--blend` here and by `sound-source load --source`. */
+    ref: string;
+    /** How many seeds the recipe holds. */
+    seedCount: number;
+    /** The recipe, in order. */
+    seeds: {
+        /** The voice seed's code. */
+        code: number;
+        /** 0-based position in the recipe, which is what `blend set --member` and `blend remove --member` address. */
+        index: number;
+        /** Whether Style follows Timbre for this seed. The UI shows this as the link between the two sliders. */
+        link: boolean;
+        /** The seed's display name. Absent when the seed is no longer in the local registry, which can happen to a blend saved against a voice you no longer have. */
+        name?: string;
+        /** This seed's Style weight, 0 to 1. Absent on a timbre-only model, which has no Style axis at all. */
+        style?: number;
+        /** This seed's Timbre weight, 0 to 1. The UI calls this Timbre. */
+        timbre: number;
+    }[];
+    /** Every language this blend can sing, which is what its model and seeds allow between them. */
+    supportedLanguages?: string[];
+    /** Tag names attached to the blend. */
+    tags?: string[];
+    /** True when the model carries no Style axis. Seeds on such a blend report no `style`, and passing `--style` is an error rather than a value that quietly does nothing. */
+    timbreOnly?: boolean;
+}
+
+/** Arguments for `blend set`. */
+export interface BlendSetParams {
+    /** New avatar id. Blend-level. */
+    avatar?: number | null;
+    /** *Required.** Which blend, by display name or ref. */
+    blend: string;
+    /** New native language, as a full English name. Must be one the model and seeds allow. Blend-level. */
+    language?: string | null;
+    /** Whether Style should follow Timbre for this seed. Requires `--member`. */
+    link?: boolean | null;
+    /** Which seed to configure, by 0-based position in the recipe. Omit to configure the blend itself instead. */
+    member?: number | null;
+    /** New display name. Blend-level. */
+    name?: string | null;
+    /** This seed's Style weight, 0 to 1. Requires `--member`, and requires a model that has a Style axis: on a timbre-only model this is an error rather than a value that silently does nothing. */
+    style?: number | null;
+    /** Replacement tag list. Replaces the existing tags rather than adding to them. Blend-level. */
+    tags?: string[] | null;
+    /** This seed's Timbre weight, 0 to 1. Requires `--member`. */
+    timbre?: number | null;
+}
+
+/** Success payload of `blend set`. */
+export interface BlendSetResult {
+    /** Avatar id, or -1 when the blend falls back to its first seed's avatar. */
+    avatar?: number;
+    /** Group discriminator of the blended-voice library this blend belongs to. */
+    group: string;
+    /** The blend's library id. */
+    id: number;
+    /** Full English name of the blend's native language. */
+    language?: string;
+    /** Id of the vocal synth model the blend sings through. Fixed when the blend was created. */
+    modelId: number;
+    /** Name of that model. */
+    modelName: string;
+    /** Display name. */
+    name: string;
+    /** Ref for this blend, accepted by `--blend` here and by `sound-source load --source`. */
+    ref: string;
+    /** How many seeds the recipe holds. */
+    seedCount: number;
+    /** The recipe, in order. */
+    seeds: {
+        /** The voice seed's code. */
+        code: number;
+        /** 0-based position in the recipe, which is what `blend set --member` and `blend remove --member` address. */
+        index: number;
+        /** Whether Style follows Timbre for this seed. The UI shows this as the link between the two sliders. */
+        link: boolean;
+        /** The seed's display name. Absent when the seed is no longer in the local registry, which can happen to a blend saved against a voice you no longer have. */
+        name?: string;
+        /** This seed's Style weight, 0 to 1. Absent on a timbre-only model, which has no Style axis at all. */
+        style?: number;
+        /** This seed's Timbre weight, 0 to 1. The UI calls this Timbre. */
+        timbre: number;
+    }[];
+    /** Every language this blend can sing, which is what its model and seeds allow between them. */
+    supportedLanguages?: string[];
+    /** Tag names attached to the blend. */
+    tags?: string[];
+    /** True when the model carries no Style axis. Seeds on such a blend report no `style`, and passing `--style` is an error rather than a value that quietly does nothing. */
+    timbreOnly?: boolean;
+}
+
+/** The `blend` operations, mirroring the canonical operation tree 1:1. */
+export interface BlendOperations {
+    /**
+     * Add a voice seed to a blend.
+     *
+     * Requires the `voice.write` capability.
+     */
+    add(params: BlendAddParams, options?: MutatingCallOptions): Promise<BlendAddResult>;
+
+    /**
+     * Create a blended voice on a chosen vocal synth model, ready for seeds.
+     *
+     * Requires the `voice.write` capability.
+     */
+    create(params: BlendCreateParams, options?: MutatingCallOptions): Promise<BlendCreateResult>;
+
+    /**
+     * Delete a blended voice from your library.
+     *
+     * Requires the `voice.write` capability.
+     */
+    delete(params: BlendDeleteParams, options?: MutatingCallOptions): Promise<BlendDeleteResult>;
+
+    /**
+     * Read one blended voice: its model, its seeds, and each seed's weights.
+     *
+     * Requires the `voice.read` capability.
+     */
+    get(params: BlendGetParams, options?: CallOptions): Promise<BlendGetResult>;
+
+    /**
+     * List the blended voices in your library, with how full the library is.
+     *
+     * Requires the `voice.read` capability.
+     */
+    list(params: BlendListParams, options?: CallOptions): Promise<BlendListResult>;
+
+    /**
+     * Remove one voice seed from a blend.
+     *
+     * Requires the `voice.write` capability.
+     */
+    remove(params: BlendRemoveParams, options?: MutatingCallOptions): Promise<BlendRemoveResult>;
+
+    /**
+     * Move a voice seed to another position in a blend's recipe.
+     *
+     * Requires the `voice.write` capability.
+     */
+    reorder(params: BlendReorderParams, options?: MutatingCallOptions): Promise<BlendReorderResult>;
+
+    /**
+     * Change a blend's name, tags, avatar or language, or one seed's weights.
+     *
+     * Requires the `voice.write` capability.
+     */
+    set(params: BlendSetParams, options?: MutatingCallOptions): Promise<BlendSetResult>;
+}
 
 // --- caret -----------------------------------------------------------------
 
@@ -358,6 +812,247 @@ export interface CaretOperations {
     set(params: CaretSetParams, options?: MutatingCallOptions): Promise<void>;
 }
 
+// --- choir -----------------------------------------------------------------
+
+/** Arguments for `choir add`. */
+export interface ChoirAddParams {
+    /** Where to insert the new member. Defaults to the end. `0` makes the new voice the leader and pushes the rest down. */
+    at?: number | null;
+    /** Which vocal synth model the new member sings through, by model name or generation. Omit for the voice's default. */
+    model?: string | null;
+    /** **Required.** Which voice to add, by display name or ref — the same thing `sound-source load --source` accepts, including a blended voice. */
+    source: string;
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. */
+    trackUuid?: string | null;
+}
+
+/** Success payload of `choir add`. */
+export interface ChoirAddResult {
+    /** Display name of the current leader. A reorder can change this, which is the point of reordering. */
+    leaderName?: string;
+    /** How many members the choir holds now. */
+    memberCount: number;
+    /** Where the affected member ended up, or was removed from. */
+    memberIndex?: number;
+    /** Display name of the affected member's voice. */
+    memberName?: string;
+    /** 0-based index of the track. */
+    trackIndex: number;
+    /** UUID of that track. */
+    trackUuid: string;
+}
+
+/** Arguments for `choir disable`. */
+export interface ChoirDisableParams {
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. */
+    trackUuid?: string | null;
+}
+
+/** Success payload of `choir disable`. */
+export interface ChoirDisableResult {
+    /** The voice that remains: the former member 0, now the track's only AI voice. */
+    leaderName: string;
+    /** How many non-leader members were dropped. This is why disabling is not the inverse of enabling. */
+    removedCount: number;
+    /** 0-based index of the track. */
+    trackIndex: number;
+    /** UUID of that track. */
+    trackUuid: string;
+}
+
+/** Arguments for `choir enable`. */
+export interface ChoirEnableParams {
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. */
+    trackUuid?: string | null;
+}
+
+/** Success payload of `choir enable`. */
+export interface ChoirEnableResult {
+    /** How many members the choir now holds. Enabling keeps the existing AI voice as the leader, so this is 1 unless the track already had a choir. */
+    memberCount: number;
+    /** 0-based index of the track. */
+    trackIndex: number;
+    /** The track's name after enabling. Turning choir mode on renames the track, which is why the new name is reported. */
+    trackName?: string;
+    /** UUID of that track. */
+    trackUuid: string;
+}
+
+/** Arguments for `choir get`. */
+export interface ChoirGetParams {
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. */
+    trackUuid?: string | null;
+}
+
+/** Success payload of `choir get`. */
+export interface ChoirGetResult {
+    /** Whether choir mode is on. When false there is exactly one AI voice and `members` reports it as the leader. */
+    enabled: boolean;
+    /** The ceiling `choir add` enforces. */
+    maxMembers?: number;
+    /** How many members the choir holds. */
+    memberCount: number;
+    /** The members in order. Index 0 is the leader. */
+    members: {
+        /** Member gain in dB. */
+        gain: number;
+        /** 0-based position in the choir. Member 0 is the leader. */
+        index: number;
+        /** True for member 0. The leader is what the track falls back to when choir mode is turned off. */
+        isLeader: boolean;
+        /** True when this member's voice is a blend rather than an ordinary voice. A choir member may be either. */
+        isVoiceBlend?: boolean;
+        /** The vocal synth model this member sings through. */
+        modelName?: string;
+        /** Whether this member is muted. */
+        mute: boolean;
+        /** Display name of this member's voice. */
+        name: string;
+        /** Ref of that voice, in the same form `sound-source load --source` accepts. */
+        ref?: string;
+    }[];
+    /** Timing offset between members, in milliseconds. The UI calls this Offset. */
+    offset?: number;
+    /** Stereo spread across the members, 0 to 1. The UI calls this Spread. */
+    spread?: number;
+    /** 0-based index of the track. */
+    trackIndex: number;
+    /** UUID of that track. */
+    trackUuid: string;
+}
+
+/** Arguments for `choir remove`. */
+export interface ChoirRemoveParams {
+    /** *Required.** Which member to remove. `0` is the leader and is refused. */
+    member: number;
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. */
+    trackUuid?: string | null;
+}
+
+/** Success payload of `choir remove`. */
+export interface ChoirRemoveResult {
+    /** Display name of the current leader. A reorder can change this, which is the point of reordering. */
+    leaderName?: string;
+    /** How many members the choir holds now. */
+    memberCount: number;
+    /** Where the affected member ended up, or was removed from. */
+    memberIndex?: number;
+    /** Display name of the affected member's voice. */
+    memberName?: string;
+    /** 0-based index of the track. */
+    trackIndex: number;
+    /** UUID of that track. */
+    trackUuid: string;
+}
+
+/** Arguments for `choir reorder`. */
+export interface ChoirReorderParams {
+    /** *Required.** Which member to move. */
+    member: number;
+    /** *Required.** Where to move it. `0` promotes it to leader. */
+    to: number;
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. */
+    trackUuid?: string | null;
+}
+
+/** Success payload of `choir reorder`. */
+export interface ChoirReorderResult {
+    /** Display name of the current leader. A reorder can change this, which is the point of reordering. */
+    leaderName?: string;
+    /** How many members the choir holds now. */
+    memberCount: number;
+    /** Where the affected member ended up, or was removed from. */
+    memberIndex?: number;
+    /** Display name of the affected member's voice. */
+    memberName?: string;
+    /** 0-based index of the track. */
+    trackIndex: number;
+    /** UUID of that track. */
+    trackUuid: string;
+}
+
+/** Arguments for `choir set`. */
+export interface ChoirSetParams {
+    /** Member gain in dB. Requires `--member`. */
+    gain?: number | null;
+    /** Which member to configure. `0` is the leader. Omit to configure the choir as a whole instead. */
+    member?: number | null;
+    /** Whether to mute this member. Requires `--member`. */
+    mute?: boolean | null;
+    /** Timing offset between members, in milliseconds. Choir-level. */
+    offset?: number | null;
+    /** Stereo spread across the members, 0 to 1. Choir-level. */
+    spread?: number | null;
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. */
+    trackUuid?: string | null;
+}
+
+/** The `choir` operations, mirroring the canonical operation tree 1:1. */
+export interface ChoirOperations {
+    /**
+     * Add an AI voice to a choir, by name or ref.
+     *
+     * Requires the `soundsource.write` capability.
+     */
+    add(params: ChoirAddParams, options?: MutatingCallOptions): Promise<ChoirAddResult>;
+
+    /**
+     * Turn choir mode off, leaving the leader as the track's only AI voice.
+     *
+     * Requires the `soundsource.write` capability.
+     */
+    disable(params: ChoirDisableParams, options?: MutatingCallOptions): Promise<ChoirDisableResult>;
+
+    /**
+     * Turn choir mode on for a Sing track, keeping its current AI voice as the leader.
+     *
+     * Requires the `soundsource.write` capability.
+     */
+    enable(params: ChoirEnableParams, options?: MutatingCallOptions): Promise<ChoirEnableResult>;
+
+    /**
+     * Read a Sing track's choir: whether it is on, its settings, and every member.
+     *
+     * Requires the `soundsource.read` capability.
+     */
+    get(params: ChoirGetParams, options?: CallOptions): Promise<ChoirGetResult>;
+
+    /**
+     * Remove one AI voice from a choir.
+     *
+     * Requires the `soundsource.write` capability.
+     */
+    remove(params: ChoirRemoveParams, options?: MutatingCallOptions): Promise<ChoirRemoveResult>;
+
+    /**
+     * Move a choir member to another position, which is how you choose the leader.
+     *
+     * Requires the `soundsource.write` capability.
+     */
+    reorder(params: ChoirReorderParams, options?: MutatingCallOptions): Promise<ChoirReorderResult>;
+
+    /**
+     * Set the choir's timing and width, or one member's gain and mute.
+     *
+     * Requires the `soundsource.write` capability.
+     */
+    set(params: ChoirSetParams, options?: MutatingCallOptions): Promise<void>;
+}
+
 // --- clip ------------------------------------------------------------------
 
 /** Arguments for `clip audio-content`. */
@@ -372,18 +1067,69 @@ export interface ClipAudioContentParams {
 export interface ClipAudioContentResult {
     /** Project-relative path (starting with './') in full; absolute paths are truncated to the file name for privacy. */
     audioFileName: string;
+    /** Content fingerprint of the clip's source media -- the path and its load state (ADR 0088 §5). No write on this surface replaces a clip's media, so this is a change-detection token rather than an `--if-match` precondition: re-read and compare to learn that the media was swapped or finished loading. Hashed over the full path even though `audioFileName` is redacted, so a swap between same-named files in different folders still shows up. */
+    fingerprint: Fingerprint;
     /** Audio load state: 'not_loaded', 'loaded_success', or 'loaded_failed'. */
     loadingState: string;
+}
+
+/** Arguments for `clip consolidate`. */
+export interface ClipConsolidateParams {
+    /** Name for the consolidated clip(s). Omit for the generated `Consolidate_\<n\>_\<track\>`, which is what the timeline's own Consolidate produces. */
+    name?: string | null;
+    /** Start of the range to consolidate, on the global timeline. Ticks (`3840t`), clock time (`1.5s`), or a musical position (`4.1.0`). */
+    rangeBegin: number;
+    /** End of the range (exclusive), on the global timeline. */
+    rangeEnd: number;
+    /**
+     * Track to consolidate within. Repeat for several tracks; each produces its own consolidated clip, and the whole call is one undo entry.
+     *
+     * Tracks are named by id, not index: indices shift as tracks come and go, and this op deletes clips, so a stale index is worth designing out. Read them from `track list`.
+     */
+    trackUuids: string[];
+}
+
+/** Success payload of `clip consolidate`. */
+export interface ClipConsolidateResult {
+    /** One consolidated clip per track that had material in the range. A named track with nothing in the range is skipped rather than producing an empty clip. */
+    clips: {
+        /** Generated name, `Consolidate_\<n\>_\<track\>` unless --name was given. */
+        clipName: string;
+        /** Clip type, matching its track. */
+        clipType: string;
+        /** Id of the consolidated clip. */
+        clipUuid: string;
+        /** How many source clips contributed to this one. */
+        consolidatedClipCount: number;
+        /** The consolidated clip's geometry: exactly the requested range. */
+        geometry: Record<string, unknown>;
+        /** Name of that track. */
+        trackName: string;
+        /** Id of the track it was placed on. */
+        trackUuid: string;
+    }[];
+    /** Range start actually used, in ticks. */
+    rangeBegin: number;
+    /** Range end actually used (exclusive), in ticks. */
+    rangeEnd: number;
+    /** How many tracks produced a consolidated clip -- at most the number of trackUuids given. */
+    trackCount: number;
 }
 
 /** Arguments for `clip create`. */
 export interface ClipCreateParams {
     /** Clip duration. Ticks (`3840t`), a note value (`1/4`, `1/8.`), beats (`2b`), or whole measures (`2bar`, anchored at `--pos`). See `help time-values`. */
     dur: number;
-    /** Optional custom name. Omit to let ACE Studio auto-generate a name. */
+    /**
+     * Optional custom name. Omit to let ACE Studio auto-generate a name.
+     *
+     * For a `marker` clip this is the marker's annotation text, and omitting it is normal — the timeline then shows its "double click to write text" prompt.
+     */
     name?: string | null;
     /**
      * Initial notes, as a JSON array in clip-local ticks — the same shape `note add` takes. Omit to create an empty clip.
+     *
+     * Rejected for `marker` and `chord`, which hold no notes.
      *
      * Example: `--notes '[\{"pos":0,"dur":480,"pitch":60,"lyric":"la"\}]'`
      */
@@ -401,11 +1147,21 @@ export interface ClipCreateParams {
         /** Note start in clip-local ticks. */
         pos: number;
     }[] | null;
+    /** What to do when the new clip's span is already occupied on the target track: `fail` (default), or `cover` to trim the clips in the way. */
+    onOccupied?: string | null;
     /** Clip start position. Ticks (`3840t`), clock time (`1.5s`, `1:23.5`), or musical position (`4.1.0`). See `help time-values`. */
     pos: number;
-    /** Target track index (0-based). Empty tracks are automatically converted to the appropriate type. */
-    trackIndex: number;
-    /** Clip type: `sing`, `instrument`, or `genericMidi` — the same spellings `clipType` is reported in. Matched case-insensitively. */
+    /**
+     * Target track index (0-based). Empty tracks are automatically converted to the appropriate type.
+     *
+     * Required for `sing`, `instrument` and `genericMidi`. **Rejected** for `marker` and `chord`: there is exactly one track of each, so the clip type already names the target, and passing an index would look like a choice you do not have.
+     */
+    trackIndex?: number | null;
+    /**
+     * Clip type: `sing`, `instrument`, `genericMidi`, `marker`, or `chord` — the same spellings `clipType` is reported in. Matched case-insensitively.
+     *
+     * `audio` and `video` are not creatable here: a media clip's duration comes from the file, not from `--dur`. Use `import file` instead.
+     */
     type: string;
 }
 
@@ -426,6 +1182,83 @@ export interface ClipCreateResult {
     /** UUIDs of the initial notes, in the clip's own note order — the order `clip note-content` reports, which is not necessarily the order they were given in. Empty when the clip was created without content. */
     noteUuids: string[];
     /** Name of the track the clip was placed on. */
+    trackName: string;
+}
+
+/** Arguments for `clip delete`. */
+export interface ClipDeleteParams {
+    /** UUIDs of the clips to delete, with or without curly braces. Repeat the flag to name several. All-or-nothing: a UUID naming no clip fails before anything is deleted. */
+    clipUuids: string[];
+}
+
+/** Success payload of `clip delete`. */
+export interface ClipDeleteResult {
+    /** UUIDs of the deleted clips, in the order given. */
+    clipUuids: string[];
+    /** How many clips were deleted. */
+    deletedCount: number;
+}
+
+/** Arguments for `clip detach-audio`. */
+export interface ClipDetachAudioParams {
+    /** UUIDs of the video clips to detach. Repeat the flag to name several; they all share one new audio track. */
+    clipUuids: string[];
+}
+
+/** Success payload of `clip detach-audio`. */
+export interface ClipDetachAudioResult {
+    /** The extracted audio clips placed on the new track. */
+    clipUuids: string[];
+    /** The video clips whose audio was detached. */
+    detachedClipUuids: string[];
+    /** How many video clips were detached. */
+    detachedCount: number;
+    /** Name of the created audio track. */
+    trackName: string;
+    /** UUID of the audio track the extraction created. */
+    trackUuid: string;
+}
+
+/** Arguments for `clip duplicate`. */
+export interface ClipDuplicateParams {
+    /** UUID of the clip to copy, with or without curly braces. */
+    clipUuid: string;
+    /** What to do when the destination is occupied: `fail` (default), `cover`, or `relocate` (video only). */
+    onOccupied?: string | null;
+    /** Where to place the copy. Defaults to immediately after the source, which is where duplicating in the arrangement puts it. */
+    pos?: number | null;
+    /** Destination track index (0-based). Defaults to the source's own track. The track must hold the clip's type. */
+    trackIndex?: number | null;
+}
+
+/** Success payload of `clip duplicate`. */
+export interface ClipDuplicateResult {
+    /** Display name of the copy. */
+    clipName: string;
+    /** Clip type of the copy. */
+    clipType: string;
+    /** UUID of the new copy, with braces. */
+    clipUuid: string;
+    /** Geometry of the copy, always in ticks. */
+    geometry: {
+        /** Visible region start on the global timeline. */
+        clipBegin: number;
+        /** Duration of the visible (clipped) region. */
+        clipDur: number;
+        /** Visible region end on the global timeline. */
+        clipEnd: number;
+        /** Start of the visible (clipped) region, pattern-local. */
+        clipPos: number;
+        /** Full pattern duration, including trimmed-away regions. */
+        dur: number;
+        /** Pattern end on the global timeline (pos + dur). */
+        end: number;
+        /** Pattern start on the global timeline. */
+        pos: number;
+    };
+    /** UUID of the clip that was copied. */
+    sourceClipUuid: string;
+    /** Name of the track the copy landed on. Differs from the requested track when `onOccupied=relocate` stacked it on a new one. */
     trackName: string;
 }
 
@@ -530,6 +1363,8 @@ export interface ClipLyricsResult {
         /** Coordinate system of begin/end: `project` or `clip-local`. */
         scope: string;
     };
+    /** Content fingerprint of the whole clip's note content (ADR 0088 §5) -- lyrics are note content, read at sentence granularity. Carry it back as `--if-match` on a `note` write or `clip replace-content` to fail STALE_WRITE instead of overwriting edits made since this read. Always covers the full clip, even when the read was range-filtered. */
+    fingerprint: Fingerprint;
     /** Number of sentences returned. */
     sentenceCount: number;
     /** Lyric sentences overlapping the filter range. */
@@ -543,27 +1378,29 @@ export interface ClipLyricsResult {
     }[];
 }
 
-/** Arguments for `clip move-edges`. */
-export interface ClipMoveEdgesParams {
-    /** UUID of the target clip. Accepted with or without curly braces, e.g. `\{xxxxxxxx-…\}` or `xxxxxxxx-…`. */
+/** Arguments for `clip move`. */
+export interface ClipMoveParams {
+    /** UUID of the target clip, with or without curly braces. */
     clipUuid: string;
-    /** Positioning mode: `diff` (relative tick offset, positive = expand, negative = shrink) or `abs` (absolute tick position). */
-    mode: string;
-    /** Which edge to move: `left` or `right`. */
-    side: string;
-    /** Tick value. Interpreted as an offset when `mode=diff` and as an absolute position when `mode=abs`. */
-    value: number;
+    /** Shift the clip earlier by this much. Refused when it would start the clip before the project start. */
+    moveEarlier?: number | null;
+    /** Shift the clip later by this much. A note value (`1/4`), beats (`2b`), whole measures (`1bar`), or ticks (`480t`). */
+    moveLater?: number | null;
+    /** What to do when the destination is already occupied: `fail` (default), `cover` (trim the clips in the way, as a drag does; not for video), or `relocate` (stack on a new track above; video only). */
+    onOccupied?: string | null;
+    /** Absolute destination for the clip's start. Ticks (`3840t`), clock time (`1.5s`, `1:23.5`), or musical position (`4.1.0`). See `help time-values`. Mutually exclusive with `--move-later` / `--move-earlier`. */
+    pos?: number | null;
 }
 
-/** Success payload of `clip move-edges`. */
-export interface ClipMoveEdgesResult {
+/** Success payload of `clip move`. */
+export interface ClipMoveResult {
     /** Display name of the clip. */
     clipName: string;
-    /** Clip type: `sing`, `instrument`, `genericMidi`, `audio`, or `chord`. */
+    /** Clip type: `sing`, `instrument`, `genericMidi`, `audio`, `video`, `chord`, or `marker`. */
     clipType: string;
-    /** UUID of the moved clip, with braces. */
+    /** UUID of the clip, with braces. */
     clipUuid: string;
-    /** Updated clip geometry, always in ticks. */
+    /** Clip geometry after the write, always in ticks. */
     geometry: {
         /** Visible region start on the global timeline. */
         clipBegin: number;
@@ -638,6 +1475,20 @@ export interface ClipNoteContentResult {
     }[];
 }
 
+/** Arguments for `clip reattach-audio`. */
+export interface ClipReattachAudioParams {
+    /** UUIDs of the video clips to reattach. Every named clip must currently have its audio detached. */
+    clipUuids: string[];
+}
+
+/** Success payload of `clip reattach-audio`. */
+export interface ClipReattachAudioResult {
+    /** The video clips whose embedded audio was restored. */
+    clipUuids: string[];
+    /** How many video clips were reattached. */
+    reattachedCount: number;
+}
+
 /** Arguments for `clip replace-content`. */
 export interface ClipReplaceContentParams {
     /** UUID of the target clip. Accepted with or without curly braces. The clip must be a note clip (Sing, Instrument, or GenericMidi). */
@@ -673,6 +1524,248 @@ export interface ClipReplaceContentResult {
     previousNoteCount: number;
 }
 
+/** Arguments for `clip resize`. */
+export interface ClipResizeParams {
+    /** How far into the source the clip starts showing. Trims the front without moving the clip. For an audio or video clip this is the offset into the media file; for a note clip, into its authored content. */
+    clipIn?: number | null;
+    /** UUID of the target clip, with or without curly braces. */
+    clipUuid: string;
+    /** New length for the clip. A note value (`1/4`), beats (`2b`), measures (`2bar`, anchored at the clip's start), or ticks (`1920t`). */
+    dur?: number | null;
+    /** What to do when the result would overlap another clip: `fail` (default), `cover`, or `relocate` (video only). */
+    onOccupied?: string | null;
+    /** New start for the clip. Ticks (`3840t`), clock time (`1.5s`), or musical position (`4.1.0`). See `help time-values`. */
+    pos?: number | null;
+}
+
+/** Success payload of `clip resize`. */
+export interface ClipResizeResult {
+    /** Display name of the clip. */
+    clipName: string;
+    /** Clip type: `sing`, `instrument`, `genericMidi`, `audio`, `video`, `chord`, or `marker`. */
+    clipType: string;
+    /** UUID of the clip, with braces. */
+    clipUuid: string;
+    /** Clip geometry after the write, always in ticks. */
+    geometry: {
+        /** Visible region start on the global timeline. */
+        clipBegin: number;
+        /** Duration of the visible (clipped) region. */
+        clipDur: number;
+        /** Visible region end on the global timeline. */
+        clipEnd: number;
+        /** Start of the visible (clipped) region, pattern-local. */
+        clipPos: number;
+        /** Full pattern duration, including trimmed-away regions. */
+        dur: number;
+        /** Pattern end on the global timeline (pos + dur). */
+        end: number;
+        /** Pattern start on the global timeline. */
+        pos: number;
+    };
+}
+
+/** Arguments for `clip set`. */
+export interface ClipSetParams {
+    /** UUID of the target clip, with or without curly braces. */
+    clipUuid: string;
+    /** New color as `#RRGGBB` or a named color. Setting a color stops the clip following its track. */
+    color?: string | null;
+    /** Make the clip follow its track's color (`true`) or carry its own (`false`). Passing `true` together with `--color` is contradictory and is refused. */
+    colorLinkToTrack?: boolean | null;
+    /** New name. Pass an empty string to clear it and fall back to the auto-generated name. */
+    name?: string | null;
+}
+
+/** Success payload of `clip set`. */
+export interface ClipSetResult {
+    /** Effective display name, auto-generated when the clip has no custom name. */
+    clipName: string;
+    /** Clip type. */
+    clipType: string;
+    /** UUID of the clip, with braces. */
+    clipUuid: string;
+    /** Effective color as upper-case `#RRGGBB`. */
+    color: string;
+    /** Clip geometry, always in ticks. */
+    geometry?: {
+        /** Visible region start on the global timeline. */
+        clipBegin: number;
+        /** Duration of the visible (clipped) region. */
+        clipDur: number;
+        /** Visible region end on the global timeline. */
+        clipEnd: number;
+        /** Start of the visible (clipped) region, pattern-local. */
+        clipPos: number;
+        /** Full pattern duration, including trimmed-away regions. */
+        dur: number;
+        /** Pattern end on the global timeline (pos + dur). */
+        end: number;
+        /** Pattern start on the global timeline. */
+        pos: number;
+    };
+    /** True when the clip follows its track's color instead of carrying its own. */
+    isColorLinkToTrack: boolean;
+    /** The custom name as stored. Empty when the clip falls back to an auto-generated name. */
+    rawName: string;
+}
+
+/** Arguments for `clip set-enabled`. */
+export interface ClipSetEnabledParams {
+    /** UUIDs of the target clips. Repeat the flag to name several. */
+    clipUuids: string[];
+    /** `true` to enable, `false` to disable. A disabled clip stays in place but does not play. */
+    enabled: boolean;
+}
+
+/** Success payload of `clip set-enabled`. */
+export interface ClipSetEnabledResult {
+    /** One row per updated clip, in the order given. */
+    clips: {
+        /** UUID of the clip, with braces. */
+        clipUuid: string;
+        /** Whether the clip is now enabled. */
+        enabled: boolean;
+    }[];
+    /** How many clips were addressed. */
+    updatedCount: number;
+}
+
+/** Arguments for `clip set-fades`. */
+export interface ClipSetFadesParams {
+    /** UUID of the target clip (single-clip form). Repeat the flag exactly twice for the crossfade form. */
+    clipUuids: string[];
+    /** Crossfade length, for the two-clip form. Clock time (`1.5s`, `500ms`) or ticks (`240t`); `0s` removes it. */
+    crossfade?: number | null;
+    /** Fade-in length. Clock time (`1.5s`, `500ms`) or ticks (`240t`); `0s` removes the fade. Single-clip form only. */
+    fadeIn?: number | null;
+    /** Fade-in curve shape as `x,y`, each in [-0.5, 0.5]. `0,0` is linear. */
+    fadeInShape?: number[] | null;
+    /** Fade-out length. Clock time (`1.5s`, `500ms`) or ticks (`240t`); `0s` removes the fade. Single-clip form only. */
+    fadeOut?: number | null;
+    /** Fade-out curve shape as `x,y`, each in [-0.5, 0.5]. `0,0` is linear. */
+    fadeOutShape?: number[] | null;
+}
+
+/** Success payload of `clip set-fades`. */
+export interface ClipSetFadesResult {
+    /** UUID of the clip that carries the fades. In the crossfade form this is the earlier of the two. */
+    clipUuid: string;
+    /** True when the fade-out is a crossfade into the next clip. */
+    crossfade: boolean;
+    /** Fade-in length in seconds. */
+    fadeIn?: number;
+    /** Fade-out length in seconds. Doubles as the crossfade length. */
+    fadeOut: number;
+    /** Crossfade form only: the later clip of the pair. */
+    nextClipUuid?: string;
+}
+
+/** Arguments for `clip set-gain`. */
+export interface ClipSetGainParams {
+    /** UUID of the target clip. Must be an Audio or Video clip. */
+    clipUuid: string;
+    /** Clip gain in decibels. `0` is unity. */
+    gain: number;
+}
+
+/** Success payload of `clip set-gain`. */
+export interface ClipSetGainResult {
+    /** Clip type: `audio` or `video`. */
+    clipType: string;
+    /** UUID of the clip, with braces. */
+    clipUuid: string;
+    /** The clip's gain after the write, in decibels. */
+    gain: number;
+}
+
+/** Arguments for `clip set-muted`. */
+export interface ClipSetMutedParams {
+    /** UUIDs of the target clips. Video clips only. Repeat the flag to name several. */
+    clipUuids: string[];
+    /** `true` to mute the embedded audio, `false` to unmute it. */
+    muted: boolean;
+}
+
+/** Success payload of `clip set-muted`. */
+export interface ClipSetMutedResult {
+    /** One row per updated clip, in the order given. */
+    clips: {
+        /** UUID of the clip, with braces. */
+        clipUuid: string;
+        /** Whether the clip's embedded audio is now muted. */
+        muted: boolean;
+    }[];
+    /** How many clips were addressed. */
+    updatedCount: number;
+}
+
+/** Arguments for `clip split`. */
+export interface ClipSplitParams {
+    /** UUID of the clip to split, with or without curly braces. */
+    clipUuid: string;
+    /** Where to cut, on the global timeline. Must fall strictly inside the clip and leave both halves at least one grid cell long. */
+    pos: number;
+}
+
+/** Success payload of `clip split`. */
+export interface ClipSplitResult {
+    /** The two halves, head first. The head keeps the original UUID. */
+    clipUuids: string[];
+    /** The earlier half, which reuses the original clip. */
+    head: {
+        /** Display name of the clip. */
+        clipName: string;
+        /** Clip type: `sing`, `instrument`, `genericMidi`, `audio`, `video`, `chord`, or `marker`. */
+        clipType: string;
+        /** UUID of the clip, with braces. */
+        clipUuid: string;
+        /** Clip geometry after the write, always in ticks. */
+        geometry: {
+            /** Visible region start on the global timeline. */
+            clipBegin: number;
+            /** Duration of the visible (clipped) region. */
+            clipDur: number;
+            /** Visible region end on the global timeline. */
+            clipEnd: number;
+            /** Start of the visible (clipped) region, pattern-local. */
+            clipPos: number;
+            /** Full pattern duration, including trimmed-away regions. */
+            dur: number;
+            /** Pattern end on the global timeline (pos + dur). */
+            end: number;
+            /** Pattern start on the global timeline. */
+            pos: number;
+        };
+    };
+    /** The later half, a new clip over the same source. */
+    tail: {
+        /** Display name of the clip. */
+        clipName: string;
+        /** Clip type: `sing`, `instrument`, `genericMidi`, `audio`, `video`, `chord`, or `marker`. */
+        clipType: string;
+        /** UUID of the clip, with braces. */
+        clipUuid: string;
+        /** Clip geometry after the write, always in ticks. */
+        geometry: {
+            /** Visible region start on the global timeline. */
+            clipBegin: number;
+            /** Duration of the visible (clipped) region. */
+            clipDur: number;
+            /** Visible region end on the global timeline. */
+            clipEnd: number;
+            /** Start of the visible (clipped) region, pattern-local. */
+            clipPos: number;
+            /** Full pattern duration, including trimmed-away regions. */
+            dur: number;
+            /** Pattern end on the global timeline (pos + dur). */
+            end: number;
+            /** Pattern start on the global timeline. */
+            pos: number;
+        };
+    };
+}
+
 /** The `clip` operations, mirroring the canonical operation tree 1:1. */
 export interface ClipOperations {
     /**
@@ -683,11 +1776,39 @@ export interface ClipOperations {
     audioContent(params: ClipAudioContentParams, options?: CallOptions): Promise<ClipAudioContentResult>;
 
     /**
+     * Collapse a time range into one clip per track, carrying notes and expression.
+     *
+     * Requires the `clip.write` capability.
+     */
+    consolidate(params: ClipConsolidateParams, options?: MutatingCallOptions): Promise<ClipConsolidateResult>;
+
+    /**
      * Place a new note clip on a track, optionally with initial notes.
      *
      * Requires the `clip.write` capability.
      */
     create(params: ClipCreateParams, options?: MutatingCallOptions): Promise<ClipCreateResult>;
+
+    /**
+     * Delete one or more clips by UUID.
+     *
+     * Requires the `clip.write` capability.
+     */
+    delete(params: ClipDeleteParams, options?: MutatingCallOptions): Promise<ClipDeleteResult>;
+
+    /**
+     * Extract video clips' embedded audio onto a new audio track.
+     *
+     * Requires the `clip.write` capability.
+     */
+    detachAudio(params: ClipDetachAudioParams, options?: MutatingCallOptions): Promise<ClipDetachAudioResult>;
+
+    /**
+     * Copy a clip to another position or track.
+     *
+     * Requires the `clip.write` capability.
+     */
+    duplicate(params: ClipDuplicateParams, options?: MutatingCallOptions): Promise<ClipDuplicateResult>;
 
     /**
      * Get full metadata for one clip (geometry, color, enabled state).
@@ -711,11 +1832,11 @@ export interface ClipOperations {
     lyrics(params: ClipLyricsParams, options?: CallOptions): Promise<ClipLyricsResult>;
 
     /**
-     * Move the left or right edge of a clip by UUID (diff or absolute).
+     * Move a clip along the timeline, keeping its length and trim.
      *
      * Requires the `clip.write` capability.
      */
-    moveEdges(params: ClipMoveEdgesParams, options?: MutatingCallOptions): Promise<ClipMoveEdgesResult>;
+    move(params: ClipMoveParams, options?: MutatingCallOptions): Promise<ClipMoveResult>;
 
     /**
      * Get note data for a Sing, Instrument, or GenericMidi clip.
@@ -725,11 +1846,67 @@ export interface ClipOperations {
     noteContent(params: ClipNoteContentParams, options?: CallOptions): Promise<ClipNoteContentResult>;
 
     /**
+     * Restore video clips' embedded audio, leaving any extracted track.
+     *
+     * Requires the `clip.write` capability.
+     */
+    reattachAudio(params: ClipReattachAudioParams, options?: MutatingCallOptions): Promise<ClipReattachAudioResult>;
+
+    /**
      * Replace a clip's notes wholesale with a new set.
      *
      * Requires the `clip.write` capability.
      */
     replaceContent(params: ClipReplaceContentParams, options?: PreconditionCallOptions): Promise<ClipReplaceContentResult>;
+
+    /**
+     * Change a clip's start, length, or how far into its source it starts.
+     *
+     * Requires the `clip.write` capability.
+     */
+    resize(params: ClipResizeParams, options?: MutatingCallOptions): Promise<ClipResizeResult>;
+
+    /**
+     * Rename a clip or change its color.
+     *
+     * Requires the `clip.write` capability.
+     */
+    set(params: ClipSetParams, options?: MutatingCallOptions): Promise<ClipSetResult>;
+
+    /**
+     * Enable or disable clips, silencing them without deleting them.
+     *
+     * Requires the `clip.write` capability.
+     */
+    setEnabled(params: ClipSetEnabledParams, options?: MutatingCallOptions): Promise<ClipSetEnabledResult>;
+
+    /**
+     * Set a clip's fade in/out, or a crossfade between two adjacent clips.
+     *
+     * Requires the `clip.write` capability.
+     */
+    setFades(params: ClipSetFadesParams, options?: MutatingCallOptions): Promise<ClipSetFadesResult>;
+
+    /**
+     * Set the gain of an Audio or Video clip, in decibels.
+     *
+     * Requires the `clip.write` capability.
+     */
+    setGain(params: ClipSetGainParams, options?: MutatingCallOptions): Promise<ClipSetGainResult>;
+
+    /**
+     * Mute or unmute a video clip's embedded audio.
+     *
+     * Requires the `clip.write` capability.
+     */
+    setMuted(params: ClipSetMutedParams, options?: MutatingCallOptions): Promise<ClipSetMutedResult>;
+
+    /**
+     * Split a clip into two at a position inside it.
+     *
+     * Requires the `clip.write` capability.
+     */
+    split(params: ClipSplitParams, options?: MutatingCallOptions): Promise<ClipSplitResult>;
 }
 
 // --- convert ---------------------------------------------------------------
@@ -760,11 +1937,11 @@ export interface ConvertGlobalToEditorResult {
 
 /** Arguments for `convert measure-to-tick`. */
 export interface ConvertMeasureToTickParams {
-    /** Bar/measure number (0-based, must be \>= 0). */
+    /** The same bar counted from 0, as the project stores it and as `tick-to-measure` reports it. This is the spelling the wire takes. `acestudio-cli` and MCP also accept `bar` counting from 1, folding it to this before the call; pass one or the other, never both. */
     barPos: number;
-    /** Beat position within the bar (0-based). Required when `--consider-beat-mode` is true. */
+    /** The same beat counted from 0, as `tick-to-measure` reports it. This is the spelling the wire takes; `beat` counting from 1 is accepted by `acestudio-cli` and MCP. Pass one or the other, never both. */
     beatPos?: number | null;
-    /** When true, use beat-level precision; `--beat-pos` is then required. */
+    /** When true, use beat-level precision; a beat is then required. */
     considerBeatMode: boolean;
     /** Tick offset within the bar (beat mode off) or within the beat (beat mode on). Must be \>= 0. */
     tickOffset: number;
@@ -786,9 +1963,9 @@ export interface ConvertTickToMeasureParams {
 
 /** Success payload of `convert tick-to-measure`. */
 export interface ConvertTickToMeasureResult {
-    /** Bar/measure number (0-based). */
+    /** Bar/measure counted from 0, as the project stores it. Feed it straight back to `measure-to-tick --bar-pos` or `timesig set-at --bar-pos`. Reported as `bar` counting from 1 instead under `--bars human`. */
     barPos: number;
-    /** Beat position within the bar (0-based). Present only when considerBeatMode is true. */
+    /** Beat within the bar counted from 0. Present only when considerBeatMode is true. Reported as `beat` counting from 1 instead under `--bars human`. */
     beatPos?: number;
     /** Tick offset within the bar (bar mode) or within the beat (beat mode). */
     tickOffset: number;
@@ -1060,6 +2237,483 @@ export interface EditorOperations {
     tickRange(options?: CallOptions): Promise<EditorTickRangeResult>;
 }
 
+// --- ensemble --------------------------------------------------------------
+
+/** Arguments for `ensemble add`. */
+export interface EnsembleAddParams {
+    /** Where to insert the new member. Defaults to the end. `0` makes the new instrument the leader and pushes the rest down. */
+    at?: number | null;
+    /** **Required.** Which instrument to add, by display name or ref — the same thing `sound-source load --source` accepts. */
+    source: string;
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. */
+    trackUuid?: string | null;
+}
+
+/** Success payload of `ensemble add`. */
+export interface EnsembleAddResult {
+    /** Display name of the current leader. A reorder can change this, which is the point of reordering. */
+    leaderName?: string;
+    /** How many members the ensemble holds now. */
+    memberCount: number;
+    /** Where the affected member ended up, or was removed from. */
+    memberIndex?: number;
+    /** Display name of the affected member's instrument. */
+    memberName?: string;
+    /** 0-based index of the track. */
+    trackIndex: number;
+    /** UUID of that track. */
+    trackUuid: string;
+}
+
+/** Arguments for `ensemble disable`. */
+export interface EnsembleDisableParams {
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. */
+    trackUuid?: string | null;
+}
+
+/** Success payload of `ensemble disable`. */
+export interface EnsembleDisableResult {
+    /** The instrument that remains: the former member 0, now the track's sole instrument. */
+    leaderName: string;
+    /** How many non-leader members were dropped. This is why disabling is not the inverse of enabling. */
+    removedCount: number;
+    /** 0-based index of the track. */
+    trackIndex: number;
+    /** UUID of that track. */
+    trackUuid: string;
+}
+
+/** Arguments for `ensemble enable`. */
+export interface EnsembleEnableParams {
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. */
+    trackUuid?: string | null;
+}
+
+/** Success payload of `ensemble enable`. */
+export interface EnsembleEnableResult {
+    /** How many members the ensemble now holds. Enabling keeps the existing instrument as the leader, so this is 1 unless the track already had an ensemble. */
+    memberCount: number;
+    /** 0-based index of the track. */
+    trackIndex: number;
+    /** The track's name after enabling. Turning ensemble mode on renames the track, which is why the new name is reported. */
+    trackName?: string;
+    /** UUID of that track. */
+    trackUuid: string;
+}
+
+/** Arguments for `ensemble get`. */
+export interface EnsembleGetParams {
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. */
+    trackUuid?: string | null;
+}
+
+/** Success payload of `ensemble get`. */
+export interface EnsembleGetResult {
+    /** Whether ensemble mode is on. When false there is exactly one instrument and `members` reports it as the leader. */
+    enabled: boolean;
+    /** The ceiling `ensemble add` enforces. */
+    maxMembers?: number;
+    /** How many members the ensemble holds. */
+    memberCount: number;
+    /** The members in order. Index 0 is the leader. */
+    members: {
+        /** Instrument category, e.g. 'Piano'. */
+        category?: string;
+        /** Member gain in dB. */
+        gain: number;
+        /** 0-based position in the ensemble. Member 0 is the leader. */
+        index: number;
+        /** True for member 0. The leader is what the track falls back to when ensemble mode is turned off. */
+        isLeader: boolean;
+        /** Whether this member is muted. */
+        mute: boolean;
+        /** Display name of this member's instrument. */
+        name: string;
+        /** Ref of that instrument, in the same form `sound-source load --source` accepts. */
+        ref?: string;
+    }[];
+    /** Timing offset between members, in milliseconds. The UI calls this Offset. */
+    offset?: number;
+    /** Stereo spread across the members, 0 to 1. The UI calls this Spread. */
+    spread?: number;
+    /** 0-based index of the track. */
+    trackIndex: number;
+    /** UUID of that track. */
+    trackUuid: string;
+}
+
+/** Arguments for `ensemble remove`. */
+export interface EnsembleRemoveParams {
+    /** *Required.** Which member to remove. `0` is the leader and is refused. */
+    member: number;
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. */
+    trackUuid?: string | null;
+}
+
+/** Success payload of `ensemble remove`. */
+export interface EnsembleRemoveResult {
+    /** Display name of the current leader. A reorder can change this, which is the point of reordering. */
+    leaderName?: string;
+    /** How many members the ensemble holds now. */
+    memberCount: number;
+    /** Where the affected member ended up, or was removed from. */
+    memberIndex?: number;
+    /** Display name of the affected member's instrument. */
+    memberName?: string;
+    /** 0-based index of the track. */
+    trackIndex: number;
+    /** UUID of that track. */
+    trackUuid: string;
+}
+
+/** Arguments for `ensemble reorder`. */
+export interface EnsembleReorderParams {
+    /** *Required.** Which member to move. */
+    member: number;
+    /** *Required.** Where to move it. `0` promotes it to leader. */
+    to: number;
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. */
+    trackUuid?: string | null;
+}
+
+/** Success payload of `ensemble reorder`. */
+export interface EnsembleReorderResult {
+    /** Display name of the current leader. A reorder can change this, which is the point of reordering. */
+    leaderName?: string;
+    /** How many members the ensemble holds now. */
+    memberCount: number;
+    /** Where the affected member ended up, or was removed from. */
+    memberIndex?: number;
+    /** Display name of the affected member's instrument. */
+    memberName?: string;
+    /** 0-based index of the track. */
+    trackIndex: number;
+    /** UUID of that track. */
+    trackUuid: string;
+}
+
+/** Arguments for `ensemble set`. */
+export interface EnsembleSetParams {
+    /** Member gain in dB. Requires `--member`. */
+    gain?: number | null;
+    /** Which member to configure. `0` is the leader. Omit to configure the ensemble as a whole instead. */
+    member?: number | null;
+    /** Whether to mute this member. Requires `--member`. */
+    mute?: boolean | null;
+    /** Timing offset between members, in milliseconds. Ensemble-level. */
+    offset?: number | null;
+    /** Stereo spread across the members, 0 to 1. Ensemble-level. */
+    spread?: number | null;
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. */
+    trackUuid?: string | null;
+}
+
+/** The `ensemble` operations, mirroring the canonical operation tree 1:1. */
+export interface EnsembleOperations {
+    /**
+     * Add an instrument to an ensemble, by name or ref.
+     *
+     * Requires the `soundsource.write` capability.
+     */
+    add(params: EnsembleAddParams, options?: MutatingCallOptions): Promise<EnsembleAddResult>;
+
+    /**
+     * Turn ensemble mode off, leaving the leader as the track's sole instrument.
+     *
+     * Requires the `soundsource.write` capability.
+     */
+    disable(params: EnsembleDisableParams, options?: MutatingCallOptions): Promise<EnsembleDisableResult>;
+
+    /**
+     * Turn ensemble mode on for an Instrument track, keeping its current instrument as the leader.
+     *
+     * Requires the `soundsource.write` capability.
+     */
+    enable(params: EnsembleEnableParams, options?: MutatingCallOptions): Promise<EnsembleEnableResult>;
+
+    /**
+     * Read an Instrument track's ensemble: whether it is on, its settings, and every member.
+     *
+     * Requires the `soundsource.read` capability.
+     */
+    get(params: EnsembleGetParams, options?: CallOptions): Promise<EnsembleGetResult>;
+
+    /**
+     * Remove one instrument from an ensemble.
+     *
+     * Requires the `soundsource.write` capability.
+     */
+    remove(params: EnsembleRemoveParams, options?: MutatingCallOptions): Promise<EnsembleRemoveResult>;
+
+    /**
+     * Move an ensemble member to another position, which is how you choose the leader.
+     *
+     * Requires the `soundsource.write` capability.
+     */
+    reorder(params: EnsembleReorderParams, options?: MutatingCallOptions): Promise<EnsembleReorderResult>;
+
+    /**
+     * Set the ensemble's timing and width, or one member's gain and mute.
+     *
+     * Requires the `soundsource.write` capability.
+     */
+    set(params: EnsembleSetParams, options?: MutatingCallOptions): Promise<void>;
+}
+
+// --- export ----------------------------------------------------------------
+
+/** Arguments for `export audio`. */
+export interface ExportAudioParams {
+    /** Bit depth: 16 (default), 24 or 32. **WAV only** -- an MP3's resolution is its bit rate, so passing this with `--format mp3` is an error. */
+    bitDepth?: number | null;
+    /** Bit rate in kbps: 128, 192 (default), 256 or 320. **MP3 only**. */
+    bitRate?: number | null;
+    /** Channel count: 1 (mono) or 2 (stereo, default). */
+    channels?: number | null;
+    /** Container to write. Omit to take it from `--path`'s extension. */
+    format?: 'wav' | 'mp3';
+    /** Where the rendered range starts. Ticks (`3840t`), clock time (`1.5s`), or a musical position (`4.1.0`). Omit to start at the top of the project. */
+    from?: number | null;
+    /** Where to write. For the per-track scopes this is the template the per-track names are built from: each track's name is appended to the base name, in the same directory, keeping the extension. */
+    path: string;
+    /** Sample rate in Hz: 32000, 44100 (default) or 48000. */
+    sampleRate?: number | null;
+    /** What to render: `master` (default) bounces the master bus to one file; `selected-tracks` and `all-tracks` mirror the Export dialog's other two choices, one file per track; `tracks` renders exactly the tracks named by `--track-uuid`. */
+    scope?: 'master' | 'selected-tracks' | 'all-tracks' | 'tracks';
+    /** Where the rendered range ends (exclusive). Omit to render to the end of the project's content -- which is what the dialog's "Total" range means. */
+    to?: number | null;
+    /**
+     * Which tracks to render. Repeatable, and **`--scope tracks` only**: the other scopes either have no per-track choice to make (`master`, `all-tracks`) or take it from the arrangement selection (`selected-tracks`). Passing it elsewhere is an error rather than a no-op, since silently ignoring a track list would let a caller believe they had narrowed the render.
+     *
+     * This is the scriptable counterpart to `selected-tracks`: naming ids gives the same files on every run, where a selection gives whatever the user last clicked (ADR 0087).
+     *
+     * `Option` so the schema, and the SDK bindings generated from it, say optional -- a bare `Vec` is a required field, which would oblige every `master` caller to send an empty array for an argument that scope refuses. Contrast `export vocal-sample`'s `clipUuids`, a bare `Vec` because that command has no meaning without ids.
+     */
+    trackUuids?: string[] | null;
+    /** Bypass every external FX plugin for the render -- the dialog's "Export without effects". Off by default; the render carries the mix as you hear it. */
+    withoutEffects?: boolean | null;
+}
+
+/** Success payload of `export audio`. */
+export interface ExportAudioResult {
+    /** Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending. */
+    cancellable?: boolean;
+    /** The job class, as `job get` reports it: 'export-audio' or 'export-video'. */
+    jobClass?: string;
+    /** The launched job's id. Pass it to `job get` / `job wait` / `job cancel`. Present on every successful launch -- the render has NOT finished when this returns. */
+    jobId: string;
+    /** Every file the render will write, resolved at launch. One entry for 'master'; one per exported track for the per-track scopes, already de-duplicated the way the Export dialog de-duplicates colliding track names. These files do not exist yet -- wait on the job before reading them. */
+    paths: string[];
+    /** The scope that was launched: 'master', 'selected-tracks', 'all-tracks' or 'tracks'. */
+    scope?: string;
+    /** How many tracks the render covers. Per-track scopes only; absent for 'master'. */
+    trackCount?: number;
+}
+
+/** Arguments for `export fcpxml`. */
+export interface ExportFcpxmlParams {
+    /** Where to write. The extension picks the format: `.fcpxml` or `.aaf`. Any other extension is rejected -- there is no default to fall back to that would not silently write the wrong thing. */
+    path: string;
+}
+
+/** Success payload of `export fcpxml`. */
+export interface ExportFcpxmlResult {
+    /** The format actually written, after resolving --format or the path's extension. */
+    format?: string;
+    /** Every file written, in the order written. Usually one; `export midi --split-tracks` writes one per exported track, each with the track's name appended to the base name. */
+    paths: string[];
+    /** How many tracks contributed to the export. The tracks that reached the file, not every track that was considered -- `export midi` counts the ones carrying notes the format can represent, `export fcpxml` the ones carrying timeline content. */
+    trackCount?: number;
+}
+
+/** Arguments for `export lrc`. */
+export interface ExportLrcParams {
+    /** Where to write the `.lrc` file. */
+    path: string;
+    /** Which Sing track's lyrics to write. Required; a non-Sing track is rejected, since only a Sing track carries lyrics. */
+    trackUuid: string;
+}
+
+/** Success payload of `export lrc`. */
+export interface ExportLrcResult {
+    /** How many timed lyric lines were written. Zero means the track had no lyrics in range -- the file is still written, and still valid LRC. */
+    lineCount?: number;
+    /** The written file, as a one-element list so the shape matches the other synchronous export verbs. */
+    paths: string[];
+    /** Display name of the Sing track the lyrics came from. */
+    trackName?: string;
+}
+
+/** Arguments for `export midi`. */
+export interface ExportMidiParams {
+    /** Which format to write. Omit to take it from `--path`'s extension. */
+    format?: 'midi' | 'ufdata';
+    /** Where the exported range starts. Omit for the top of the project. */
+    from?: number | null;
+    /** Where to write. With `--split-tracks` this is the template: each track's name is appended to the base name. */
+    path: string;
+    /** Write one file per track instead of one file holding every track. Off by default. */
+    splitTracks?: boolean | null;
+    /** Where the exported range ends (exclusive). Omit for the end of the project's content. */
+    to?: number | null;
+    /**
+     * Which tracks to export. Repeatable. Omit for every track that carries notes the chosen format can represent.
+     *
+     * `Option` so the schema says optional, matching "omit for every track" -- a bare `Vec` generates a required field.
+     */
+    trackUuids?: string[] | null;
+    /** Carry each note's lyric into the file. **UfData only.** */
+    withLyrics?: boolean | null;
+    /** Carry each note's syllable breakdown into the file. **UfData only.** */
+    withSyllables?: boolean | null;
+}
+
+/** Success payload of `export midi`. */
+export interface ExportMidiResult {
+    /** The format actually written, after resolving --format or the path's extension. */
+    format?: string;
+    /** Every file written, in the order written. Usually one; `export midi --split-tracks` writes one per exported track, each with the track's name appended to the base name. */
+    paths: string[];
+    /** How many tracks contributed to the export. The tracks that reached the file, not every track that was considered -- `export midi` counts the ones carrying notes the format can represent, `export fcpxml` the ones carrying timeline content. */
+    trackCount?: number;
+}
+
+/** Arguments for `export song-template`. */
+export interface ExportSongTemplateParams {
+    /** Where to write the `.acet` template archive. */
+    path: string;
+}
+
+/** Success payload of `export song-template`. */
+export interface ExportSongTemplateResult {
+    /** Absolute path of the written .acet template archive. */
+    templatePath: string;
+}
+
+/** Arguments for `export video`. */
+export interface ExportVideoParams {
+    /** Video bit rate in kbps. Omit for the encoder's default for the resolved geometry. */
+    bitRate?: number | null;
+    /** Frame rate. Omit for the composition canvas's frame rate. */
+    fps?: number | null;
+    /** Where the rendered range starts. Omit for the top of the project. */
+    from?: number | null;
+    /** Frame height in pixels. Omit for the composition canvas's height. */
+    height?: number | null;
+    /** Where to write the rendered video. */
+    path: string;
+    /** Where the rendered range ends (exclusive). Omit for the end of the project's content. */
+    to?: number | null;
+    /** Frame width in pixels. Omit for the composition canvas's width. */
+    width?: number | null;
+}
+
+/** Success payload of `export video`. */
+export interface ExportVideoResult {
+    /** Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending. */
+    cancellable?: boolean;
+    /** Frame rate the render will produce. */
+    fps?: number;
+    /** Frame height the render will produce. */
+    height?: number;
+    /** The job class, as `job get` reports it: 'export-audio' or 'export-video'. */
+    jobClass?: string;
+    /** The launched job's id. Pass it to `job get` / `job wait` / `job cancel`. Present on every successful launch -- the render has NOT finished when this returns. */
+    jobId: string;
+    /** Where the rendered video will land. The file does not exist yet. */
+    path: string;
+    /** Frame width the render will produce, after the composition canvas and any --width/--height override are resolved. */
+    width?: number;
+}
+
+/** Arguments for `export vocal-sample`. */
+export interface ExportVocalSampleParams {
+    /** Which clips to write. Repeatable; at least one is required. Clips from several tracks are kept grouped by track in the file. */
+    clipUuids: string[];
+    /** Where to write the `.clips` file. */
+    path: string;
+}
+
+/** Success payload of `export vocal-sample`. */
+export interface ExportVocalSampleResult {
+    /** How many clips were written into the file. */
+    clipCount?: number;
+    /** The written `.clips` file, as a one-element list so the shape matches the other synchronous export verbs. */
+    paths: string[];
+    /** How many distinct tracks those clips came from. A vocal sample keeps the clips' track grouping, so this is how many tracks the file will restore into. */
+    trackCount?: number;
+}
+
+/** The `export` operations, mirroring the canonical operation tree 1:1. */
+export interface ExportOperations {
+    /**
+     * Render audio to a file. Launches a job.
+     *
+     * Requires the `export.invoke` capability.
+     */
+    audio(params: ExportAudioParams, options?: MutatingCallOptions): Promise<ExportAudioResult>;
+
+    /**
+     * Write the timeline out as FCPXML or AAF for an NLE.
+     *
+     * Requires the `export.invoke` capability.
+     */
+    fcpxml(params: ExportFcpxmlParams, options?: MutatingCallOptions): Promise<ExportFcpxmlResult>;
+
+    /**
+     * Write a Sing track's lyrics out as a timed LRC file.
+     *
+     * Requires the `export.invoke` capability.
+     */
+    lrc(params: ExportLrcParams, options?: MutatingCallOptions): Promise<ExportLrcResult>;
+
+    /**
+     * Write the project's notes out as MIDI or UfData.
+     *
+     * Requires the `export.invoke` capability.
+     */
+    midi(params: ExportMidiParams, options?: MutatingCallOptions): Promise<ExportMidiResult>;
+
+    /**
+     * Export the project as a reusable song template (.acet).
+     *
+     * Requires the `export.invoke` capability.
+     *
+     * Pay-gated on `membership`: an account that does not satisfy it is refused, without a purchase prompt.
+     */
+    songTemplate(params: ExportSongTemplateParams, options?: MutatingCallOptions): Promise<ExportSongTemplateResult>;
+
+    /**
+     * Render the composition to a video file. Launches a job.
+     *
+     * Requires the `export.invoke` capability.
+     */
+    video(params: ExportVideoParams, options?: MutatingCallOptions): Promise<ExportVideoResult>;
+
+    /**
+     * Write named clips out as a Creative Library vocal sample.
+     *
+     * Requires the `export.invoke` capability.
+     *
+     * Pay-gated on `membership`: an account that does not satisfy it is refused, without a purchase prompt.
+     */
+    vocalSample(params: ExportVocalSampleParams, options?: MutatingCallOptions): Promise<ExportVocalSampleResult>;
+}
+
 // --- history ---------------------------------------------------------------
 
 /** Arguments for `history list`. */
@@ -1151,6 +2805,186 @@ export interface HistoryOperations {
      * Requires the `history.control` capability.
      */
     undo(options?: MutatingCallOptions): Promise<HistoryUndoResult>;
+}
+
+// --- import ----------------------------------------------------------------
+
+/** Arguments for `import file`. */
+export interface ImportFileParams {
+    /** Offset into the **source media** where the visible region starts — the head trim. Omit to start at the beginning of the file. */
+    clipIn?: number | null;
+    /** How much of the source to show. Omit for the file's own length (its remaining length, when `--clip-in` trims the head). */
+    dur?: number | null;
+    /** Place a video clip with its embedded audio silenced (the detached flag, ADR 0069). **Video only** — for every other clip type the corresponding dimension is enabled/disabled, so passing this on an audio import is an error rather than a no-op. */
+    muted?: boolean | null;
+    /** What to do when the target span is already occupied: `fail` (default), `cover` to trim the clips in the way (not video), or `relocate` to stack the clip on a new video track above (video only). */
+    onOccupied?: string | null;
+    /** Path to the file to import. The extension decides what kind of clip it becomes; an unsupported extension is rejected with the list of supported ones. */
+    path: string;
+    /** Where the clip starts on the global timeline. Ticks (`3840t`), clock time (`1.5s`), or a musical position (`4.1.0`). Omit for tick 0. */
+    pos?: number | null;
+    /** Split polyphonic content into separate monophonic voices, one track each. **MIDI and MusicXML only** — the desktop app asks this in a dialog; here it is an argument, defaulting to off (one track per source track). */
+    splitPolyphonic?: boolean | null;
+    /** Target track index (0-based). Omit to auto-route: audio goes onto a new track after the existing content, video onto the project's video track (created if there is none). An `Empty` slot is converted in place. */
+    trackIndex?: number | null;
+    /** Adopt the source file's tempo map, replacing the project's over the imported range. **Project kinds only**, and off by default: rewriting someone's tempo is not a side effect of "import these notes". */
+    withTempo?: boolean | null;
+    /** Adopt the source file's time signatures. **Project kinds only**, off by default, same reasoning as `--with-tempo`. */
+    withTimeSignatures?: boolean | null;
+}
+
+/** Success payload of `import file`. */
+export interface ImportFileResult {
+    /** Project kinds only: how many clips were placed and are addressable in `clips`. */
+    clipCount?: number;
+    /** Media kinds only: display name of the placed clip. */
+    clipName?: string;
+    /** Media kinds only: clip type the extension resolved to, 'audio' or 'video' (a still image becomes a Video clip). */
+    clipType?: string;
+    /** Media kinds only: id of the placed clip -- the handle every later clip write takes. */
+    clipUuid?: string;
+    /** Project kinds only: one row per placed clip, each with clipUuid / clipType / clipName / geometry. A MIDI file with four tracks yields four rows. */
+    clips?: Record<string, unknown>[];
+    /** Media kinds only: the placed clip's geometry, in ticks -- the same shape `clip get` reports, so `end` can be read rather than computed. */
+    geometry?: Record<string, unknown>;
+    /** Audio clips only: 'not_loaded', 'loaded_success' or 'loaded_failed'. Usually 'not_loaded' -- decoding continues after this command returns. Poll `clip audio-content` and compare its fingerprint to see it settle. */
+    loadingState?: string;
+    /** Media kinds only: the source's own length in ticks, before any --clip-in / --dur window was applied. Compare with geometry to see how much of the file is showing. */
+    naturalDur?: number;
+    /** Project kinds only: 'midi', 'musicxml' or 'ufdata'. Its presence is what distinguishes the two output shapes. */
+    sourceFormat?: string;
+    /** The path that was imported, echoed back unchanged. The only field both shapes carry. */
+    sourcePath: string;
+    /** Project kinds only: whether the source's tempo map was applied to the project (echoes --with-tempo, default false). */
+    tempoImported?: boolean;
+    /** Project kinds only: whether the source's time signatures were applied (echoes --with-time-signatures, default false). */
+    timeSignaturesImported?: boolean;
+    /** Project kinds only: how many tracks the source file held. Larger than clipCount only if a placed clip could not be identified afterwards. */
+    trackCount?: number;
+    /** Media kinds only: name of the track the clip landed on, which may be one this command created. */
+    trackName?: string;
+}
+
+/** The `import` operations, mirroring the canonical operation tree 1:1. */
+export interface ImportOperations {
+    /**
+     * Import a media or project file, placed and trimmed as asked.
+     *
+     * Requires the `import.invoke` capability.
+     */
+    file(params: ImportFileParams, options?: MutatingCallOptions): Promise<ImportFileResult>;
+}
+
+// --- instrument ------------------------------------------------------------
+
+/** Arguments for `instrument disable`. */
+export interface InstrumentDisableParams {
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. */
+    trackUuid?: string | null;
+}
+
+/** Success payload of `instrument disable`. */
+export interface InstrumentDisableResult {
+    /** Whether the instrument is processing. A disabled instrument stays mounted with its state intact. */
+    enabled: boolean;
+    /** Which format is mounted. */
+    format?: 'vst3' | 'vst2' | 'au';
+    /** Which MIDI channel it listens on: '1' through '16'. Never 'all' — a mounted instrument addresses exactly one channel. */
+    midiChannel: string;
+    /** Display name of the mounted plugin. */
+    name: string;
+    /** 0-based index of the track. */
+    trackIndex: number;
+    /** UUID of that track. */
+    trackUuid: string;
+    /** Plugin vendor. */
+    vendor?: string;
+}
+
+/** Arguments for `instrument enable`. */
+export interface InstrumentEnableParams {
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. */
+    trackUuid?: string | null;
+}
+
+/** Success payload of `instrument enable`. */
+export interface InstrumentEnableResult {
+    /** Whether the instrument is processing. A disabled instrument stays mounted with its state intact. */
+    enabled: boolean;
+    /** Which format is mounted. */
+    format?: 'vst3' | 'vst2' | 'au';
+    /** Which MIDI channel it listens on: '1' through '16'. Never 'all' — a mounted instrument addresses exactly one channel. */
+    midiChannel: string;
+    /** Display name of the mounted plugin. */
+    name: string;
+    /** 0-based index of the track. */
+    trackIndex: number;
+    /** UUID of that track. */
+    trackUuid: string;
+    /** Plugin vendor. */
+    vendor?: string;
+}
+
+/** Arguments for `instrument set`. */
+export interface InstrumentSetParams {
+    /**
+     * **Required.** Which MIDI channel the instrument listens on: `1` through `16`.
+     *
+     * Channels are numbered the way every MIDI device numbers them. The wire used to carry two different numberings for the same concept, one of them 0-based; the translation now lives in the handler where it belongs.
+     *
+     * `all` is deliberately not accepted. A mounted instrument listens on one channel, and the slot has no every-channel state — so asking for it is an error rather than a value quietly stored as 1. The track's *input* (`track set-input --midi-channel`) does accept `all`.
+     */
+    midiChannel: string;
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. */
+    trackUuid?: string | null;
+}
+
+/** Success payload of `instrument set`. */
+export interface InstrumentSetResult {
+    /** Whether the instrument is processing. A disabled instrument stays mounted with its state intact. */
+    enabled: boolean;
+    /** Which format is mounted. */
+    format?: 'vst3' | 'vst2' | 'au';
+    /** Which MIDI channel it listens on: '1' through '16'. Never 'all' — a mounted instrument addresses exactly one channel. */
+    midiChannel: string;
+    /** Display name of the mounted plugin. */
+    name: string;
+    /** 0-based index of the track. */
+    trackIndex: number;
+    /** UUID of that track. */
+    trackUuid: string;
+    /** Plugin vendor. */
+    vendor?: string;
+}
+
+/** The `instrument` operations, mirroring the canonical operation tree 1:1. */
+export interface InstrumentOperations {
+    /**
+     * Disable the external instrument mounted on a MIDI track, leaving it mounted.
+     *
+     * Requires the `soundsource.write` capability.
+     */
+    disable(params: InstrumentDisableParams, options?: MutatingCallOptions): Promise<InstrumentDisableResult>;
+
+    /**
+     * Enable the external instrument mounted on a MIDI track.
+     *
+     * Requires the `soundsource.write` capability.
+     */
+    enable(params: InstrumentEnableParams, options?: MutatingCallOptions): Promise<InstrumentEnableResult>;
+
+    /**
+     * Set which MIDI channel a track's external instrument listens on.
+     *
+     * Requires the `soundsource.write` capability.
+     */
+    set(params: InstrumentSetParams, options?: MutatingCallOptions): Promise<InstrumentSetResult>;
 }
 
 // --- job -------------------------------------------------------------------
@@ -1444,6 +3278,44 @@ export interface NoteDeleteResult {
     deletedCount: number;
 }
 
+/** Arguments for `note get`. */
+export interface NoteGetParams {
+    /** UUID of the note to read, from `clip note-content`. Exactly one. */
+    noteUuids: string[];
+}
+
+/** Success payload of `note get`. */
+export interface NoteGetResult {
+    /** Instrument notes only: the note's articulation. */
+    articulation?: string;
+    /** Clip type: `sing`, `instrument`, or `genericMidi`. */
+    clipType: string;
+    /** UUID of the clip holding the note, with braces. */
+    clipUuid: string;
+    /** Note duration in ticks. */
+    dur: number;
+    /** Note end in clip-local ticks (pos + dur). */
+    endPos: number;
+    /** Content fingerprint of the whole clip's note content (ADR 0088 §5). Carry it back as `--if-match` on any `note` write or `clip replace-content` to fail STALE_WRITE instead of overwriting edits made since this read. */
+    fingerprint: Fingerprint;
+    /** Sing notes only: leading consonant lengths in seconds. */
+    headConsonants?: number[];
+    /** Sing notes only: the note's language, spelled in full English. */
+    language?: string;
+    /** Sing notes only: the note's lyric. `-` marks a tenuto continuing the previous syllable. */
+    lyric?: string;
+    /** Stable note UUID, with braces. */
+    noteUuid: string;
+    /** MIDI pitch number. */
+    pitch: number;
+    /** Note start in clip-local ticks. */
+    pos: number;
+    /** Sing notes only: the phonemes the engine derived from the lyric. */
+    syllable?: string;
+    /** Sing notes only: trailing consonant lengths in seconds. */
+    tailConsonants?: number[];
+}
+
 /** Arguments for `note move`. */
 export interface NoteMoveParams {
     /** Shift every note this much earlier. Same length forms as `--later`. The move is rejected if it would push any note before tick 0. */
@@ -1512,6 +3384,47 @@ export interface NoteResizeResult {
     resizedCount: number;
 }
 
+/** Arguments for `note set-articulation`. */
+export interface NoteSetArticulationParams {
+    /** The articulation to apply. Which names are valid depends on the instrument loaded on the track; read the current value back from `clip note-content`. */
+    articulation: string;
+    /** UUIDs of the target notes. All must be in the same Instrument clip. */
+    noteUuids: string[];
+}
+
+/** Success payload of `note set-articulation`. */
+export interface NoteSetArticulationResult {
+    /** UUID of the clip holding the notes. */
+    clipUuid: string;
+    /** The notes after the write, in the order given. */
+    notes: {
+        /** Instrument notes only: the note's articulation. */
+        articulation?: string;
+        /** Note duration in ticks. */
+        dur: number;
+        /** Note end in clip-local ticks (pos + dur). */
+        endPos: number;
+        /** Sing notes only: leading consonant lengths in seconds. */
+        headConsonants?: number[];
+        /** Sing notes only: the note's language, spelled in full English. */
+        language?: string;
+        /** Sing notes only: the note's lyric. `-` marks a tenuto continuing the previous syllable. */
+        lyric?: string;
+        /** Stable note UUID, with braces. */
+        noteUuid: string;
+        /** MIDI pitch number. */
+        pitch: number;
+        /** Note start in clip-local ticks. */
+        pos: number;
+        /** Sing notes only: the phonemes the engine derived from the lyric. */
+        syllable?: string;
+        /** Sing notes only: trailing consonant lengths in seconds. */
+        tailConsonants?: number[];
+    }[];
+    /** How many notes were addressed. */
+    updatedCount: number;
+}
+
 /** Arguments for `note set-lyric`. */
 export interface NoteSetLyricParams {
     /** Language for every named note: `CHN`, `JPN`, `ENG`, `SPA`, or `KOR`. Omit to leave each note's language untouched. */
@@ -1543,6 +3456,72 @@ export interface NoteSetLyricResult {
     updatedCount: number;
 }
 
+/** Arguments for `note split`. */
+export interface NoteSplitParams {
+    /** UUID of the note to split. Exactly one. */
+    noteUuids: string[];
+    /** Where to cut, in clip-local ticks. Must fall strictly inside the note and leave both halves at least one grid cell long. */
+    pos: number;
+}
+
+/** Success payload of `note split`. */
+export interface NoteSplitResult {
+    /** Clip type of the holding clip. */
+    clipType: string;
+    /** UUID of the clip holding the note. */
+    clipUuid: string;
+    head: {
+        /** Instrument notes only: the note's articulation. */
+        articulation?: string;
+        /** Note duration in ticks. */
+        dur: number;
+        /** Note end in clip-local ticks (pos + dur). */
+        endPos: number;
+        /** Sing notes only: leading consonant lengths in seconds. */
+        headConsonants?: number[];
+        /** Sing notes only: the note's language, spelled in full English. */
+        language?: string;
+        /** Sing notes only: the note's lyric. `-` marks a tenuto continuing the previous syllable. */
+        lyric?: string;
+        /** Stable note UUID, with braces. */
+        noteUuid: string;
+        /** MIDI pitch number. */
+        pitch: number;
+        /** Note start in clip-local ticks. */
+        pos: number;
+        /** Sing notes only: the phonemes the engine derived from the lyric. */
+        syllable?: string;
+        /** Sing notes only: trailing consonant lengths in seconds. */
+        tailConsonants?: number[];
+    };
+    /** The two halves, head first. The head keeps the original UUID. */
+    noteUuids: string[];
+    tail: {
+        /** Instrument notes only: the note's articulation. */
+        articulation?: string;
+        /** Note duration in ticks. */
+        dur: number;
+        /** Note end in clip-local ticks (pos + dur). */
+        endPos: number;
+        /** Sing notes only: leading consonant lengths in seconds. */
+        headConsonants?: number[];
+        /** Sing notes only: the note's language, spelled in full English. */
+        language?: string;
+        /** Sing notes only: the note's lyric. `-` marks a tenuto continuing the previous syllable. */
+        lyric?: string;
+        /** Stable note UUID, with braces. */
+        noteUuid: string;
+        /** MIDI pitch number. */
+        pitch: number;
+        /** Note start in clip-local ticks. */
+        pos: number;
+        /** Sing notes only: the phonemes the engine derived from the lyric. */
+        syllable?: string;
+        /** Sing notes only: trailing consonant lengths in seconds. */
+        tailConsonants?: number[];
+    };
+}
+
 /** The `note` operations, mirroring the canonical operation tree 1:1. */
 export interface NoteOperations {
     /**
@@ -1560,6 +3539,13 @@ export interface NoteOperations {
     delete(params: NoteDeleteParams, options?: PreconditionCallOptions): Promise<NoteDeleteResult>;
 
     /**
+     * Get one note's geometry, pitch, and type-specific fields.
+     *
+     * Requires the `note.read` capability.
+     */
+    get(params: NoteGetParams, options?: CallOptions): Promise<NoteGetResult>;
+
+    /**
      * Move notes by id in time, in pitch, or both.
      *
      * Requires the `note.write` capability.
@@ -1574,11 +3560,25 @@ export interface NoteOperations {
     resize(params: NoteResizeParams, options?: PreconditionCallOptions): Promise<NoteResizeResult>;
 
     /**
+     * Set the articulation of Instrument-clip notes.
+     *
+     * Requires the `note.write` capability.
+     */
+    setArticulation(params: NoteSetArticulationParams, options?: PreconditionCallOptions): Promise<NoteSetArticulationResult>;
+
+    /**
      * Set the lyric (and optionally language) of Sing notes by id.
      *
      * Requires the `note.write` capability.
      */
     setLyric(params: NoteSetLyricParams, options?: PreconditionCallOptions): Promise<NoteSetLyricResult>;
+
+    /**
+     * Split a note in two at a position inside it.
+     *
+     * Requires the `note.write` capability.
+     */
+    split(params: NoteSplitParams, options?: PreconditionCallOptions): Promise<NoteSplitResult>;
 }
 
 // --- project ---------------------------------------------------------------
@@ -1722,18 +3722,6 @@ export interface ProjectSaveAsResult {
     savedPath: string;
 }
 
-/** Arguments for `project save-template`. */
-export interface ProjectSaveTemplateParams {
-    /** Destination .acet template path. */
-    path: string;
-}
-
-/** Success payload of `project save-template`. */
-export interface ProjectSaveTemplateResult {
-    /** Absolute path of the written .acet template archive. */
-    templatePath: string;
-}
-
 /** Success payload of `project synthesis-status`. */
 export interface ProjectSynthesisStatusResult {
     /** Whether content synthesis is currently in progress. */
@@ -1804,15 +3792,6 @@ export interface ProjectOperations {
      * Requires the `project.lifecycle` capability.
      */
     saveAs(params: ProjectSaveAsParams, options?: MutatingCallOptions): Promise<ProjectSaveAsResult>;
-
-    /**
-     * Export the project as a reusable song template (.acet).
-     *
-     * Requires the `project.lifecycle` capability.
-     *
-     * Pay-gated on `membership`: an account that does not satisfy it is refused, without a purchase prompt.
-     */
-    saveTemplate(params: ProjectSaveTemplateParams, options?: MutatingCallOptions): Promise<ProjectSaveTemplateResult>;
 
     /**
      * Read whether content synthesis is currently in progress.
@@ -2046,7 +4025,365 @@ export interface SelectionOperations {
     set(params: SelectionSetParams, options?: MutatingCallOptions): Promise<SelectionSetResult>;
 }
 
+// --- sound-source ----------------------------------------------------------
+
+/** Arguments for `sound-source get`. */
+export interface SoundSourceGetParams {
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. */
+    trackUuid?: string | null;
+}
+
+/** Success payload of `sound-source get`. */
+export interface SoundSourceGetResult {
+    /** Whether choir mode is on. Sing tracks only; see `choir get` for the members. */
+    choirEnabled?: boolean;
+    /** Whether ensemble mode is on. Instrument tracks only; see `ensemble get` for the members. */
+    ensembleEnabled?: boolean;
+    /** Whether the track carries a sound source at all. A MIDI track with an external instrument mounted reports true. */
+    hasSource: boolean;
+    /** Which MIDI channel the external instrument listens on: '1' through '16', or 'all'. External instruments only. */
+    midiChannel?: string;
+    /** The vocal synth model this source sings through. Voices and choirs only. */
+    model?: {
+        /** Model id. */
+        id?: number;
+        /** Model name. */
+        name?: string;
+        /** Full English names of the languages this model can sing. */
+        supportedLanguages?: string[];
+        /** True when the model carries no Style axis, so a blend on it has Timbre only. */
+        timbreOnly?: boolean;
+    };
+    /** The mounted source. Absent when `hasSource` is false. */
+    soundSource?: {
+        /** Category name, e.g. 'Piano'. AI instruments only. */
+        category?: string;
+        /** Numeric category id. AI instruments only. */
+        categoryId?: number;
+        /** Every format this plugin was scanned in. One plugin in three formats is one row, not three. External instruments only. */
+        formats?: ('vst3' | 'vst2' | 'au')[];
+        /** Which model generations recommend a model for this voice: 'v1', 'v2', or both. Generation is a per-voice curation published by the backend, not a property of a model, so it is reported per row and only on pre-made voices. */
+        generations?: ('v1' | 'v2')[];
+        /** The raw group discriminator behind `origin`: empty for pre-made, '#' for cloned, '\@' for community, the blended-voice library id for a blend. Reported for continuity with the project file; prefer `ref`. */
+        group?: string;
+        /** Numeric library id. Ids repeat across origins, so this alone does not identify a source; `ref` does. */
+        id?: number;
+        /** Whether a community voice is already in your library. Community voices only; an uncollected voice must be collected before it will load. */
+        isCollected?: boolean;
+        /** What this source is. */
+        kind?: 'voice' | 'choir' | 'instrument' | 'ensemble' | 'external-instrument';
+        /** How many members the source has. Choirs and ensembles only. */
+        memberCount?: number;
+        /** Id of the vocal synth model this source defaults to. Voices only. */
+        modelId?: number;
+        /** Name of that model, as the track panel's Vocal Synth Model control shows it. Voices only. */
+        modelName?: string;
+        /** Display name, as the Voice Library shows it. */
+        name?: string;
+        /** Full English name of the language this source sings natively. Voices and choirs only. */
+        nativeLanguage?: string;
+        /** Which library it comes from. Absent for external instruments, which come from the plugin scan rather than the account's library. */
+        origin?: 'premade' | 'cloned' | 'community' | 'blended';
+        /** Precise handle for this source, accepted by `--source` anywhere a name is. One of `singer:\<id\>` (pre-made), `singer:#\<id\>` (cloned), `singer:\@\<id\>` (community), `singer:\<library\>/\<id\>` (blend), `choir:\<group\>/\<id\>`, `instrument:\<id\>`, `ensemble:\<group\>/\<id\>`, or `plugin:\<format\>:\<typeId\>` (external instrument). */
+        ref?: string;
+        /** How many voice seeds the recipe holds. Blended voices only. */
+        seedCount?: number;
+        /** Full English names of every language this source can sing on its current model. Voices and choirs only. */
+        supportedLanguages?: string[];
+        /** Tag names attached to the source. */
+        tags?: string[];
+        /** Plugin vendor. External instruments only; this is what disambiguates two vendors shipping a plugin of the same name. */
+        vendor?: string;
+        /** Plugin version string as the plugin reports it. External instruments only. */
+        version?: string;
+    };
+    /** Runtime state of the mounted source. 'ready' for a library source; for an external instrument, 'mounted' when it is loaded and enabled, 'disabled' when mounted but bypassed, and 'missing' when the project names a plugin this machine cannot find. 'missing' is distinct from an empty slot: the project still carries the reference and it will come back if the plugin is installed. */
+    state?: 'ready' | 'mounted' | 'disabled' | 'missing';
+    /** 0-based index of the track read. */
+    trackIndex: number;
+    /** Track type: 'Sing', 'Instrument', 'GenericMidi', 'Audio', or 'Empty'. */
+    trackType: string;
+    /** UUID of that track, in braces format. */
+    trackUuid: string;
+}
+
+/** Arguments for `sound-source list`. */
+export interface SoundSourceListParams {
+    /** Filter AI instruments by category name, such as `Piano`. */
+    category?: string | null;
+    /** Filter by name substring, case-insensitive. */
+    keyword?: string | null;
+    /** Only list sources of this kind. Repeatable, so `--kind voice --kind choir` gives you both. Omit for everything. */
+    kind?: ('voice' | 'choir' | 'instrument' | 'ensemble' | 'external-instrument')[] | null;
+    /** Filter by language, as a full English name such as `Japanese`. Applies to voices and choirs; other kinds have no language. */
+    language?: string | null;
+    /** Only list voices that work with this vocal synth model. Takes either a model name (`Verse24`) or a generation (`v1`, `v2`), and a generation selects the voices that generation recommends a model for. */
+    model?: string | null;
+    /** Only list sources from this library. Repeatable. Omit for everything. */
+    origin?: ('premade' | 'cloned' | 'community' | 'blended')[] | null;
+    /** Show each source's `ref` in the human listing. Refs are always present in the JSON payload; this is for reading them without first provoking an ambiguity error. */
+    showRefs?: boolean | null;
+    /** Filter by tag name, case-insensitive, matching any of the given tags. */
+    tags?: string[] | null;
+    /** Filter external instruments by plugin vendor. */
+    vendor?: string | null;
+}
+
+/** Success payload of `sound-source list`. */
+export interface SoundSourceListResult {
+    /** Number of rows returned. */
+    count: number;
+    /** Every source matching the filters, across every kind. Never truncated and never deduplicated by name: two sources can legitimately share one. */
+    soundSources: {
+        /** Category name, e.g. 'Piano'. AI instruments only. */
+        category?: string;
+        /** Numeric category id. AI instruments only. */
+        categoryId?: number;
+        /** Every format this plugin was scanned in. One plugin in three formats is one row, not three. External instruments only. */
+        formats?: ('vst3' | 'vst2' | 'au')[];
+        /** Which model generations recommend a model for this voice: 'v1', 'v2', or both. Generation is a per-voice curation published by the backend, not a property of a model, so it is reported per row and only on pre-made voices. */
+        generations?: ('v1' | 'v2')[];
+        /** The raw group discriminator behind `origin`: empty for pre-made, '#' for cloned, '\@' for community, the blended-voice library id for a blend. Reported for continuity with the project file; prefer `ref`. */
+        group?: string;
+        /** Numeric library id. Ids repeat across origins, so this alone does not identify a source; `ref` does. */
+        id?: number;
+        /** Whether a community voice is already in your library. Community voices only; an uncollected voice must be collected before it will load. */
+        isCollected?: boolean;
+        /** What this source is. */
+        kind: 'voice' | 'choir' | 'instrument' | 'ensemble' | 'external-instrument';
+        /** How many members the source has. Choirs and ensembles only. */
+        memberCount?: number;
+        /** Id of the vocal synth model this source defaults to. Voices only. */
+        modelId?: number;
+        /** Name of that model, as the track panel's Vocal Synth Model control shows it. Voices only. */
+        modelName?: string;
+        /** Display name, as the Voice Library shows it. */
+        name: string;
+        /** Full English name of the language this source sings natively. Voices and choirs only. */
+        nativeLanguage?: string;
+        /** Which library it comes from. Absent for external instruments, which come from the plugin scan rather than the account's library. */
+        origin?: 'premade' | 'cloned' | 'community' | 'blended';
+        /** Precise handle for this source, accepted by `--source` anywhere a name is. One of `singer:\<id\>` (pre-made), `singer:#\<id\>` (cloned), `singer:\@\<id\>` (community), `singer:\<library\>/\<id\>` (blend), `choir:\<group\>/\<id\>`, `instrument:\<id\>`, `ensemble:\<group\>/\<id\>`, or `plugin:\<format\>:\<typeId\>` (external instrument). */
+        ref: string;
+        /** How many voice seeds the recipe holds. Blended voices only. */
+        seedCount?: number;
+        /** Full English names of every language this source can sing on its current model. Voices and choirs only. */
+        supportedLanguages?: string[];
+        /** Tag names attached to the source. */
+        tags: string[];
+        /** Plugin vendor. External instruments only; this is what disambiguates two vendors shipping a plugin of the same name. */
+        vendor?: string;
+        /** Plugin version string as the plugin reports it. External instruments only. */
+        version?: string;
+    }[];
+}
+
+/** Arguments for `sound-source load`. */
+export interface SoundSourceLoadParams {
+    /** Which plugin format to mount for an external instrument. Defaults to `vst3`, and the format that was actually mounted is always reported. A format you asked for and the plugin does not offer is an error rather than a silent substitution. */
+    format?: 'vst3' | 'vst2' | 'au';
+    /** Which vocal synth model to sing through, by model name or by generation (`v1`, `v2`). Omit to take what the app would have picked. */
+    model?: string | null;
+    /**
+     * **Required.** Which sound source to load, by display name or by `ref`.
+     *
+     * A name that matches exactly one source loads it. A name that matches several is an error listing the candidates with their refs, and passing one of those refs back resolves it. A ref is always accepted directly, so a script never has to trigger the error to learn the syntax.
+     */
+    source: string;
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. */
+    trackUuid?: string | null;
+    /** Narrow an ambiguous external-instrument name by plugin vendor. Two vendors shipping a plugin of the same name is ordinary; this is the first thing to reach for before falling back to a ref. */
+    vendor?: string | null;
+}
+
+/** Success payload of `sound-source load`. */
+export interface SoundSourceLoadResult {
+    /** Which plugin format was mounted. Always reported for an external instrument, including when it was defaulted rather than requested, so a caller knows what it actually got. */
+    format?: 'vst3' | 'vst2' | 'au';
+    /** What kind of source landed. */
+    kind: 'voice' | 'choir' | 'instrument' | 'ensemble' | 'external-instrument';
+    /** Full English name of the track's default note language. Emitted only when the load created the track's language, which happens when a MIDI or Empty track becomes a Sing track. */
+    language?: string;
+    /** The vocal synth model the source sings through. Voices and choirs only. */
+    modelName?: string;
+    /** Display name of that source. */
+    name: string;
+    /** Ref of the source that landed, resolved from `--source`. */
+    ref: string;
+    /** 0-based index of the track loaded onto. */
+    trackIndex: number;
+    /** What the track ended up as. Loading a voice onto a MIDI track converts it to 'Sing'. */
+    trackType: string;
+    /** UUID of that track. */
+    trackUuid: string;
+    /** Plugin vendor. External instruments only. */
+    vendor?: string;
+}
+
+/** Arguments for `sound-source set`. */
+export interface SoundSourceSetParams {
+    /** Which member to retarget on a choir or ensemble track. `0` is the leader. Omit to set the model for the whole source, which on a single-voice track is the only thing there is to set. */
+    member?: number | null;
+    /**
+     * **Required.** Which vocal synth model to sing through, by model name (`Verse24`) or by generation (`v1`, `v2`). A generation picks that generation's recommended model for this voice.
+     *
+     * A name that names no model is an error; nothing is substituted, so a typo surfaces here rather than as a track that quietly sings through something else.
+     */
+    model: string;
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. */
+    trackUuid?: string | null;
+}
+
+/** Success payload of `sound-source set`. */
+export interface SoundSourceSetResult {
+    /** Id of the model the source now sings through. */
+    modelId: number;
+    /** Name of that model. */
+    modelName: string;
+    /** Languages the source can sing on the new model. A model change can narrow this, which is why it is reported back. */
+    supportedLanguages?: string[];
+    /** 0-based index of the track. */
+    trackIndex: number;
+    /** UUID of that track. */
+    trackUuid: string;
+}
+
+/** Arguments for `sound-source tags`. */
+export interface SoundSourceTagsParams {
+    /** Only return the filter vocabulary that applies to this kind. Repeatable. Omit for everything. */
+    kind?: ('voice' | 'choir' | 'instrument' | 'ensemble' | 'external-instrument')[] | null;
+}
+
+/** Success payload of `sound-source tags`. */
+export interface SoundSourceTagsResult {
+    /** AI instrument categories. */
+    categories?: {
+        /** Numeric category id. */
+        id: number;
+        /** Category name, e.g. 'Piano'. */
+        name: string;
+    }[];
+    /** Every language the installed voices can sing. */
+    languages?: {
+        /** Short code, e.g. 'zh'. */
+        code: string;
+        /** Full English name, e.g. 'Chinese'. */
+        name: string;
+    }[];
+    /** Tag names in use across the installed sources. */
+    tags?: string[];
+    /** Vendors of the scanned instrument plugins. */
+    vendors?: string[];
+}
+
+/** Arguments for `sound-source unload`. */
+export interface SoundSourceUnloadParams {
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. */
+    trackUuid?: string | null;
+}
+
+/** Success payload of `sound-source unload`. */
+export interface SoundSourceUnloadResult {
+    /** What the track is now. A Sing or Instrument track becomes 'GenericMidi'; a MIDI track that merely had its external instrument unmounted stays 'GenericMidi'. */
+    newType: string;
+    /** 0-based index of the track. */
+    trackIndex: number;
+    /** Track name before the unload. */
+    trackName: string;
+    /** UUID of that track. */
+    trackUuid: string;
+}
+
+/** The `sound-source` operations, mirroring the canonical operation tree 1:1. */
+export interface SoundSourceOperations {
+    /**
+     * Report what sound source a track carries, and how it is configured.
+     *
+     * Requires the `soundsource.read` capability.
+     */
+    get(params: SoundSourceGetParams, options?: CallOptions): Promise<SoundSourceGetResult>;
+
+    /**
+     * List every sound source you can put on a track: voices, choirs, instruments, ensembles, external instruments.
+     *
+     * Requires the `soundsource.read` capability.
+     */
+    list(params: SoundSourceListParams, options?: CallOptions): Promise<SoundSourceListResult>;
+
+    /**
+     * Load a sound source onto a track, addressing it by name.
+     *
+     * Requires the `soundsource.write` capability.
+     */
+    load(params: SoundSourceLoadParams, options?: MutatingCallOptions): Promise<SoundSourceLoadResult>;
+
+    /**
+     * Change which vocal synth model a track's sound source sings through.
+     *
+     * Requires the `soundsource.write` capability.
+     */
+    set(params: SoundSourceSetParams, options?: MutatingCallOptions): Promise<SoundSourceSetResult>;
+
+    /**
+     * Return the filter vocabulary for sound sources: languages, tags, instrument categories.
+     *
+     * Requires the `soundsource.read` capability.
+     */
+    tags(params: SoundSourceTagsParams, options?: CallOptions): Promise<SoundSourceTagsResult>;
+
+    /**
+     * Remove a track's sound source, leaving a plain MIDI track behind.
+     *
+     * Requires the `soundsource.write` capability.
+     */
+    unload(params: SoundSourceUnloadParams, options?: MutatingCallOptions): Promise<SoundSourceUnloadResult>;
+}
+
 // --- tempo -----------------------------------------------------------------
+
+/** Arguments for `tempo analyze`. */
+export interface TempoAnalyzeParams {
+    /** The audio clip to analyze, by UUID (`clip list` reports it). Required: analysis is always of a specific piece of audio, never of "the project". */
+    clipUuid: string;
+}
+
+/** Success payload of `tempo analyze`. */
+export interface TempoAnalyzeResult {
+    /** The id the finished analysis will be filed under -- known up front, so a caller can line up its `tempo apply-beat-analysis` before the job settles. Valid only once the job reaches `succeeded`; a failed or cancelled run files nothing and `tempo apply-beat-analysis` answers NOT_FOUND. */
+    analysisId: string;
+    /** The job class, for a consumer keying off the producing function. Always `tempo-analyze`. */
+    jobClassId: 'tempo-analyze';
+    /** The launched job's id, returned before any analysis runs . Observe it with `job get` / `job wait`, stop it with `job cancel`. */
+    jobId: string;
+}
+
+/** Arguments for `tempo apply-beat-analysis`. */
+export interface TempoApplyBeatAnalysisParams {
+    /** The analysis to apply, as reported by `tempo analyze`. Consumed on success: a second apply of the same id fails NOT_FOUND, because the content shift the first one made invalidated what the analysis described. */
+    analysisId: string;
+    /** Where the analyzed audio starts, in project time. Omit to use the analyzed clip's own current position, which is what you want unless the clip moved since. Seconds (`1.5s`), clock time (`1:23.5`), or a tick / musical position converted to seconds. See `help time-values`. */
+    anchor?: number | null;
+}
+
+/** Success payload of `tempo apply-beat-analysis`. */
+export interface TempoApplyBeatAnalysisResult {
+    /** How many clips and markers were re-anchored to keep their seconds. MIDI-like clips (Sing / Instrument / GenericMidi / Chord) are never counted: they keep their ticks and re-read under the new grid. */
+    movedClipCount: number;
+    /** Seconds every pre-existing non-MIDI-like item moved later so the first detected downbeat lands on a bar line. Always \>= 0. */
+    offsetSec: number;
+    /** Number of tempo points the applied grid installed. */
+    pointCount: number;
+    /** Number of time-signature entries the applied grid installed. */
+    signatureCount: number;
+}
 
 /** Success payload of `tempo get`. */
 export interface TempoGetResult {
@@ -2063,6 +4400,43 @@ export interface TempoGetResult {
     }[];
 }
 
+/** Success payload of `tempo points`. */
+export interface TempoPointsResult {
+    /** Content fingerprint of the whole tempo point list. Carry it back as `--if-match` on `tempo set-point`, `tempo remove-point` or `tempo set` to fail STALE_WRITE instead of overwriting edits made since this read. */
+    fingerprint: Fingerprint;
+    /** Which unit the stored positions are authoritative in. Always `tick` for the tempo curve. */
+    nativeUnit: 'tick';
+    /** Number of entries in points (convenience field). */
+    pointCount: number;
+    /** All tempo points, in ascending pos order. Dual-unit: `pos` is authoritative, `posSec` is that position read back through the very curve these points define. */
+    points: {
+        /** Curve control toward the next point; 0.0 = linear. */
+        bend: number;
+        /** Point position, in project ticks. The native unit -- what `set-point` and `remove-point` address. */
+        pos: number;
+        /** The same position in seconds, under the current tempo curve. Derived, so editing one point moves the seconds of every point after it. */
+        posSec: number;
+        /** Tempo at this point, in BPM. */
+        value: number;
+    }[];
+}
+
+/** Arguments for `tempo remove-point`. */
+export interface TempoRemovePointParams {
+    /** The point to remove. Ticks (`3840t`), clock time (`1.5s`), or musical position (`4.1.0`). No point there is a NOT_FOUND. See `help time-values`. */
+    pos: number;
+}
+
+/** Success payload of `tempo remove-point`. */
+export interface TempoRemovePointResult {
+    /** Number of points in the table after the write. */
+    pointCount: number;
+    /** The position acted on, in project ticks -- resolved, so a caller that passed a musical or clock form learns which tick it hit. */
+    pos: number;
+    /** Whether a point already existed at `pos`. True for a `set-point` that overwrote one and for every successful `remove-point`; false for a `set-point` that inserted a new point. */
+    replaced: boolean;
+}
+
 /** Arguments for `tempo set`. */
 export interface TempoSetParams {
     /** JSON array of tempo points, e.g. `[\{"pos":0,"value":120\}]`. Each point: `pos` (ticks \>= 0), `value` (BPM 1-1000), `bend` (optional, default 0.0). Points must be sorted by `pos` ascending with no duplicates. */
@@ -2076,8 +4450,58 @@ export interface TempoSetParams {
     }[];
 }
 
+/** Arguments for `tempo set-display-range`. */
+export interface TempoSetDisplayRangeParams {
+    /** Upper bound of the editor's BPM axis. Must be \> `--min`. Omit to keep the current upper bound. */
+    maxBpm?: number | null;
+    /** Lower bound of the editor's BPM axis. Must be \< `--max`. Omit to keep the current lower bound. */
+    minBpm?: number | null;
+}
+
+/** Success payload of `tempo set-display-range`. */
+export interface TempoSetDisplayRangeResult {
+    /** Upper bound of the tempo curve editor's BPM axis, after the write. */
+    maxBpm: number;
+    /** Lower bound of the tempo curve editor's BPM axis, after the write. */
+    minBpm: number;
+}
+
+/** Arguments for `tempo set-point`. */
+export interface TempoSetPointParams {
+    /** Curve bend toward the next point, -1.0 to 1.0. 0.0 is a straight segment. Omit to keep an existing point's bend, or 0.0 for a new one. */
+    bend?: number | null;
+    /** Tempo at this point, in BPM. 1-1000. Required. */
+    bpm: number;
+    /** Where the point goes. Ticks (`3840t`), clock time (`1.5s`), or musical position (`4.1.0`). Must be \>= 0. A point already at this position is replaced. See `help time-values`. */
+    pos: number;
+}
+
+/** Success payload of `tempo set-point`. */
+export interface TempoSetPointResult {
+    /** Number of points in the table after the write. */
+    pointCount: number;
+    /** The position acted on, in project ticks -- resolved, so a caller that passed a musical or clock form learns which tick it hit. */
+    pos: number;
+    /** Whether a point already existed at `pos`. True for a `set-point` that overwrote one and for every successful `remove-point`; false for a `set-point` that inserted a new point. */
+    replaced: boolean;
+}
+
 /** The `tempo` operations, mirroring the canonical operation tree 1:1. */
 export interface TempoOperations {
+    /**
+     * Start beat/tempo analysis of an audio clip. Returns a job id immediately; observe it with the job group.
+     *
+     * Requires the `tempo.analyze` capability.
+     */
+    analyze(params: TempoAnalyzeParams, options?: MutatingCallOptions): Promise<TempoAnalyzeResult>;
+
+    /**
+     * EXPERIMENTAL (alpha). Apply an analyzed grid song-anchored: replace tempo and time signatures, and move content to keep its seconds. Provided as is.
+     *
+     * Requires the `tempo.applyV2` capability.
+     */
+    applyBeatAnalysis(params: TempoApplyBeatAnalysisParams, options?: MutatingCallOptions): Promise<TempoApplyBeatAnalysisResult>;
+
     /**
      * Read the full tempo automation table (all BPM points).
      *
@@ -2086,11 +4510,39 @@ export interface TempoOperations {
     get(options?: CallOptions): Promise<TempoGetResult>;
 
     /**
+     * List the tempo curve's points in both units, with the fingerprint the point writes take as --if-match.
+     *
+     * Requires the `tempo.read` capability.
+     */
+    points(options?: CallOptions): Promise<TempoPointsResult>;
+
+    /**
+     * Remove the tempo point at a position.
+     *
+     * Requires the `tempo.write` capability.
+     */
+    removePoint(params: TempoRemovePointParams, options?: PreconditionCallOptions): Promise<TempoRemovePointResult>;
+
+    /**
      * Replace the entire tempo automation table with a new list of points.
      *
      * Requires the `tempo.write` capability.
      */
-    set(params: TempoSetParams, options?: MutatingCallOptions): Promise<void>;
+    set(params: TempoSetParams, options?: PreconditionCallOptions): Promise<void>;
+
+    /**
+     * Set the BPM range the tempo curve editor draws (project-persisted, not a view preference).
+     *
+     * Requires the `tempo.write` capability.
+     */
+    setDisplayRange(params: TempoSetDisplayRangeParams, options?: MutatingCallOptions): Promise<TempoSetDisplayRangeResult>;
+
+    /**
+     * Add or replace one tempo point at a position (upsert). Leaves every other point untouched.
+     *
+     * Requires the `tempo.write` capability.
+     */
+    setPoint(params: TempoSetPointParams, options?: PreconditionCallOptions): Promise<TempoSetPointResult>;
 }
 
 // --- timesig ---------------------------------------------------------------
@@ -2105,22 +4557,81 @@ export interface TimesigGetResult {
         barPos: number;
         /** Beat unit; one of 2, 4, 8, 16, 32. */
         denominator: number;
-        /** Beats per bar (2-8). */
+        /** Beats per bar (1-32). */
         numerator: number;
     }[];
 }
 
+/** Success payload of `timesig list`. */
+export interface TimesigListResult {
+    /** Content fingerprint of the whole time-signature list. Carry it back as `--if-match` on `timesig set-at`, `timesig remove-at` or `timesig set` to fail STALE_WRITE instead of overwriting edits made since this read. */
+    fingerprint: Fingerprint;
+    /** Which unit the stored positions are authoritative in. Always `bar` for the time-signature list. */
+    nativeUnit: 'bar';
+    /** Number of entries in signatures (convenience field). */
+    signatureCount: number;
+    /** All time-signature entries, in ascending barPos order. Dual-unit: `barPos` is authoritative, `tick` and `sec` are where that bar falls under the current meter and tempo. */
+    signatures: {
+        /** The bar this signature takes effect from, counted from 0 as the project stores it. The native unit, and what `set-at --bar-pos` takes verbatim. Reported as `bar` counting from 1 instead under `--bars human`. */
+        barPos: number;
+        /** Beat unit; one of 2, 4, 8, 16, 32. */
+        denominator: number;
+        /** Beats per bar (1-32). */
+        numerator: number;
+        /** The same bar start in seconds, under the current tempo curve. */
+        sec: number;
+        /** Project tick that bar starts at. Derived from every earlier signature, so inserting one moves this for the entries after it. */
+        tick: number;
+    }[];
+}
+
+/** Arguments for `timesig remove-at`. */
+export interface TimesigRemoveAtParams {
+    /** The same bar counted from 0, as the project stores it and as `convert` reports it. This is the spelling the wire takes. `acestudio-cli` and MCP also accept `bar` counting from 1; pass one or the other, never both. */
+    barPos: number;
+}
+
+/** Success payload of `timesig remove-at`. */
+export interface TimesigRemoveAtResult {
+    /** The bar acted on, counted from 0 — the same value whichever spelling the call used to address it. Reported as `bar` counting from 1 instead under `--bars human`. */
+    barPos: number;
+    /** Whether an entry already existed at `barPos`. True for a `set-at` that overwrote one and for every successful `remove-at`; false for a `set-at` that inserted a new entry. */
+    replaced: boolean;
+    /** Number of entries in the list after the write. */
+    signatureCount: number;
+}
+
 /** Arguments for `timesig set`. */
 export interface TimesigSetParams {
-    /** JSON array of time-signature entries, e.g. `[\{"barPos":0,"numerator":4,"denominator":4\}]`. Each entry: `barPos` (bar \>= 0), `numerator` (2-8), `denominator` (2, 4, 8, 16, or 32). Entries must be sorted by `barPos` ascending with no duplicates. */
+    /** JSON array of time-signature entries, e.g. `[\{"barPos":0,"numerator":4,"denominator":4\}]`. Each entry: the bar as `barPos` (\>= 0, counting from 0), `numerator` (1-32), `denominator` (2, 4, 8, 16, or 32). `acestudio-cli` and MCP also accept `bar` counting from 1 in place of `barPos`, folding it before the call; pass one or the other, never both. Entries must be sorted by ascending bar with no duplicates. */
     signatures: {
-        /** Bar position, 0-based. Must be \>= 0. */
+        /** The same bar counted from 0, as the project stores it. Give this or `bar`, never both. */
         barPos: number;
         /** Beat unit: 2, 4, 8, 16, or 32. */
         denominator: number;
-        /** Beats per bar, 2-8. */
+        /** Beats per bar, 1-32. */
         numerator: number;
     }[];
+}
+
+/** Arguments for `timesig set-at`. */
+export interface TimesigSetAtParams {
+    /** The same bar counted from 0, as the project stores it and as `convert` reports it. This is the spelling the wire takes. `acestudio-cli` and MCP also accept `bar` counting from 1, folding it to this before the call; pass one or the other, never both. */
+    barPos: number;
+    /** Beat unit: 2, 4, 8, 16, or 32. Required. */
+    denominator: number;
+    /** Beats per bar, 1-32. Required. */
+    numerator: number;
+}
+
+/** Success payload of `timesig set-at`. */
+export interface TimesigSetAtResult {
+    /** The bar acted on, counted from 0 — the same value whichever spelling the call used to address it. Reported as `bar` counting from 1 instead under `--bars human`. */
+    barPos: number;
+    /** Whether an entry already existed at `barPos`. True for a `set-at` that overwrote one and for every successful `remove-at`; false for a `set-at` that inserted a new entry. */
+    replaced: boolean;
+    /** Number of entries in the list after the write. */
+    signatureCount: number;
 }
 
 /** The `timesig` operations, mirroring the canonical operation tree 1:1. */
@@ -2133,14 +4644,105 @@ export interface TimesigOperations {
     get(options?: CallOptions): Promise<TimesigGetResult>;
 
     /**
+     * List the time signatures with the tick each takes effect at, plus the fingerprint the entry writes take as --if-match.
+     *
+     * Requires the `timesig.read` capability.
+     */
+    list(options?: CallOptions): Promise<TimesigListResult>;
+
+    /**
+     * Remove the time-signature entry at a bar. Bars after it fall back to the previous signature.
+     *
+     * Requires the `timesig.write` capability.
+     */
+    removeAt(params: TimesigRemoveAtParams, options?: PreconditionCallOptions): Promise<TimesigRemoveAtResult>;
+
+    /**
      * Replace the entire time-signature list with a new set of entries.
      *
      * Requires the `timesig.write` capability.
      */
-    set(params: TimesigSetParams, options?: MutatingCallOptions): Promise<void>;
+    set(params: TimesigSetParams, options?: PreconditionCallOptions): Promise<void>;
+
+    /**
+     * Add or replace the time signature taking effect at a bar (upsert). Leaves every other entry untouched.
+     *
+     * Requires the `timesig.write` capability.
+     */
+    setAt(params: TimesigSetAtParams, options?: PreconditionCallOptions): Promise<TimesigSetAtResult>;
 }
 
 // --- track -----------------------------------------------------------------
+
+/** Arguments for `track create`. */
+export interface TrackCreateParams {
+    /**
+     * 0-based position to insert at. Omit to append after the last content track.
+     *
+     * Counts in the index space the new track's region uses: the arrangement for `sing`/`instrument`/`genericMidi`/`audio`, and the pinned Video or Marker band for `video`/`marker` (ADR 0104), whose indices are local to that band.
+     */
+    index?: number | null;
+    /** Optional display name. Omit to take the type's default name. */
+    name?: string | null;
+    /**
+     * Create the track with this sound source already on it, by display name or ref — the same thing `sound-source load --source` accepts.
+     *
+     * The track type follows from the source, so `--type` is not needed alongside it. This is the only path that reports the track's resolved note language, because it is the only point at which a Sing track's language is decided.
+     */
+    source?: string | null;
+    /**
+     * Track type to create: `sing`, `instrument`, `genericMidi`, `audio`, `video`, or `marker` — the same spellings `trackType` is reported in, matched case-insensitively.
+     *
+     * `chord` is not creatable: a project has exactly one chord track, always. Neither is `empty` — an empty slot is what the arrangement pads itself with, not something you ask for.
+     *
+     * Optional when `--source` is given, which implies the type.
+     */
+    type?: string | null;
+}
+
+/** Success payload of `track create`. */
+export interface TrackCreateResult {
+    /** Full English name of the track's default note language. Present only when `track create --source` built a Sing track, which is the one moment a track's language is decided; changing it afterwards is `track set-language`. */
+    language?: string;
+    /** Which index space `trackIndex` counts in: 'arrangement' (the main track list), 'video', or 'marker'. */
+    region: string;
+    /** The sound source the track was created with. Present only when `track create --source` put one there. */
+    soundSourceName?: string;
+    /** 0-based resting position, in the index space of `region`. */
+    trackIndex: number;
+    /** Display name the track came to rest with. */
+    trackName: string;
+    /** One of: Sing, Instrument, GenericMidi, Audio, Video, Marker. */
+    trackType: string;
+    /** UUID of the placed track, in braces format. For `duplicate` this is the copy's fresh UUID, not the original's. */
+    trackUuid: string;
+}
+
+/** Arguments for `track duplicate`. */
+export interface TrackDuplicateParams {
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. Required to address a track in the pinned Video or Marker band. */
+    trackUuid?: string | null;
+}
+
+/** Success payload of `track duplicate`. */
+export interface TrackDuplicateResult {
+    /** Full English name of the track's default note language. Present only when `track create --source` built a Sing track, which is the one moment a track's language is decided; changing it afterwards is `track set-language`. */
+    language?: string;
+    /** Which index space `trackIndex` counts in: 'arrangement' (the main track list), 'video', or 'marker'. */
+    region: string;
+    /** The sound source the track was created with. Present only when `track create --source` put one there. */
+    soundSourceName?: string;
+    /** 0-based resting position, in the index space of `region`. */
+    trackIndex: number;
+    /** Display name the track came to rest with. */
+    trackName: string;
+    /** One of: Sing, Instrument, GenericMidi, Audio, Video, Marker. */
+    trackType: string;
+    /** UUID of the placed track, in braces format. For `duplicate` this is the copy's fresh UUID, not the original's. */
+    trackUuid: string;
+}
 
 /** Arguments for `track get`. */
 export interface TrackGetParams {
@@ -2193,7 +4795,7 @@ export interface TrackGetResult {
     soundSourceInfo?: {
         /** Instrument category name. Instrument (non-ensemble) mode only. */
         category?: string;
-        /** False for GenericMidi tracks, which have no sound source. Other keys are absent when present. */
+        /** Whether the track carries a sound source. A GenericMidi track with an external instrument mounted reports true: the slot is a sound source in every sense that matters, and reporting it empty made a mounted plugin indistinguishable from no plugin at all. Other keys are absent when this is false. `sound-source get` reports the same thing in more detail. */
         hasSource?: boolean;
         /** True when the singer is a voice blend rather than a vanilla singer. Singer mode only. */
         isVoiceBlend?: boolean;
@@ -2267,105 +4869,139 @@ export interface TrackRenameParams {
     trackIndex: number;
 }
 
+/** Arguments for `track reorder`. */
+export interface TrackReorderParams {
+    /** 0-based position to move to, in the same region the track already lives in. A track cannot leave its region: the pinned Video and Marker bands hold only their own type (ADR 0104), so a cross-region move is refused rather than silently clamped. */
+    toIndex: number;
+    /** 0-based index in the arrangement (users see tracks numbered from 1). */
+    trackIndex?: number | null;
+    /** Track UUID in braces format, e.g. `\{12345678-abcd-...\}`. Required to address a track in the pinned Video or Marker band, which `--track-index` cannot name. */
+    trackUuid?: string | null;
+}
+
+/** Success payload of `track reorder`. */
+export interface TrackReorderResult {
+    /** Full English name of the track's default note language. Present only when `track create --source` built a Sing track, which is the one moment a track's language is decided; changing it afterwards is `track set-language`. */
+    language?: string;
+    /** Which index space `trackIndex` counts in: 'arrangement' (the main track list), 'video', or 'marker'. */
+    region: string;
+    /** The sound source the track was created with. Present only when `track create --source` put one there. */
+    soundSourceName?: string;
+    /** 0-based resting position, in the index space of `region`. */
+    trackIndex: number;
+    /** Display name the track came to rest with. */
+    trackName: string;
+    /** One of: Sing, Instrument, GenericMidi, Audio, Video, Marker. */
+    trackType: string;
+    /** UUID of the placed track, in braces format. For `duplicate` this is the copy's fresh UUID, not the original's. */
+    trackUuid: string;
+}
+
 /** Arguments for `track set`. */
 export interface TrackSetParams {
     /** Palette color hex string, e.g. `#EC4F44`. Must be one of the values returned by `color-palette`. Also affects the default color for new clips on this track. */
     color?: string | null;
     /** Volume gain level: 0.0 and above; 1.0 = unity; above 1.0 = boost. */
     gain?: number | null;
+    /**
+     * Whether the track monitors its live input.
+     *
+     * This was `track set-monitor`, a verb of its own for one boolean. It behaves differently from its neighbours under undo — it lands no entry — but that is ours to handle, not a reason to make the caller learn a second verb for a switch that sits beside mute and solo in the mixer.
+     */
+    monitor?: boolean | null;
     /** Mute the track (true) or unmute (false). When muted the track is silenced but still renders. */
     mute?: boolean | null;
     /** Stereo pan position: -1.0 (full left) to 1.0 (full right); 0.0 = center. */
     pan?: number | null;
     /** Solo the track (true) or unsolo (false). When any track is soloed, all non-soloed tracks are effectively muted. */
     solo?: boolean | null;
-    /** 0-based track index. */
-    trackIndex: number;
+    /** 0-based track index. Addresses the arrangement only — the master bus has no index, so `--track-uuid master` is how you reach it. */
+    trackIndex?: number | null;
+    /**
+     * Track UUID in braces format, e.g. `\{12345678-abcd-...\}`, or the well-known id `master` for the project's master bus.
+     *
+     * The master is a track like any other here — it has no domain of its own (ledger §2.11). It carries only a gain, so `--gain` is the one property it accepts; the rest are refused rather than silently dropped.
+     */
+    trackUuid?: string | null;
 }
 
-/** Arguments for `track set-record`. */
-export interface TrackSetRecordParams {
-    /** Audio input channel index: -1 = off, 0+ = specific channel. Audio tracks only. */
-    inputChannelIndex?: number | null;
-    /** Enable (true) or disable (false) input monitoring - hear the live input during recording. */
-    listen?: boolean | null;
-    /** Custom MIDI channel: -1 = all channels, 0-15 = specific channel. Required when `midi-input-source-type` is `custom`. Note tracks only. */
-    midiInputChannel?: number | null;
-    /** Custom MIDI device name. Required when `midi-input-source-type` is `custom`. Note tracks only. */
-    midiInputDeviceName?: string | null;
-    /** MIDI input source type. One of: `none`, `all`, `computerKeyboard`, `custom`. Note tracks (Sing/Instrument/GenericMidi) only. */
-    midiInputSourceType?: string | null;
-    /** MIDI record mode: `monophonic` or `polyphonic`. Sing tracks only. */
+/** Arguments for `track set-input`. */
+export interface TrackSetInputParams {
+    /** Which audio input to record from, by device channel name, or `none` to record from nothing. Audio tracks only; `device list` reports the available channels. */
+    inputChannel?: string | null;
+    /**
+     * Which MIDI channel to listen on: `1` through `16`, or `all`.
+     *
+     * Numbered the way every MIDI device is numbered. The wire used to carry `-1 = all, 0-15` here and `1-16` for an instrument's output: one concept, two numberings, one of them contradicting the hardware. The translation now lives in the handler.
+     */
+    midiChannel?: string | null;
+    /**
+     * Which MIDI input to record from: a device name, or one of `all` (every device), `none`, or `keyboard` (the computer keyboard).
+     *
+     * Naming a device is enough — there is no separate source-type flag to set, because naming a device is what choosing a custom source means.
+     */
+    midiDevice?: string | null;
+    /**
+     * How to capture a chord played onto a Sing track: `monophonic` trims the overlaps into one vocal part, `polyphonic` splits it into separate parts. Sing tracks only.
+     *
+     * This lives on the input verb because the app puts both entries in the same mixer-strip MIDI input menu.
+     */
     recordMode?: string | null;
     /** 0-based track index. */
     trackIndex: number;
 }
 
-/** Arguments for `track singer-recipe`. */
-export interface TrackSingerRecipeParams {
-    /** 0-based singer index within the track. Defaults to 0 (leader / only singer). For choir tracks, 0 is the leader, 1+ are members. */
-    singerIndex?: number | null;
-    /** 0-based track index. Must point to a Sing track. */
+/** Success payload of `track set-input`. */
+export interface TrackSetInputResult {
+    /** Which audio input the track now records from, named as the device names it. Audio tracks only; absent when the track records from nothing. */
+    inputChannelName?: string;
+    /** Which MIDI input the track now records from. Note tracks only. */
+    midiInput?: {
+        /** Which channel it listens on: '1' through '16', or 'all'. */
+        channel?: string;
+        /** The device name, when `sourceType` is 'custom'. */
+        deviceName?: string;
+        /** Where MIDI comes from. */
+        sourceType?: 'none' | 'all' | 'keyboard' | 'custom';
+    };
+    /** How chords played onto a Sing track are captured. Sing tracks only. */
+    recordMode?: 'monophonic' | 'polyphonic';
+    /** 0-based index of the track. */
     trackIndex: number;
 }
 
-/** Success payload of `track singer-recipe`. */
-export interface TrackSingerRecipeResult {
-    /** True when the singer is a voice blend rather than a vanilla singer. */
-    isVoiceBlend: boolean;
-    /** Synthesis model (router) the singer runs on. */
-    router: {
-        /** Router id. */
-        id: number;
-        /** Whether this is a SingingMamba (version 2) model. */
-        isSingingMamba: boolean;
-        /** Whether seeds blend on timbre only (same as isSingingMamba). */
-        isTimbreOnly: boolean;
-        /** Router name. */
-        name: string;
-        /** Languages the router supports. */
-        supportedLanguages: string[];
-        /** Router version; 2 = SingingMamba. */
-        version: number;
-    };
-    /** One of: unmixed (vanilla), saved, unsaved, changed, invalid. */
-    saveState: string;
-    /** Number of entries in seeds (convenience field). */
-    seedCount: number;
-    /** Seed composition of the blend. */
-    seeds: {
-        /** Seed code. */
-        code: number;
-        /** Seed labels; empty when metadata is unavailable. */
-        labels: string[];
-        /** Whether the seed proportion is locked. */
-        lock: boolean;
-        /** Seed name; 'Unknown Seed' when metadata is unavailable. */
-        name: string;
-        /** Style blend proportion. Non-SingingMamba (version 1) models only. */
-        style?: number;
-        /** Timbre blend proportion. */
-        timbre: number;
-    }[];
-    /** Display name of the singer. */
-    singerName: string;
-    /** Available vocal controls. SingingMamba models only. */
-    vocalControls?: {
-        /** Default value, or null when the control has none. */
-        defaultValue: number | null;
-        /** Vocal control name. */
-        name: string;
-    }[];
+/** Arguments for `track set-language`. */
+export interface TrackSetLanguageParams {
+    /** Default lyric language for notes added later, as a full English name (e.g. `Chinese`). `track get` reports the current value as `defaultLanguage`, and the singer's `supportedLanguages` is the set to choose from. Existing notes keep the language they were written with. */
+    language: string;
+    /** 0-based index in the arrangement. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format. */
+    trackUuid?: string | null;
 }
 
 /** The `track` operations, mirroring the canonical operation tree 1:1. */
 export interface TrackOperations {
+    /**
+     * Create a track of any creatable type, optionally at a given position.
+     *
+     * Requires the `track.write` capability.
+     */
+    create(params: TrackCreateParams, options?: MutatingCallOptions): Promise<TrackCreateResult>;
+
     /**
      * Delete all currently selected tracks and their content.
      *
      * Requires the `track.write` capability.
      */
     delete(options?: MutatingCallOptions): Promise<void>;
+
+    /**
+     * Duplicate a track with its clips and FX chain, next to the original.
+     *
+     * Requires the `track.write` capability.
+     */
+    duplicate(params: TrackDuplicateParams, options?: MutatingCallOptions): Promise<TrackDuplicateResult>;
 
     /**
      * Get comprehensive metadata for one track by index.
@@ -2389,25 +5025,32 @@ export interface TrackOperations {
     rename(params: TrackRenameParams, options?: MutatingCallOptions): Promise<void>;
 
     /**
-     * Update a track's mixer and display properties (color, pan, gain, mute, solo).
+     * Move a track to another position within its own region.
+     *
+     * Requires the `track.write` capability.
+     */
+    reorder(params: TrackReorderParams, options?: MutatingCallOptions): Promise<TrackReorderResult>;
+
+    /**
+     * Update a track's mixer and display properties (color, pan, gain, mute, solo, monitor).
      *
      * Requires the `track.write` capability.
      */
     set(params: TrackSetParams, options?: MutatingCallOptions): Promise<void>;
 
     /**
-     * Set per-track record-input configuration (listen, audio channel, MIDI source, record mode).
+     * Set what a track records from: its input channel, its MIDI input, and how chords are captured.
      *
      * Requires the `track.write` capability.
      */
-    setRecord(params: TrackSetRecordParams, options?: MutatingCallOptions): Promise<void>;
+    setInput(params: TrackSetInputParams, options?: MutatingCallOptions): Promise<TrackSetInputResult>;
 
     /**
-     * Read the voice-blend (singer recipe) for a singer on a Sing track.
+     * Set the default lyric language for new notes on a Sing track.
      *
-     * Requires the `track.read` capability.
+     * Requires the `track.write` capability.
      */
-    singerRecipe(params: TrackSingerRecipeParams, options?: CallOptions): Promise<TrackSingerRecipeResult>;
+    setLanguage(params: TrackSetLanguageParams, options?: MutatingCallOptions): Promise<void>;
 }
 
 // --- transport -------------------------------------------------------------
@@ -2674,7 +5317,7 @@ export interface UiOperations {
     showWindow(params: UiShowWindowParams, options?: MutatingCallOptions): Promise<void>;
 
     /**
-     * Studio chrome (spec 1501 §4): a panel, tool window, or arrangement-view row
+     * Studio chrome: a panel, tool window, or arrangement-view row
      * was shown or hidden. `changes` carries the affected citizens as their paths
      * in the `ui get` payload — `panels.mixer`, `specialTracks.chord`,
      * `windows.video-monitor` — plus `sharedPanelSlot.selected` when MV and V2M
@@ -2877,428 +5520,180 @@ export interface VocalparamOperations {
 
 /** Arguments for `voice collect`. */
 export interface VoiceCollectParams {
-    /** Community voice ID to collect. */
-    id: number;
+    /** **Required.** Which community voice to collect, by display name or ref. A name matching more than one voice is an error listing the candidates. */
+    source: string;
 }
 
 /** Success payload of `voice collect`. */
 export interface VoiceCollectResult {
     /** Always true on success. */
     collected: boolean;
-    /** ID of the collected voice, echoed back. */
+    /** Its numeric id. */
     id: number;
-    /** Display name of the collected voice. */
+    /** Its display name. */
     name: string;
+    /** Ref of the collected voice. */
+    ref: string;
 }
 
-/** Arguments for `voice community-list`. */
-export interface VoiceCommunityListParams {
-    /** If set, only return voices already in your collection. */
+/** Arguments for `voice community`. */
+export interface VoiceCommunityParams {
+    /** Only return voices you have already collected. */
     isMyCollection?: boolean | null;
-    /** Filter by name substring (case-insensitive). */
+    /** Filter by name substring, case-insensitive. */
     keyword?: string | null;
-    /** Filter by language (natural language name, e.g. `Chinese`). */
+    /** Filter by language, as a full English name such as `Japanese`. */
     language?: string | null;
-    /** Page number (0-based). Each page contains up to 30 voices. */
-    page: number;
-    /** Filter by tag names (case-insensitive, OR logic). */
+    /** Which page to fetch, 0-based. Each page holds up to 30 voices. Defaults to the first page. */
+    page?: number | null;
+    /** Filter by tag name, case-insensitive, matching any of the given tags. */
     tags?: string[] | null;
 }
 
-/** Success payload of `voice community-list`. */
-export interface VoiceCommunityListResult {
-    /** Number of voices returned. Absent on fetch timeout. */
+/** Success payload of `voice community`. */
+export interface VoiceCommunityResult {
+    /** How many voices this page returned. */
     count?: number;
     /** Set to 'Timeout' when the catalog fetch timed out; retry the command. Absent on normal success. */
     error?: string;
-    /** The requested page number, echoed back (0-based). */
+    /** The requested page, echoed back. 0-based. */
     page: number;
-    /** Community voices on this page (up to 30). Empty on fetch timeout. */
+    /** Voices per page; always 30. */
+    pageSize?: number;
+    /** How many pages match the current filters. Reported with the page itself so a caller never has to issue a second query, with the filters repeated exactly, to find out. */
+    totalPages?: number;
+    /** The voices on this page. Empty when the catalog fetch timed out. */
     voices: {
-        /** Which source the voice comes from. Empty for official, '#' for custom, '\@' for community, the account's blended-voice library id for a blend. Ids repeat across sources, so (group, id) identifies a voice and id alone does not. */
-        group: string;
-        /** Numeric voice ID. */
+        /** Numeric community voice id. */
         id: number;
-        /** Whether the voice is in your collection. Community voices only. */
-        isCollected?: boolean;
+        /** Whether this voice is already in your library. An uncollected voice must be collected before it will load onto a track. */
+        isCollected: boolean;
+        /** Id of its default vocal synth model. */
+        modelId?: number;
+        /** Name of that model. */
+        modelName?: string;
         /** Display name. */
         name: string;
         /** Full English name of the voice's native language. */
-        nativeLanguage: string;
-        /** ID of the default router. */
-        routerId: number;
-        /** Name of the default router. */
-        routerName: string;
-        /** Full English names of languages the default router can sing. */
-        supportedLanguages: string[];
+        nativeLanguage?: string;
+        /** Ref for this voice, in the form `singer:\@\<id\>`. Accepted by `voice collect --source` and, once collected, by `sound-source load --source`. */
+        ref: string;
+        /** Full English names of the languages it can sing on its default model. */
+        supportedLanguages?: string[];
         /** Tag names attached to the voice. */
         tags: string[];
     }[];
 }
 
-/** Arguments for `voice community-pages`. */
-export interface VoiceCommunityPagesParams {
-    /** If set, count only voices in your collection. */
-    isMyCollection?: boolean | null;
-    /** Filter by name substring (case-insensitive). */
+/** Arguments for `voice seeds`. */
+export interface VoiceSeedsParams {
+    /**
+     * Include seeds from community voices you have collected.
+     *
+     * The app's "+" popup leaves these out, but that is a listing choice rather than a capability rule: starting from a community voice and blending onto it reaches the same state, so the surface allows them and says so.
+     */
+    community?: boolean | null;
+    /** Filter by name substring, case-insensitive. */
     keyword?: string | null;
-    /** Filter by language (natural language name, e.g. `Chinese`). */
-    language?: string | null;
-    /** Filter by tag names (case-insensitive, OR logic). */
-    tags?: string[] | null;
+    /** Only list seeds a blend on this model can use, by model name or generation. Omit to list every seed you own. */
+    model?: string | null;
 }
 
-/** Success payload of `voice community-pages`. */
-export interface VoiceCommunityPagesResult {
-    /** Voices per page; always 30. */
-    pageSize: number;
-    /** Total number of pages matching the filters. */
-    totalPages: number;
-}
-
-/** Arguments for `voice list`. */
-export interface VoiceListParams {
-    /** Filter instruments by category name (e.g. `Piano`). Ignored for voices, choirs, and ensembles. */
-    category?: string | null;
-    /** Filter by name substring (case-insensitive). */
-    keyword?: string | null;
-    /** Filter voices by language (natural language name, e.g. `Chinese`). Ignored for instruments and ensembles. */
-    language?: string | null;
-    /** Filter by tag names (case-insensitive, OR logic). Example: `--tags Pop --tags Female`. */
-    tags?: string[] | null;
-    /** Type of sound source to query. One of: `voice`, `choir`, `instrument`, `ensemble`. */
-    type: string;
-}
-
-/** Success payload of `voice list`. */
-export interface VoiceListResult {
-    /** Number of sound sources returned. */
+/** Success payload of `voice seeds`. */
+export interface VoiceSeedsResult {
+    /** How many seeds were returned. */
     count: number;
-    /** Matching sound sources. Item shape depends on the queried type; only id, name, and tags are common to all types. */
-    soundSources: {
-        /** Category name. Instrument only. */
-        category?: string;
-        /** Category ID. Instrument only. */
-        categoryId?: number;
-        /** Which source the voice, choir or ensemble comes from. Empty for official, '#' for custom, '\@' for community, the account's blended-voice library id for a blend. Ids repeat across sources, so (group, id) identifies one and id alone does not. */
-        group?: string;
-        /** Numeric sound source ID. */
-        id: number;
-        /** Whether the voice is in your collection. Community voices only. */
-        isCollected?: boolean;
-        /** Number of members. Choir and ensemble only. */
-        memberCount?: number;
+    /** The voice seeds available for blending. */
+    seeds: {
+        /** The seed's code, which is what a recipe stores. */
+        code: number;
+        /** Descriptive labels the library attaches to the seed. */
+        labels?: string[];
         /** Display name. */
         name: string;
-        /** Full English name of the native language. Voice and choir only. */
-        nativeLanguage?: string;
-        /** ID of the default router. Voice only. */
-        routerId?: number;
-        /** Name of the default router. Voice only. */
-        routerName?: string;
-        /** Full English names of supported languages. Voice and choir only. */
-        supportedLanguages?: string[];
-        /** Tag names attached to the source. */
-        tags: string[];
-        /** Instrument engine type. Instrument only. */
-        type?: string;
+        /** Which library the seed comes from. */
+        origin?: 'premade' | 'cloned' | 'community';
+        /** Ref for this seed, accepted by `blend add --seed`. */
+        ref: string;
     }[];
-    /** The queried type, echoed back: 'voice', 'choir', 'instrument', or 'ensemble'. */
-    type: string;
 }
 
-/** Arguments for `voice load`. */
-export interface VoiceLoadParams {
-    /** Which source it comes from: empty string for official, `#` for custom, `\@` for community, the account's blended-voice library id for a blend. Ids repeat across sources, so this is needed to disambiguate. Required for singer, choir, ensemble. */
-    group?: string | null;
-    /** Sound source ID. */
-    id: number;
-    /** Router ID for singers. Omit to use the source's default router. */
-    routerId?: number | null;
-    /** Kind of voice to load: `singer`, `choir`, `instrument`, or `ensemble`. */
-    soundSourceType: string;
-    /** 0-based track index (users see tracks starting from 1). */
-    trackIndex: number;
-}
-
-/** Success payload of `voice load`. */
-export interface VoiceLoadResult {
-    /** ID of the loaded sound source. */
-    id: number;
-    /** Display name of the loaded sound source. */
-    name: string;
-    /** The loaded type, echoed back: 'singer', 'choir', 'instrument', or 'ensemble'. */
-    soundSourceType: string;
-    /** 0-based index of the track the source was loaded onto. */
-    trackIndex: number;
-}
-
-/** Arguments for `voice mix-create`. */
-export interface VoiceMixCreateParams {
-    /** Avatar id. Omit to take the library's first avatar. */
-    head?: number | null;
-    /** Language the voice sings, as a full English name (e.g. `Chinese`). Omit to take the first one the seeds and router allow. */
+/** Arguments for `voice synth-models`. */
+export interface VoiceSynthModelsParams {
+    /** Only list models that can sing this language, as a full English name. */
     language?: string | null;
-    /** Display name for the new blended voice. */
-    name: string;
-    /** Synthesis router id. Omit to let Studio pick one that carries every seed — which is what you want unless you have a specific reason. */
-    routerId?: number | null;
-    /** JSON array of seed entries, e.g. `[\{"code":1001,"timbre":0.6,"style":0.4\}]`. Each entry needs a `code`; `timbre`, `style`, and `lock` default to 1, 1, and true. Every seed must be owned and blendable. */
-    seeds: {
-        /** The seed voice's code. Must name a seed this account owns and that is allowed in a blend. */
-        code: number;
-        /** Whether the seed's weights are locked against redistribution when other weights change. Defaults to true. */
-        lock?: boolean | null;
-        /** Style weight, defaulting to 1. */
-        style?: number | null;
-        /** Timbre weight, defaulting to 1. */
-        timbre?: number | null;
-    }[];
-    /** Tag names to attach, for filtering in `voice list`. */
-    tags?: string[] | null;
 }
 
-/** Success payload of `voice mix-create`. */
-export interface VoiceMixCreateResult {
-    /** Group identifier of the blended-voice library the voice belongs to. */
-    group: string;
-    /** Avatar id, or -1 when the voice falls back to its first seed's avatar. */
-    head: number;
-    /** The blended voice's library id. Pass it to `voice mix-edit --id`, or to `voice load --id` with group '#'. */
-    id: number;
-    /** Full English name of the voice's language. */
-    language: string;
-    /** Display name. */
-    name: string;
-    /** Id of the synthesis router the blend sings through. */
-    routerId: number;
-    /** Name of that router. */
-    routerName: string;
-    /** The recipe, one entry per seed voice. */
-    seeds: {
-        /** The seed voice's code. */
-        code: number;
-        /** Whether the seed's weights are locked against redistribution when other weights change. */
-        lock: boolean;
-        /** The seed voice's name. Omitted when the seed is no longer in the local registry. */
-        name?: string;
-        /** The seed's style weight in the blend. */
-        style: number;
-        /** The seed's timbre weight in the blend. */
-        timbre: number;
-    }[];
-    /** Tag names attached to the voice. */
-    tags: string[];
-}
-
-/** Arguments for `voice mix-delete`. */
-export interface VoiceMixDeleteParams {
-    /** Library id of the blended voice to delete, from `voice mix-create` or `voice list`. */
-    id: number;
-}
-
-/** Success payload of `voice mix-delete`. */
-export interface VoiceMixDeleteResult {
-    /** Library id of the deleted blended voice. */
-    id: number;
-    /** The library's ceiling, so a caller can tell whether a `voice mix-create` will now fit. */
-    maximum: number;
-    /** Display name it had when it was deleted. */
-    name: string;
-    /** How many blended voices the library still holds. */
-    remaining: number;
-}
-
-/** Arguments for `voice mix-edit`. */
-export interface VoiceMixEditParams {
-    /** New avatar id. */
-    head?: number | null;
-    /** Library id of the blended voice to edit, from `voice mix-create` or `voice list`. */
-    id: number;
-    /** New language, as a full English name. */
-    language?: string | null;
-    /** New display name. */
-    name?: string | null;
-    /** New synthesis router id. Omit and Studio re-picks one only when a new recipe leaves the current router unable to carry every seed. */
-    routerId?: number | null;
-    /** Replacement recipe, same shape as `voice mix-create --seeds`. Replaces the whole recipe rather than merging into it. */
-    seeds?: {
-        /** The seed voice's code. Must name a seed this account owns and that is allowed in a blend. */
-        code: number;
-        /** Whether the seed's weights are locked against redistribution when other weights change. Defaults to true. */
-        lock?: boolean | null;
-        /** Style weight, defaulting to 1. */
-        style?: number | null;
-        /** Timbre weight, defaulting to 1. */
-        timbre?: number | null;
-    }[] | null;
-    /** Replacement tag list. Replaces the existing tags rather than adding to them; pass no values to clear them. */
-    tags?: string[] | null;
-}
-
-/** Success payload of `voice mix-edit`. */
-export interface VoiceMixEditResult {
-    /** Group identifier of the blended-voice library the voice belongs to. */
-    group: string;
-    /** Avatar id, or -1 when the voice falls back to its first seed's avatar. */
-    head: number;
-    /** The blended voice's library id. Pass it to `voice mix-edit --id`, or to `voice load --id` with group '#'. */
-    id: number;
-    /** Full English name of the voice's language. */
-    language: string;
-    /** Display name. */
-    name: string;
-    /** Id of the synthesis router the blend sings through. */
-    routerId: number;
-    /** Name of that router. */
-    routerName: string;
-    /** The recipe, one entry per seed voice. */
-    seeds: {
-        /** The seed voice's code. */
-        code: number;
-        /** Whether the seed's weights are locked against redistribution when other weights change. */
-        lock: boolean;
-        /** The seed voice's name. Omitted when the seed is no longer in the local registry. */
-        name?: string;
-        /** The seed's style weight in the blend. */
-        style: number;
-        /** The seed's timbre weight in the blend. */
-        timbre: number;
-    }[];
-    /** Tag names attached to the voice. */
-    tags: string[];
-}
-
-/** Arguments for `voice tags`. */
-export interface VoiceTagsParams {
-    /** Sound source type to return filters for. `voice` returns supported languages; `instrument` returns categories. */
-    type: string;
-}
-
-/** Success payload of `voice tags`. */
-export interface VoiceTagsResult {
-    /** Instrument categories. Present for type 'instrument'. */
-    categories?: {
-        /** Numeric category ID. */
+/** Success payload of `voice synth-models`. */
+export interface VoiceSynthModelsResult {
+    /** How many models were returned. */
+    count: number;
+    /** Every vocal synth model the account can reach. Model names are published by the backend and supersede one another, so this roster is read at runtime and never compiled in. */
+    models: {
+        /** Model id. */
         id: number;
-        /** Category name, e.g. 'Piano'. */
+        /** Model name, as the track panel's Vocal Synth Model control shows it. */
         name: string;
+        /** Full English names of the languages this model can sing. */
+        supportedLanguages: string[];
+        /** True when the model carries no Style axis, so a blend on it has Timbre only. */
+        timbreOnly?: boolean;
+        /** How many of your voices offer this model. */
+        voiceCount: number;
     }[];
-    /** Supported synthesis languages. Present for type 'voice'. */
-    languages?: {
-        /** Short language code, e.g. 'zh'. */
-        code: string;
-        /** Full English language name, e.g. 'Chinese'. */
-        name: string;
-    }[];
-    /** Explanation of why tagGroups is empty. Present for type 'voice'. */
-    note?: string;
-    /** Always empty: tag groups require a network fetch and are not cached. Present for type 'voice'. */
-    tagGroups?: unknown[];
-}
-
-/** Arguments for `voice unload`. */
-export interface VoiceUnloadParams {
-    /** 0-based track index of the Sing or Instrument track to unload. */
-    trackIndex: number;
-}
-
-/** Success payload of `voice unload`. */
-export interface VoiceUnloadResult {
-    /** New track type; always 'GenericMidi'. */
-    newType: string;
-    /** 0-based index of the converted track. */
-    trackIndex: number;
-    /** Track name before the conversion. */
-    trackName: string;
 }
 
 /** The `voice` operations, mirroring the canonical operation tree 1:1. */
 export interface VoiceOperations {
     /**
-     * Collect (favorite) a community voice so it can be loaded onto tracks.
+     * Collect a community voice into your library so it can be loaded.
      *
      * Requires the `voice.write` capability.
      */
     collect(params: VoiceCollectParams, options?: MutatingCallOptions): Promise<VoiceCollectResult>;
 
     /**
-     * Browse a page of the community voice catalog.
+     * Browse the community voice catalog, one page at a time.
      *
      * Requires the `voice.read` capability.
      */
-    communityList(params: VoiceCommunityListParams, options?: CallOptions): Promise<VoiceCommunityListResult>;
+    community(params: VoiceCommunityParams, options?: CallOptions): Promise<VoiceCommunityResult>;
 
     /**
-     * Return the total page count for the community voice catalog.
+     * List the voice seeds you can put into a blend.
      *
      * Requires the `voice.read` capability.
      */
-    communityPages(params: VoiceCommunityPagesParams, options?: CallOptions): Promise<VoiceCommunityPagesResult>;
+    seeds(params: VoiceSeedsParams, options?: CallOptions): Promise<VoiceSeedsResult>;
 
     /**
-     * List locally installed sound sources (voices, choirs, instruments, ensembles).
+     * List the vocal synth models, with the languages each sings and how many voices offer it.
      *
      * Requires the `voice.read` capability.
      */
-    list(params: VoiceListParams, options?: CallOptions): Promise<VoiceListResult>;
-
-    /**
-     * Load a sound source onto a track.
-     *
-     * Requires the `voice.write` capability.
-     */
-    load(params: VoiceLoadParams, options?: MutatingCallOptions): Promise<VoiceLoadResult>;
-
-    /**
-     * Create a blended voice in the library from a recipe of seed voices.
-     *
-     * Requires the `voice.write` capability.
-     */
-    mixCreate(params: VoiceMixCreateParams, options?: MutatingCallOptions): Promise<VoiceMixCreateResult>;
-
-    /**
-     * Delete a blended voice from the library.
-     *
-     * Requires the `voice.write` capability.
-     */
-    mixDelete(params: VoiceMixDeleteParams, options?: MutatingCallOptions): Promise<VoiceMixDeleteResult>;
-
-    /**
-     * Edit an existing blended voice: its recipe, name, tags, language, or avatar.
-     *
-     * Requires the `voice.write` capability.
-     */
-    mixEdit(params: VoiceMixEditParams, options?: MutatingCallOptions): Promise<VoiceMixEditResult>;
-
-    /**
-     * Return the tag taxonomy / filter options for sound sources.
-     *
-     * Requires the `voice.read` capability.
-     */
-    tags(params: VoiceTagsParams, options?: CallOptions): Promise<VoiceTagsResult>;
-
-    /**
-     * Unload a sound source from a track, downgrading it to Generic MIDI.
-     *
-     * Requires the `voice.write` capability.
-     */
-    unload(params: VoiceUnloadParams, options?: MutatingCallOptions): Promise<VoiceUnloadResult>;
+    synthModels(params: VoiceSynthModelsParams, options?: CallOptions): Promise<VoiceSynthModelsResult>;
 }
 
 /** Every published operation, grouped by domain. A connection's client implements this; the runtime builds it from `OPERATIONS`. */
 export interface PublicBindings {
+    readonly blend: BlendOperations;
     readonly caret: CaretOperations;
+    readonly choir: ChoirOperations;
     readonly clip: ClipOperations;
     readonly convert: ConvertOperations;
     readonly device: DeviceOperations;
     readonly editor: EditorOperations;
+    readonly ensemble: EnsembleOperations;
+    readonly export: ExportOperations;
     readonly history: HistoryOperations;
+    readonly import: ImportOperations;
+    readonly instrument: InstrumentOperations;
     readonly job: JobOperations;
     readonly note: NoteOperations;
     readonly project: ProjectOperations;
     readonly recording: RecordingOperations;
     readonly selection: SelectionOperations;
+    readonly soundSource: SoundSourceOperations;
     readonly tempo: TempoOperations;
     readonly timesig: TimesigOperations;
     readonly track: TrackOperations;
@@ -3310,16 +5705,43 @@ export interface PublicBindings {
 
 /** Every operation in this artifact, sorted by path. */
 export const OPERATIONS = [
+    { path: 'blend add', domain: 'blend', method: 'add', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'blend create', domain: 'blend', method: 'create', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'blend delete', domain: 'blend', method: 'delete', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'blend get', domain: 'blend', method: 'get', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'blend list', domain: 'blend', method: 'list', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'blend remove', domain: 'blend', method: 'remove', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'blend reorder', domain: 'blend', method: 'reorder', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'blend set', domain: 'blend', method: 'set', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'caret get', domain: 'caret', method: 'get', capability: 'caret.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'caret set', domain: 'caret', method: 'set', capability: 'caret.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'choir add', domain: 'choir', method: 'add', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'choir disable', domain: 'choir', method: 'disable', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'choir enable', domain: 'choir', method: 'enable', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'choir get', domain: 'choir', method: 'get', capability: 'soundsource.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'choir remove', domain: 'choir', method: 'remove', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'choir reorder', domain: 'choir', method: 'reorder', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'choir set', domain: 'choir', method: 'set', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'clip audio-content', domain: 'clip', method: 'audioContent', capability: 'clip.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip consolidate', domain: 'clip', method: 'consolidate', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'clip create', domain: 'clip', method: 'create', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip delete', domain: 'clip', method: 'delete', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip detach-audio', domain: 'clip', method: 'detachAudio', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip duplicate', domain: 'clip', method: 'duplicate', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'clip get', domain: 'clip', method: 'get', capability: 'clip.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'clip list', domain: 'clip', method: 'list', capability: 'clip.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'clip lyrics', domain: 'clip', method: 'lyrics', capability: 'clip.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'clip move-edges', domain: 'clip', method: 'moveEdges', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip move', domain: 'clip', method: 'move', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'clip note-content', domain: 'clip', method: 'noteContent', capability: 'clip.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip reattach-audio', domain: 'clip', method: 'reattachAudio', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'clip replace-content', domain: 'clip', method: 'replaceContent', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'clip resize', domain: 'clip', method: 'resize', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip set', domain: 'clip', method: 'set', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip set-enabled', domain: 'clip', method: 'setEnabled', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip set-fades', domain: 'clip', method: 'setFades', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip set-gain', domain: 'clip', method: 'setGain', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip set-muted', domain: 'clip', method: 'setMuted', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip split', domain: 'clip', method: 'split', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'convert editor-to-global', domain: 'convert', method: 'editorToGlobal', capability: 'convert.editor-to-global', ungated: true, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'convert global-to-editor', domain: 'convert', method: 'globalToEditor', capability: 'convert.global-to-editor', ungated: true, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'convert measure-to-tick', domain: 'convert', method: 'measureToTick', capability: 'convert.measure-to-tick', ungated: true, mutating: false, fingerprintPrecondition: false, takesParams: true },
@@ -3333,9 +5755,27 @@ export const OPERATIONS = [
     { path: 'editor open', domain: 'editor', method: 'open', capability: 'editor.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
     { path: 'editor status', domain: 'editor', method: 'status', capability: 'editor.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
     { path: 'editor tick-range', domain: 'editor', method: 'tickRange', capability: 'editor.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'ensemble add', domain: 'ensemble', method: 'add', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'ensemble disable', domain: 'ensemble', method: 'disable', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'ensemble enable', domain: 'ensemble', method: 'enable', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'ensemble get', domain: 'ensemble', method: 'get', capability: 'soundsource.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'ensemble remove', domain: 'ensemble', method: 'remove', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'ensemble reorder', domain: 'ensemble', method: 'reorder', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'ensemble set', domain: 'ensemble', method: 'set', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'export audio', domain: 'export', method: 'audio', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'export fcpxml', domain: 'export', method: 'fcpxml', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'export lrc', domain: 'export', method: 'lrc', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'export midi', domain: 'export', method: 'midi', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'export song-template', domain: 'export', method: 'songTemplate', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'membership' },
+    { path: 'export video', domain: 'export', method: 'video', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'export vocal-sample', domain: 'export', method: 'vocalSample', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'membership' },
     { path: 'history list', domain: 'history', method: 'list', capability: 'history.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'history redo', domain: 'history', method: 'redo', capability: 'history.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
     { path: 'history undo', domain: 'history', method: 'undo', capability: 'history.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'import file', domain: 'import', method: 'file', capability: 'import.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'instrument disable', domain: 'instrument', method: 'disable', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'instrument enable', domain: 'instrument', method: 'enable', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'instrument set', domain: 'instrument', method: 'set', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'job cancel', domain: 'job', method: 'cancel', capability: 'job.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'job discard-result', domain: 'job', method: 'discardResult', capability: 'job.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'job get', domain: 'job', method: 'get', capability: 'job.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
@@ -3345,9 +5785,12 @@ export const OPERATIONS = [
     { path: 'job wait', domain: 'job', method: 'wait', capability: 'job.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'note add', domain: 'note', method: 'add', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
     { path: 'note delete', domain: 'note', method: 'delete', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'note get', domain: 'note', method: 'get', capability: 'note.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'note move', domain: 'note', method: 'move', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
     { path: 'note resize', domain: 'note', method: 'resize', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'note set-articulation', domain: 'note', method: 'setArticulation', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
     { path: 'note set-lyric', domain: 'note', method: 'setLyric', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'note split', domain: 'note', method: 'split', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
     { path: 'project collect-save', domain: 'project', method: 'collectSave', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'project dirty', domain: 'project', method: 'dirty', capability: 'project.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
     { path: 'project info', domain: 'project', method: 'info', capability: 'project.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
@@ -3357,23 +5800,40 @@ export const OPERATIONS = [
     { path: 'project recent-clear', domain: 'project', method: 'recentClear', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
     { path: 'project save', domain: 'project', method: 'save', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
     { path: 'project save-as', domain: 'project', method: 'saveAs', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'project save-template', domain: 'project', method: 'saveTemplate', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'membership' },
     { path: 'project synthesis-status', domain: 'project', method: 'synthesisStatus', capability: 'project.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
     { path: 'recording start', domain: 'recording', method: 'start', capability: 'recording.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
     { path: 'recording stop', domain: 'recording', method: 'stop', capability: 'recording.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
     { path: 'selection get', domain: 'selection', method: 'get', capability: 'selection.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'selection set', domain: 'selection', method: 'set', capability: 'selection.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'sound-source get', domain: 'sound-source', method: 'get', capability: 'soundsource.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'sound-source list', domain: 'sound-source', method: 'list', capability: 'soundsource.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'sound-source load', domain: 'sound-source', method: 'load', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'sound-source set', domain: 'sound-source', method: 'set', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'sound-source tags', domain: 'sound-source', method: 'tags', capability: 'soundsource.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'sound-source unload', domain: 'sound-source', method: 'unload', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'tempo analyze', domain: 'tempo', method: 'analyze', capability: 'tempo.analyze', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'tempo apply-beat-analysis', domain: 'tempo', method: 'applyBeatAnalysis', capability: 'tempo.applyV2', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'tempo get', domain: 'tempo', method: 'get', capability: 'tempo.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
-    { path: 'tempo set', domain: 'tempo', method: 'set', capability: 'tempo.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'tempo points', domain: 'tempo', method: 'points', capability: 'tempo.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'tempo remove-point', domain: 'tempo', method: 'removePoint', capability: 'tempo.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'tempo set', domain: 'tempo', method: 'set', capability: 'tempo.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'tempo set-display-range', domain: 'tempo', method: 'setDisplayRange', capability: 'tempo.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'tempo set-point', domain: 'tempo', method: 'setPoint', capability: 'tempo.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
     { path: 'timesig get', domain: 'timesig', method: 'get', capability: 'timesig.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
-    { path: 'timesig set', domain: 'timesig', method: 'set', capability: 'timesig.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'timesig list', domain: 'timesig', method: 'list', capability: 'timesig.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'timesig remove-at', domain: 'timesig', method: 'removeAt', capability: 'timesig.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'timesig set', domain: 'timesig', method: 'set', capability: 'timesig.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'timesig set-at', domain: 'timesig', method: 'setAt', capability: 'timesig.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'track create', domain: 'track', method: 'create', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'track delete', domain: 'track', method: 'delete', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'track duplicate', domain: 'track', method: 'duplicate', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'track get', domain: 'track', method: 'get', capability: 'track.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'track list', domain: 'track', method: 'list', capability: 'track.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
     { path: 'track rename', domain: 'track', method: 'rename', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'track reorder', domain: 'track', method: 'reorder', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'track set', domain: 'track', method: 'set', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'track set-record', domain: 'track', method: 'setRecord', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'track singer-recipe', domain: 'track', method: 'singerRecipe', capability: 'track.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'track set-input', domain: 'track', method: 'setInput', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'track set-language', domain: 'track', method: 'setLanguage', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'transport loop', domain: 'transport', method: 'loop', capability: 'transport.state', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
     { path: 'transport metronome', domain: 'transport', method: 'metronome', capability: 'transport.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'transport play', domain: 'transport', method: 'play', capability: 'transport.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
@@ -3393,15 +5853,9 @@ export const OPERATIONS = [
     { path: 'vocalparam read', domain: 'vocalparam', method: 'read', capability: 'vocalparam.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true, bulkEncoding: 'base64' },
     { path: 'vocalparam write', domain: 'vocalparam', method: 'write', capability: 'vocalparam.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true, bulkEncoding: 'base64' },
     { path: 'voice collect', domain: 'voice', method: 'collect', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'voice community-list', domain: 'voice', method: 'communityList', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'voice community-pages', domain: 'voice', method: 'communityPages', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'voice list', domain: 'voice', method: 'list', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'voice load', domain: 'voice', method: 'load', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'voice mix-create', domain: 'voice', method: 'mixCreate', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'voice mix-delete', domain: 'voice', method: 'mixDelete', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'voice mix-edit', domain: 'voice', method: 'mixEdit', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'voice tags', domain: 'voice', method: 'tags', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'voice unload', domain: 'voice', method: 'unload', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'voice community', domain: 'voice', method: 'community', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'voice seeds', domain: 'voice', method: 'seeds', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'voice synth-models', domain: 'voice', method: 'synthModels', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
 ] as const satisfies readonly OperationDescriptor[];
 
 /** Every observable channel in this artifact, sorted by channel. The runtime builds one subscription per row and guards it with the row's capability; a channel absent from this table is not observable from this artifact at all. */
@@ -3412,16 +5866,43 @@ export const NOTIFICATION_CHANNELS = [
 
 /** The token each operation requires, for the pre-wire guard: a call the session's grant cannot reach fails locally with the identical typed `CAPABILITY_DENIED` the host would have returned. Ungated operations are absent — they need no token. */
 export const REQUIRED_TOKENS = {
+    'blend add': 'voice.write',
+    'blend create': 'voice.write',
+    'blend delete': 'voice.write',
+    'blend get': 'voice.read',
+    'blend list': 'voice.read',
+    'blend remove': 'voice.write',
+    'blend reorder': 'voice.write',
+    'blend set': 'voice.write',
     'caret get': 'caret.read',
     'caret set': 'caret.write',
+    'choir add': 'soundsource.write',
+    'choir disable': 'soundsource.write',
+    'choir enable': 'soundsource.write',
+    'choir get': 'soundsource.read',
+    'choir remove': 'soundsource.write',
+    'choir reorder': 'soundsource.write',
+    'choir set': 'soundsource.write',
     'clip audio-content': 'clip.read',
+    'clip consolidate': 'clip.write',
     'clip create': 'clip.write',
+    'clip delete': 'clip.write',
+    'clip detach-audio': 'clip.write',
+    'clip duplicate': 'clip.write',
     'clip get': 'clip.read',
     'clip list': 'clip.read',
     'clip lyrics': 'clip.read',
-    'clip move-edges': 'clip.write',
+    'clip move': 'clip.write',
     'clip note-content': 'clip.read',
+    'clip reattach-audio': 'clip.write',
     'clip replace-content': 'clip.write',
+    'clip resize': 'clip.write',
+    'clip set': 'clip.write',
+    'clip set-enabled': 'clip.write',
+    'clip set-fades': 'clip.write',
+    'clip set-gain': 'clip.write',
+    'clip set-muted': 'clip.write',
+    'clip split': 'clip.write',
     'device current': 'device.read',
     'device list': 'device.read',
     'device set-audio': 'device.write',
@@ -3429,9 +5910,27 @@ export const REQUIRED_TOKENS = {
     'editor open': 'editor.write',
     'editor status': 'editor.read',
     'editor tick-range': 'editor.read',
+    'ensemble add': 'soundsource.write',
+    'ensemble disable': 'soundsource.write',
+    'ensemble enable': 'soundsource.write',
+    'ensemble get': 'soundsource.read',
+    'ensemble remove': 'soundsource.write',
+    'ensemble reorder': 'soundsource.write',
+    'ensemble set': 'soundsource.write',
+    'export audio': 'export.invoke',
+    'export fcpxml': 'export.invoke',
+    'export lrc': 'export.invoke',
+    'export midi': 'export.invoke',
+    'export song-template': 'export.invoke',
+    'export video': 'export.invoke',
+    'export vocal-sample': 'export.invoke',
     'history list': 'history.read',
     'history redo': 'history.control',
     'history undo': 'history.control',
+    'import file': 'import.invoke',
+    'instrument disable': 'soundsource.write',
+    'instrument enable': 'soundsource.write',
+    'instrument set': 'soundsource.write',
     'job cancel': 'job.control',
     'job discard-result': 'job.control',
     'job get': 'job.read',
@@ -3441,9 +5940,12 @@ export const REQUIRED_TOKENS = {
     'job wait': 'job.read',
     'note add': 'note.write',
     'note delete': 'note.write',
+    'note get': 'note.read',
     'note move': 'note.write',
     'note resize': 'note.write',
+    'note set-articulation': 'note.write',
     'note set-lyric': 'note.write',
+    'note split': 'note.write',
     'project collect-save': 'project.lifecycle',
     'project dirty': 'project.read',
     'project info': 'project.read',
@@ -3453,23 +5955,40 @@ export const REQUIRED_TOKENS = {
     'project recent-clear': 'project.lifecycle',
     'project save': 'project.lifecycle',
     'project save-as': 'project.lifecycle',
-    'project save-template': 'project.lifecycle',
     'project synthesis-status': 'project.read',
     'recording start': 'recording.control',
     'recording stop': 'recording.control',
     'selection get': 'selection.read',
     'selection set': 'selection.write',
+    'sound-source get': 'soundsource.read',
+    'sound-source list': 'soundsource.read',
+    'sound-source load': 'soundsource.write',
+    'sound-source set': 'soundsource.write',
+    'sound-source tags': 'soundsource.read',
+    'sound-source unload': 'soundsource.write',
+    'tempo analyze': 'tempo.analyze',
+    'tempo apply-beat-analysis': 'tempo.applyV2',
     'tempo get': 'tempo.read',
+    'tempo points': 'tempo.read',
+    'tempo remove-point': 'tempo.write',
     'tempo set': 'tempo.write',
+    'tempo set-display-range': 'tempo.write',
+    'tempo set-point': 'tempo.write',
     'timesig get': 'timesig.read',
+    'timesig list': 'timesig.read',
+    'timesig remove-at': 'timesig.write',
     'timesig set': 'timesig.write',
+    'timesig set-at': 'timesig.write',
+    'track create': 'track.write',
     'track delete': 'track.write',
+    'track duplicate': 'track.write',
     'track get': 'track.read',
     'track list': 'track.read',
     'track rename': 'track.write',
+    'track reorder': 'track.write',
     'track set': 'track.write',
-    'track set-record': 'track.write',
-    'track singer-recipe': 'track.read',
+    'track set-input': 'track.write',
+    'track set-language': 'track.write',
     'transport loop': 'transport.state',
     'transport metronome': 'transport.control',
     'transport play': 'transport.control',
@@ -3489,26 +6008,20 @@ export const REQUIRED_TOKENS = {
     'vocalparam read': 'vocalparam.read',
     'vocalparam write': 'vocalparam.write',
     'voice collect': 'voice.write',
-    'voice community-list': 'voice.read',
-    'voice community-pages': 'voice.read',
-    'voice list': 'voice.read',
-    'voice load': 'voice.write',
-    'voice mix-create': 'voice.write',
-    'voice mix-delete': 'voice.write',
-    'voice mix-edit': 'voice.write',
-    'voice tags': 'voice.read',
-    'voice unload': 'voice.write',
+    'voice community': 'voice.read',
+    'voice seeds': 'voice.read',
+    'voice synth-models': 'voice.read',
 } as const satisfies Readonly<Record<string, CapabilityToken>>;
 
-/** Each published Capability Profile's transitive token expansion (ADR 0093 §1): a named bundle a grant is measured against, rather than a set the consumer hand-lists. A profile is met when every token here is granted. The expansion is the registry's and moves with it, and a profile the registry still marks draft may yet be re-cut (ADR 0093 §6). */
+/** Each published Surface Profile's transitive token expansion (ADR 0093 §6): the ceiling Studio grants a consumer class within, so a grant can be measured against it rather than token by token. The ceiling is met when every token here is granted. It is not a capability to request — it carries no version and it moves with the registry, and one the registry still marks draft may yet be re-cut. */
 export const PROFILES = {
-    'surface.cli-mcp.v1': ['caret.read', 'caret.write', 'chord.read', 'chord.write', 'clip.read', 'clip.write', 'device.read', 'device.write', 'editor.read', 'editor.write', 'export.invoke', 'fx.read', 'fx.write', 'generative.add-layer', 'generative.enhance', 'generative.retake', 'generative.seed-audio', 'generative.song', 'generative.sound-effects', 'generative.stem-split', 'generative.text2sample', 'generative.vocal2midi', 'generative.voice-change', 'history.control', 'history.read', 'import.invoke', 'job.control', 'job.read', 'lyric.read', 'lyric.write', 'note.read', 'note.write', 'project.lifecycle', 'project.read', 'recording.control', 'selection.read', 'selection.write', 'tempo.analyze', 'tempo.applyV2', 'tempo.read', 'tempo.write', 'timesig.read', 'timesig.write', 'track.read', 'track.write', 'transport.control', 'transport.state', 'ui.control', 'ui.state', 'vocalparam.read', 'vocalparam.write', 'voice.read', 'voice.write'],
-    'surface.extension-sdk.v1': ['session.handshake', 'session.ping', 'session.shutdown', 'workflow.dev', 'workflow.ui'],
+    'surface.cli-mcp': ['caret.read', 'caret.write', 'chord.read', 'chord.write', 'clip.read', 'clip.write', 'device.read', 'device.write', 'editor.read', 'editor.write', 'export.invoke', 'fx.read', 'fx.write', 'generative.add-layer', 'generative.enhance', 'generative.retake', 'generative.seed-audio', 'generative.song', 'generative.sound-effects', 'generative.stem-split', 'generative.text2sample', 'generative.vocal2midi', 'generative.voice-change', 'history.control', 'history.read', 'import.invoke', 'job.control', 'job.read', 'lyric.read', 'lyric.write', 'note.read', 'note.write', 'project.lifecycle', 'project.read', 'recording.control', 'selection.read', 'selection.write', 'soundsource.read', 'soundsource.write', 'tempo.analyze', 'tempo.applyV2', 'tempo.read', 'tempo.write', 'timesig.read', 'timesig.write', 'track.read', 'track.write', 'transport.control', 'transport.state', 'ui.control', 'ui.state', 'vocalparam.read', 'vocalparam.write', 'voice.read', 'voice.write'],
+    'surface.extension-sdk': ['session.handshake', 'session.ping', 'session.shutdown', 'workflow.dev', 'workflow.ui'],
 } as const satisfies Readonly<Record<string, readonly CapabilityToken[]>>;
 
-/** The profiles above the registry still marks draft (ADR 0093 §6): their expansions are exempt from the freeze snapshot, so one may be re-cut in a later release. Depending on a draft profile by name is allowed and this is how to know you are. */
+/** The ceilings above the registry still marks draft (ADR 0093 §6): one may be re-cut in a later release, so what it covers today is not a promise. Nothing here is frozen — a ceiling holds no promise to freeze — and this roster is how to know which ones say so. Measuring a grant against a draft ceiling by name is allowed. */
 export const DRAFT_PROFILES = [
-    'surface.extension-sdk.v1',
+    'surface.extension-sdk',
 ] as const satisfies readonly (keyof typeof PROFILES)[];
 
 /** Capability-gated arguments fields (ADR 0071): setting one on a session that did not negotiate its capability is refused before the wire. A field gated by a capability this artifact may not name is absent from the type above entirely, so it can never appear here. */

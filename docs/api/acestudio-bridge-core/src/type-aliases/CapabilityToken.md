@@ -42,6 +42,8 @@ type CapabilityToken =
   | "session.handshake"
   | "session.ping"
   | "session.shutdown"
+  | "soundsource.read"
+  | "soundsource.write"
   | "tempo.analyze"
   | "tempo.applyV2"
   | "tempo.read"

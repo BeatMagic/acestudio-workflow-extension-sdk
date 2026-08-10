@@ -10,7 +10,7 @@ The `voice` operations, mirroring the canonical operation tree 1:1.
 collect(params, options?): Promise<VoiceCollectResult>;
 ```
 
-Collect (favorite) a community voice so it can be loaded onto tracks.
+Collect a community voice into your library so it can be loaded.
 
 Requires the `voice.write` capability.
 
@@ -30,13 +30,13 @@ Requires the `voice.write` capability.
 
 ***
 
-### communityList()
+### community()
 
 ```ts
-communityList(params, options?): Promise<VoiceCommunityListResult>;
+community(params, options?): Promise<VoiceCommunityResult>;
 ```
 
-Browse a page of the community voice catalog.
+Browse the community voice catalog, one page at a time.
 
 Requires the `voice.read` capability.
 
@@ -44,7 +44,7 @@ Requires the `voice.read` capability.
 
 ##### params
 
-[`VoiceCommunityListParams`](VoiceCommunityListParams.md)
+[`VoiceCommunityParams`](VoiceCommunityParams.md)
 
 ##### options?
 
@@ -52,17 +52,17 @@ Requires the `voice.read` capability.
 
 #### Returns
 
-`Promise`\<[`VoiceCommunityListResult`](VoiceCommunityListResult.md)\>
+`Promise`\<[`VoiceCommunityResult`](VoiceCommunityResult.md)\>
 
 ***
 
-### communityPages()
+### seeds()
 
 ```ts
-communityPages(params, options?): Promise<VoiceCommunityPagesResult>;
+seeds(params, options?): Promise<VoiceSeedsResult>;
 ```
 
-Return the total page count for the community voice catalog.
+List the voice seeds you can put into a blend.
 
 Requires the `voice.read` capability.
 
@@ -70,7 +70,7 @@ Requires the `voice.read` capability.
 
 ##### params
 
-[`VoiceCommunityPagesParams`](VoiceCommunityPagesParams.md)
+[`VoiceSeedsParams`](VoiceSeedsParams.md)
 
 ##### options?
 
@@ -78,17 +78,17 @@ Requires the `voice.read` capability.
 
 #### Returns
 
-`Promise`\<[`VoiceCommunityPagesResult`](VoiceCommunityPagesResult.md)\>
+`Promise`\<[`VoiceSeedsResult`](VoiceSeedsResult.md)\>
 
 ***
 
-### list()
+### synthModels()
 
 ```ts
-list(params, options?): Promise<VoiceListResult>;
+synthModels(params, options?): Promise<VoiceSynthModelsResult>;
 ```
 
-List locally installed sound sources (voices, choirs, instruments, ensembles).
+List the vocal synth models, with the languages each sings and how many voices offer it.
 
 Requires the `voice.read` capability.
 
@@ -96,7 +96,7 @@ Requires the `voice.read` capability.
 
 ##### params
 
-[`VoiceListParams`](VoiceListParams.md)
+[`VoiceSynthModelsParams`](VoiceSynthModelsParams.md)
 
 ##### options?
 
@@ -104,160 +104,4 @@ Requires the `voice.read` capability.
 
 #### Returns
 
-`Promise`\<[`VoiceListResult`](VoiceListResult.md)\>
-
-***
-
-### load()
-
-```ts
-load(params, options?): Promise<VoiceLoadResult>;
-```
-
-Load a sound source onto a track.
-
-Requires the `voice.write` capability.
-
-#### Parameters
-
-##### params
-
-[`VoiceLoadParams`](VoiceLoadParams.md)
-
-##### options?
-
-[`MutatingCallOptions`](MutatingCallOptions.md)
-
-#### Returns
-
-`Promise`\<[`VoiceLoadResult`](VoiceLoadResult.md)\>
-
-***
-
-### mixCreate()
-
-```ts
-mixCreate(params, options?): Promise<VoiceMixCreateResult>;
-```
-
-Create a blended voice in the library from a recipe of seed voices.
-
-Requires the `voice.write` capability.
-
-#### Parameters
-
-##### params
-
-[`VoiceMixCreateParams`](VoiceMixCreateParams.md)
-
-##### options?
-
-[`MutatingCallOptions`](MutatingCallOptions.md)
-
-#### Returns
-
-`Promise`\<[`VoiceMixCreateResult`](VoiceMixCreateResult.md)\>
-
-***
-
-### mixDelete()
-
-```ts
-mixDelete(params, options?): Promise<VoiceMixDeleteResult>;
-```
-
-Delete a blended voice from the library.
-
-Requires the `voice.write` capability.
-
-#### Parameters
-
-##### params
-
-[`VoiceMixDeleteParams`](VoiceMixDeleteParams.md)
-
-##### options?
-
-[`MutatingCallOptions`](MutatingCallOptions.md)
-
-#### Returns
-
-`Promise`\<[`VoiceMixDeleteResult`](VoiceMixDeleteResult.md)\>
-
-***
-
-### mixEdit()
-
-```ts
-mixEdit(params, options?): Promise<VoiceMixEditResult>;
-```
-
-Edit an existing blended voice: its recipe, name, tags, language, or avatar.
-
-Requires the `voice.write` capability.
-
-#### Parameters
-
-##### params
-
-[`VoiceMixEditParams`](VoiceMixEditParams.md)
-
-##### options?
-
-[`MutatingCallOptions`](MutatingCallOptions.md)
-
-#### Returns
-
-`Promise`\<[`VoiceMixEditResult`](VoiceMixEditResult.md)\>
-
-***
-
-### tags()
-
-```ts
-tags(params, options?): Promise<VoiceTagsResult>;
-```
-
-Return the tag taxonomy / filter options for sound sources.
-
-Requires the `voice.read` capability.
-
-#### Parameters
-
-##### params
-
-[`VoiceTagsParams`](VoiceTagsParams.md)
-
-##### options?
-
-[`CallOptions`](CallOptions.md)
-
-#### Returns
-
-`Promise`\<[`VoiceTagsResult`](VoiceTagsResult.md)\>
-
-***
-
-### unload()
-
-```ts
-unload(params, options?): Promise<VoiceUnloadResult>;
-```
-
-Unload a sound source from a track, downgrading it to Generic MIDI.
-
-Requires the `voice.write` capability.
-
-#### Parameters
-
-##### params
-
-[`VoiceUnloadParams`](VoiceUnloadParams.md)
-
-##### options?
-
-[`MutatingCallOptions`](MutatingCallOptions.md)
-
-#### Returns
-
-`Promise`\<[`VoiceUnloadResult`](VoiceUnloadResult.md)\>
+`Promise`\<[`VoiceSynthModelsResult`](VoiceSynthModelsResult.md)\>

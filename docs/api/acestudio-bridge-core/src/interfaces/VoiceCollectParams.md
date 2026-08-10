@@ -4,10 +4,10 @@ Arguments for `voice collect`.
 
 ## Properties
 
-### id
+### source
 
 ```ts
-id: number;
+source: string;
 ```
 
-Community voice ID to collect.
+**Required.** Which community voice to collect, by display name or ref. A name matching more than one voice is an error listing the candidates.

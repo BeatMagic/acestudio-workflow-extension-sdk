@@ -20,7 +20,7 @@ Always true on success.
 id: number;
 ```
 
-ID of the collected voice, echoed back.
+Its numeric id.
 
 ***
 
@@ -30,4 +30,14 @@ ID of the collected voice, echoed back.
 name: string;
 ```
 
-Display name of the collected voice.
+Its display name.
+
+***
+
+### ref
+
+```ts
+ref: string;
+```
+
+Ref of the collected voice.

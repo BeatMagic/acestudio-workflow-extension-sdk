@@ -10,7 +10,7 @@ Arguments for `convert measure-to-tick`.
 barPos: number;
 ```
 
-Bar/measure number (0-based, must be \>= 0).
+The same bar counted from 0, as the project stores it and as `tick-to-measure` reports it. This is the spelling the wire takes. `acestudio-cli` and MCP also accept `bar` counting from 1, folding it to this before the call; pass one or the other, never both.
 
 ***
 
@@ -20,7 +20,7 @@ Bar/measure number (0-based, must be \>= 0).
 optional beatPos?: number | null;
 ```
 
-Beat position within the bar (0-based). Required when `--consider-beat-mode` is true.
+The same beat counted from 0, as `tick-to-measure` reports it. This is the spelling the wire takes; `beat` counting from 1 is accepted by `acestudio-cli` and MCP. Pass one or the other, never both.
 
 ***
 
@@ -30,7 +30,7 @@ Beat position within the bar (0-based). Required when `--consider-beat-mode` is 
 considerBeatMode: boolean;
 ```
 
-When true, use beat-level precision; `--beat-pos` is then required.
+When true, use beat-level precision; a beat is then required.
 
 ***
 

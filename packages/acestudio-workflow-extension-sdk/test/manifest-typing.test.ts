@@ -38,7 +38,7 @@ const ASKS_NOTHING = { ...READS_CLIPS, capabilities: [] } as const satisfies Ext
 /** A manifest asking by profile name rather than token by token. */
 const BY_PROFILE = {
   ...READS_CLIPS,
-  capabilities: ["surface.extension-sdk.v1"],
+  capabilities: ["surface.extension-sdk"],
 } as const satisfies ExtensionManifest;
 
 /**
@@ -152,7 +152,7 @@ describe("the manifest-scoped client", () => {
   });
 
   it("expands a profile name to the tokens it stands for", () => {
-    expectTypeOf<CapabilityTokensOf<"surface.extension-sdk.v1">>().toEqualTypeOf<
+    expectTypeOf<CapabilityTokensOf<"surface.extension-sdk">>().toEqualTypeOf<
       "session.handshake" | "session.ping" | "session.shutdown" | "workflow.dev" | "workflow.ui"
     >();
     expectTypeOf<CapabilityTokensOf<"clip.read">>().toEqualTypeOf<"clip.read">();

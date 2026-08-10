@@ -218,34 +218,6 @@ Requires the `project.lifecycle` capability.
 
 ***
 
-### saveTemplate()
-
-```ts
-saveTemplate(params, options?): Promise<ProjectSaveTemplateResult>;
-```
-
-Export the project as a reusable song template (.acet).
-
-Requires the `project.lifecycle` capability.
-
-Pay-gated on `membership`: an account that does not satisfy it is refused, without a purchase prompt.
-
-#### Parameters
-
-##### params
-
-[`ProjectSaveTemplateParams`](ProjectSaveTemplateParams.md)
-
-##### options?
-
-[`MutatingCallOptions`](MutatingCallOptions.md)
-
-#### Returns
-
-`Promise`\<[`ProjectSaveTemplateResult`](ProjectSaveTemplateResult.md)\>
-
-***
-
 ### synthesisStatus()
 
 ```ts

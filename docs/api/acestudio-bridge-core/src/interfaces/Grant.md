@@ -61,8 +61,8 @@ token by token.
 ##### profileOrTokens
 
   \| readonly [`CapabilityToken`](../type-aliases/CapabilityToken.md)[]
-  \| `"surface.cli-mcp.v1"`
-  \| `"surface.extension-sdk.v1"`
+  \| `"surface.cli-mcp"`
+  \| `"surface.extension-sdk"`
 
 #### Returns
 

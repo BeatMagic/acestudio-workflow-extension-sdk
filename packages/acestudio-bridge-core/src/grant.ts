@@ -201,7 +201,7 @@ function resolveTokens(profileOrTokens: ProfileName | readonly CapabilityToken[]
       code: "UNKNOWN_CAPABILITY",
       message: `no published Capability Profile is named '${String(profileOrTokens)}'`,
       details: { requested: String(profileOrTokens), published: Object.keys(PROFILES) },
-      hint: "profile names are versioned — check the suffix, e.g. surface.extension-sdk.v1",
+      hint: "a Surface Profile carries no version — check the name against the published list, e.g. surface.extension-sdk",
     });
   }
   return profile;

@@ -65,10 +65,10 @@ describe("connect", () => {
   it("carries the requested capability names into the handshake", async () => {
     const { connection, host } = await connectToScriptedHost(
       {},
-      { requestedCapabilities: ["surface.extension-sdk.v1", "track.read"] },
+      { requestedCapabilities: ["surface.extension-sdk", "track.read"] },
     );
 
-    expect((await host.handshake).requestedCapabilities).toEqual(["surface.extension-sdk.v1", "track.read"]);
+    expect((await host.handshake).requestedCapabilities).toEqual(["surface.extension-sdk", "track.read"]);
     connection.close();
   });
 

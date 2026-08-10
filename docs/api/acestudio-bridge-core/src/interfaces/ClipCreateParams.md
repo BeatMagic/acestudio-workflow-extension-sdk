@@ -22,6 +22,8 @@ optional name?: string | null;
 
 Optional custom name. Omit to let ACE Studio auto-generate a name.
 
+For a `marker` clip this is the marker's annotation text, and omitting it is normal — the timeline then shows its "double click to write text" prompt.
+
 ***
 
 ### notes?
@@ -41,7 +43,19 @@ optional notes?:
 
 Initial notes, as a JSON array in clip-local ticks — the same shape `note add` takes. Omit to create an empty clip.
 
+Rejected for `marker` and `chord`, which hold no notes.
+
 Example: `--notes '[\{"pos":0,"dur":480,"pitch":60,"lyric":"la"\}]'`
+
+***
+
+### onOccupied?
+
+```ts
+optional onOccupied?: string | null;
+```
+
+What to do when the new clip's span is already occupied on the target track: `fail` (default), or `cover` to trim the clips in the way.
 
 ***
 
@@ -55,13 +69,15 @@ Clip start position. Ticks (`3840t`), clock time (`1.5s`, `1:23.5`), or musical 
 
 ***
 
-### trackIndex
+### trackIndex?
 
 ```ts
-trackIndex: number;
+optional trackIndex?: number | null;
 ```
 
 Target track index (0-based). Empty tracks are automatically converted to the appropriate type.
+
+Required for `sing`, `instrument` and `genericMidi`. **Rejected** for `marker` and `chord`: there is exactly one track of each, so the clip type already names the target, and passing an index would look like a choice you do not have.
 
 ***
 
@@ -71,4 +87,6 @@ Target track index (0-based). Empty tracks are automatically converted to the ap
 type: string;
 ```
 
-Clip type: `sing`, `instrument`, or `genericMidi` — the same spellings `clipType` is reported in. Matched case-insensitively.
+Clip type: `sing`, `instrument`, `genericMidi`, `marker`, or `chord` — the same spellings `clipType` is reported in. Matched case-insensitively.
+
+`audio` and `video` are not creatable here: a media clip's duration comes from the file, not from `--dur`. Use `import file` instead.

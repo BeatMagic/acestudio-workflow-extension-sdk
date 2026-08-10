@@ -14,7 +14,7 @@ parse — the shape is theirs, so the order of keys here is the order
 ### capabilities
 
 ```ts
-readonly capabilities: readonly RequestedCapability[];
+readonly capabilities: readonly CapabilityToken[];
 ```
 
 Capability tokens and/or Capability Profiles to request. The install dialog

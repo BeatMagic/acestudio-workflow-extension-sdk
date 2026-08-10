@@ -6,8 +6,6 @@
 
 import type { CapabilityToken } from '@timedomain/acestudio-bridge-core';
 import type { Grant } from '@timedomain/acestudio-bridge-core';
-import type { ProfileName } from '@timedomain/acestudio-bridge-core';
-import type { ProfileTokens } from '@timedomain/acestudio-bridge-core';
 import type { Readable } from 'node:stream';
 import type { ScopedBindings } from '@timedomain/acestudio-bridge-core';
 import { Transport } from '@timedomain/acestudio-bridge-core';
@@ -29,9 +27,6 @@ export type CallHandler<C, K extends keyof C> = (...args: ParamsOf<C, K>) => Res
 
 // @public
 export type CallsOf<P extends UiProtocol> = P["calls"] extends UiCalls ? P["calls"] : Record<never, never>;
-
-// @public
-export type CapabilityTokensOf<C extends RequestedCapability> = C extends ProfileName ? ProfileTokens<C> : C extends CapabilityToken ? C : never;
 
 // @public
 export const DEBUG_ENV = "ACE_EXTENSION_SDK_DEBUG";
@@ -159,7 +154,7 @@ export const MANIFEST_FILENAME = "manifest.json";
 export const MANIFEST_VERSION = 1;
 
 // @public
-export type ManifestClient<M extends ExtensionManifest> = ScopedBindings<CapabilityTokensOf<M["capabilities"][number]>>;
+export type ManifestClient<M extends ExtensionManifest> = ScopedBindings<M["capabilities"][number]>;
 
 // @public
 export interface ManifestJson extends ExtensionManifest {
@@ -171,7 +166,7 @@ export interface ManifestJson extends ExtensionManifest {
 export type ParamsOf<C, K extends keyof C> = C[K] extends (params: never) => unknown ? Parameters<C[K]> : never;
 
 // @public
-export type RequestedCapability = CapabilityToken | ProfileName;
+export type RequestedCapability = CapabilityToken;
 
 // @public
 export type ResultOf<C, K extends keyof C> = C[K] extends (params: never) => infer R ? Awaited<R> : never;

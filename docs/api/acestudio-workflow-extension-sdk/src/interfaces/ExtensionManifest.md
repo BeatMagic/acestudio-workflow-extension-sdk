@@ -15,7 +15,7 @@ the bundle. [serializeManifest](../functions/serializeManifest.md) stamps both.
 ### capabilities
 
 ```ts
-readonly capabilities: readonly RequestedCapability[];
+readonly capabilities: readonly CapabilityToken[];
 ```
 
 Capability tokens and/or Capability Profiles to request. The install dialog

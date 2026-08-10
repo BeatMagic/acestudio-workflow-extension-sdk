@@ -19,7 +19,7 @@
  * @packageDocumentation
  */
 
-export type { CapabilityTokensOf, ManifestClient } from "./client.js";
+export type { ManifestClient } from "./client.js";
 export type { ExtensionContext } from "./context.js";
 export { defineExtension } from "./define-extension.js";
 export type {

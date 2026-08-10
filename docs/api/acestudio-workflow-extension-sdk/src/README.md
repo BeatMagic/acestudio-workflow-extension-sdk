@@ -45,7 +45,6 @@ channel ships from the `./page` subpath.
 - [AssetSource](type-aliases/AssetSource.md)
 - [CallHandler](type-aliases/CallHandler.md)
 - [CallsOf](type-aliases/CallsOf.md)
-- [CapabilityTokensOf](type-aliases/CapabilityTokensOf.md)
 - [DriveLetter](type-aliases/DriveLetter.md)
 - [EmitArgs](type-aliases/EmitArgs.md)
 - [EnumeratedFilesystemScope](type-aliases/EnumeratedFilesystemScope.md)

@@ -204,7 +204,7 @@ function resolveTokens(profileOrTokens: ProfileName | readonly CapabilityToken[]
   if (profile === undefined) {
     throw new BridgeError({
       code: "UNKNOWN_CAPABILITY",
-      message: `no published Capability Profile is named '${String(profileOrTokens)}'`,
+      message: `no published Surface Profile is named '${String(profileOrTokens)}'`,
       details: { requested: String(profileOrTokens), published: Object.keys(PROFILES) },
       hint: "a Surface Profile carries no version — check the name against the published list, e.g. surface.extension-sdk",
     });

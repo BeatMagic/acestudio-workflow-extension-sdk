@@ -488,9 +488,17 @@ describe("the grant", () => {
 
     // Typed as a profile name, so reaching this needs a cast — it is the shape of
     // the failure when the call comes from untyped JavaScript.
-    expect(() => connection.grant.missing("surface.made-up" as never)).toThrowError(
-      /no published Capability Profile/,
-    );
+    let thrown: unknown;
+    try {
+      connection.grant.missing("surface.made-up" as never);
+    } catch (error: unknown) {
+      thrown = error;
+    }
+
+    // The code is the contract; the message beside it is not. Pinning the prose
+    // would fail this on a harmless rewording — as it just did, when the message
+    // stopped calling a ceiling a "Capability Profile".
+    expect(isCode(thrown, "UNKNOWN_CAPABILITY")).toBe(true);
     connection.close();
   });
 });

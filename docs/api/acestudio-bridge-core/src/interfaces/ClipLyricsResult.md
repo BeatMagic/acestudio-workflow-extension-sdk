@@ -42,6 +42,16 @@ Coordinate system of begin/end: `project` or `clip-local`.
 
 ***
 
+### fingerprint
+
+```ts
+fingerprint: Fingerprint;
+```
+
+Content fingerprint of the whole clip's note content (ADR 0088 §5) -- lyrics are note content, read at sentence granularity. Carry it back as `--if-match` on a `note` write or `clip replace-content` to fail STALE_WRITE instead of overwriting edits made since this read. Always covers the full clip, even when the read was range-filtered.
+
+***
+
 ### sentenceCount
 
 ```ts

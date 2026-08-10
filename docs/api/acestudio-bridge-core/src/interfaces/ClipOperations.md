@@ -30,6 +30,32 @@ Requires the `clip.read` capability.
 
 ***
 
+### consolidate()
+
+```ts
+consolidate(params, options?): Promise<ClipConsolidateResult>;
+```
+
+Collapse a time range into one clip per track, carrying notes and expression.
+
+Requires the `clip.write` capability.
+
+#### Parameters
+
+##### params
+
+[`ClipConsolidateParams`](ClipConsolidateParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`ClipConsolidateResult`](ClipConsolidateResult.md)\>
+
+***
+
 ### create()
 
 ```ts
@@ -53,6 +79,84 @@ Requires the `clip.write` capability.
 #### Returns
 
 `Promise`\<[`ClipCreateResult`](ClipCreateResult.md)\>
+
+***
+
+### delete()
+
+```ts
+delete(params, options?): Promise<ClipDeleteResult>;
+```
+
+Delete one or more clips by UUID.
+
+Requires the `clip.write` capability.
+
+#### Parameters
+
+##### params
+
+[`ClipDeleteParams`](ClipDeleteParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`ClipDeleteResult`](ClipDeleteResult.md)\>
+
+***
+
+### detachAudio()
+
+```ts
+detachAudio(params, options?): Promise<ClipDetachAudioResult>;
+```
+
+Extract video clips' embedded audio onto a new audio track.
+
+Requires the `clip.write` capability.
+
+#### Parameters
+
+##### params
+
+[`ClipDetachAudioParams`](ClipDetachAudioParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`ClipDetachAudioResult`](ClipDetachAudioResult.md)\>
+
+***
+
+### duplicate()
+
+```ts
+duplicate(params, options?): Promise<ClipDuplicateResult>;
+```
+
+Copy a clip to another position or track.
+
+Requires the `clip.write` capability.
+
+#### Parameters
+
+##### params
+
+[`ClipDuplicateParams`](ClipDuplicateParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`ClipDuplicateResult`](ClipDuplicateResult.md)\>
 
 ***
 
@@ -134,13 +238,13 @@ Requires the `clip.read` capability.
 
 ***
 
-### moveEdges()
+### move()
 
 ```ts
-moveEdges(params, options?): Promise<ClipMoveEdgesResult>;
+move(params, options?): Promise<ClipMoveResult>;
 ```
 
-Move the left or right edge of a clip by UUID (diff or absolute).
+Move a clip along the timeline, keeping its length and trim.
 
 Requires the `clip.write` capability.
 
@@ -148,7 +252,7 @@ Requires the `clip.write` capability.
 
 ##### params
 
-[`ClipMoveEdgesParams`](ClipMoveEdgesParams.md)
+[`ClipMoveParams`](ClipMoveParams.md)
 
 ##### options?
 
@@ -156,7 +260,7 @@ Requires the `clip.write` capability.
 
 #### Returns
 
-`Promise`\<[`ClipMoveEdgesResult`](ClipMoveEdgesResult.md)\>
+`Promise`\<[`ClipMoveResult`](ClipMoveResult.md)\>
 
 ***
 
@@ -186,6 +290,32 @@ Requires the `clip.read` capability.
 
 ***
 
+### reattachAudio()
+
+```ts
+reattachAudio(params, options?): Promise<ClipReattachAudioResult>;
+```
+
+Restore video clips' embedded audio, leaving any extracted track.
+
+Requires the `clip.write` capability.
+
+#### Parameters
+
+##### params
+
+[`ClipReattachAudioParams`](ClipReattachAudioParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`ClipReattachAudioResult`](ClipReattachAudioResult.md)\>
+
+***
+
 ### replaceContent()
 
 ```ts
@@ -209,3 +339,185 @@ Requires the `clip.write` capability.
 #### Returns
 
 `Promise`\<[`ClipReplaceContentResult`](ClipReplaceContentResult.md)\>
+
+***
+
+### resize()
+
+```ts
+resize(params, options?): Promise<ClipResizeResult>;
+```
+
+Change a clip's start, length, or how far into its source it starts.
+
+Requires the `clip.write` capability.
+
+#### Parameters
+
+##### params
+
+[`ClipResizeParams`](ClipResizeParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`ClipResizeResult`](ClipResizeResult.md)\>
+
+***
+
+### set()
+
+```ts
+set(params, options?): Promise<ClipSetResult>;
+```
+
+Rename a clip or change its color.
+
+Requires the `clip.write` capability.
+
+#### Parameters
+
+##### params
+
+[`ClipSetParams`](ClipSetParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`ClipSetResult`](ClipSetResult.md)\>
+
+***
+
+### setEnabled()
+
+```ts
+setEnabled(params, options?): Promise<ClipSetEnabledResult>;
+```
+
+Enable or disable clips, silencing them without deleting them.
+
+Requires the `clip.write` capability.
+
+#### Parameters
+
+##### params
+
+[`ClipSetEnabledParams`](ClipSetEnabledParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`ClipSetEnabledResult`](ClipSetEnabledResult.md)\>
+
+***
+
+### setFades()
+
+```ts
+setFades(params, options?): Promise<ClipSetFadesResult>;
+```
+
+Set a clip's fade in/out, or a crossfade between two adjacent clips.
+
+Requires the `clip.write` capability.
+
+#### Parameters
+
+##### params
+
+[`ClipSetFadesParams`](ClipSetFadesParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`ClipSetFadesResult`](ClipSetFadesResult.md)\>
+
+***
+
+### setGain()
+
+```ts
+setGain(params, options?): Promise<ClipSetGainResult>;
+```
+
+Set the gain of an Audio or Video clip, in decibels.
+
+Requires the `clip.write` capability.
+
+#### Parameters
+
+##### params
+
+[`ClipSetGainParams`](ClipSetGainParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`ClipSetGainResult`](ClipSetGainResult.md)\>
+
+***
+
+### setMuted()
+
+```ts
+setMuted(params, options?): Promise<ClipSetMutedResult>;
+```
+
+Mute or unmute a video clip's embedded audio.
+
+Requires the `clip.write` capability.
+
+#### Parameters
+
+##### params
+
+[`ClipSetMutedParams`](ClipSetMutedParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`ClipSetMutedResult`](ClipSetMutedResult.md)\>
+
+***
+
+### split()
+
+```ts
+split(params, options?): Promise<ClipSplitResult>;
+```
+
+Split a clip into two at a position inside it.
+
+Requires the `clip.write` capability.
+
+#### Parameters
+
+##### params
+
+[`ClipSplitParams`](ClipSplitParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`ClipSplitResult`](ClipSplitResult.md)\>

@@ -2,6 +2,78 @@
 
 ```ts
 const OPERATIONS: readonly [{
+  capability: "voice.write";
+  domain: "blend";
+  fingerprintPrecondition: false;
+  method: "add";
+  mutating: true;
+  path: "blend add";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "voice.write";
+  domain: "blend";
+  fingerprintPrecondition: false;
+  method: "create";
+  mutating: true;
+  path: "blend create";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "voice.write";
+  domain: "blend";
+  fingerprintPrecondition: false;
+  method: "delete";
+  mutating: true;
+  path: "blend delete";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "voice.read";
+  domain: "blend";
+  fingerprintPrecondition: false;
+  method: "get";
+  mutating: false;
+  path: "blend get";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "voice.read";
+  domain: "blend";
+  fingerprintPrecondition: false;
+  method: "list";
+  mutating: false;
+  path: "blend list";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "voice.write";
+  domain: "blend";
+  fingerprintPrecondition: false;
+  method: "remove";
+  mutating: true;
+  path: "blend remove";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "voice.write";
+  domain: "blend";
+  fingerprintPrecondition: false;
+  method: "reorder";
+  mutating: true;
+  path: "blend reorder";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "voice.write";
+  domain: "blend";
+  fingerprintPrecondition: false;
+  method: "set";
+  mutating: true;
+  path: "blend set";
+  takesParams: true;
+  ungated: false;
+}, {
   capability: "caret.read";
   domain: "caret";
   fingerprintPrecondition: false;
@@ -20,6 +92,69 @@ const OPERATIONS: readonly [{
   takesParams: true;
   ungated: false;
 }, {
+  capability: "soundsource.write";
+  domain: "choir";
+  fingerprintPrecondition: false;
+  method: "add";
+  mutating: true;
+  path: "choir add";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "soundsource.write";
+  domain: "choir";
+  fingerprintPrecondition: false;
+  method: "disable";
+  mutating: true;
+  path: "choir disable";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "soundsource.write";
+  domain: "choir";
+  fingerprintPrecondition: false;
+  method: "enable";
+  mutating: true;
+  path: "choir enable";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "soundsource.read";
+  domain: "choir";
+  fingerprintPrecondition: false;
+  method: "get";
+  mutating: false;
+  path: "choir get";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "soundsource.write";
+  domain: "choir";
+  fingerprintPrecondition: false;
+  method: "remove";
+  mutating: true;
+  path: "choir remove";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "soundsource.write";
+  domain: "choir";
+  fingerprintPrecondition: false;
+  method: "reorder";
+  mutating: true;
+  path: "choir reorder";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "soundsource.write";
+  domain: "choir";
+  fingerprintPrecondition: false;
+  method: "set";
+  mutating: true;
+  path: "choir set";
+  takesParams: true;
+  ungated: false;
+}, {
   capability: "clip.read";
   domain: "clip";
   fingerprintPrecondition: false;
@@ -32,9 +167,45 @@ const OPERATIONS: readonly [{
   capability: "clip.write";
   domain: "clip";
   fingerprintPrecondition: false;
+  method: "consolidate";
+  mutating: true;
+  path: "clip consolidate";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "clip.write";
+  domain: "clip";
+  fingerprintPrecondition: false;
   method: "create";
   mutating: true;
   path: "clip create";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "clip.write";
+  domain: "clip";
+  fingerprintPrecondition: false;
+  method: "delete";
+  mutating: true;
+  path: "clip delete";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "clip.write";
+  domain: "clip";
+  fingerprintPrecondition: false;
+  method: "detachAudio";
+  mutating: true;
+  path: "clip detach-audio";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "clip.write";
+  domain: "clip";
+  fingerprintPrecondition: false;
+  method: "duplicate";
+  mutating: true;
+  path: "clip duplicate";
   takesParams: true;
   ungated: false;
 }, {
@@ -68,9 +239,9 @@ const OPERATIONS: readonly [{
   capability: "clip.write";
   domain: "clip";
   fingerprintPrecondition: false;
-  method: "moveEdges";
+  method: "move";
   mutating: true;
-  path: "clip move-edges";
+  path: "clip move";
   takesParams: true;
   ungated: false;
 }, {
@@ -85,10 +256,82 @@ const OPERATIONS: readonly [{
 }, {
   capability: "clip.write";
   domain: "clip";
+  fingerprintPrecondition: false;
+  method: "reattachAudio";
+  mutating: true;
+  path: "clip reattach-audio";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "clip.write";
+  domain: "clip";
   fingerprintPrecondition: true;
   method: "replaceContent";
   mutating: true;
   path: "clip replace-content";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "clip.write";
+  domain: "clip";
+  fingerprintPrecondition: false;
+  method: "resize";
+  mutating: true;
+  path: "clip resize";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "clip.write";
+  domain: "clip";
+  fingerprintPrecondition: false;
+  method: "set";
+  mutating: true;
+  path: "clip set";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "clip.write";
+  domain: "clip";
+  fingerprintPrecondition: false;
+  method: "setEnabled";
+  mutating: true;
+  path: "clip set-enabled";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "clip.write";
+  domain: "clip";
+  fingerprintPrecondition: false;
+  method: "setFades";
+  mutating: true;
+  path: "clip set-fades";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "clip.write";
+  domain: "clip";
+  fingerprintPrecondition: false;
+  method: "setGain";
+  mutating: true;
+  path: "clip set-gain";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "clip.write";
+  domain: "clip";
+  fingerprintPrecondition: false;
+  method: "setMuted";
+  mutating: true;
+  path: "clip set-muted";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "clip.write";
+  domain: "clip";
+  fingerprintPrecondition: false;
+  method: "split";
+  mutating: true;
+  path: "clip split";
   takesParams: true;
   ungated: false;
 }, {
@@ -209,6 +452,134 @@ const OPERATIONS: readonly [{
   takesParams: false;
   ungated: false;
 }, {
+  capability: "soundsource.write";
+  domain: "ensemble";
+  fingerprintPrecondition: false;
+  method: "add";
+  mutating: true;
+  path: "ensemble add";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "soundsource.write";
+  domain: "ensemble";
+  fingerprintPrecondition: false;
+  method: "disable";
+  mutating: true;
+  path: "ensemble disable";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "soundsource.write";
+  domain: "ensemble";
+  fingerprintPrecondition: false;
+  method: "enable";
+  mutating: true;
+  path: "ensemble enable";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "soundsource.read";
+  domain: "ensemble";
+  fingerprintPrecondition: false;
+  method: "get";
+  mutating: false;
+  path: "ensemble get";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "soundsource.write";
+  domain: "ensemble";
+  fingerprintPrecondition: false;
+  method: "remove";
+  mutating: true;
+  path: "ensemble remove";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "soundsource.write";
+  domain: "ensemble";
+  fingerprintPrecondition: false;
+  method: "reorder";
+  mutating: true;
+  path: "ensemble reorder";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "soundsource.write";
+  domain: "ensemble";
+  fingerprintPrecondition: false;
+  method: "set";
+  mutating: true;
+  path: "ensemble set";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "export.invoke";
+  domain: "export";
+  fingerprintPrecondition: false;
+  method: "audio";
+  mutating: true;
+  path: "export audio";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "export.invoke";
+  domain: "export";
+  fingerprintPrecondition: false;
+  method: "fcpxml";
+  mutating: true;
+  path: "export fcpxml";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "export.invoke";
+  domain: "export";
+  fingerprintPrecondition: false;
+  method: "lrc";
+  mutating: true;
+  path: "export lrc";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "export.invoke";
+  domain: "export";
+  fingerprintPrecondition: false;
+  method: "midi";
+  mutating: true;
+  path: "export midi";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "export.invoke";
+  domain: "export";
+  entitlement: "membership";
+  fingerprintPrecondition: false;
+  method: "songTemplate";
+  mutating: true;
+  path: "export song-template";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "export.invoke";
+  domain: "export";
+  fingerprintPrecondition: false;
+  method: "video";
+  mutating: true;
+  path: "export video";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "export.invoke";
+  domain: "export";
+  entitlement: "membership";
+  fingerprintPrecondition: false;
+  method: "vocalSample";
+  mutating: true;
+  path: "export vocal-sample";
+  takesParams: true;
+  ungated: false;
+}, {
   capability: "history.read";
   domain: "history";
   fingerprintPrecondition: false;
@@ -234,6 +605,42 @@ const OPERATIONS: readonly [{
   mutating: true;
   path: "history undo";
   takesParams: false;
+  ungated: false;
+}, {
+  capability: "import.invoke";
+  domain: "import";
+  fingerprintPrecondition: false;
+  method: "file";
+  mutating: true;
+  path: "import file";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "soundsource.write";
+  domain: "instrument";
+  fingerprintPrecondition: false;
+  method: "disable";
+  mutating: true;
+  path: "instrument disable";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "soundsource.write";
+  domain: "instrument";
+  fingerprintPrecondition: false;
+  method: "enable";
+  mutating: true;
+  path: "instrument enable";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "soundsource.write";
+  domain: "instrument";
+  fingerprintPrecondition: false;
+  method: "set";
+  mutating: true;
+  path: "instrument set";
+  takesParams: true;
   ungated: false;
 }, {
   capability: "job.control";
@@ -317,6 +724,15 @@ const OPERATIONS: readonly [{
   takesParams: true;
   ungated: false;
 }, {
+  capability: "note.read";
+  domain: "note";
+  fingerprintPrecondition: false;
+  method: "get";
+  mutating: false;
+  path: "note get";
+  takesParams: true;
+  ungated: false;
+}, {
   capability: "note.write";
   domain: "note";
   fingerprintPrecondition: true;
@@ -338,9 +754,27 @@ const OPERATIONS: readonly [{
   capability: "note.write";
   domain: "note";
   fingerprintPrecondition: true;
+  method: "setArticulation";
+  mutating: true;
+  path: "note set-articulation";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "note.write";
+  domain: "note";
+  fingerprintPrecondition: true;
   method: "setLyric";
   mutating: true;
   path: "note set-lyric";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "note.write";
+  domain: "note";
+  fingerprintPrecondition: true;
+  method: "split";
+  mutating: true;
+  path: "note split";
   takesParams: true;
   ungated: false;
 }, {
@@ -425,16 +859,6 @@ const OPERATIONS: readonly [{
   takesParams: true;
   ungated: false;
 }, {
-  capability: "project.lifecycle";
-  domain: "project";
-  entitlement: "membership";
-  fingerprintPrecondition: false;
-  method: "saveTemplate";
-  mutating: true;
-  path: "project save-template";
-  takesParams: true;
-  ungated: false;
-}, {
   capability: "project.read";
   domain: "project";
   fingerprintPrecondition: false;
@@ -480,6 +904,78 @@ const OPERATIONS: readonly [{
   takesParams: true;
   ungated: false;
 }, {
+  capability: "soundsource.read";
+  domain: "sound-source";
+  fingerprintPrecondition: false;
+  method: "get";
+  mutating: false;
+  path: "sound-source get";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "soundsource.read";
+  domain: "sound-source";
+  fingerprintPrecondition: false;
+  method: "list";
+  mutating: false;
+  path: "sound-source list";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "soundsource.write";
+  domain: "sound-source";
+  fingerprintPrecondition: false;
+  method: "load";
+  mutating: true;
+  path: "sound-source load";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "soundsource.write";
+  domain: "sound-source";
+  fingerprintPrecondition: false;
+  method: "set";
+  mutating: true;
+  path: "sound-source set";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "soundsource.read";
+  domain: "sound-source";
+  fingerprintPrecondition: false;
+  method: "tags";
+  mutating: false;
+  path: "sound-source tags";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "soundsource.write";
+  domain: "sound-source";
+  fingerprintPrecondition: false;
+  method: "unload";
+  mutating: true;
+  path: "sound-source unload";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "tempo.analyze";
+  domain: "tempo";
+  fingerprintPrecondition: false;
+  method: "analyze";
+  mutating: true;
+  path: "tempo analyze";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "tempo.applyV2";
+  domain: "tempo";
+  fingerprintPrecondition: false;
+  method: "applyBeatAnalysis";
+  mutating: true;
+  path: "tempo apply-beat-analysis";
+  takesParams: true;
+  ungated: false;
+}, {
   capability: "tempo.read";
   domain: "tempo";
   fingerprintPrecondition: false;
@@ -489,12 +985,48 @@ const OPERATIONS: readonly [{
   takesParams: false;
   ungated: false;
 }, {
-  capability: "tempo.write";
+  capability: "tempo.read";
   domain: "tempo";
   fingerprintPrecondition: false;
+  method: "points";
+  mutating: false;
+  path: "tempo points";
+  takesParams: false;
+  ungated: false;
+}, {
+  capability: "tempo.write";
+  domain: "tempo";
+  fingerprintPrecondition: true;
+  method: "removePoint";
+  mutating: true;
+  path: "tempo remove-point";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "tempo.write";
+  domain: "tempo";
+  fingerprintPrecondition: true;
   method: "set";
   mutating: true;
   path: "tempo set";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "tempo.write";
+  domain: "tempo";
+  fingerprintPrecondition: false;
+  method: "setDisplayRange";
+  mutating: true;
+  path: "tempo set-display-range";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "tempo.write";
+  domain: "tempo";
+  fingerprintPrecondition: true;
+  method: "setPoint";
+  mutating: true;
+  path: "tempo set-point";
   takesParams: true;
   ungated: false;
 }, {
@@ -507,12 +1039,48 @@ const OPERATIONS: readonly [{
   takesParams: false;
   ungated: false;
 }, {
-  capability: "timesig.write";
+  capability: "timesig.read";
   domain: "timesig";
   fingerprintPrecondition: false;
+  method: "list";
+  mutating: false;
+  path: "timesig list";
+  takesParams: false;
+  ungated: false;
+}, {
+  capability: "timesig.write";
+  domain: "timesig";
+  fingerprintPrecondition: true;
+  method: "removeAt";
+  mutating: true;
+  path: "timesig remove-at";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "timesig.write";
+  domain: "timesig";
+  fingerprintPrecondition: true;
   method: "set";
   mutating: true;
   path: "timesig set";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "timesig.write";
+  domain: "timesig";
+  fingerprintPrecondition: true;
+  method: "setAt";
+  mutating: true;
+  path: "timesig set-at";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "track.write";
+  domain: "track";
+  fingerprintPrecondition: false;
+  method: "create";
+  mutating: true;
+  path: "track create";
   takesParams: true;
   ungated: false;
 }, {
@@ -523,6 +1091,15 @@ const OPERATIONS: readonly [{
   mutating: true;
   path: "track delete";
   takesParams: false;
+  ungated: false;
+}, {
+  capability: "track.write";
+  domain: "track";
+  fingerprintPrecondition: false;
+  method: "duplicate";
+  mutating: true;
+  path: "track duplicate";
+  takesParams: true;
   ungated: false;
 }, {
   capability: "track.read";
@@ -555,6 +1132,15 @@ const OPERATIONS: readonly [{
   capability: "track.write";
   domain: "track";
   fingerprintPrecondition: false;
+  method: "reorder";
+  mutating: true;
+  path: "track reorder";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "track.write";
+  domain: "track";
+  fingerprintPrecondition: false;
   method: "set";
   mutating: true;
   path: "track set";
@@ -564,18 +1150,18 @@ const OPERATIONS: readonly [{
   capability: "track.write";
   domain: "track";
   fingerprintPrecondition: false;
-  method: "setRecord";
+  method: "setInput";
   mutating: true;
-  path: "track set-record";
+  path: "track set-input";
   takesParams: true;
   ungated: false;
 }, {
-  capability: "track.read";
+  capability: "track.write";
   domain: "track";
   fingerprintPrecondition: false;
-  method: "singerRecipe";
-  mutating: false;
-  path: "track singer-recipe";
+  method: "setLanguage";
+  mutating: true;
+  path: "track set-language";
   takesParams: true;
   ungated: false;
 }, {
@@ -755,81 +1341,27 @@ const OPERATIONS: readonly [{
   capability: "voice.read";
   domain: "voice";
   fingerprintPrecondition: false;
-  method: "communityList";
+  method: "community";
   mutating: false;
-  path: "voice community-list";
+  path: "voice community";
   takesParams: true;
   ungated: false;
 }, {
   capability: "voice.read";
   domain: "voice";
   fingerprintPrecondition: false;
-  method: "communityPages";
+  method: "seeds";
   mutating: false;
-  path: "voice community-pages";
+  path: "voice seeds";
   takesParams: true;
   ungated: false;
 }, {
   capability: "voice.read";
   domain: "voice";
   fingerprintPrecondition: false;
-  method: "list";
+  method: "synthModels";
   mutating: false;
-  path: "voice list";
-  takesParams: true;
-  ungated: false;
-}, {
-  capability: "voice.write";
-  domain: "voice";
-  fingerprintPrecondition: false;
-  method: "load";
-  mutating: true;
-  path: "voice load";
-  takesParams: true;
-  ungated: false;
-}, {
-  capability: "voice.write";
-  domain: "voice";
-  fingerprintPrecondition: false;
-  method: "mixCreate";
-  mutating: true;
-  path: "voice mix-create";
-  takesParams: true;
-  ungated: false;
-}, {
-  capability: "voice.write";
-  domain: "voice";
-  fingerprintPrecondition: false;
-  method: "mixDelete";
-  mutating: true;
-  path: "voice mix-delete";
-  takesParams: true;
-  ungated: false;
-}, {
-  capability: "voice.write";
-  domain: "voice";
-  fingerprintPrecondition: false;
-  method: "mixEdit";
-  mutating: true;
-  path: "voice mix-edit";
-  takesParams: true;
-  ungated: false;
-}, {
-  capability: "voice.read";
-  domain: "voice";
-  fingerprintPrecondition: false;
-  method: "tags";
-  mutating: false;
-  path: "voice tags";
-  takesParams: true;
-  ungated: false;
-}, {
-  capability: "voice.write";
-  domain: "voice";
-  fingerprintPrecondition: false;
-  method: "unload";
-  mutating: true;
-  path: "voice unload";
+  path: "voice synth-models";
   takesParams: true;
   ungated: false;
 }];

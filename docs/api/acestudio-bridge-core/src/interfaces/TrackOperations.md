@@ -4,6 +4,32 @@ The `track` operations, mirroring the canonical operation tree 1:1.
 
 ## Methods
 
+### create()
+
+```ts
+create(params, options?): Promise<TrackCreateResult>;
+```
+
+Create a track of any creatable type, optionally at a given position.
+
+Requires the `track.write` capability.
+
+#### Parameters
+
+##### params
+
+[`TrackCreateParams`](TrackCreateParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`TrackCreateResult`](TrackCreateResult.md)\>
+
+***
+
 ### delete()
 
 ```ts
@@ -23,6 +49,32 @@ Requires the `track.write` capability.
 #### Returns
 
 `Promise`\<`void`\>
+
+***
+
+### duplicate()
+
+```ts
+duplicate(params, options?): Promise<TrackDuplicateResult>;
+```
+
+Duplicate a track with its clips and FX chain, next to the original.
+
+Requires the `track.write` capability.
+
+#### Parameters
+
+##### params
+
+[`TrackDuplicateParams`](TrackDuplicateParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`TrackDuplicateResult`](TrackDuplicateResult.md)\>
 
 ***
 
@@ -100,13 +152,39 @@ Requires the `track.write` capability.
 
 ***
 
+### reorder()
+
+```ts
+reorder(params, options?): Promise<TrackReorderResult>;
+```
+
+Move a track to another position within its own region.
+
+Requires the `track.write` capability.
+
+#### Parameters
+
+##### params
+
+[`TrackReorderParams`](TrackReorderParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`TrackReorderResult`](TrackReorderResult.md)\>
+
+***
+
 ### set()
 
 ```ts
 set(params, options?): Promise<void>;
 ```
 
-Update a track's mixer and display properties (color, pan, gain, mute, solo).
+Update a track's mixer and display properties (color, pan, gain, mute, solo, monitor).
 
 Requires the `track.write` capability.
 
@@ -126,13 +204,13 @@ Requires the `track.write` capability.
 
 ***
 
-### setRecord()
+### setInput()
 
 ```ts
-setRecord(params, options?): Promise<void>;
+setInput(params, options?): Promise<TrackSetInputResult>;
 ```
 
-Set per-track record-input configuration (listen, audio channel, MIDI source, record mode).
+Set what a track records from: its input channel, its MIDI input, and how chords are captured.
 
 Requires the `track.write` capability.
 
@@ -140,7 +218,33 @@ Requires the `track.write` capability.
 
 ##### params
 
-[`TrackSetRecordParams`](TrackSetRecordParams.md)
+[`TrackSetInputParams`](TrackSetInputParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`TrackSetInputResult`](TrackSetInputResult.md)\>
+
+***
+
+### setLanguage()
+
+```ts
+setLanguage(params, options?): Promise<void>;
+```
+
+Set the default lyric language for new notes on a Sing track.
+
+Requires the `track.write` capability.
+
+#### Parameters
+
+##### params
+
+[`TrackSetLanguageParams`](TrackSetLanguageParams.md)
 
 ##### options?
 
@@ -149,29 +253,3 @@ Requires the `track.write` capability.
 #### Returns
 
 `Promise`\<`void`\>
-
-***
-
-### singerRecipe()
-
-```ts
-singerRecipe(params, options?): Promise<TrackSingerRecipeResult>;
-```
-
-Read the voice-blend (singer recipe) for a singer on a Sing track.
-
-Requires the `track.read` capability.
-
-#### Parameters
-
-##### params
-
-[`TrackSingerRecipeParams`](TrackSingerRecipeParams.md)
-
-##### options?
-
-[`CallOptions`](CallOptions.md)
-
-#### Returns
-
-`Promise`\<[`TrackSingerRecipeResult`](TrackSingerRecipeResult.md)\>

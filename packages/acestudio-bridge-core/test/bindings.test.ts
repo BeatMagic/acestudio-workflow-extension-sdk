@@ -479,7 +479,7 @@ describe("the grant", () => {
       "tempo.write",
     ]);
     // A profile is a bundle the grant is measured against by name.
-    expect(connection.grant.missing("surface.extension-sdk.v1")).toEqual([...PROFILES["surface.extension-sdk.v1"]]);
+    expect(connection.grant.missing("surface.extension-sdk")).toEqual([...PROFILES["surface.extension-sdk"]]);
     connection.close();
   });
 
@@ -488,9 +488,17 @@ describe("the grant", () => {
 
     // Typed as a profile name, so reaching this needs a cast — it is the shape of
     // the failure when the call comes from untyped JavaScript.
-    expect(() => connection.grant.missing("surface.made-up.v1" as never)).toThrowError(
-      /no published Capability Profile/,
-    );
+    let thrown: unknown;
+    try {
+      connection.grant.missing("surface.made-up" as never);
+    } catch (error: unknown) {
+      thrown = error;
+    }
+
+    // The code is the contract; the message beside it is not. Pinning the prose
+    // would fail this on a harmless rewording — as it just did, when the message
+    // stopped calling a ceiling a "Capability Profile".
+    expect(isCode(thrown, "UNKNOWN_CAPABILITY")).toBe(true);
     connection.close();
   });
 });
@@ -529,7 +537,7 @@ describe("connection.scoped", () => {
     // "Zero runtime machinery" is the claim (ADR 0094 §5); identity is how it is
     // checked. A scoped client that were a *copy* would be a second surface to
     // keep in step, and could disagree with the guard.
-    expect(connection.scoped("surface.cli-mcp.v1")).toBe(connection.client);
+    expect(connection.scoped("surface.cli-mcp")).toBe(connection.client);
     expect(connection.scoped("track.read")).toBe(connection.client);
     connection.close();
   });
@@ -552,7 +560,7 @@ describe("connection.scoped", () => {
 
   it("types a profile down to that profile's reach", async () => {
     const { connection } = await connectToScriptedHost();
-    const scoped = connection.scoped("surface.cli-mcp.v1");
+    const scoped = connection.scoped("surface.cli-mcp");
 
     expectTypeOf(scoped.track.rename).toBeFunction();
     expectTypeOf(scoped.tempo.set).toBeFunction();
@@ -565,7 +573,7 @@ describe("connection.scoped", () => {
     // Scoping is a compile-time view of *reach*, not a grant. Typing a client to
     // a profile the session was never granted must not make its calls succeed —
     // the guard reads the grant, never the scope.
-    const scoped = connection.scoped("surface.cli-mcp.v1");
+    const scoped = connection.scoped("surface.cli-mcp");
     await expect(scoped.track.list()).rejects.toSatisfy((error: unknown) => isCode(error, "CAPABILITY_DENIED"));
     expect(host.invocations).toEqual([]);
     connection.close();

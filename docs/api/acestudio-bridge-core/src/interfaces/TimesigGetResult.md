@@ -48,4 +48,4 @@ Beat unit; one of 2, 4, 8, 16, 32.
 numerator: number;
 ```
 
-Beats per bar (2-8).
+Beats per bar (1-32).

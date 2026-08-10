@@ -14,11 +14,11 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 import type { PublicBindings } from "@timedomain/acestudio-bridge-core";
 import type {
   AbsoluteFilesystemPath,
-  CapabilityTokensOf,
   ExtensionContext,
   ExtensionDefinition,
   ExtensionManifest,
   ManifestClient,
+  RequestedCapability,
 } from "@timedomain/acestudio-workflow-extension-sdk";
 
 /** A manifest asking to read clips, and nothing else. */
@@ -35,10 +35,10 @@ const READS_CLIPS = {
 /** A manifest asking for nothing at all — which is a legitimate thing to ask for. */
 const ASKS_NOTHING = { ...READS_CLIPS, capabilities: [] } as const satisfies ExtensionManifest;
 
-/** A manifest asking by profile name rather than token by token. */
-const BY_PROFILE = {
+/** A manifest asking for two tokens, so its client is the union's surface. */
+const READS_AND_WRITES_CLIPS = {
   ...READS_CLIPS,
-  capabilities: ["surface.extension-sdk.v1"],
+  capabilities: ["clip.read", "clip.write"],
 } as const satisfies ExtensionManifest;
 
 /**
@@ -49,7 +49,7 @@ const BY_PROFILE = {
 function callsTheManifestDecides(
   readsClips: ExtensionContext<typeof READS_CLIPS>,
   asksNothing: ExtensionContext<typeof ASKS_NOTHING>,
-  byProfile: ExtensionContext<typeof BY_PROFILE>,
+  readsAndWrites: ExtensionContext<typeof READS_AND_WRITES_CLIPS>,
 ): void {
   // What the manifest asked for, reachable by name.
   void readsClips.client.clip.list({ trackIndex: 0 });
@@ -66,11 +66,28 @@ function callsTheManifestDecides(
   // @ts-expect-error -- and nothing that is gated is
   void asksNothing.client.clip;
 
-  // A profile stands for its bundle of tokens, so the surface it admits is the
-  // union's, not the profile name's.
-  void byProfile.grant.tokens;
-  // @ts-expect-error -- the extension-SDK surface profile carries no clip capability
-  void byProfile.client.clip;
+  // The surface a list admits is the union of its tokens, not one of them: asking
+  // for both halves of `clip` reaches the reads *and* the writes.
+  void readsAndWrites.client.clip.list;
+  void readsAndWrites.client.clip.create;
+  // @ts-expect-error -- still only what was asked for; no token here reaches track
+  void readsAndWrites.client.track;
+}
+
+/**
+ * A Surface Profile is a ceiling, not a request. Studio refuses a manifest naming
+ * one at parse — by `surface.` prefix, so it holds for a ceiling this build has
+ * never heard of — and the type refuses it here, while the author still has a
+ * compiler in front of them.
+ */
+function unrequestableNames(): void {
+  const namesACeiling = {
+    ...READS_CLIPS,
+    // @ts-expect-error -- a `surface.*` name is the ceiling Studio grants this consumer
+    // class within, not a capability to request; the host refuses the bundle outright
+    capabilities: ["surface.extension-sdk"],
+  } as const satisfies ExtensionManifest;
+  void namesACeiling;
 }
 
 /** The reserved names, as the declarations that must not compile. */
@@ -151,11 +168,17 @@ describe("the manifest-scoped client", () => {
     expectTypeOf<ManifestClient<typeof READS_CLIPS>["clip"]>().not.toHaveProperty("create");
   });
 
-  it("expands a profile name to the tokens it stands for", () => {
-    expectTypeOf<CapabilityTokensOf<"surface.extension-sdk.v1">>().toEqualTypeOf<
-      "session.handshake" | "session.ping" | "session.shutdown" | "workflow.dev" | "workflow.ui"
-    >();
-    expectTypeOf<CapabilityTokensOf<"clip.read">>().toEqualTypeOf<"clip.read">();
+  it("scopes by the manifest's tokens, with no expansion step in between", () => {
+    expectTypeOf<ManifestClient<typeof READS_AND_WRITES_CLIPS>["clip"]>().toHaveProperty("list");
+    expectTypeOf<ManifestClient<typeof READS_AND_WRITES_CLIPS>["clip"]>().toHaveProperty("create");
+    expectTypeOf<ManifestClient<typeof READS_AND_WRITES_CLIPS>>().not.toHaveProperty("track");
+  });
+
+  it("admits a token as a request, and a Surface Profile ceiling not at all", () => {
+    expectTypeOf<"clip.read">().toExtend<RequestedCapability>();
+    // The name resolves — `PROFILES` publishes it — but it is the ceiling a grant
+    // is measured against, so it is not in the request namespace at all.
+    expectTypeOf<"surface.extension-sdk">().not.toExtend<RequestedCapability>();
   });
 
   it("reaches the whole public surface when the manifest is not literal", () => {
@@ -167,6 +190,7 @@ describe("the manifest-scoped client", () => {
 
   it("is a compile-time view — there is nothing here to run", () => {
     expect(typeof callsTheManifestDecides).toBe("function");
+    expect(typeof unrequestableNames).toBe("function");
     expect(typeof reservedNames).toBe("function");
     expect(typeof absolutePathForms).toBe("function");
   });

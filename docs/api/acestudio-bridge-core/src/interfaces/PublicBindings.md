@@ -4,10 +4,26 @@ Every published operation, grouped by domain. A connection's client implements t
 
 ## Properties
 
+### blend
+
+```ts
+readonly blend: BlendOperations;
+```
+
+***
+
 ### caret
 
 ```ts
 readonly caret: CaretOperations;
+```
+
+***
+
+### choir
+
+```ts
+readonly choir: ChoirOperations;
 ```
 
 ***
@@ -44,10 +60,42 @@ readonly editor: EditorOperations;
 
 ***
 
+### ensemble
+
+```ts
+readonly ensemble: EnsembleOperations;
+```
+
+***
+
+### export
+
+```ts
+readonly export: ExportOperations;
+```
+
+***
+
 ### history
 
 ```ts
 readonly history: HistoryOperations;
+```
+
+***
+
+### import
+
+```ts
+readonly import: ImportOperations;
+```
+
+***
+
+### instrument
+
+```ts
+readonly instrument: InstrumentOperations;
 ```
 
 ***
@@ -88,6 +136,14 @@ readonly recording: RecordingOperations;
 
 ```ts
 readonly selection: SelectionOperations;
+```
+
+***
+
+### soundSource
+
+```ts
+readonly soundSource: SoundSourceOperations;
 ```
 
 ***

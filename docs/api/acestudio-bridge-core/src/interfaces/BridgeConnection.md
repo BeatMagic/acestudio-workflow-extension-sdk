@@ -227,7 +227,7 @@ extension layer hands them a client already typed to it.
 
 ###### P
 
-`P` *extends* `"surface.cli-mcp.v1"` \| `"surface.extension-sdk.v1"`
+`P` *extends* `"surface.cli-mcp"` \| `"surface.extension-sdk"`
 
 ##### Parameters
 

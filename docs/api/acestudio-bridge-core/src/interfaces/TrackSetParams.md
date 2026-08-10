@@ -24,6 +24,18 @@ Volume gain level: 0.0 and above; 1.0 = unity; above 1.0 = boost.
 
 ***
 
+### monitor?
+
+```ts
+optional monitor?: boolean | null;
+```
+
+Whether the track monitors its live input.
+
+This was `track set-monitor`, a verb of its own for one boolean. It behaves differently from its neighbours under undo — it lands no entry — but that is ours to handle, not a reason to make the caller learn a second verb for a switch that sits beside mute and solo in the mixer.
+
+***
+
 ### mute?
 
 ```ts
@@ -54,10 +66,22 @@ Solo the track (true) or unsolo (false). When any track is soloed, all non-soloe
 
 ***
 
-### trackIndex
+### trackIndex?
 
 ```ts
-trackIndex: number;
+optional trackIndex?: number | null;
 ```
 
-0-based track index.
+0-based track index. Addresses the arrangement only — the master bus has no index, so `--track-uuid master` is how you reach it.
+
+***
+
+### trackUuid?
+
+```ts
+optional trackUuid?: string | null;
+```
+
+Track UUID in braces format, e.g. `\{12345678-abcd-...\}`, or the well-known id `master` for the project's master bus.
+
+The master is a track like any other here — it has no domain of its own (ledger §2.11). It carries only a gain, so `--gain` is the one property it accepts; the rest are refused rather than silently dropped.

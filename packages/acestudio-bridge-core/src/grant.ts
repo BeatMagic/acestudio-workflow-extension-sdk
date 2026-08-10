@@ -16,8 +16,13 @@ import { BridgeError } from "./errors.js";
 import { CAPABILITY_TOKENS, PROFILES, type CapabilityToken } from "./generated/bindings.js";
 
 /**
- * A published Capability Profile's name — a named bundle of tokens a grant can
- * be measured against, rather than a list every consumer restates.
+ * A published Surface Profile's name — a named bundle of tokens a grant can be
+ * measured against, rather than a list every consumer restates.
+ *
+ * Measured against, not asked for. Each of these is a *ceiling*: the most a whole
+ * consumer class may ever be granted, which Studio intersects a request with. So
+ * one of these names is what `missing`/`scoped` take, and is deliberately not
+ * something a manifest may request.
  *
  * @public
  */
@@ -199,9 +204,9 @@ function resolveTokens(profileOrTokens: ProfileName | readonly CapabilityToken[]
   if (profile === undefined) {
     throw new BridgeError({
       code: "UNKNOWN_CAPABILITY",
-      message: `no published Capability Profile is named '${String(profileOrTokens)}'`,
+      message: `no published Surface Profile is named '${String(profileOrTokens)}'`,
       details: { requested: String(profileOrTokens), published: Object.keys(PROFILES) },
-      hint: "profile names are versioned — check the suffix, e.g. surface.extension-sdk.v1",
+      hint: "a Surface Profile carries no version — check the name against the published list, e.g. surface.extension-sdk",
     });
   }
   return profile;

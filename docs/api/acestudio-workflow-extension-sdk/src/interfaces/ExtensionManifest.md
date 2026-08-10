@@ -15,13 +15,16 @@ the bundle. [serializeManifest](../functions/serializeManifest.md) stamps both.
 ### capabilities
 
 ```ts
-readonly capabilities: readonly RequestedCapability[];
+readonly capabilities: readonly CapabilityToken[];
 ```
 
-Capability tokens and/or Capability Profiles to request. The install dialog
-renders the expansion of this list, and the handlers' client is typed down to
-exactly it — so a capability that is not here is a compile error at the call
-rather than a refusal at run time.
+The capability tokens to request. The install dialog renders this list, and the
+handlers' client is typed down to exactly it — so a capability that is not here
+is a compile error at the call rather than a refusal at run time.
+
+Tokens, with no expansion step: a `surface.*` ceiling is not a capability to
+request, and the host refuses a manifest that names one. See
+[RequestedCapability](../type-aliases/RequestedCapability.md).
 
 ***
 

@@ -110,7 +110,7 @@ Requires the `ui.control` capability.
 onChanged(listener): Unsubscribe;
 ```
 
-Studio chrome (spec 1501 §4): a panel, tool window, or arrangement-view row
+Studio chrome: a panel, tool window, or arrangement-view row
 was shown or hidden. `changes` carries the affected citizens as their paths
 in the `ui get` payload — `panels.mixer`, `specialTracks.chord`,
 `windows.video-monitor` — plus `sharedPanelSlot.selected` when MV and V2M

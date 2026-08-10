@@ -63,12 +63,11 @@ describe("connect", () => {
   });
 
   it("carries the requested capability names into the handshake", async () => {
-    const { connection, host } = await connectToScriptedHost(
-      {},
-      { requestedCapabilities: ["surface.extension-sdk.v1", "track.read"] },
-    );
+    // Tokens, not a `surface.*` name: a Surface Profile is the ceiling a grant is
+    // computed against and resolves in no request namespace, so nothing asks by one.
+    const { connection, host } = await connectToScriptedHost({}, { requestedCapabilities: ["clip.write", "track.read"] });
 
-    expect((await host.handshake).requestedCapabilities).toEqual(["surface.extension-sdk.v1", "track.read"]);
+    expect((await host.handshake).requestedCapabilities).toEqual(["clip.write", "track.read"]);
     connection.close();
   });
 

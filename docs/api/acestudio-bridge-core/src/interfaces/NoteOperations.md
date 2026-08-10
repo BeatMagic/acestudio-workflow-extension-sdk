@@ -56,6 +56,32 @@ Requires the `note.write` capability.
 
 ***
 
+### get()
+
+```ts
+get(params, options?): Promise<NoteGetResult>;
+```
+
+Get one note's geometry, pitch, and type-specific fields.
+
+Requires the `note.read` capability.
+
+#### Parameters
+
+##### params
+
+[`NoteGetParams`](NoteGetParams.md)
+
+##### options?
+
+[`CallOptions`](CallOptions.md)
+
+#### Returns
+
+`Promise`\<[`NoteGetResult`](NoteGetResult.md)\>
+
+***
+
 ### move()
 
 ```ts
@@ -108,6 +134,32 @@ Requires the `note.write` capability.
 
 ***
 
+### setArticulation()
+
+```ts
+setArticulation(params, options?): Promise<NoteSetArticulationResult>;
+```
+
+Set the articulation of Instrument-clip notes.
+
+Requires the `note.write` capability.
+
+#### Parameters
+
+##### params
+
+[`NoteSetArticulationParams`](NoteSetArticulationParams.md)
+
+##### options?
+
+[`PreconditionCallOptions`](PreconditionCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`NoteSetArticulationResult`](NoteSetArticulationResult.md)\>
+
+***
+
 ### setLyric()
 
 ```ts
@@ -131,3 +183,29 @@ Requires the `note.write` capability.
 #### Returns
 
 `Promise`\<[`NoteSetLyricResult`](NoteSetLyricResult.md)\>
+
+***
+
+### split()
+
+```ts
+split(params, options?): Promise<NoteSplitResult>;
+```
+
+Split a note in two at a position inside it.
+
+Requires the `note.write` capability.
+
+#### Parameters
+
+##### params
+
+[`NoteSplitParams`](NoteSplitParams.md)
+
+##### options?
+
+[`PreconditionCallOptions`](PreconditionCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`NoteSplitResult`](NoteSplitResult.md)\>

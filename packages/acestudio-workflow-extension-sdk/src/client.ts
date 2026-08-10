@@ -14,25 +14,18 @@
  * the enforcement.
  */
 
-import type { CapabilityToken, ProfileName, ProfileTokens, ScopedBindings } from "@timedomain/acestudio-bridge-core";
-import type { ExtensionManifest, RequestedCapability } from "./manifest.js";
-
-/**
- * The tokens one requested name stands for: a profile expands to its bundle, a
- * token stands for itself.
- *
- * @public
- */
-export type CapabilityTokensOf<C extends RequestedCapability> = C extends ProfileName
-  ? ProfileTokens<C>
-  : C extends CapabilityToken
-    ? C
-    : never;
+import type { ScopedBindings } from "@timedomain/acestudio-bridge-core";
+import type { ExtensionManifest } from "./manifest.js";
 
 /**
  * The client a manifest's `capabilities` reach: each domain keeps only the methods
  * those capabilities can call, a domain none of them reaches is absent entirely,
  * and ungated operations are there regardless.
+ *
+ * The manifest's list scopes this directly, with no expansion step in between: a
+ * `RequestedCapability` is an atomic token, and the one name that used to stand
+ * for a bundle here — a `surface.*` ceiling — is not something a manifest may
+ * request at all.
  *
  * A manifest whose `capabilities` are not literal — one typed as
  * {@link ExtensionManifest} rather than written `as const` — reaches the whole
@@ -40,6 +33,4 @@ export type CapabilityTokensOf<C extends RequestedCapability> = C extends Profil
  *
  * @public
  */
-export type ManifestClient<M extends ExtensionManifest> = ScopedBindings<
-  CapabilityTokensOf<M["capabilities"][number]>
->;
+export type ManifestClient<M extends ExtensionManifest> = ScopedBindings<M["capabilities"][number]>;

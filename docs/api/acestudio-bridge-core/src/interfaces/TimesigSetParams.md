@@ -14,7 +14,7 @@ signatures: {
 }[];
 ```
 
-JSON array of time-signature entries, e.g. `[\{"barPos":0,"numerator":4,"denominator":4\}]`. Each entry: `barPos` (bar \>= 0), `numerator` (2-8), `denominator` (2, 4, 8, 16, or 32). Entries must be sorted by `barPos` ascending with no duplicates.
+JSON array of time-signature entries, e.g. `[\{"barPos":0,"numerator":4,"denominator":4\}]`. Each entry: the bar as `barPos` (\>= 0, counting from 0), `numerator` (1-32), `denominator` (2, 4, 8, 16, or 32). `acestudio-cli` and MCP also accept `bar` counting from 1 in place of `barPos`, folding it before the call; pass one or the other, never both. Entries must be sorted by ascending bar with no duplicates.
 
 #### barPos
 
@@ -22,7 +22,7 @@ JSON array of time-signature entries, e.g. `[\{"barPos":0,"numerator":4,"denomin
 barPos: number;
 ```
 
-Bar position, 0-based. Must be \>= 0.
+The same bar counted from 0, as the project stores it. Give this or `bar`, never both.
 
 #### denominator
 
@@ -38,4 +38,4 @@ Beat unit: 2, 4, 8, 16, or 32.
 numerator: number;
 ```
 
-Beats per bar, 2-8.
+Beats per bar, 1-32.

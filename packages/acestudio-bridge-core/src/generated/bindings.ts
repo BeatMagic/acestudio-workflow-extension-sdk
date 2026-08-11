@@ -6013,13 +6013,16 @@ export const REQUIRED_TOKENS = {
     'voice synth-models': 'voice.read',
 } as const satisfies Readonly<Record<string, CapabilityToken>>;
 
-/** Each published Surface Profile's transitive token expansion (ADR 0093 §6): the ceiling Studio grants a consumer class within, so a grant can be measured against it rather than token by token. The ceiling is met when every token here is granted. It is not a capability to request — it carries no version and it moves with the registry, and one the registry still marks draft may yet be re-cut. */
+/** Each profile's transitive token expansion: a name for a bundle of capability tokens, so a grant can be measured against one name rather than token by token. A profile is met when every token here is granted. The capabilities are the contract — a profile is a convenience over them and grants nothing itself. Surface ceilings (ADR 0093 §6) sit here beside the versioned bundles (ADR 0022): a ceiling carries no version, moves with the Studio build enforcing it, and is not a capability to request. */
 export const PROFILES = {
     'surface.cli-mcp': ['caret.read', 'caret.write', 'chord.read', 'chord.write', 'clip.read', 'clip.write', 'device.read', 'device.write', 'editor.read', 'editor.write', 'export.invoke', 'fx.read', 'fx.write', 'generative.add-layer', 'generative.enhance', 'generative.retake', 'generative.seed-audio', 'generative.song', 'generative.sound-effects', 'generative.stem-split', 'generative.text2sample', 'generative.vocal2midi', 'generative.voice-change', 'history.control', 'history.read', 'import.invoke', 'job.control', 'job.read', 'lyric.read', 'lyric.write', 'note.read', 'note.write', 'project.lifecycle', 'project.read', 'recording.control', 'selection.read', 'selection.write', 'soundsource.read', 'soundsource.write', 'tempo.analyze', 'tempo.applyV2', 'tempo.read', 'tempo.write', 'timesig.read', 'timesig.write', 'track.read', 'track.write', 'transport.control', 'transport.state', 'ui.control', 'ui.state', 'vocalparam.read', 'vocalparam.write', 'voice.read', 'voice.write'],
     'surface.extension-sdk': ['session.handshake', 'session.ping', 'session.shutdown', 'workflow.dev', 'workflow.ui'],
+    'ui.v1': ['workflow.ui'],
+    'project.v1': ['project.read'],
+    'generative.all.v1': ['generative.add-layer', 'generative.enhance', 'generative.retake', 'generative.seed-audio', 'generative.song', 'generative.sound-effects', 'generative.stem-split', 'generative.text2sample', 'generative.vocal2midi', 'generative.voice-change'],
 } as const satisfies Readonly<Record<string, readonly CapabilityToken[]>>;
 
-/** The ceilings above the registry still marks draft (ADR 0093 §6): one may be re-cut in a later release, so what it covers today is not a promise. Nothing here is frozen — a ceiling holds no promise to freeze — and this roster is how to know which ones say so. Measuring a grant against a draft ceiling by name is allowed. */
+/** The profiles above the registry still marks draft (ADR 0093 §6): one may be re-cut in a later release, so what it covers today is not a promise. Depending on a draft profile by name is allowed and this is how to know you are. */
 export const DRAFT_PROFILES = [
     'surface.extension-sdk',
 ] as const satisfies readonly (keyof typeof PROFILES)[];

@@ -63,6 +63,9 @@ token by token.
   \| readonly [`CapabilityToken`](../type-aliases/CapabilityToken.md)[]
   \| `"surface.cli-mcp"`
   \| `"surface.extension-sdk"`
+  \| `"ui.v1"`
+  \| `"project.v1"`
+  \| `"generative.all.v1"`
 
 #### Returns
 

@@ -181,7 +181,7 @@ Requires the `tempo.write` capability.
 ### setDisplayRange()
 
 ```ts
-setDisplayRange(params, options?): Promise<TempoSetDisplayRangeResult>;
+setDisplayRange(params?, options?): Promise<TempoSetDisplayRangeResult>;
 ```
 
 Set the BPM range the tempo curve editor draws (project-persisted, not a view preference).
@@ -190,7 +190,7 @@ Requires the `tempo.write` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`TempoSetDisplayRangeParams`](TempoSetDisplayRangeParams.md)
 

@@ -131,7 +131,7 @@ Requires the `transport.control` capability.
 ### setLoop()
 
 ```ts
-setLoop(params, options?): Promise<void>;
+setLoop(params?, options?): Promise<void>;
 ```
 
 Update the project loop region.
@@ -140,7 +140,7 @@ Requires the `transport.control` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`TransportSetLoopParams`](TransportSetLoopParams.md)
 

@@ -148,7 +148,7 @@ export interface BlendOperations {
     create(params: BlendCreateParams, options?: MutatingCallOptions): Promise<BlendCreateResult>;
     delete(params: BlendDeleteParams, options?: MutatingCallOptions): Promise<BlendDeleteResult>;
     get(params: BlendGetParams, options?: CallOptions): Promise<BlendGetResult>;
-    list(params: BlendListParams, options?: CallOptions): Promise<BlendListResult>;
+    list(params?: BlendListParams, options?: CallOptions): Promise<BlendListResult>;
     remove(params: BlendRemoveParams, options?: MutatingCallOptions): Promise<BlendRemoveResult>;
     reorder(params: BlendReorderParams, options?: MutatingCallOptions): Promise<BlendReorderResult>;
     set(params: BlendSetParams, options?: MutatingCallOptions): Promise<BlendSetResult>;
@@ -411,7 +411,7 @@ export interface CaretGetResult {
 
 // @public
 export interface CaretOperations {
-    get(params: CaretGetParams, options?: CallOptions): Promise<CaretGetResult>;
+    get(params?: CaretGetParams, options?: CallOptions): Promise<CaretGetResult>;
     set(params: CaretSetParams, options?: MutatingCallOptions): Promise<void>;
 }
 
@@ -551,12 +551,12 @@ export interface ChoirGetResult {
 // @public
 export interface ChoirOperations {
     add(params: ChoirAddParams, options?: MutatingCallOptions): Promise<ChoirAddResult>;
-    disable(params: ChoirDisableParams, options?: MutatingCallOptions): Promise<ChoirDisableResult>;
-    enable(params: ChoirEnableParams, options?: MutatingCallOptions): Promise<ChoirEnableResult>;
-    get(params: ChoirGetParams, options?: CallOptions): Promise<ChoirGetResult>;
+    disable(params?: ChoirDisableParams, options?: MutatingCallOptions): Promise<ChoirDisableResult>;
+    enable(params?: ChoirEnableParams, options?: MutatingCallOptions): Promise<ChoirEnableResult>;
+    get(params?: ChoirGetParams, options?: CallOptions): Promise<ChoirGetResult>;
     remove(params: ChoirRemoveParams, options?: MutatingCallOptions): Promise<ChoirRemoveResult>;
     reorder(params: ChoirReorderParams, options?: MutatingCallOptions): Promise<ChoirReorderResult>;
-    set(params: ChoirSetParams, options?: MutatingCallOptions): Promise<void>;
+    set(params?: ChoirSetParams, options?: MutatingCallOptions): Promise<void>;
 }
 
 // @public
@@ -863,7 +863,7 @@ export interface ClipOperations {
     detachAudio(params: ClipDetachAudioParams, options?: MutatingCallOptions): Promise<ClipDetachAudioResult>;
     duplicate(params: ClipDuplicateParams, options?: MutatingCallOptions): Promise<ClipDuplicateResult>;
     get(params: ClipGetParams, options?: CallOptions): Promise<ClipGetResult>;
-    list(params: ClipListParams, options?: CallOptions): Promise<ClipListResult>;
+    list(params?: ClipListParams, options?: CallOptions): Promise<ClipListResult>;
     lyrics(params: ClipLyricsParams, options?: CallOptions): Promise<ClipLyricsResult>;
     move(params: ClipMoveParams, options?: MutatingCallOptions): Promise<ClipMoveResult>;
     noteContent(params: ClipNoteContentParams, options?: CallOptions): Promise<ClipNoteContentResult>;
@@ -1212,7 +1212,7 @@ export interface DeviceListResult {
 export interface DeviceOperations {
     current(options?: CallOptions): Promise<DeviceCurrentResult>;
     list(options?: CallOptions): Promise<DeviceListResult>;
-    setAudio(params: DeviceSetAudioParams, options?: MutatingCallOptions): Promise<DeviceSetAudioResult>;
+    setAudio(params?: DeviceSetAudioParams, options?: MutatingCallOptions): Promise<DeviceSetAudioResult>;
 }
 
 // @public
@@ -1359,12 +1359,12 @@ export interface EnsembleGetResult {
 // @public
 export interface EnsembleOperations {
     add(params: EnsembleAddParams, options?: MutatingCallOptions): Promise<EnsembleAddResult>;
-    disable(params: EnsembleDisableParams, options?: MutatingCallOptions): Promise<EnsembleDisableResult>;
-    enable(params: EnsembleEnableParams, options?: MutatingCallOptions): Promise<EnsembleEnableResult>;
-    get(params: EnsembleGetParams, options?: CallOptions): Promise<EnsembleGetResult>;
+    disable(params?: EnsembleDisableParams, options?: MutatingCallOptions): Promise<EnsembleDisableResult>;
+    enable(params?: EnsembleEnableParams, options?: MutatingCallOptions): Promise<EnsembleEnableResult>;
+    get(params?: EnsembleGetParams, options?: CallOptions): Promise<EnsembleGetResult>;
     remove(params: EnsembleRemoveParams, options?: MutatingCallOptions): Promise<EnsembleRemoveResult>;
     reorder(params: EnsembleReorderParams, options?: MutatingCallOptions): Promise<EnsembleReorderResult>;
-    set(params: EnsembleSetParams, options?: MutatingCallOptions): Promise<void>;
+    set(params?: EnsembleSetParams, options?: MutatingCallOptions): Promise<void>;
 }
 
 // @public
@@ -1595,9 +1595,9 @@ export interface GenerativeEnhanceResult {
 // @public
 export interface GenerativeOperations {
     addLayer(params: GenerativeAddLayerParams, options?: MutatingCallOptions): Promise<GenerativeAddLayerResult>;
-    enhance(params: GenerativeEnhanceParams, options?: MutatingCallOptions): Promise<GenerativeEnhanceResult>;
+    enhance(params?: GenerativeEnhanceParams, options?: MutatingCallOptions): Promise<GenerativeEnhanceResult>;
     seedAudio(params: GenerativeSeedAudioParams, options?: MutatingCallOptions): Promise<GenerativeSeedAudioResult>;
-    song(params: GenerativeSongParams, options?: MutatingCallOptions): Promise<GenerativeSongResult>;
+    song(params?: GenerativeSongParams, options?: MutatingCallOptions): Promise<GenerativeSongResult>;
     soundEffects(params: GenerativeSoundEffectsParams, options?: MutatingCallOptions): Promise<GenerativeSoundEffectsResult>;
     stemSplit(params: GenerativeStemSplitParams, options?: MutatingCallOptions): Promise<GenerativeStemSplitResult>;
     text2sample(params: GenerativeText2sampleParams, options?: MutatingCallOptions): Promise<GenerativeText2sampleResult>;
@@ -1799,7 +1799,7 @@ export interface HistoryListResult {
 
 // @public
 export interface HistoryOperations {
-    list(params: HistoryListParams, options?: CallOptions): Promise<HistoryListResult>;
+    list(params?: HistoryListParams, options?: CallOptions): Promise<HistoryListResult>;
     redo(options?: MutatingCallOptions): Promise<HistoryRedoResult>;
     undo(options?: MutatingCallOptions): Promise<HistoryUndoResult>;
 }
@@ -1906,8 +1906,8 @@ export interface InstrumentEnableResult {
 
 // @public
 export interface InstrumentOperations {
-    disable(params: InstrumentDisableParams, options?: MutatingCallOptions): Promise<InstrumentDisableResult>;
-    enable(params: InstrumentEnableParams, options?: MutatingCallOptions): Promise<InstrumentEnableResult>;
+    disable(params?: InstrumentDisableParams, options?: MutatingCallOptions): Promise<InstrumentDisableResult>;
+    enable(params?: InstrumentEnableParams, options?: MutatingCallOptions): Promise<InstrumentEnableResult>;
     set(params: InstrumentSetParams, options?: MutatingCallOptions): Promise<InstrumentSetResult>;
 }
 
@@ -4020,10 +4020,10 @@ export interface ProjectOpenResult {
 
 // @public
 export interface ProjectOperations {
-    collectSave(params: ProjectCollectSaveParams, options?: MutatingCallOptions): Promise<ProjectCollectSaveResult>;
+    collectSave(params?: ProjectCollectSaveParams, options?: MutatingCallOptions): Promise<ProjectCollectSaveResult>;
     dirty(options?: CallOptions): Promise<ProjectDirtyResult>;
     info(options?: CallOptions): Promise<ProjectInfoResult>;
-    'new'(params: ProjectNewParams, options?: MutatingCallOptions): Promise<ProjectNewResult>;
+    'new'(params?: ProjectNewParams, options?: MutatingCallOptions): Promise<ProjectNewResult>;
     onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
     open(params: ProjectOpenParams, options?: MutatingCallOptions): Promise<ProjectOpenResult>;
     recent(options?: CallOptions): Promise<ProjectRecentResult>;
@@ -4612,12 +4612,12 @@ export interface SoundSourceLoadResult {
 
 // @public
 export interface SoundSourceOperations {
-    get(params: SoundSourceGetParams, options?: CallOptions): Promise<SoundSourceGetResult>;
-    list(params: SoundSourceListParams, options?: CallOptions): Promise<SoundSourceListResult>;
+    get(params?: SoundSourceGetParams, options?: CallOptions): Promise<SoundSourceGetResult>;
+    list(params?: SoundSourceListParams, options?: CallOptions): Promise<SoundSourceListResult>;
     load(params: SoundSourceLoadParams, options?: MutatingCallOptions): Promise<SoundSourceLoadResult>;
     set(params: SoundSourceSetParams, options?: MutatingCallOptions): Promise<SoundSourceSetResult>;
-    tags(params: SoundSourceTagsParams, options?: CallOptions): Promise<SoundSourceTagsResult>;
-    unload(params: SoundSourceUnloadParams, options?: MutatingCallOptions): Promise<SoundSourceUnloadResult>;
+    tags(params?: SoundSourceTagsParams, options?: CallOptions): Promise<SoundSourceTagsResult>;
+    unload(params?: SoundSourceUnloadParams, options?: MutatingCallOptions): Promise<SoundSourceUnloadResult>;
 }
 
 // @public
@@ -4718,7 +4718,7 @@ export interface TempoOperations {
     points(options?: CallOptions): Promise<TempoPointsResult>;
     removePoint(params: TempoRemovePointParams, options?: PreconditionCallOptions): Promise<TempoRemovePointResult>;
     set(params: TempoSetParams, options?: PreconditionCallOptions): Promise<void>;
-    setDisplayRange(params: TempoSetDisplayRangeParams, options?: MutatingCallOptions): Promise<TempoSetDisplayRangeResult>;
+    setDisplayRange(params?: TempoSetDisplayRangeParams, options?: MutatingCallOptions): Promise<TempoSetDisplayRangeResult>;
     setPoint(params: TempoSetPointParams, options?: PreconditionCallOptions): Promise<TempoSetPointResult>;
 }
 
@@ -4962,15 +4962,15 @@ export interface TrackListResult {
 
 // @public
 export interface TrackOperations {
-    create(params: TrackCreateParams, options?: MutatingCallOptions): Promise<TrackCreateResult>;
+    create(params?: TrackCreateParams, options?: MutatingCallOptions): Promise<TrackCreateResult>;
     delete(options?: MutatingCallOptions): Promise<void>;
-    duplicate(params: TrackDuplicateParams, options?: MutatingCallOptions): Promise<TrackDuplicateResult>;
+    duplicate(params?: TrackDuplicateParams, options?: MutatingCallOptions): Promise<TrackDuplicateResult>;
     get(params: TrackGetParams, options?: CallOptions): Promise<TrackGetResult>;
-    list(params: TrackListParams, options?: CallOptions): Promise<TrackListResult>;
+    list(params?: TrackListParams, options?: CallOptions): Promise<TrackListResult>;
     onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
     rename(params: TrackRenameParams, options?: MutatingCallOptions): Promise<void>;
     reorder(params: TrackReorderParams, options?: MutatingCallOptions): Promise<TrackReorderResult>;
-    set(params: TrackSetParams, options?: MutatingCallOptions): Promise<void>;
+    set(params?: TrackSetParams, options?: MutatingCallOptions): Promise<void>;
     setInput(params: TrackSetInputParams, options?: MutatingCallOptions): Promise<TrackSetInputResult>;
     setLanguage(params: TrackSetLanguageParams, options?: MutatingCallOptions): Promise<void>;
 }
@@ -5068,7 +5068,7 @@ export interface TransportOperations {
     onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
     play(options?: MutatingCallOptions): Promise<void>;
     seek(params: TransportSeekParams, options?: MutatingCallOptions): Promise<void>;
-    setLoop(params: TransportSetLoopParams, options?: PreconditionCallOptions): Promise<void>;
+    setLoop(params?: TransportSetLoopParams, options?: PreconditionCallOptions): Promise<void>;
     state(options?: CallOptions): Promise<TransportStateResult>;
     stop(options?: MutatingCallOptions): Promise<void>;
     toggle(options?: MutatingCallOptions): Promise<void>;
@@ -5339,9 +5339,9 @@ export interface VoiceCommunityResult {
 // @public
 export interface VoiceOperations {
     collect(params: VoiceCollectParams, options?: MutatingCallOptions): Promise<VoiceCollectResult>;
-    community(params: VoiceCommunityParams, options?: CallOptions): Promise<VoiceCommunityResult>;
-    seeds(params: VoiceSeedsParams, options?: CallOptions): Promise<VoiceSeedsResult>;
-    synthModels(params: VoiceSynthModelsParams, options?: CallOptions): Promise<VoiceSynthModelsResult>;
+    community(params?: VoiceCommunityParams, options?: CallOptions): Promise<VoiceCommunityResult>;
+    seeds(params?: VoiceSeedsParams, options?: CallOptions): Promise<VoiceSeedsResult>;
+    synthModels(params?: VoiceSynthModelsParams, options?: CallOptions): Promise<VoiceSynthModelsResult>;
 }
 
 // @public

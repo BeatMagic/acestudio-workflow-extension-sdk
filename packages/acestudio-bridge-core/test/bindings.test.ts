@@ -260,7 +260,7 @@ describe("the pre-wire guard", () => {
   it("narrows a denial's details to the tokens the grant is short of", async () => {
     const { connection } = await connectToScriptedHost({ grantedTokens: [] });
 
-    const error = await connection.client.track.list({}).catch((e: unknown) => e);
+    const error = await connection.client.track.list().catch((e: unknown) => e);
 
     if (!isCode(error, "CAPABILITY_DENIED")) {
       throw new Error("expected a CAPABILITY_DENIED");
@@ -600,7 +600,7 @@ describe("connection.scoped", () => {
     // a profile the session was never granted must not make its calls succeed —
     // the guard reads the grant, never the scope.
     const scoped = connection.scoped("surface.cli-mcp");
-    await expect(scoped.track.list({})).rejects.toSatisfy((error: unknown) => isCode(error, "CAPABILITY_DENIED"));
+    await expect(scoped.track.list()).rejects.toSatisfy((error: unknown) => isCode(error, "CAPABILITY_DENIED"));
     expect(host.invocations).toEqual([]);
     connection.close();
   });

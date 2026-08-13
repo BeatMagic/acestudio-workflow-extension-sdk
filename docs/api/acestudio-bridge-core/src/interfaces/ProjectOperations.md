@@ -7,7 +7,7 @@ The `project` operations, mirroring the canonical operation tree 1:1, and the su
 ### collectSave()
 
 ```ts
-collectSave(params, options?): Promise<ProjectCollectSaveResult>;
+collectSave(params?, options?): Promise<ProjectCollectSaveResult>;
 ```
 
 Copy externally-referenced media into the bundle, then save.
@@ -16,7 +16,7 @@ Requires the `project.lifecycle` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`ProjectCollectSaveParams`](ProjectCollectSaveParams.md)
 
@@ -77,7 +77,7 @@ Requires the `project.read` capability.
 ### new()
 
 ```ts
-new(params, options?): Promise<ProjectNewResult>;
+new(params?, options?): Promise<ProjectNewResult>;
 ```
 
 Reset to a fresh project, optionally from a song template.
@@ -86,7 +86,7 @@ Requires the `project.lifecycle` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`ProjectNewParams`](ProjectNewParams.md)
 

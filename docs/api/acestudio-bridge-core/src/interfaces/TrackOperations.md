@@ -7,7 +7,7 @@ The `track` operations, mirroring the canonical operation tree 1:1, and the subs
 ### create()
 
 ```ts
-create(params, options?): Promise<TrackCreateResult>;
+create(params?, options?): Promise<TrackCreateResult>;
 ```
 
 Create a track of any creatable type, optionally at a given position.
@@ -16,7 +16,7 @@ Requires the `track.write` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`TrackCreateParams`](TrackCreateParams.md)
 
@@ -55,7 +55,7 @@ Requires the `track.write` capability.
 ### duplicate()
 
 ```ts
-duplicate(params, options?): Promise<TrackDuplicateResult>;
+duplicate(params?, options?): Promise<TrackDuplicateResult>;
 ```
 
 Duplicate a track with its clips and FX chain, next to the original.
@@ -64,7 +64,7 @@ Requires the `track.write` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`TrackDuplicateParams`](TrackDuplicateParams.md)
 
@@ -107,7 +107,7 @@ Requires the `track.read` capability.
 ### list()
 
 ```ts
-list(params, options?): Promise<TrackListResult>;
+list(params?, options?): Promise<TrackListResult>;
 ```
 
 List tracks with their basic metadata and total count, optionally filtered to given track types.
@@ -116,7 +116,7 @@ Requires the `track.read` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`TrackListParams`](TrackListParams.md)
 
@@ -211,7 +211,7 @@ Requires the `track.write` capability.
 ### set()
 
 ```ts
-set(params, options?): Promise<void>;
+set(params?, options?): Promise<void>;
 ```
 
 Update a track's mixer and display properties (color, pan, gain, mute, solo, monitor).
@@ -220,7 +220,7 @@ Requires the `track.write` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`TrackSetParams`](TrackSetParams.md)
 

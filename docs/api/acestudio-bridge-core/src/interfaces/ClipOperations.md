@@ -189,7 +189,7 @@ Requires the `clip.read` capability.
 ### list()
 
 ```ts
-list(params, options?): Promise<ClipListResult>;
+list(params?, options?): Promise<ClipListResult>;
 ```
 
 List all clips on a content track with basic metadata.
@@ -198,7 +198,7 @@ Requires the `clip.read` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`ClipListParams`](ClipListParams.md)
 

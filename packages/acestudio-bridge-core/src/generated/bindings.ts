@@ -737,7 +737,7 @@ export interface BlendOperations {
      *
      * Requires the `voice.read` capability.
      */
-    list(params: BlendListParams, options?: CallOptions): Promise<BlendListResult>;
+    list(params?: BlendListParams, options?: CallOptions): Promise<BlendListResult>;
 
     /**
      * Remove one voice seed from a blend.
@@ -857,7 +857,7 @@ export interface CaretOperations {
      *
      * Requires the `caret.read` capability.
      */
-    get(params: CaretGetParams, options?: CallOptions): Promise<CaretGetResult>;
+    get(params?: CaretGetParams, options?: CallOptions): Promise<CaretGetResult>;
 
     /**
      * Move the caret to a specified tick position.
@@ -1070,21 +1070,21 @@ export interface ChoirOperations {
      *
      * Requires the `soundsource.write` capability.
      */
-    disable(params: ChoirDisableParams, options?: MutatingCallOptions): Promise<ChoirDisableResult>;
+    disable(params?: ChoirDisableParams, options?: MutatingCallOptions): Promise<ChoirDisableResult>;
 
     /**
      * Turn choir mode on for a Sing track, keeping its current AI voice as the leader.
      *
      * Requires the `soundsource.write` capability.
      */
-    enable(params: ChoirEnableParams, options?: MutatingCallOptions): Promise<ChoirEnableResult>;
+    enable(params?: ChoirEnableParams, options?: MutatingCallOptions): Promise<ChoirEnableResult>;
 
     /**
      * Read a Sing track's choir: whether it is on, its settings, and every member.
      *
      * Requires the `soundsource.read` capability.
      */
-    get(params: ChoirGetParams, options?: CallOptions): Promise<ChoirGetResult>;
+    get(params?: ChoirGetParams, options?: CallOptions): Promise<ChoirGetResult>;
 
     /**
      * Remove one AI voice from a choir.
@@ -1105,7 +1105,7 @@ export interface ChoirOperations {
      *
      * Requires the `soundsource.write` capability.
      */
-    set(params: ChoirSetParams, options?: MutatingCallOptions): Promise<void>;
+    set(params?: ChoirSetParams, options?: MutatingCallOptions): Promise<void>;
 }
 
 // --- clip ------------------------------------------------------------------
@@ -1879,7 +1879,7 @@ export interface ClipOperations {
      *
      * Requires the `clip.read` capability.
      */
-    list(params: ClipListParams, options?: CallOptions): Promise<ClipListResult>;
+    list(params?: ClipListParams, options?: CallOptions): Promise<ClipListResult>;
 
     /**
      * Get sentence-level lyrics for a Sing clip.
@@ -2216,7 +2216,7 @@ export interface DeviceOperations {
      *
      * Requires the `device.write` capability.
      */
-    setAudio(params: DeviceSetAudioParams, options?: MutatingCallOptions): Promise<DeviceSetAudioResult>;
+    setAudio(params?: DeviceSetAudioParams, options?: MutatingCallOptions): Promise<DeviceSetAudioResult>;
 }
 
 // --- editor ----------------------------------------------------------------
@@ -2505,21 +2505,21 @@ export interface EnsembleOperations {
      *
      * Requires the `soundsource.write` capability.
      */
-    disable(params: EnsembleDisableParams, options?: MutatingCallOptions): Promise<EnsembleDisableResult>;
+    disable(params?: EnsembleDisableParams, options?: MutatingCallOptions): Promise<EnsembleDisableResult>;
 
     /**
      * Turn ensemble mode on for an Instrument track, keeping its current instrument as the leader.
      *
      * Requires the `soundsource.write` capability.
      */
-    enable(params: EnsembleEnableParams, options?: MutatingCallOptions): Promise<EnsembleEnableResult>;
+    enable(params?: EnsembleEnableParams, options?: MutatingCallOptions): Promise<EnsembleEnableResult>;
 
     /**
      * Read an Instrument track's ensemble: whether it is on, its settings, and every member.
      *
      * Requires the `soundsource.read` capability.
      */
-    get(params: EnsembleGetParams, options?: CallOptions): Promise<EnsembleGetResult>;
+    get(params?: EnsembleGetParams, options?: CallOptions): Promise<EnsembleGetResult>;
 
     /**
      * Remove one instrument from an ensemble.
@@ -2540,7 +2540,7 @@ export interface EnsembleOperations {
      *
      * Requires the `soundsource.write` capability.
      */
-    set(params: EnsembleSetParams, options?: MutatingCallOptions): Promise<void>;
+    set(params?: EnsembleSetParams, options?: MutatingCallOptions): Promise<void>;
 }
 
 // --- export ----------------------------------------------------------------
@@ -3117,7 +3117,7 @@ export interface GenerativeOperations {
      *
      * Pay-gated on `credits(music-enhancer)`: an account that does not satisfy it is refused, without a purchase prompt.
      */
-    enhance(params: GenerativeEnhanceParams, options?: MutatingCallOptions): Promise<GenerativeEnhanceResult>;
+    enhance(params?: GenerativeEnhanceParams, options?: MutatingCallOptions): Promise<GenerativeEnhanceResult>;
 
     /**
      * Generate audio from a prompt plus reference material onto a track.
@@ -3135,7 +3135,7 @@ export interface GenerativeOperations {
      *
      * Pay-gated on `credits(song-generator)`: an account that does not satisfy it is refused, without a purchase prompt.
      */
-    song(params: GenerativeSongParams, options?: MutatingCallOptions): Promise<GenerativeSongResult>;
+    song(params?: GenerativeSongParams, options?: MutatingCallOptions): Promise<GenerativeSongResult>;
 
     /**
      * Generate a sound effect from a text prompt onto a track.
@@ -3255,7 +3255,7 @@ export interface HistoryOperations {
      *
      * Requires the `history.read` capability.
      */
-    list(params: HistoryListParams, options?: CallOptions): Promise<HistoryListResult>;
+    list(params?: HistoryListParams, options?: CallOptions): Promise<HistoryListResult>;
 
     /**
      * Redo the entry the last undo took back, whoever authored it.
@@ -3435,14 +3435,14 @@ export interface InstrumentOperations {
      *
      * Requires the `soundsource.write` capability.
      */
-    disable(params: InstrumentDisableParams, options?: MutatingCallOptions): Promise<InstrumentDisableResult>;
+    disable(params?: InstrumentDisableParams, options?: MutatingCallOptions): Promise<InstrumentDisableResult>;
 
     /**
      * Enable the external instrument mounted on a MIDI track.
      *
      * Requires the `soundsource.write` capability.
      */
-    enable(params: InstrumentEnableParams, options?: MutatingCallOptions): Promise<InstrumentEnableResult>;
+    enable(params?: InstrumentEnableParams, options?: MutatingCallOptions): Promise<InstrumentEnableResult>;
 
     /**
      * Set which MIDI channel a track's external instrument listens on.
@@ -4200,7 +4200,7 @@ export interface ProjectOperations {
      *
      * Requires the `project.lifecycle` capability.
      */
-    collectSave(params: ProjectCollectSaveParams, options?: MutatingCallOptions): Promise<ProjectCollectSaveResult>;
+    collectSave(params?: ProjectCollectSaveParams, options?: MutatingCallOptions): Promise<ProjectCollectSaveResult>;
 
     /**
      * Report whether the project has unsaved changes.
@@ -4221,7 +4221,7 @@ export interface ProjectOperations {
      *
      * Requires the `project.lifecycle` capability.
      */
-    'new'(params: ProjectNewParams, options?: MutatingCallOptions): Promise<ProjectNewResult>;
+    'new'(params?: ProjectNewParams, options?: MutatingCallOptions): Promise<ProjectNewResult>;
 
     /**
      * Open a project file, blocking until it is fully loaded.
@@ -4795,14 +4795,14 @@ export interface SoundSourceOperations {
      *
      * Requires the `soundsource.read` capability.
      */
-    get(params: SoundSourceGetParams, options?: CallOptions): Promise<SoundSourceGetResult>;
+    get(params?: SoundSourceGetParams, options?: CallOptions): Promise<SoundSourceGetResult>;
 
     /**
      * List every sound source you can put on a track: voices, choirs, instruments, ensembles, external instruments.
      *
      * Requires the `soundsource.read` capability.
      */
-    list(params: SoundSourceListParams, options?: CallOptions): Promise<SoundSourceListResult>;
+    list(params?: SoundSourceListParams, options?: CallOptions): Promise<SoundSourceListResult>;
 
     /**
      * Load a sound source onto a track, addressing it by name.
@@ -4823,14 +4823,14 @@ export interface SoundSourceOperations {
      *
      * Requires the `soundsource.read` capability.
      */
-    tags(params: SoundSourceTagsParams, options?: CallOptions): Promise<SoundSourceTagsResult>;
+    tags(params?: SoundSourceTagsParams, options?: CallOptions): Promise<SoundSourceTagsResult>;
 
     /**
      * Remove a track's sound source, leaving a plain MIDI track behind.
      *
      * Requires the `soundsource.write` capability.
      */
-    unload(params: SoundSourceUnloadParams, options?: MutatingCallOptions): Promise<SoundSourceUnloadResult>;
+    unload(params?: SoundSourceUnloadParams, options?: MutatingCallOptions): Promise<SoundSourceUnloadResult>;
 }
 
 // --- tempo -----------------------------------------------------------------
@@ -5021,7 +5021,7 @@ export interface TempoOperations {
      *
      * Requires the `tempo.write` capability.
      */
-    setDisplayRange(params: TempoSetDisplayRangeParams, options?: MutatingCallOptions): Promise<TempoSetDisplayRangeResult>;
+    setDisplayRange(params?: TempoSetDisplayRangeParams, options?: MutatingCallOptions): Promise<TempoSetDisplayRangeResult>;
 
     /**
      * Add or replace one tempo point at a position (upsert). Leaves every other point untouched.
@@ -5492,7 +5492,7 @@ export interface TrackOperations {
      *
      * Requires the `track.write` capability.
      */
-    create(params: TrackCreateParams, options?: MutatingCallOptions): Promise<TrackCreateResult>;
+    create(params?: TrackCreateParams, options?: MutatingCallOptions): Promise<TrackCreateResult>;
 
     /**
      * Delete all currently selected tracks and their content.
@@ -5506,7 +5506,7 @@ export interface TrackOperations {
      *
      * Requires the `track.write` capability.
      */
-    duplicate(params: TrackDuplicateParams, options?: MutatingCallOptions): Promise<TrackDuplicateResult>;
+    duplicate(params?: TrackDuplicateParams, options?: MutatingCallOptions): Promise<TrackDuplicateResult>;
 
     /**
      * Get comprehensive metadata for one track by index.
@@ -5520,7 +5520,7 @@ export interface TrackOperations {
      *
      * Requires the `track.read` capability.
      */
-    list(params: TrackListParams, options?: CallOptions): Promise<TrackListResult>;
+    list(params?: TrackListParams, options?: CallOptions): Promise<TrackListResult>;
 
     /**
      * Rename a track. Pass an empty string to restore the default name.
@@ -5541,7 +5541,7 @@ export interface TrackOperations {
      *
      * Requires the `track.write` capability.
      */
-    set(params: TrackSetParams, options?: MutatingCallOptions): Promise<void>;
+    set(params?: TrackSetParams, options?: MutatingCallOptions): Promise<void>;
 
     /**
      * Set what a track records from: its input channel, its MIDI input, and how chords are captured.
@@ -5650,7 +5650,7 @@ export interface TransportOperations {
      *
      * Requires the `transport.control` capability.
      */
-    setLoop(params: TransportSetLoopParams, options?: PreconditionCallOptions): Promise<void>;
+    setLoop(params?: TransportSetLoopParams, options?: PreconditionCallOptions): Promise<void>;
 
     /**
      * Read the current transport state and playback head position.
@@ -6186,21 +6186,21 @@ export interface VoiceOperations {
      *
      * Requires the `voice.read` capability.
      */
-    community(params: VoiceCommunityParams, options?: CallOptions): Promise<VoiceCommunityResult>;
+    community(params?: VoiceCommunityParams, options?: CallOptions): Promise<VoiceCommunityResult>;
 
     /**
      * List the voice seeds you can put into a blend.
      *
      * Requires the `voice.read` capability.
      */
-    seeds(params: VoiceSeedsParams, options?: CallOptions): Promise<VoiceSeedsResult>;
+    seeds(params?: VoiceSeedsParams, options?: CallOptions): Promise<VoiceSeedsResult>;
 
     /**
      * List the vocal synth models, with the languages each sings and how many voices offer it.
      *
      * Requires the `voice.read` capability.
      */
-    synthModels(params: VoiceSynthModelsParams, options?: CallOptions): Promise<VoiceSynthModelsResult>;
+    synthModels(params?: VoiceSynthModelsParams, options?: CallOptions): Promise<VoiceSynthModelsResult>;
 }
 
 /** Every published operation, grouped by domain. A connection's client implements this; the runtime builds it from `OPERATIONS`. */

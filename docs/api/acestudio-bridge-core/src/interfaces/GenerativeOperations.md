@@ -35,7 +35,7 @@ Pay-gated on `credits(add-a-layer)`: an account that does not satisfy it is refu
 ### enhance()
 
 ```ts
-enhance(params, options?): Promise<GenerativeEnhanceResult>;
+enhance(params?, options?): Promise<GenerativeEnhanceResult>;
 ```
 
 Re-produce existing audio as a new arrangement. Launches a staged job.
@@ -46,7 +46,7 @@ Pay-gated on `credits(music-enhancer)`: an account that does not satisfy it is r
 
 #### Parameters
 
-##### params
+##### params?
 
 [`GenerativeEnhanceParams`](GenerativeEnhanceParams.md)
 
@@ -91,7 +91,7 @@ Pay-gated on `credits(seed-audio)`: an account that does not satisfy it is refus
 ### song()
 
 ```ts
-song(params, options?): Promise<GenerativeSongResult>;
+song(params?, options?): Promise<GenerativeSongResult>;
 ```
 
 Generate a song from an idea or from lyrics. Launches a staged job.
@@ -102,7 +102,7 @@ Pay-gated on `credits(song-generator)`: an account that does not satisfy it is r
 
 #### Parameters
 
-##### params
+##### params?
 
 [`GenerativeSongParams`](GenerativeSongParams.md)
 

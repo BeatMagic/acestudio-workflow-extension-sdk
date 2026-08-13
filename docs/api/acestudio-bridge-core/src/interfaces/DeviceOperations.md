@@ -51,7 +51,7 @@ Requires the `device.read` capability.
 ### setAudio()
 
 ```ts
-setAudio(params, options?): Promise<DeviceSetAudioResult>;
+setAudio(params?, options?): Promise<DeviceSetAudioResult>;
 ```
 
 Select the audio backend, output device, and input device by name.
@@ -60,7 +60,7 @@ Requires the `device.write` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`DeviceSetAudioParams`](DeviceSetAudioParams.md)
 

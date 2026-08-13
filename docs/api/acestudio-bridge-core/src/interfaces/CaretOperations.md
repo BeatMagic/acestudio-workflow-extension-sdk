@@ -7,7 +7,7 @@ The `caret` operations, mirroring the canonical operation tree 1:1.
 ### get()
 
 ```ts
-get(params, options?): Promise<CaretGetResult>;
+get(params?, options?): Promise<CaretGetResult>;
 ```
 
 Read the caret position (track index, tick, scope) and which view holds focus.
@@ -16,7 +16,7 @@ Requires the `caret.read` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`CaretGetParams`](CaretGetParams.md)
 

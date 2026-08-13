@@ -7,7 +7,7 @@ The `history` operations, mirroring the canonical operation tree 1:1.
 ### list()
 
 ```ts
-list(params, options?): Promise<HistoryListResult>;
+list(params?, options?): Promise<HistoryListResult>;
 ```
 
 List undo-stack entries newest first, with their names and authors.
@@ -16,7 +16,7 @@ Requires the `history.read` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`HistoryListParams`](HistoryListParams.md)
 

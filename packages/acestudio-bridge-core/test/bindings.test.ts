@@ -21,6 +21,7 @@ import {
   type ChangeEvent,
   type InvokeParams,
   type OperationWarning,
+  type ProjectInfoResult,
   type TrackListResult,
 } from "@timedomain/acestudio-bridge-core";
 // Reached by path, not through the package entry: these are @internal helpers,
@@ -49,7 +50,17 @@ async function flush(): Promise<void> {
 /** One scripted `track list` answer, shaped by the generated result type. */
 const TRACKS: TrackListResult = {
   contentTrackCount: 1,
-  tracks: [{ clipCount: 2, trackIndex: 0, trackName: "Lead", trackType: "Sing", trackUuid: "{a}" }],
+  tracks: [
+    { clipCount: 2, region: "video", trackIndex: 0, trackName: "Backdrop", trackType: "Video", trackUuid: "{a}" },
+  ],
+};
+
+/** One scripted `project info` answer, shaped by the generated result type. */
+const PROJECT: ProjectInfoResult = {
+  duration: 3_840,
+  isNewProject: false,
+  isTempProject: false,
+  projectName: "Demo",
 };
 
 describe("the operation surface", () => {
@@ -71,13 +82,28 @@ describe("the operation surface", () => {
       operations: { "track list": { data: TRACKS } },
     });
 
-    // `track list` takes no arguments, so its binding's first parameter is the
-    // options object — which is exactly the case a runtime binding by position
-    // gets wrong if it assumes every method starts with a payload.
-    const result = await connection.client.track.list({ timeoutMs: 1_000 });
+    const result = await connection.client.track.list({ type: ["video"] }, { timeoutMs: 1_000 });
 
     expect(result).toEqual(TRACKS);
-    expect(host.invocations).toEqual([{ path: "track list", arguments: {}, waitTimeoutMs: undefined }]);
+    expect(host.invocations).toEqual([
+      { path: "track list", arguments: { type: ["video"] }, waitTimeoutMs: undefined },
+    ]);
+    connection.close();
+  });
+
+  it("puts the options object first for an operation that takes no arguments", async () => {
+    const { connection, host } = await connectToScriptedHost({
+      grantedTokens: ["project.read"],
+      operations: { "project info": { data: PROJECT } },
+    });
+
+    // `project info` takes no arguments, so its binding's first parameter is the
+    // options object — which is exactly the case a runtime binding by position
+    // gets wrong if it assumes every method starts with a payload.
+    const result = await connection.client.project.info({ timeoutMs: 1_000 });
+
+    expect(result).toEqual(PROJECT);
+    expect(host.invocations).toEqual([{ path: "project info", arguments: {}, waitTimeoutMs: undefined }]);
     connection.close();
   });
 

@@ -111,7 +111,7 @@ Requires the `voice.read` capability.
 ### list()
 
 ```ts
-list(params, options?): Promise<BlendListResult>;
+list(params?, options?): Promise<BlendListResult>;
 ```
 
 List the blended voices in your library, with how full the library is.
@@ -120,7 +120,7 @@ Requires the `voice.read` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`BlendListParams`](BlendListParams.md)
 

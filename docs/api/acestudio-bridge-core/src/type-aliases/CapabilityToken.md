@@ -2,6 +2,7 @@
 
 ```ts
 type CapabilityToken = 
+  | "canvas.read"
   | "caret.read"
   | "caret.write"
   | "chord.read"
@@ -17,7 +18,6 @@ type CapabilityToken =
   | "fx.write"
   | "generative.add-layer"
   | "generative.enhance"
-  | "generative.retake"
   | "generative.seed-audio"
   | "generative.song"
   | "generative.sound-effects"

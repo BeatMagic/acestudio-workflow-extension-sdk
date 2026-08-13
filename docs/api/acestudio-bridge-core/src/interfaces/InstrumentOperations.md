@@ -7,7 +7,7 @@ The `instrument` operations, mirroring the canonical operation tree 1:1.
 ### disable()
 
 ```ts
-disable(params, options?): Promise<InstrumentDisableResult>;
+disable(params?, options?): Promise<InstrumentDisableResult>;
 ```
 
 Disable the external instrument mounted on a MIDI track, leaving it mounted.
@@ -16,7 +16,7 @@ Requires the `soundsource.write` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`InstrumentDisableParams`](InstrumentDisableParams.md)
 
@@ -33,7 +33,7 @@ Requires the `soundsource.write` capability.
 ### enable()
 
 ```ts
-enable(params, options?): Promise<InstrumentEnableResult>;
+enable(params?, options?): Promise<InstrumentEnableResult>;
 ```
 
 Enable the external instrument mounted on a MIDI track.
@@ -42,7 +42,7 @@ Requires the `soundsource.write` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`InstrumentEnableParams`](InstrumentEnableParams.md)
 

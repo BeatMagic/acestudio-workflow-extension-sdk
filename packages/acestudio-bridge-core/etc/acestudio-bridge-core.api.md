@@ -148,7 +148,7 @@ export interface BlendOperations {
     create(params: BlendCreateParams, options?: MutatingCallOptions): Promise<BlendCreateResult>;
     delete(params: BlendDeleteParams, options?: MutatingCallOptions): Promise<BlendDeleteResult>;
     get(params: BlendGetParams, options?: CallOptions): Promise<BlendGetResult>;
-    list(params: BlendListParams, options?: CallOptions): Promise<BlendListResult>;
+    list(params?: BlendListParams, options?: CallOptions): Promise<BlendListResult>;
     remove(params: BlendRemoveParams, options?: MutatingCallOptions): Promise<BlendRemoveResult>;
     reorder(params: BlendReorderParams, options?: MutatingCallOptions): Promise<BlendReorderResult>;
     set(params: BlendSetParams, options?: MutatingCallOptions): Promise<BlendSetResult>;
@@ -279,7 +279,7 @@ export class BridgeError<C extends AnyBridgeErrorCode = AnyBridgeErrorCode> exte
 }
 
 // @public
-export type BridgeErrorCode = 'ALREADY_RECORDING' | 'AMBIGUOUS_SOURCE' | 'ANALYSIS_UNUSABLE' | 'BAD_ARGS' | 'BRIDGE_UNREACHABLE' | 'CAPABILITY_DENIED' | 'CAPABILITY_OUT_OF_SURFACE' | 'CHAIN_NOT_GROWN' | 'CLIP_OVERLAP' | 'COLLECT_FAILED' | 'CONFIRMATION_REQUIRED' | 'CREATE_TIMEOUT' | 'CREDIT_INSUFFICIENT' | 'EDITOR_NOT_READY' | 'EDIT_TIMEOUT' | 'EXPORT_IN_PROGRESS' | 'EXPORT_START_FAILED' | 'FILE_NOT_FOUND' | 'FINGERPRINT_SCOPE_MISMATCH' | 'FIXTURE_FAILED' | 'FLUSH_TIMEOUT' | 'FORMAT_UNAVAILABLE' | 'GESTURE_HELD' | 'HANDLER_FAILED' | 'IMPORT_FAILED' | 'INSERT_FAILED' | 'INVALID_ARG' | 'IO_ERROR' | 'JOB_NOT_CANCELLABLE' | 'MEMBERSHIP_REQUIRED' | 'NEW_FAILED' | 'NOTE_OVERLAP' | 'NOT_FOUND' | 'NO_FIXTURE' | 'NO_GESTURE' | 'NO_MASTER_CHAIN' | 'NO_PATTERN_EDIT_OPEN' | 'NO_PROJECT' | 'NO_PROJECT_OPEN' | 'NO_SCENE' | 'NO_STATE' | 'NO_TRACK_VIEW' | 'NO_WINDOW' | 'OPEN_FAILED' | 'PLAYBACK_START_FAILED' | 'RECORD_START_FAILED' | 'SAVE_FAILED' | 'SCENARIO_FAILED' | 'SESSION_INVALID' | 'STALE_WRITE' | 'TIMEOUT' | 'TIME_UNIT_REQUIRED' | 'TRACK_CREATE_FAILED' | 'UNAVAILABLE' | 'UNKNOWN_CAPABILITY' | 'UNKNOWN_COMMAND' | 'UNKNOWN_SCENARIO' | 'UNSAVED_CHANGES' | 'USER_BUSY';
+export type BridgeErrorCode = 'ALREADY_RECORDING' | 'AMBIGUOUS_SOURCE' | 'ANALYSIS_UNUSABLE' | 'BAD_ARGS' | 'BRIDGE_UNREACHABLE' | 'CAPABILITY_DENIED' | 'CAPABILITY_OUT_OF_SURFACE' | 'CHAIN_NOT_GROWN' | 'CLIP_OVERLAP' | 'COLLECT_FAILED' | 'CONFIRMATION_REQUIRED' | 'CREATE_TIMEOUT' | 'CREDIT_INSUFFICIENT' | 'EDITOR_NOT_READY' | 'EDIT_TIMEOUT' | 'EXPORT_IN_PROGRESS' | 'EXPORT_START_FAILED' | 'FILE_NOT_FOUND' | 'FINGERPRINT_SCOPE_MISMATCH' | 'FIXTURE_FAILED' | 'FLUSH_TIMEOUT' | 'FORMAT_UNAVAILABLE' | 'GESTURE_HELD' | 'HANDLER_FAILED' | 'IMPORT_FAILED' | 'INSERT_FAILED' | 'INVALID_ARG' | 'IO_ERROR' | 'JOB_NOT_CANCELLABLE' | 'MEMBERSHIP_REQUIRED' | 'MISSING_ARG' | 'NEW_FAILED' | 'NOTE_OVERLAP' | 'NOT_FOUND' | 'NOT_READY' | 'NO_FIXTURE' | 'NO_GESTURE' | 'NO_MASTER_CHAIN' | 'NO_PATTERN_EDIT_OPEN' | 'NO_PROJECT' | 'NO_PROJECT_OPEN' | 'NO_SCENE' | 'NO_STATE' | 'NO_TRACK_VIEW' | 'NO_WINDOW' | 'OPEN_FAILED' | 'PLAYBACK_START_FAILED' | 'RECORD_START_FAILED' | 'SAVE_FAILED' | 'SCENARIO_FAILED' | 'SESSION_INVALID' | 'STALE_WRITE' | 'TIMEOUT' | 'TIME_UNIT_REQUIRED' | 'TRACK_CREATE_FAILED' | 'UNAVAILABLE' | 'UNKNOWN_CAPABILITY' | 'UNKNOWN_COMMAND' | 'UNKNOWN_SCENARIO' | 'UNSAVED_CHANGES' | 'USER_BUSY';
 
 // @public
 export interface BridgeErrorDetails {
@@ -369,10 +369,32 @@ export interface CallOptions {
 export type Camel<S extends string> = S extends `${infer Head}-${infer Tail}` ? `${Head}${Capitalize<Camel<Tail>>}` : S;
 
 // @public
-export const CAPABILITY_TOKENS: readonly ["caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "fx.read", "fx.write", "generative.add-layer", "generative.enhance", "generative.retake", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "session.handshake", "session.ping", "session.shutdown", "soundsource.read", "soundsource.write", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.read", "track.write", "transport.control", "transport.state", "ui.control", "ui.state", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write", "workflow.dev", "workflow.ui"];
+export interface CanvasEffectiveSizeResult {
+    frameRate: number;
+    height: number;
+    width: number;
+}
 
 // @public
-export type CapabilityToken = 'caret.read' | 'caret.write' | 'chord.read' | 'chord.write' | 'clip.read' | 'clip.write' | 'device.read' | 'device.write' | 'editor.read' | 'editor.write' | 'export.invoke' | 'fx.read' | 'fx.write' | 'generative.add-layer' | 'generative.enhance' | 'generative.retake' | 'generative.seed-audio' | 'generative.song' | 'generative.sound-effects' | 'generative.stem-split' | 'generative.text2sample' | 'generative.vocal2midi' | 'generative.voice-change' | 'history.control' | 'history.read' | 'import.invoke' | 'job.control' | 'job.read' | 'lyric.read' | 'lyric.write' | 'note.read' | 'note.write' | 'project.lifecycle' | 'project.read' | 'recording.control' | 'selection.read' | 'selection.write' | 'session.handshake' | 'session.ping' | 'session.shutdown' | 'soundsource.read' | 'soundsource.write' | 'tempo.analyze' | 'tempo.applyV2' | 'tempo.read' | 'tempo.write' | 'timesig.read' | 'timesig.write' | 'track.read' | 'track.write' | 'transport.control' | 'transport.state' | 'ui.control' | 'ui.state' | 'vocalparam.read' | 'vocalparam.write' | 'voice.read' | 'voice.write' | 'workflow.dev' | 'workflow.ui';
+export interface CanvasInfoResult {
+    adaptive: boolean;
+    frameRate: number;
+    height?: number;
+    width?: number;
+}
+
+// @public
+export interface CanvasOperations {
+    effectiveSize(options?: CallOptions): Promise<CanvasEffectiveSizeResult>;
+    info(options?: CallOptions): Promise<CanvasInfoResult>;
+    onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
+}
+
+// @public
+export const CAPABILITY_TOKENS: readonly ["canvas.read", "caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "fx.read", "fx.write", "generative.add-layer", "generative.enhance", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "session.handshake", "session.ping", "session.shutdown", "soundsource.read", "soundsource.write", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.read", "track.write", "transport.control", "transport.state", "ui.control", "ui.state", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write", "workflow.dev", "workflow.ui"];
+
+// @public
+export type CapabilityToken = 'canvas.read' | 'caret.read' | 'caret.write' | 'chord.read' | 'chord.write' | 'clip.read' | 'clip.write' | 'device.read' | 'device.write' | 'editor.read' | 'editor.write' | 'export.invoke' | 'fx.read' | 'fx.write' | 'generative.add-layer' | 'generative.enhance' | 'generative.seed-audio' | 'generative.song' | 'generative.sound-effects' | 'generative.stem-split' | 'generative.text2sample' | 'generative.vocal2midi' | 'generative.voice-change' | 'history.control' | 'history.read' | 'import.invoke' | 'job.control' | 'job.read' | 'lyric.read' | 'lyric.write' | 'note.read' | 'note.write' | 'project.lifecycle' | 'project.read' | 'recording.control' | 'selection.read' | 'selection.write' | 'session.handshake' | 'session.ping' | 'session.shutdown' | 'soundsource.read' | 'soundsource.write' | 'tempo.analyze' | 'tempo.applyV2' | 'tempo.read' | 'tempo.write' | 'timesig.read' | 'timesig.write' | 'track.read' | 'track.write' | 'transport.control' | 'transport.state' | 'ui.control' | 'ui.state' | 'vocalparam.read' | 'vocalparam.write' | 'voice.read' | 'voice.write' | 'workflow.dev' | 'workflow.ui';
 
 // @public
 export interface CaretGetParams {
@@ -389,7 +411,7 @@ export interface CaretGetResult {
 
 // @public
 export interface CaretOperations {
-    get(params: CaretGetParams, options?: CallOptions): Promise<CaretGetResult>;
+    get(params?: CaretGetParams, options?: CallOptions): Promise<CaretGetResult>;
     set(params: CaretSetParams, options?: MutatingCallOptions): Promise<void>;
 }
 
@@ -529,12 +551,12 @@ export interface ChoirGetResult {
 // @public
 export interface ChoirOperations {
     add(params: ChoirAddParams, options?: MutatingCallOptions): Promise<ChoirAddResult>;
-    disable(params: ChoirDisableParams, options?: MutatingCallOptions): Promise<ChoirDisableResult>;
-    enable(params: ChoirEnableParams, options?: MutatingCallOptions): Promise<ChoirEnableResult>;
-    get(params: ChoirGetParams, options?: CallOptions): Promise<ChoirGetResult>;
+    disable(params?: ChoirDisableParams, options?: MutatingCallOptions): Promise<ChoirDisableResult>;
+    enable(params?: ChoirEnableParams, options?: MutatingCallOptions): Promise<ChoirEnableResult>;
+    get(params?: ChoirGetParams, options?: CallOptions): Promise<ChoirGetResult>;
     remove(params: ChoirRemoveParams, options?: MutatingCallOptions): Promise<ChoirRemoveResult>;
     reorder(params: ChoirReorderParams, options?: MutatingCallOptions): Promise<ChoirReorderResult>;
-    set(params: ChoirSetParams, options?: MutatingCallOptions): Promise<void>;
+    set(params?: ChoirSetParams, options?: MutatingCallOptions): Promise<void>;
 }
 
 // @public
@@ -731,7 +753,8 @@ export interface ClipGetResult {
 
 // @public
 export interface ClipListParams {
-    trackIndex: number;
+    trackIndex?: number | null;
+    trackUuid?: string | null;
 }
 
 // @public
@@ -840,10 +863,11 @@ export interface ClipOperations {
     detachAudio(params: ClipDetachAudioParams, options?: MutatingCallOptions): Promise<ClipDetachAudioResult>;
     duplicate(params: ClipDuplicateParams, options?: MutatingCallOptions): Promise<ClipDuplicateResult>;
     get(params: ClipGetParams, options?: CallOptions): Promise<ClipGetResult>;
-    list(params: ClipListParams, options?: CallOptions): Promise<ClipListResult>;
+    list(params?: ClipListParams, options?: CallOptions): Promise<ClipListResult>;
     lyrics(params: ClipLyricsParams, options?: CallOptions): Promise<ClipLyricsResult>;
     move(params: ClipMoveParams, options?: MutatingCallOptions): Promise<ClipMoveResult>;
     noteContent(params: ClipNoteContentParams, options?: CallOptions): Promise<ClipNoteContentResult>;
+    onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
     reattachAudio(params: ClipReattachAudioParams, options?: MutatingCallOptions): Promise<ClipReattachAudioResult>;
     replaceContent(params: ClipReplaceContentParams, options?: PreconditionCallOptions): Promise<ClipReplaceContentResult>;
     resize(params: ClipResizeParams, options?: MutatingCallOptions): Promise<ClipResizeResult>;
@@ -1188,7 +1212,7 @@ export interface DeviceListResult {
 export interface DeviceOperations {
     current(options?: CallOptions): Promise<DeviceCurrentResult>;
     list(options?: CallOptions): Promise<DeviceListResult>;
-    setAudio(params: DeviceSetAudioParams, options?: MutatingCallOptions): Promise<DeviceSetAudioResult>;
+    setAudio(params?: DeviceSetAudioParams, options?: MutatingCallOptions): Promise<DeviceSetAudioResult>;
 }
 
 // @public
@@ -1335,12 +1359,12 @@ export interface EnsembleGetResult {
 // @public
 export interface EnsembleOperations {
     add(params: EnsembleAddParams, options?: MutatingCallOptions): Promise<EnsembleAddResult>;
-    disable(params: EnsembleDisableParams, options?: MutatingCallOptions): Promise<EnsembleDisableResult>;
-    enable(params: EnsembleEnableParams, options?: MutatingCallOptions): Promise<EnsembleEnableResult>;
-    get(params: EnsembleGetParams, options?: CallOptions): Promise<EnsembleGetResult>;
+    disable(params?: EnsembleDisableParams, options?: MutatingCallOptions): Promise<EnsembleDisableResult>;
+    enable(params?: EnsembleEnableParams, options?: MutatingCallOptions): Promise<EnsembleEnableResult>;
+    get(params?: EnsembleGetParams, options?: CallOptions): Promise<EnsembleGetResult>;
     remove(params: EnsembleRemoveParams, options?: MutatingCallOptions): Promise<EnsembleRemoveResult>;
     reorder(params: EnsembleReorderParams, options?: MutatingCallOptions): Promise<EnsembleReorderResult>;
-    set(params: EnsembleSetParams, options?: MutatingCallOptions): Promise<void>;
+    set(params?: EnsembleSetParams, options?: MutatingCallOptions): Promise<void>;
 }
 
 // @public
@@ -1528,6 +1552,203 @@ export class FrameDecoder {
 }
 
 // @public
+export interface GenerativeAddLayerParams {
+    from: number;
+    instrument?: string | null;
+    lyrics?: string | null;
+    prompt?: string | null;
+    soundType?: 'instrumental' | 'song-track' | 'drums' | 'bass' | 'guitar' | 'keyboard' | 'percussion' | 'strings' | 'synth' | 'fx' | 'brass' | 'woodwinds' | 'vocals' | 'backing-vocals' | 'custom';
+    to: number;
+    trackUuid: string;
+}
+
+// @public
+export interface GenerativeAddLayerResult {
+    cancellable: boolean;
+    delivery: string;
+    from?: number;
+    jobClass: string;
+    jobId: string;
+    to?: number;
+    trackId: string;
+}
+
+// @public
+export interface GenerativeEnhanceParams {
+    clipUuid?: string | null;
+    influence?: number | null;
+    lyrics?: string | null;
+    path?: string | null;
+    prompt?: string | null;
+    title?: string | null;
+}
+
+// @public
+export interface GenerativeEnhanceResult {
+    cancellable: boolean;
+    delivery: string;
+    jobClass: string;
+    jobId: string;
+    streamingCapable?: boolean;
+}
+
+// @public
+export interface GenerativeOperations {
+    addLayer(params: GenerativeAddLayerParams, options?: MutatingCallOptions): Promise<GenerativeAddLayerResult>;
+    enhance(params?: GenerativeEnhanceParams, options?: MutatingCallOptions): Promise<GenerativeEnhanceResult>;
+    seedAudio(params: GenerativeSeedAudioParams, options?: MutatingCallOptions): Promise<GenerativeSeedAudioResult>;
+    song(params?: GenerativeSongParams, options?: MutatingCallOptions): Promise<GenerativeSongResult>;
+    soundEffects(params: GenerativeSoundEffectsParams, options?: MutatingCallOptions): Promise<GenerativeSoundEffectsResult>;
+    stemSplit(params: GenerativeStemSplitParams, options?: MutatingCallOptions): Promise<GenerativeStemSplitResult>;
+    text2sample(params: GenerativeText2sampleParams, options?: MutatingCallOptions): Promise<GenerativeText2sampleResult>;
+    vocal2midi(params: GenerativeVocal2midiParams, options?: MutatingCallOptions): Promise<GenerativeVocal2midiResult>;
+    voiceChange(params: GenerativeVoiceChangeParams, options?: MutatingCallOptions): Promise<GenerativeVoiceChangeResult>;
+}
+
+// @public
+export interface GenerativeSeedAudioParams {
+    from: number;
+    prompt: string;
+    referenceAudio?: string[] | null;
+    referenceImage?: string | null;
+    to: number;
+    trackUuid: string;
+}
+
+// @public
+export interface GenerativeSeedAudioResult {
+    cancellable: boolean;
+    delivery: string;
+    from?: number;
+    jobClass: string;
+    jobId: string;
+    to?: number;
+    trackId: string;
+}
+
+// @public
+export interface GenerativeSongParams {
+    instrumental?: boolean | null;
+    lyrics?: string | null;
+    prompt?: string | null;
+    title?: string | null;
+}
+
+// @public
+export interface GenerativeSongResult {
+    cancellable: boolean;
+    delivery: string;
+    jobClass: string;
+    jobId: string;
+    streamingCapable?: boolean;
+}
+
+// @public
+export interface GenerativeSoundEffectsParams {
+    from: number;
+    influence?: 'low' | 'mid' | 'high';
+    loop?: boolean | null;
+    prompt: string;
+    to: number;
+    trackUuid: string;
+}
+
+// @public
+export interface GenerativeSoundEffectsResult {
+    cancellable: boolean;
+    delivery: string;
+    from?: number;
+    jobClass: string;
+    jobId: string;
+    to?: number;
+    trackId: string;
+}
+
+// @public
+export interface GenerativeStemSplitParams {
+    clipUuid: string;
+    mode?: 'basic' | 'professional' | 'advanced' | 'customized';
+    prompt?: string | null;
+    removeReverb?: boolean | null;
+}
+
+// @public
+export interface GenerativeStemSplitResult {
+    cancellable: boolean;
+    clipUuid: string;
+    delivery: string;
+    jobClass: string;
+    jobId: string;
+    mode?: string;
+    trackIds: string[];
+}
+
+// @public
+export interface GenerativeText2sampleParams {
+    from: number;
+    prompt: string;
+    referenceAudio?: string | null;
+    soundHint?: string | null;
+    to: number;
+    trackUuid: string;
+}
+
+// @public
+export interface GenerativeText2sampleResult {
+    cancellable: boolean;
+    delivery: string;
+    from?: number;
+    jobClass: string;
+    jobId: string;
+    to?: number;
+    trackId: string;
+}
+
+// @public
+export interface GenerativeVocal2midiParams {
+    applyPitch?: boolean | null;
+    clipUuid: string;
+    language: 'chinese' | 'english' | 'japanese' | 'spanish' | 'korean' | 'french' | 'italian' | 'portuguese' | 'notes-only';
+    trackUuid?: string | null;
+}
+
+// @public
+export interface GenerativeVocal2midiResult {
+    cancellable: boolean;
+    delivery: string;
+    from?: number;
+    jobClass: string;
+    jobId: string;
+    to?: number;
+    trackId: string;
+}
+
+// @public
+export interface GenerativeVoiceChangeParams {
+    correctToKey?: string | null;
+    correctToScale?: string | null;
+    from: number;
+    modelIds: number[];
+    pitchCorrection?: number | null;
+    randomOffset?: number | null;
+    removeInstrument?: boolean | null;
+    removeReverb?: boolean | null;
+    semitones?: number | null;
+    to: number;
+    trackUuids: string[];
+}
+
+// @public
+export interface GenerativeVoiceChangeResult {
+    cancellable: boolean;
+    delivery: string;
+    jobClass: string;
+    jobId: string;
+    modelIds: number[];
+    trackIds: string[];
+}
+
+// @public
 export interface Grant {
     has(token: CapabilityToken): boolean;
     missing(profileOrTokens: ProfileName | readonly CapabilityToken[]): readonly CapabilityToken[];
@@ -1578,7 +1799,7 @@ export interface HistoryListResult {
 
 // @public
 export interface HistoryOperations {
-    list(params: HistoryListParams, options?: CallOptions): Promise<HistoryListResult>;
+    list(params?: HistoryListParams, options?: CallOptions): Promise<HistoryListResult>;
     redo(options?: MutatingCallOptions): Promise<HistoryRedoResult>;
     undo(options?: MutatingCallOptions): Promise<HistoryUndoResult>;
 }
@@ -1685,8 +1906,8 @@ export interface InstrumentEnableResult {
 
 // @public
 export interface InstrumentOperations {
-    disable(params: InstrumentDisableParams, options?: MutatingCallOptions): Promise<InstrumentDisableResult>;
-    enable(params: InstrumentEnableParams, options?: MutatingCallOptions): Promise<InstrumentEnableResult>;
+    disable(params?: InstrumentDisableParams, options?: MutatingCallOptions): Promise<InstrumentDisableResult>;
+    enable(params?: InstrumentEnableParams, options?: MutatingCallOptions): Promise<InstrumentEnableResult>;
     set(params: InstrumentSetParams, options?: MutatingCallOptions): Promise<InstrumentSetResult>;
 }
 
@@ -2134,10 +2355,45 @@ export interface NoteSplitResult {
 
 // @public
 export const NOTIFICATION_CHANNELS: readonly [{
+    readonly channel: "canvas";
+    readonly domain: "canvas";
+    readonly method: "onChanged";
+    readonly capability: "canvas.read";
+}, {
+    readonly channel: "clips";
+    readonly domain: "clip";
+    readonly method: "onChanged";
+    readonly capability: "clip.read";
+}, {
     readonly channel: "jobs";
     readonly domain: "job";
     readonly method: "onChanged";
     readonly capability: "job.read";
+}, {
+    readonly channel: "project";
+    readonly domain: "project";
+    readonly method: "onChanged";
+    readonly capability: "project.read";
+}, {
+    readonly channel: "selection";
+    readonly domain: "selection";
+    readonly method: "onChanged";
+    readonly capability: "selection.read";
+}, {
+    readonly channel: "tempo";
+    readonly domain: "tempo";
+    readonly method: "onChanged";
+    readonly capability: "tempo.read";
+}, {
+    readonly channel: "tracks";
+    readonly domain: "track";
+    readonly method: "onChanged";
+    readonly capability: "track.read";
+}, {
+    readonly channel: "transport";
+    readonly domain: "transport";
+    readonly method: "onChanged";
+    readonly capability: "transport.state";
 }, {
     readonly channel: "ui";
     readonly domain: "ui";
@@ -2259,6 +2515,24 @@ export const OPERATIONS: readonly [{
     readonly mutating: true;
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
+}, {
+    readonly path: "canvas effective-size";
+    readonly domain: "canvas";
+    readonly method: "effectiveSize";
+    readonly capability: "canvas.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: false;
+}, {
+    readonly path: "canvas info";
+    readonly domain: "canvas";
+    readonly method: "info";
+    readonly capability: "canvas.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: false;
 }, {
     readonly path: "caret get";
     readonly domain: "caret";
@@ -2765,6 +3039,94 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
     readonly entitlement: "membership";
+}, {
+    readonly path: "generative add-layer";
+    readonly domain: "generative";
+    readonly method: "addLayer";
+    readonly capability: "generative.add-layer";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+    readonly entitlement: "credits(add-a-layer)";
+}, {
+    readonly path: "generative enhance";
+    readonly domain: "generative";
+    readonly method: "enhance";
+    readonly capability: "generative.enhance";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+    readonly entitlement: "credits(music-enhancer)";
+}, {
+    readonly path: "generative seed-audio";
+    readonly domain: "generative";
+    readonly method: "seedAudio";
+    readonly capability: "generative.seed-audio";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+    readonly entitlement: "credits(seed-audio)";
+}, {
+    readonly path: "generative song";
+    readonly domain: "generative";
+    readonly method: "song";
+    readonly capability: "generative.song";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+    readonly entitlement: "credits(song-generator)";
+}, {
+    readonly path: "generative sound-effects";
+    readonly domain: "generative";
+    readonly method: "soundEffects";
+    readonly capability: "generative.sound-effects";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+    readonly entitlement: "credits(sound-effects)";
+}, {
+    readonly path: "generative stem-split";
+    readonly domain: "generative";
+    readonly method: "stemSplit";
+    readonly capability: "generative.stem-split";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+    readonly entitlement: "credits(stem-splitter)";
+}, {
+    readonly path: "generative text2sample";
+    readonly domain: "generative";
+    readonly method: "text2sample";
+    readonly capability: "generative.text2sample";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+    readonly entitlement: "credits(text2sample)";
+}, {
+    readonly path: "generative vocal2midi";
+    readonly domain: "generative";
+    readonly method: "vocal2midi";
+    readonly capability: "generative.vocal2midi";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "generative voice-change";
+    readonly domain: "generative";
+    readonly method: "voiceChange";
+    readonly capability: "generative.voice-change";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
 }, {
     readonly path: "history list";
     readonly domain: "history";
@@ -3304,7 +3666,7 @@ export const OPERATIONS: readonly [{
     readonly ungated: false;
     readonly mutating: false;
     readonly fingerprintPrecondition: false;
-    readonly takesParams: false;
+    readonly takesParams: true;
 }, {
     readonly path: "track rename";
     readonly domain: "track";
@@ -3573,15 +3935,21 @@ export interface PreconditionCallOptions extends MutatingCallOptions {
 }
 
 // @public
+export interface PrepareMoveResult {
+    ready: boolean;
+}
+
+// @public
 export type ProfileName = keyof typeof PROFILES;
 
 // @public
 export const PROFILES: {
-    readonly 'surface.cli-mcp': readonly ["caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "fx.read", "fx.write", "generative.add-layer", "generative.enhance", "generative.retake", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "soundsource.read", "soundsource.write", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.read", "track.write", "transport.control", "transport.state", "ui.control", "ui.state", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write"];
-    readonly 'surface.extension-sdk': readonly ["session.handshake", "session.ping", "session.shutdown", "workflow.dev", "workflow.ui"];
+    readonly 'surface.cli-mcp': readonly ["canvas.read", "caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "fx.read", "fx.write", "generative.add-layer", "generative.enhance", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "soundsource.read", "soundsource.write", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.read", "track.write", "transport.control", "transport.state", "ui.control", "ui.state", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write"];
+    readonly 'surface.extension-sdk': readonly ["canvas.read", "session.handshake", "session.ping", "session.shutdown", "workflow.dev", "workflow.ui"];
+    readonly 'transport.v1': readonly ["transport.control"];
     readonly 'ui.v1': readonly ["workflow.ui"];
-    readonly 'project.v1': readonly ["project.read"];
-    readonly 'generative.all.v1': readonly ["generative.add-layer", "generative.enhance", "generative.retake", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change"];
+    readonly 'timeline.tempo.v1': readonly ["tempo.applyV2"];
+    readonly 'generative.all.v1': readonly ["generative.add-layer", "generative.enhance", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change"];
 };
 
 // @public
@@ -3652,10 +4020,11 @@ export interface ProjectOpenResult {
 
 // @public
 export interface ProjectOperations {
-    collectSave(params: ProjectCollectSaveParams, options?: MutatingCallOptions): Promise<ProjectCollectSaveResult>;
+    collectSave(params?: ProjectCollectSaveParams, options?: MutatingCallOptions): Promise<ProjectCollectSaveResult>;
     dirty(options?: CallOptions): Promise<ProjectDirtyResult>;
     info(options?: CallOptions): Promise<ProjectInfoResult>;
-    'new'(params: ProjectNewParams, options?: MutatingCallOptions): Promise<ProjectNewResult>;
+    'new'(params?: ProjectNewParams, options?: MutatingCallOptions): Promise<ProjectNewResult>;
+    onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
     open(params: ProjectOpenParams, options?: MutatingCallOptions): Promise<ProjectOpenResult>;
     recent(options?: CallOptions): Promise<ProjectRecentResult>;
     recentClear(options?: MutatingCallOptions): Promise<void>;
@@ -3711,6 +4080,8 @@ export interface PublicBindings {
     // (undocumented)
     readonly blend: BlendOperations;
     // (undocumented)
+    readonly canvas: CanvasOperations;
+    // (undocumented)
     readonly caret: CaretOperations;
     // (undocumented)
     readonly choir: ChoirOperations;
@@ -3726,6 +4097,8 @@ export interface PublicBindings {
     readonly ensemble: EnsembleOperations;
     // (undocumented)
     readonly export: ExportOperations;
+    // (undocumented)
+    readonly generative: GenerativeOperations;
     // (undocumented)
     readonly history: HistoryOperations;
     // (undocumented)
@@ -3819,6 +4192,8 @@ export const REQUIRED_TOKENS: {
     readonly 'blend remove': "voice.write";
     readonly 'blend reorder': "voice.write";
     readonly 'blend set': "voice.write";
+    readonly 'canvas effective-size': "canvas.read";
+    readonly 'canvas info': "canvas.read";
     readonly 'caret get': "caret.read";
     readonly 'caret set': "caret.write";
     readonly 'choir add': "soundsource.write";
@@ -3869,6 +4244,15 @@ export const REQUIRED_TOKENS: {
     readonly 'export song-template': "export.invoke";
     readonly 'export video': "export.invoke";
     readonly 'export vocal-sample': "export.invoke";
+    readonly 'generative add-layer': "generative.add-layer";
+    readonly 'generative enhance': "generative.enhance";
+    readonly 'generative seed-audio': "generative.seed-audio";
+    readonly 'generative song': "generative.song";
+    readonly 'generative sound-effects': "generative.sound-effects";
+    readonly 'generative stem-split': "generative.stem-split";
+    readonly 'generative text2sample': "generative.text2sample";
+    readonly 'generative vocal2midi': "generative.vocal2midi";
+    readonly 'generative voice-change': "generative.voice-change";
     readonly 'history list': "history.read";
     readonly 'history redo': "history.control";
     readonly 'history undo': "history.control";
@@ -4021,6 +4405,7 @@ export interface SelectionGetResult {
 // @public
 export interface SelectionOperations {
     get(params: SelectionGetParams, options?: CallOptions): Promise<SelectionGetResult>;
+    onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
     set(params: SelectionSetParams, options?: MutatingCallOptions): Promise<SelectionSetResult>;
 }
 
@@ -4087,13 +4472,14 @@ export const SESSION_CAPABILITY_TOKENS: readonly SessionCapability[];
 export const SESSION_METHOD_CAPABILITIES: Readonly<Record<string, SessionCapability>>;
 
 // @public
-export type SessionCapability = 'session.handshake' | 'session.ping' | 'session.shutdown';
+export type SessionCapability = 'session.handshake' | 'session.move' | 'session.ping' | 'session.shutdown';
 
 // @public (undocumented)
 export class SessionClient {
     constructor(peer: SessionPeer);
     onSessionShutdown(callback: (event: ShutdownParams) => void): Unsubscribe;
     sessionHandshake(params: HandshakeParams): Promise<HandshakeResult>;
+    setSessionPrepareMoveHandler(handler: () => Promise<PrepareMoveResult> | PrepareMoveResult): void;
 }
 
 // @public (undocumented)
@@ -4226,12 +4612,12 @@ export interface SoundSourceLoadResult {
 
 // @public
 export interface SoundSourceOperations {
-    get(params: SoundSourceGetParams, options?: CallOptions): Promise<SoundSourceGetResult>;
-    list(params: SoundSourceListParams, options?: CallOptions): Promise<SoundSourceListResult>;
+    get(params?: SoundSourceGetParams, options?: CallOptions): Promise<SoundSourceGetResult>;
+    list(params?: SoundSourceListParams, options?: CallOptions): Promise<SoundSourceListResult>;
     load(params: SoundSourceLoadParams, options?: MutatingCallOptions): Promise<SoundSourceLoadResult>;
     set(params: SoundSourceSetParams, options?: MutatingCallOptions): Promise<SoundSourceSetResult>;
-    tags(params: SoundSourceTagsParams, options?: CallOptions): Promise<SoundSourceTagsResult>;
-    unload(params: SoundSourceUnloadParams, options?: MutatingCallOptions): Promise<SoundSourceUnloadResult>;
+    tags(params?: SoundSourceTagsParams, options?: CallOptions): Promise<SoundSourceTagsResult>;
+    unload(params?: SoundSourceUnloadParams, options?: MutatingCallOptions): Promise<SoundSourceUnloadResult>;
 }
 
 // @public
@@ -4328,10 +4714,11 @@ export interface TempoOperations {
     analyze(params: TempoAnalyzeParams, options?: MutatingCallOptions): Promise<TempoAnalyzeResult>;
     applyBeatAnalysis(params: TempoApplyBeatAnalysisParams, options?: MutatingCallOptions): Promise<TempoApplyBeatAnalysisResult>;
     get(options?: CallOptions): Promise<TempoGetResult>;
+    onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
     points(options?: CallOptions): Promise<TempoPointsResult>;
     removePoint(params: TempoRemovePointParams, options?: PreconditionCallOptions): Promise<TempoRemovePointResult>;
     set(params: TempoSetParams, options?: PreconditionCallOptions): Promise<void>;
-    setDisplayRange(params: TempoSetDisplayRangeParams, options?: MutatingCallOptions): Promise<TempoSetDisplayRangeResult>;
+    setDisplayRange(params?: TempoSetDisplayRangeParams, options?: MutatingCallOptions): Promise<TempoSetDisplayRangeResult>;
     setPoint(params: TempoSetPointParams, options?: PreconditionCallOptions): Promise<TempoSetPointResult>;
 }
 
@@ -4555,10 +4942,16 @@ export interface TrackGetResult {
 }
 
 // @public
+export interface TrackListParams {
+    type?: string[] | null;
+}
+
+// @public
 export interface TrackListResult {
     contentTrackCount: number;
     tracks: {
         clipCount: number;
+        region: string;
         soundSourceName?: string;
         trackIndex: number;
         trackName: string;
@@ -4569,14 +4962,15 @@ export interface TrackListResult {
 
 // @public
 export interface TrackOperations {
-    create(params: TrackCreateParams, options?: MutatingCallOptions): Promise<TrackCreateResult>;
+    create(params?: TrackCreateParams, options?: MutatingCallOptions): Promise<TrackCreateResult>;
     delete(options?: MutatingCallOptions): Promise<void>;
-    duplicate(params: TrackDuplicateParams, options?: MutatingCallOptions): Promise<TrackDuplicateResult>;
+    duplicate(params?: TrackDuplicateParams, options?: MutatingCallOptions): Promise<TrackDuplicateResult>;
     get(params: TrackGetParams, options?: CallOptions): Promise<TrackGetResult>;
-    list(options?: CallOptions): Promise<TrackListResult>;
+    list(params?: TrackListParams, options?: CallOptions): Promise<TrackListResult>;
+    onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
     rename(params: TrackRenameParams, options?: MutatingCallOptions): Promise<void>;
     reorder(params: TrackReorderParams, options?: MutatingCallOptions): Promise<TrackReorderResult>;
-    set(params: TrackSetParams, options?: MutatingCallOptions): Promise<void>;
+    set(params?: TrackSetParams, options?: MutatingCallOptions): Promise<void>;
     setInput(params: TrackSetInputParams, options?: MutatingCallOptions): Promise<TrackSetInputResult>;
     setLanguage(params: TrackSetLanguageParams, options?: MutatingCallOptions): Promise<void>;
 }
@@ -4671,9 +5065,10 @@ export interface TransportMetronomeParams {
 export interface TransportOperations {
     loop(options?: CallOptions): Promise<TransportLoopResult>;
     metronome(params: TransportMetronomeParams, options?: MutatingCallOptions): Promise<void>;
+    onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
     play(options?: MutatingCallOptions): Promise<void>;
     seek(params: TransportSeekParams, options?: MutatingCallOptions): Promise<void>;
-    setLoop(params: TransportSetLoopParams, options?: PreconditionCallOptions): Promise<void>;
+    setLoop(params?: TransportSetLoopParams, options?: PreconditionCallOptions): Promise<void>;
     state(options?: CallOptions): Promise<TransportStateResult>;
     stop(options?: MutatingCallOptions): Promise<void>;
     toggle(options?: MutatingCallOptions): Promise<void>;
@@ -4944,9 +5339,9 @@ export interface VoiceCommunityResult {
 // @public
 export interface VoiceOperations {
     collect(params: VoiceCollectParams, options?: MutatingCallOptions): Promise<VoiceCollectResult>;
-    community(params: VoiceCommunityParams, options?: CallOptions): Promise<VoiceCommunityResult>;
-    seeds(params: VoiceSeedsParams, options?: CallOptions): Promise<VoiceSeedsResult>;
-    synthModels(params: VoiceSynthModelsParams, options?: CallOptions): Promise<VoiceSynthModelsResult>;
+    community(params?: VoiceCommunityParams, options?: CallOptions): Promise<VoiceCommunityResult>;
+    seeds(params?: VoiceSeedsParams, options?: CallOptions): Promise<VoiceSeedsResult>;
+    synthModels(params?: VoiceSynthModelsParams, options?: CallOptions): Promise<VoiceSynthModelsResult>;
 }
 
 // @public

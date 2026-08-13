@@ -1,6 +1,6 @@
 # Interface: TransportOperations
 
-The `transport` operations, mirroring the canonical operation tree 1:1.
+The `transport` operations, mirroring the canonical operation tree 1:1, and the subscription that reports when the subject changes.
 
 ## Methods
 
@@ -49,6 +49,34 @@ Requires the `transport.control` capability.
 #### Returns
 
 `Promise`\<`void`\>
+
+***
+
+### onChanged()
+
+```ts
+onChanged(listener): Unsubscribe;
+```
+
+Transport moved: play, stop, a user seek, or the loop region. `changes`
+carries `playing`, `position`, `loop`. Transitions only — the continuous
+playback position is deliberately not a channel, because a re-fetch per frame
+is what the coalescing cannot save; a throttled position feed is its own
+mechanism. A peer re-fetches with `transport state`.
+
+Listen for changes on the `transport` channel. The event is a hint to re-read, not the new state.
+
+Requires the `transport.state` capability — an ungranted subscription is refused at this call, not silently never delivered.
+
+#### Parameters
+
+##### listener
+
+(`event`) => `void`
+
+#### Returns
+
+[`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
 ***
 
@@ -103,7 +131,7 @@ Requires the `transport.control` capability.
 ### setLoop()
 
 ```ts
-setLoop(params, options?): Promise<void>;
+setLoop(params?, options?): Promise<void>;
 ```
 
 Update the project loop region.
@@ -112,7 +140,7 @@ Requires the `transport.control` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`TransportSetLoopParams`](TransportSetLoopParams.md)
 

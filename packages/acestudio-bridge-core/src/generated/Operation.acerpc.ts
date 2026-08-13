@@ -58,12 +58,17 @@ export interface InvokeWarning {
 /**
  * Result of `operation.invoke` — the command-result envelope's success half.
  *
- * The failure half is NOT here: a refused operation answers with a JSON-RPC
- * error carrying the canonical code in `data.code` (with `data.details` /
- * `data.hint` beside it), which is how this socket already refuses an
- * ungranted call. One error path, so a caller reads CAPABILITY_DENIED the same
- * way whichever gate produced it — the session's, the catalog's, or its own
- * SDK-side pre-wire guard.
+ * The failure half of the envelope is NOT here. A refused operation answers with
+ * a JSON-RPC error instead: the canonical code in `data.code`, the composed
+ * message as the error's own `message`, and `data.details` / `data.hint` when the
+ * refusal carries them. The session gate already refuses this way, so one error
+ * path means a caller reads CAPABILITY_DENIED the same whichever gate produced
+ * it — the session's, the catalog's, or its own SDK-side pre-wire guard.
+ *
+ * This is the one place the surface departs from `CommandResult`, whose failures
+ * ride *inside* the result because MCP's tool-call envelope needs them there. A
+ * handler translates: `CommandError` becomes the JSON-RPC error, warnings stay
+ * here.
  */
 export interface InvokeResult {
     /** The operation's success payload, shaped by its declared output schema. */
@@ -78,10 +83,11 @@ export class OperationClient {
     /**
      * Host-served: run one canonical operation and answer with its payload.
      *
-     * Gated by its payload, not by this method — see `@payloadGated` in the header
-     * note. The fixed check pipeline the handler runs (ADR 0093 §5) is: session
-     * valid, capability granted, busy gate for a mutating operation, content
-     * fingerprint precondition, then actor attribution and the handler.
+     * Gated by its payload, not by this method — see `\@payloadGated` in the header
+     * note. The fixed check pipeline (ADR 0093 §5) is: session valid, capability
+     * granted, busy gate for a mutating operation, content fingerprint
+     * precondition, then actor attribution and the handler. The generated dispatch
+     * runs the first step; the handler runs the rest.
      */
     async operationInvoke(params: InvokeParams): Promise<InvokeResult> {
         return this.peer.request<InvokeResult>('operation.invoke', params);

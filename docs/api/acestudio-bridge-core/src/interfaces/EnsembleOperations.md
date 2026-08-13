@@ -33,7 +33,7 @@ Requires the `soundsource.write` capability.
 ### disable()
 
 ```ts
-disable(params, options?): Promise<EnsembleDisableResult>;
+disable(params?, options?): Promise<EnsembleDisableResult>;
 ```
 
 Turn ensemble mode off, leaving the leader as the track's sole instrument.
@@ -42,7 +42,7 @@ Requires the `soundsource.write` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`EnsembleDisableParams`](EnsembleDisableParams.md)
 
@@ -59,7 +59,7 @@ Requires the `soundsource.write` capability.
 ### enable()
 
 ```ts
-enable(params, options?): Promise<EnsembleEnableResult>;
+enable(params?, options?): Promise<EnsembleEnableResult>;
 ```
 
 Turn ensemble mode on for an Instrument track, keeping its current instrument as the leader.
@@ -68,7 +68,7 @@ Requires the `soundsource.write` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`EnsembleEnableParams`](EnsembleEnableParams.md)
 
@@ -85,7 +85,7 @@ Requires the `soundsource.write` capability.
 ### get()
 
 ```ts
-get(params, options?): Promise<EnsembleGetResult>;
+get(params?, options?): Promise<EnsembleGetResult>;
 ```
 
 Read an Instrument track's ensemble: whether it is on, its settings, and every member.
@@ -94,7 +94,7 @@ Requires the `soundsource.read` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`EnsembleGetParams`](EnsembleGetParams.md)
 
@@ -163,7 +163,7 @@ Requires the `soundsource.write` capability.
 ### set()
 
 ```ts
-set(params, options?): Promise<void>;
+set(params?, options?): Promise<void>;
 ```
 
 Set the ensemble's timing and width, or one member's gain and mute.
@@ -172,7 +172,7 @@ Requires the `soundsource.write` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`EnsembleSetParams`](EnsembleSetParams.md)
 

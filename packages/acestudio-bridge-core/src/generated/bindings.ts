@@ -40,9 +40,11 @@ export type BridgeErrorCode =
   | 'IO_ERROR'
   | 'JOB_NOT_CANCELLABLE'
   | 'MEMBERSHIP_REQUIRED'
+  | 'MISSING_ARG'
   | 'NEW_FAILED'
   | 'NOTE_OVERLAP'
   | 'NOT_FOUND'
+  | 'NOT_READY'
   | 'NO_FIXTURE'
   | 'NO_GESTURE'
   | 'NO_MASTER_CHAIN'
@@ -188,7 +190,8 @@ export interface BulkFieldDescriptor {
 
 /** A capability token on the public surface. `grant.tokens` narrows to this union, so a token name typos at compile time. */
 export type CapabilityToken =
-    'caret.read'
+    'canvas.read'
+  | 'caret.read'
   | 'caret.write'
   | 'chord.read'
   | 'chord.write'
@@ -203,7 +206,6 @@ export type CapabilityToken =
   | 'fx.write'
   | 'generative.add-layer'
   | 'generative.enhance'
-  | 'generative.retake'
   | 'generative.seed-audio'
   | 'generative.song'
   | 'generative.sound-effects'
@@ -251,6 +253,7 @@ export type CapabilityToken =
 
 /** Every token in the union above, as a value: what the handshake's granted names are matched against to tell a token this artifact cannot name from one it does not recognise at all. */
 export const CAPABILITY_TOKENS = [
+    'canvas.read',
     'caret.read',
     'caret.write',
     'chord.read',
@@ -266,7 +269,6 @@ export const CAPABILITY_TOKENS = [
     'fx.write',
     'generative.add-layer',
     'generative.enhance',
-    'generative.retake',
     'generative.seed-audio',
     'generative.song',
     'generative.sound-effects',
@@ -735,7 +737,7 @@ export interface BlendOperations {
      *
      * Requires the `voice.read` capability.
      */
-    list(params: BlendListParams, options?: CallOptions): Promise<BlendListResult>;
+    list(params?: BlendListParams, options?: CallOptions): Promise<BlendListResult>;
 
     /**
      * Remove one voice seed from a blend.
@@ -757,6 +759,59 @@ export interface BlendOperations {
      * Requires the `voice.write` capability.
      */
     set(params: BlendSetParams, options?: MutatingCallOptions): Promise<BlendSetResult>;
+}
+
+// --- canvas ----------------------------------------------------------------
+
+/** Success payload of `canvas effective-size`. */
+export interface CanvasEffectiveSizeResult {
+    /** Adopted frames per second. */
+    frameRate: number;
+    /** Adopted pixel height. */
+    height: number;
+    /** Adopted pixel width. */
+    width: number;
+}
+
+/** Success payload of `canvas info`. */
+export interface CanvasInfoResult {
+    /** True when the canvas resolution follows Studio's anchor-clip derivation (ADR 0059 §3–5); false when it is an explicit authored size. */
+    adaptive: boolean;
+    /** Frames per second. Independent axis — never adaptive (ADR 0059); default 30. */
+    frameRate: number;
+    /** Authored pixel height — present iff `!adaptive`. */
+    height?: number;
+    /** Authored pixel width — present iff `!adaptive`. */
+    width?: number;
+}
+
+/** The `canvas` operations, mirroring the canonical operation tree 1:1, and the subscription that reports when the subject changes. */
+export interface CanvasOperations {
+    /**
+     * Read the effective canvas raster the compositor is using right now.
+     *
+     * Requires the `canvas.read` capability.
+     */
+    effectiveSize(options?: CallOptions): Promise<CanvasEffectiveSizeResult>;
+
+    /**
+     * Read the canvas setting: adaptive mode, frame rate, and the authored size.
+     *
+     * Requires the `canvas.read` capability.
+     */
+    info(options?: CallOptions): Promise<CanvasInfoResult>;
+
+    /**
+     * The canvas changed — the authored setting, or the effective raster the
+     * compositor adopted after an adaptive re-derivation (ADR 0066). Which of the two
+     * moved is not reported, because the host signal does not say: a peer re-fetches
+     * with `canvas info`, `canvas effective-size`, or both.
+     *
+     * Listen for changes on the `canvas` channel. The event is a hint to re-read, not the new state.
+     *
+     * Requires the `canvas.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
+     */
+    onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
 }
 
 // --- caret -----------------------------------------------------------------
@@ -802,7 +857,7 @@ export interface CaretOperations {
      *
      * Requires the `caret.read` capability.
      */
-    get(params: CaretGetParams, options?: CallOptions): Promise<CaretGetResult>;
+    get(params?: CaretGetParams, options?: CallOptions): Promise<CaretGetResult>;
 
     /**
      * Move the caret to a specified tick position.
@@ -1015,21 +1070,21 @@ export interface ChoirOperations {
      *
      * Requires the `soundsource.write` capability.
      */
-    disable(params: ChoirDisableParams, options?: MutatingCallOptions): Promise<ChoirDisableResult>;
+    disable(params?: ChoirDisableParams, options?: MutatingCallOptions): Promise<ChoirDisableResult>;
 
     /**
      * Turn choir mode on for a Sing track, keeping its current AI voice as the leader.
      *
      * Requires the `soundsource.write` capability.
      */
-    enable(params: ChoirEnableParams, options?: MutatingCallOptions): Promise<ChoirEnableResult>;
+    enable(params?: ChoirEnableParams, options?: MutatingCallOptions): Promise<ChoirEnableResult>;
 
     /**
      * Read a Sing track's choir: whether it is on, its settings, and every member.
      *
      * Requires the `soundsource.read` capability.
      */
-    get(params: ChoirGetParams, options?: CallOptions): Promise<ChoirGetResult>;
+    get(params?: ChoirGetParams, options?: CallOptions): Promise<ChoirGetResult>;
 
     /**
      * Remove one AI voice from a choir.
@@ -1050,7 +1105,7 @@ export interface ChoirOperations {
      *
      * Requires the `soundsource.write` capability.
      */
-    set(params: ChoirSetParams, options?: MutatingCallOptions): Promise<void>;
+    set(params?: ChoirSetParams, options?: MutatingCallOptions): Promise<void>;
 }
 
 // --- clip ------------------------------------------------------------------
@@ -1311,8 +1366,10 @@ export interface ClipGetResult {
 
 /** Arguments for `clip list`. */
 export interface ClipListParams {
-    /** Track index (0-based). Users see tracks starting from 1. */
-    trackIndex: number;
+    /** Track index (0-based) in the arrangement. Users see tracks starting from 1. */
+    trackIndex?: number | null;
+    /** Track UUID in braces format, e.g. `\{12345678-abcd-...\}`. Required to address a track in the pinned Video or Marker band, which `--track-index` cannot name. `track list --type video --type marker` reports those uuids. */
+    trackUuid?: string | null;
 }
 
 /** Success payload of `clip list`. */
@@ -1329,7 +1386,7 @@ export interface ClipListResult {
         clipEnd: number;
         /** Display name (auto-generated when no raw name is set). */
         clipName: string;
-        /** Clip type: `sing`, `instrument`, `genericMidi`, `audio`, or `chord`. */
+        /** Clip type: `sing`, `instrument`, `genericMidi`, `audio`, `chord`, `video`, or `marker`. */
         clipType: string;
         /** Stable clip UUID, with braces. Use with `clip move-edges`. */
         clipUuid: string;
@@ -1766,7 +1823,7 @@ export interface ClipSplitResult {
     };
 }
 
-/** The `clip` operations, mirroring the canonical operation tree 1:1. */
+/** The `clip` operations, mirroring the canonical operation tree 1:1, and the subscription that reports when the subject changes. */
 export interface ClipOperations {
     /**
      * Get audio file name and loading state for an Audio clip.
@@ -1822,7 +1879,7 @@ export interface ClipOperations {
      *
      * Requires the `clip.read` capability.
      */
-    list(params: ClipListParams, options?: CallOptions): Promise<ClipListResult>;
+    list(params?: ClipListParams, options?: CallOptions): Promise<ClipListResult>;
 
     /**
      * Get sentence-level lyrics for a Sing clip.
@@ -1907,6 +1964,18 @@ export interface ClipOperations {
      * Requires the `clip.write` capability.
      */
     split(params: ClipSplitParams, options?: MutatingCallOptions): Promise<ClipSplitResult>;
+
+    /**
+     * A clip was added, removed, moved, trimmed, renamed, muted, or recoloured.
+     * `changes` carries the affected clip uuids. A peer re-fetches with `clip list`,
+     * which needs a track to address, so a uuid here names the clip and the peer
+     * reads the track it was told about on the `tracks` channel.
+     *
+     * Listen for changes on the `clips` channel. The event is a hint to re-read, not the new state.
+     *
+     * Requires the `clip.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
+     */
+    onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
 }
 
 // --- convert ---------------------------------------------------------------
@@ -2147,7 +2216,7 @@ export interface DeviceOperations {
      *
      * Requires the `device.write` capability.
      */
-    setAudio(params: DeviceSetAudioParams, options?: MutatingCallOptions): Promise<DeviceSetAudioResult>;
+    setAudio(params?: DeviceSetAudioParams, options?: MutatingCallOptions): Promise<DeviceSetAudioResult>;
 }
 
 // --- editor ----------------------------------------------------------------
@@ -2436,21 +2505,21 @@ export interface EnsembleOperations {
      *
      * Requires the `soundsource.write` capability.
      */
-    disable(params: EnsembleDisableParams, options?: MutatingCallOptions): Promise<EnsembleDisableResult>;
+    disable(params?: EnsembleDisableParams, options?: MutatingCallOptions): Promise<EnsembleDisableResult>;
 
     /**
      * Turn ensemble mode on for an Instrument track, keeping its current instrument as the leader.
      *
      * Requires the `soundsource.write` capability.
      */
-    enable(params: EnsembleEnableParams, options?: MutatingCallOptions): Promise<EnsembleEnableResult>;
+    enable(params?: EnsembleEnableParams, options?: MutatingCallOptions): Promise<EnsembleEnableResult>;
 
     /**
      * Read an Instrument track's ensemble: whether it is on, its settings, and every member.
      *
      * Requires the `soundsource.read` capability.
      */
-    get(params: EnsembleGetParams, options?: CallOptions): Promise<EnsembleGetResult>;
+    get(params?: EnsembleGetParams, options?: CallOptions): Promise<EnsembleGetResult>;
 
     /**
      * Remove one instrument from an ensemble.
@@ -2471,7 +2540,7 @@ export interface EnsembleOperations {
      *
      * Requires the `soundsource.write` capability.
      */
-    set(params: EnsembleSetParams, options?: MutatingCallOptions): Promise<void>;
+    set(params?: EnsembleSetParams, options?: MutatingCallOptions): Promise<void>;
 }
 
 // --- export ----------------------------------------------------------------
@@ -2714,6 +2783,402 @@ export interface ExportOperations {
     vocalSample(params: ExportVocalSampleParams, options?: MutatingCallOptions): Promise<ExportVocalSampleResult>;
 }
 
+// --- generative ------------------------------------------------------------
+
+/** Arguments for `generative add-layer`. */
+export interface GenerativeAddLayerParams {
+    /** Where the generated clip starts. Ticks (`3840t`), clock time (`1.5s`), or a musical position (`4.1.0`). */
+    from: number;
+    /** Which instrument to add ("nylon guitar", "upright bass"). **`--sound-type custom` only** -- naming an instrument is what that type is for, and every other type already names one. */
+    instrument?: string | null;
+    /** Lyrics for a sung layer. **`song-track`, `vocals` and `backing-vocals` only** -- the three types that sing. Passing it elsewhere is an error rather than a silent no-op. */
+    lyrics?: string | null;
+    /** Style notes for the layer, on top of what the arrangement already implies. Accepted by every `--sound-type`. */
+    prompt?: string | null;
+    /** What kind of layer to add. Default `instrumental`. See [`LayerType`] for the full list and which content arguments each accepts. */
+    soundType?: 'instrumental' | 'song-track' | 'drums' | 'bass' | 'guitar' | 'keyboard' | 'percussion' | 'strings' | 'synth' | 'fx' | 'brass' | 'woodwinds' | 'vocals' | 'backing-vocals' | 'custom';
+    /** Where the generated clip ends (exclusive). This is what fixes the generation's length. */
+    to: number;
+    /** The Audio track the generated clip lands on, by id. Required: the panel takes it from the arrangement selection, which is not something a script can rely on (ADR 0087). Its content in the range is moved aside the same way the panel's own launch moves it, as one undo entry. */
+    trackUuid: string;
+}
+
+/** Success payload of `generative add-layer`. */
+export interface GenerativeAddLayerResult {
+    /** Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending -- the server-side kits (song, enhance) have no in-flight cancel. */
+    cancellable: boolean;
+    /** How this class delivers results: 'staged' means they land in the session history for audition and reach the project only through `job place`; 'direct' means they auto-place as one attributed undo entry. See `help streaming-results`. */
+    delivery: string;
+    /** Tick position the placed clip will start at. */
+    from?: number;
+    /** The job class, as `job get` reports it and `job list` can be filtered on: 'song-generate', 'music-enhance', 'text2sample', 'seed-audio', 'sound-effects', 'add-a-layer', 'stem-split', 'voice-changer' or 'vocal2midi'. */
+    jobClass: string;
+    /** The launched job's id. Pass it to `job get` / `job wait` / `job results`. Present on every successful launch -- nothing has been generated when this returns. */
+    jobId: string;
+    /** Tick position the placed clip will end at (exclusive). */
+    to?: number;
+    /** The track the result will be placed on, resolved at launch. For a command that creates its own target track, this is the created track's id -- it exists already, empty, and the clip lands in it when the job settles. */
+    trackId: string;
+}
+
+/** Arguments for `generative enhance`. */
+export interface GenerativeEnhanceParams {
+    /** An audio clip already in the project to enhance, by id as `clip list` reports it. Its audio is uploaded as-is -- this does not render the project, so what the clip carries is what gets analyzed. */
+    clipUuid?: string | null;
+    /** How strongly `--prompt` overrides what the source suggests, 0.0 to 1.0. Default 0.0, the panel's own default: follow the source. */
+    influence?: number | null;
+    /** Lyrics for the new take. Omit to keep the lyrics the analysis transcribed out of the source audio. */
+    lyrics?: string | null;
+    /** Audio file to enhance. Exactly one of `--path` / `--clip-uuid` is required. */
+    path?: string | null;
+    /** Style to produce ("acoustic, brushed drums, intimate"). Omit to keep the style tags the analysis inferred from the source. */
+    prompt?: string | null;
+    /** Title for the generated take. Omit for the derived one, as in `generative song`. */
+    title?: string | null;
+}
+
+/** Success payload of `generative enhance`. */
+export interface GenerativeEnhanceResult {
+    /** Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending -- the server-side kits (song, enhance) have no in-flight cancel. */
+    cancellable: boolean;
+    /** How this class delivers results: 'staged' means they land in the session history for audition and reach the project only through `job place`; 'direct' means they auto-place as one attributed undo entry. See `help streaming-results`. */
+    delivery: string;
+    /** The job class, as `job get` reports it and `job list` can be filtered on: 'song-generate', 'music-enhance', 'text2sample', 'seed-audio', 'sound-effects', 'add-a-layer', 'stem-split', 'voice-changer' or 'vocal2midi'. */
+    jobClass: string;
+    /** The launched job's id. Pass it to `job get` / `job wait` / `job results`. Present on every successful launch -- nothing has been generated when this returns. */
+    jobId: string;
+    /** True when this class's results can enter the `streaming` state -- playable while still growing, and placeable before they settle. Both staged kits are streaming-capable. */
+    streamingCapable?: boolean;
+}
+
+/** Arguments for `generative seed-audio`. */
+export interface GenerativeSeedAudioParams {
+    /** Where the generated clip starts. Ticks (`3840t`), clock time (`1.5s`), or a musical position (`4.1.0`). */
+    from: number;
+    /** What to generate. Required. */
+    prompt: string;
+    /** A local audio file to reference. Repeatable. */
+    referenceAudio?: string[] | null;
+    /** A local image whose mood the generation should follow -- the panel's reference-image slot. */
+    referenceImage?: string | null;
+    /** Where the generated clip ends (exclusive). This is what fixes the generation's length. */
+    to: number;
+    /** The Audio track the generated clip lands on, by id. Required: the panel takes it from the arrangement selection, which is not something a script can rely on (ADR 0087). Its content in the range is moved aside the same way the panel's own launch moves it, as one undo entry. */
+    trackUuid: string;
+}
+
+/** Success payload of `generative seed-audio`. */
+export interface GenerativeSeedAudioResult {
+    /** Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending -- the server-side kits (song, enhance) have no in-flight cancel. */
+    cancellable: boolean;
+    /** How this class delivers results: 'staged' means they land in the session history for audition and reach the project only through `job place`; 'direct' means they auto-place as one attributed undo entry. See `help streaming-results`. */
+    delivery: string;
+    /** Tick position the placed clip will start at. */
+    from?: number;
+    /** The job class, as `job get` reports it and `job list` can be filtered on: 'song-generate', 'music-enhance', 'text2sample', 'seed-audio', 'sound-effects', 'add-a-layer', 'stem-split', 'voice-changer' or 'vocal2midi'. */
+    jobClass: string;
+    /** The launched job's id. Pass it to `job get` / `job wait` / `job results`. Present on every successful launch -- nothing has been generated when this returns. */
+    jobId: string;
+    /** Tick position the placed clip will end at (exclusive). */
+    to?: number;
+    /** The track the result will be placed on, resolved at launch. For a command that creates its own target track, this is the created track's id -- it exists already, empty, and the clip lands in it when the job settles. */
+    trackId: string;
+}
+
+/** Arguments for `generative song`. */
+export interface GenerativeSongParams {
+    /** Generate without vocals. **Idea mode only** -- in lyrics mode there are lyrics to sing, so an instrumental would contradict the request, and passing it there is an error rather than a silent no-op. */
+    instrumental?: boolean | null;
+    /** Lyrics to sing. Passing this selects the panel's "From Lyrics" mode. Either this or `--prompt` is required -- with neither there is nothing to generate from. */
+    lyrics?: string | null;
+    /** What to generate. Without `--lyrics` this is the whole brief ("a slow piano ballad about leaving home"); with it, this is the style the lyrics should be sung in ("dream pop, female vocal"). */
+    prompt?: string | null;
+    /** Title for the generated song. **Lyrics mode only.** Omit to take the panel's derived title (the opening of the lyrics, or the style prefixed with "(Instrumental)"). */
+    title?: string | null;
+}
+
+/** Success payload of `generative song`. */
+export interface GenerativeSongResult {
+    /** Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending -- the server-side kits (song, enhance) have no in-flight cancel. */
+    cancellable: boolean;
+    /** How this class delivers results: 'staged' means they land in the session history for audition and reach the project only through `job place`; 'direct' means they auto-place as one attributed undo entry. See `help streaming-results`. */
+    delivery: string;
+    /** The job class, as `job get` reports it and `job list` can be filtered on: 'song-generate', 'music-enhance', 'text2sample', 'seed-audio', 'sound-effects', 'add-a-layer', 'stem-split', 'voice-changer' or 'vocal2midi'. */
+    jobClass: string;
+    /** The launched job's id. Pass it to `job get` / `job wait` / `job results`. Present on every successful launch -- nothing has been generated when this returns. */
+    jobId: string;
+    /** True when this class's results can enter the `streaming` state -- playable while still growing, and placeable before they settle. Both staged kits are streaming-capable. */
+    streamingCapable?: boolean;
+}
+
+/** Arguments for `generative sound-effects`. */
+export interface GenerativeSoundEffectsParams {
+    /** Where the generated clip starts. Ticks (`3840t`), clock time (`1.5s`), or a musical position (`4.1.0`). */
+    from: number;
+    /** How strictly to follow the prompt: `low`, `mid` (default) or `high`. */
+    influence?: 'low' | 'mid' | 'high';
+    /**
+     * Generate a seamlessly loopable effect. Off by default.
+     *
+     * The clap id is `loopable` because `loop` is a Rust keyword, with the user-facing long name pinned back to `--loop` so the flag reads the way the panel's checkbox does; the wire key is `loop` to match.
+     */
+    loop?: boolean | null;
+    /** The effect to generate ("distant thunder", "door creak"). Required. */
+    prompt: string;
+    /** Where the generated clip ends (exclusive). This is what fixes the generation's length. */
+    to: number;
+    /** The Audio track the generated clip lands on, by id. Required: the panel takes it from the arrangement selection, which is not something a script can rely on (ADR 0087). Its content in the range is moved aside the same way the panel's own launch moves it, as one undo entry. */
+    trackUuid: string;
+}
+
+/** Success payload of `generative sound-effects`. */
+export interface GenerativeSoundEffectsResult {
+    /** Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending -- the server-side kits (song, enhance) have no in-flight cancel. */
+    cancellable: boolean;
+    /** How this class delivers results: 'staged' means they land in the session history for audition and reach the project only through `job place`; 'direct' means they auto-place as one attributed undo entry. See `help streaming-results`. */
+    delivery: string;
+    /** Tick position the placed clip will start at. */
+    from?: number;
+    /** The job class, as `job get` reports it and `job list` can be filtered on: 'song-generate', 'music-enhance', 'text2sample', 'seed-audio', 'sound-effects', 'add-a-layer', 'stem-split', 'voice-changer' or 'vocal2midi'. */
+    jobClass: string;
+    /** The launched job's id. Pass it to `job get` / `job wait` / `job results`. Present on every successful launch -- nothing has been generated when this returns. */
+    jobId: string;
+    /** Tick position the placed clip will end at (exclusive). */
+    to?: number;
+    /** The track the result will be placed on, resolved at launch. For a command that creates its own target track, this is the created track's id -- it exists already, empty, and the clip lands in it when the job settles. */
+    trackId: string;
+}
+
+/** Arguments for `generative stem-split`. */
+export interface GenerativeStemSplitParams {
+    /**
+     * The audio clip to split, by id. Its stem tracks are inserted below its source track, the way the panel inserts them.
+     *
+     * One clip per launch, because one launch returns one job id and the producer opens a job **per clip** (`AiPluginTaskStemSplitterScheduler` schedules an attempt each). Splitting several clips is several launches -- which also lets each one be waited on and cancelled independently.
+     */
+    clipUuid: string;
+    /** Which stems to produce: `basic` (default), `professional`, `advanced` or `customized`. The first two are free; the last two bill different SKUs, so this is never inferred. */
+    mode?: 'basic' | 'professional' | 'advanced' | 'customized';
+    /** Which sound to isolate, in words ("just the horns"). **`--mode customized` only**, and required there -- that mode has no fixed stem set, so without a prompt there is nothing to separate. */
+    prompt?: string | null;
+    /**
+     * Strip reverb from the separated vocal. Off by default.
+     *
+     * **`basic` and `professional` only.** The two fine-grained modes do not support it (`StemSplitterModeNS::isRemoveReverbSupported`), so passing it there is an error rather than a flag that is quietly dropped.
+     */
+    removeReverb?: boolean | null;
+}
+
+/** Success payload of `generative stem-split`. */
+export interface GenerativeStemSplitResult {
+    /** Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending -- the server-side kits (song, enhance) have no in-flight cancel. */
+    cancellable: boolean;
+    /** The source clip being split. */
+    clipUuid: string;
+    /** How this class delivers results: 'staged' means they land in the session history for audition and reach the project only through `job place`; 'direct' means they auto-place as one attributed undo entry. See `help streaming-results`. */
+    delivery: string;
+    /** The job class, as `job get` reports it and `job list` can be filtered on: 'song-generate', 'music-enhance', 'text2sample', 'seed-audio', 'sound-effects', 'add-a-layer', 'stem-split', 'voice-changer' or 'vocal2midi'. */
+    jobClass: string;
+    /** The launched job's id. Pass it to `job get` / `job wait` / `job results`. Present on every successful launch -- nothing has been generated when this returns. */
+    jobId: string;
+    /** The split that was launched: 'basic', 'professional', 'advanced' or 'customized'. */
+    mode?: string;
+    /** The tracks created to receive the stems, in stem order, inserted below the source clip's track. They exist already and are empty; each stem lands in its own track as the job settles. */
+    trackIds: string[];
+}
+
+/** Arguments for `generative text2sample`. */
+export interface GenerativeText2sampleParams {
+    /** Where the generated clip starts. Ticks (`3840t`), clock time (`1.5s`), or a musical position (`4.1.0`). */
+    from: number;
+    /** What to generate ("warm analog pad, slow attack"). Required. */
+    prompt: string;
+    /** A local audio file whose character the generation should follow. */
+    referenceAudio?: string | null;
+    /** A sound category to steer the model, from the panel's Sounds picker ("Pad", "Pluck"). One hint, not a list — the producer carries a single `soundHint` string (`AiPluginTaskText2SampleAttempt::setSoundHint`). */
+    soundHint?: string | null;
+    /** Where the generated clip ends (exclusive). This is what fixes the generation's length. */
+    to: number;
+    /** The Audio track the generated clip lands on, by id. Required: the panel takes it from the arrangement selection, which is not something a script can rely on (ADR 0087). Its content in the range is moved aside the same way the panel's own launch moves it, as one undo entry. */
+    trackUuid: string;
+}
+
+/** Success payload of `generative text2sample`. */
+export interface GenerativeText2sampleResult {
+    /** Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending -- the server-side kits (song, enhance) have no in-flight cancel. */
+    cancellable: boolean;
+    /** How this class delivers results: 'staged' means they land in the session history for audition and reach the project only through `job place`; 'direct' means they auto-place as one attributed undo entry. See `help streaming-results`. */
+    delivery: string;
+    /** Tick position the placed clip will start at. */
+    from?: number;
+    /** The job class, as `job get` reports it and `job list` can be filtered on: 'song-generate', 'music-enhance', 'text2sample', 'seed-audio', 'sound-effects', 'add-a-layer', 'stem-split', 'voice-changer' or 'vocal2midi'. */
+    jobClass: string;
+    /** The launched job's id. Pass it to `job get` / `job wait` / `job results`. Present on every successful launch -- nothing has been generated when this returns. */
+    jobId: string;
+    /** Tick position the placed clip will end at (exclusive). */
+    to?: number;
+    /** The track the result will be placed on, resolved at launch. For a command that creates its own target track, this is the created track's id -- it exists already, empty, and the clip lands in it when the job settles. */
+    trackId: string;
+}
+
+/** Arguments for `generative vocal2midi`. */
+export interface GenerativeVocal2midiParams {
+    /** Carry the source's pitch curve onto the transcribed notes, not just their pitches. On by default, matching the dialog's checkbox. */
+    applyPitch?: boolean | null;
+    /** The audio clip to transcribe, by id. Required. */
+    clipUuid: string;
+    /** Which language the vocal is in. **Required** -- the service offers no "detect it" option, and the dialog's own initial value is whatever was picked last, which is not a default a script may inherit. Use `notes-only` for a melody with no words to transcribe. */
+    language: 'chinese' | 'english' | 'japanese' | 'spanish' | 'korean' | 'french' | 'italian' | 'portuguese' | 'notes-only';
+    /** The Sing track the transcribed notes land on. Omit to insert a new Sing track directly below the source clip's track, as the UI does. */
+    trackUuid?: string | null;
+}
+
+/** Success payload of `generative vocal2midi`. */
+export interface GenerativeVocal2midiResult {
+    /** Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending -- the server-side kits (song, enhance) have no in-flight cancel. */
+    cancellable: boolean;
+    /** How this class delivers results: 'staged' means they land in the session history for audition and reach the project only through `job place`; 'direct' means they auto-place as one attributed undo entry. See `help streaming-results`. */
+    delivery: string;
+    /** Tick position the placed clip will start at. */
+    from?: number;
+    /** The job class, as `job get` reports it and `job list` can be filtered on: 'song-generate', 'music-enhance', 'text2sample', 'seed-audio', 'sound-effects', 'add-a-layer', 'stem-split', 'voice-changer' or 'vocal2midi'. */
+    jobClass: string;
+    /** The launched job's id. Pass it to `job get` / `job wait` / `job results`. Present on every successful launch -- nothing has been generated when this returns. */
+    jobId: string;
+    /** Tick position the placed clip will end at (exclusive). */
+    to?: number;
+    /** The track the result will be placed on, resolved at launch. For a command that creates its own target track, this is the created track's id -- it exists already, empty, and the clip lands in it when the job settles. */
+    trackId: string;
+}
+
+/** Arguments for `generative voice-change`. */
+export interface GenerativeVoiceChangeParams {
+    /** Snap the converted pitch to a key, e.g. `C` or `F#`. Passing this enables scale correction, which is off unless asked for; omit it and `--correct-to-scale` has nothing to apply to. */
+    correctToKey?: string | null;
+    /** Which scale in that key, e.g. `Major` (the default) or `Minor`. `--correct-to-key` only. */
+    correctToScale?: string | null;
+    /** Where the converted range starts. */
+    from: number;
+    /**
+     * A Voice Changer model to re-sing in, by its numeric id. Repeatable; at least one is required. Each model's output lands on a new track of its own.
+     *
+     * These are **Voice Changer models**, a catalog of their own -- not the singing voices `voice list` reports, which is why the argument is not spelled `--voice-id`. The ids come from the Voice Changer panel's model list; no CLI verb enumerates them yet.
+     *
+     * Several models per launch is the point of the feature: the caller is asking to audition choices. It is also the cheap shape -- the source range is rendered **once** and that one render feeds every model, so four voices cost one render rather than four. The launch is therefore one job carrying one result per model, each settling on its own (ADR 0084).
+     */
+    modelIds: number[];
+    /** How hard to pull the converted pitch onto pitch centers, 0 to 100. Default 20 -- a strength, not an on/off switch, and 0 is the way to turn it off. */
+    pitchCorrection?: number | null;
+    /** How much random variation to allow between takes, 0 to 100. Default 0. */
+    randomOffset?: number | null;
+    /** Strip the accompaniment out of the source before converting. Off by default; useful when the range carries a full mix rather than an isolated vocal. */
+    removeInstrument?: boolean | null;
+    /** Strip reverb out of the source before converting. Off by default. */
+    removeReverb?: boolean | null;
+    /** Transpose the converted take, -24 to 24 semitones. Default 0. Applies to every requested model -- a per-model transposition is a panel affordance that would need a different argument shape, and is not exposed. */
+    semitones?: number | null;
+    /** Where the converted range ends (exclusive). */
+    to: number;
+    /** A track whose audio feeds the conversion, by id. Repeatable; at least one is required. Several tracks are summed into the one take that gets re-sung, matching what the panel does with a multi-track selection. */
+    trackUuids: string[];
+}
+
+/** Success payload of `generative voice-change`. */
+export interface GenerativeVoiceChangeResult {
+    /** Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending -- the server-side kits (song, enhance) have no in-flight cancel. */
+    cancellable: boolean;
+    /** How this class delivers results: 'staged' means they land in the session history for audition and reach the project only through `job place`; 'direct' means they auto-place as one attributed undo entry. See `help streaming-results`. */
+    delivery: string;
+    /** The job class, as `job get` reports it and `job list` can be filtered on: 'song-generate', 'music-enhance', 'text2sample', 'seed-audio', 'sound-effects', 'add-a-layer', 'stem-split', 'voice-changer' or 'vocal2midi'. */
+    jobClass: string;
+    /** The launched job's id. Pass it to `job get` / `job wait` / `job results`. Present on every successful launch -- nothing has been generated when this returns. */
+    jobId: string;
+    /** The Voice Changer models being generated, in the order given. One job result per model, each settling on its own. */
+    modelIds: number[];
+    /** The tracks created to receive each converted take, index-aligned with `modelIds`. */
+    trackIds: string[];
+}
+
+/** The `generative` operations, mirroring the canonical operation tree 1:1. */
+export interface GenerativeOperations {
+    /**
+     * Generate an accompaniment layer over what the project already plays.
+     *
+     * Requires the `generative.add-layer` capability.
+     *
+     * Pay-gated on `credits(add-a-layer)`: an account that does not satisfy it is refused, without a purchase prompt.
+     */
+    addLayer(params: GenerativeAddLayerParams, options?: MutatingCallOptions): Promise<GenerativeAddLayerResult>;
+
+    /**
+     * Re-produce existing audio as a new arrangement. Launches a staged job.
+     *
+     * Requires the `generative.enhance` capability.
+     *
+     * Pay-gated on `credits(music-enhancer)`: an account that does not satisfy it is refused, without a purchase prompt.
+     */
+    enhance(params?: GenerativeEnhanceParams, options?: MutatingCallOptions): Promise<GenerativeEnhanceResult>;
+
+    /**
+     * Generate audio from a prompt plus reference material onto a track.
+     *
+     * Requires the `generative.seed-audio` capability.
+     *
+     * Pay-gated on `credits(seed-audio)`: an account that does not satisfy it is refused, without a purchase prompt.
+     */
+    seedAudio(params: GenerativeSeedAudioParams, options?: MutatingCallOptions): Promise<GenerativeSeedAudioResult>;
+
+    /**
+     * Generate a song from an idea or from lyrics. Launches a staged job.
+     *
+     * Requires the `generative.song` capability.
+     *
+     * Pay-gated on `credits(song-generator)`: an account that does not satisfy it is refused, without a purchase prompt.
+     */
+    song(params?: GenerativeSongParams, options?: MutatingCallOptions): Promise<GenerativeSongResult>;
+
+    /**
+     * Generate a sound effect from a text prompt onto a track.
+     *
+     * Requires the `generative.sound-effects` capability.
+     *
+     * Pay-gated on `credits(sound-effects)`: an account that does not satisfy it is refused, without a purchase prompt.
+     */
+    soundEffects(params: GenerativeSoundEffectsParams, options?: MutatingCallOptions): Promise<GenerativeSoundEffectsResult>;
+
+    /**
+     * Split audio clips into separate stems on new tracks.
+     *
+     * Requires the `generative.stem-split` capability.
+     *
+     * Pay-gated on `credits(stem-splitter)`: an account that does not satisfy it is refused, without a purchase prompt.
+     */
+    stemSplit(params: GenerativeStemSplitParams, options?: MutatingCallOptions): Promise<GenerativeStemSplitResult>;
+
+    /**
+     * Generate an audio sample from a text prompt onto a track.
+     *
+     * Requires the `generative.text2sample` capability.
+     *
+     * Pay-gated on `credits(text2sample)`: an account that does not satisfy it is refused, without a purchase prompt.
+     */
+    text2sample(params: GenerativeText2sampleParams, options?: MutatingCallOptions): Promise<GenerativeText2sampleResult>;
+
+    /**
+     * Transcribe an audio clip's vocal into notes on a Sing track.
+     *
+     * Requires the `generative.vocal2midi` capability.
+     */
+    vocal2midi(params: GenerativeVocal2midiParams, options?: MutatingCallOptions): Promise<GenerativeVocal2midiResult>;
+
+    /**
+     * Re-sing rendered audio in one or more other voices.
+     *
+     * Requires the `generative.voice-change` capability.
+     */
+    voiceChange(params: GenerativeVoiceChangeParams, options?: MutatingCallOptions): Promise<GenerativeVoiceChangeResult>;
+}
+
 // --- history ---------------------------------------------------------------
 
 /** Arguments for `history list`. */
@@ -2790,7 +3255,7 @@ export interface HistoryOperations {
      *
      * Requires the `history.read` capability.
      */
-    list(params: HistoryListParams, options?: CallOptions): Promise<HistoryListResult>;
+    list(params?: HistoryListParams, options?: CallOptions): Promise<HistoryListResult>;
 
     /**
      * Redo the entry the last undo took back, whoever authored it.
@@ -2970,14 +3435,14 @@ export interface InstrumentOperations {
      *
      * Requires the `soundsource.write` capability.
      */
-    disable(params: InstrumentDisableParams, options?: MutatingCallOptions): Promise<InstrumentDisableResult>;
+    disable(params?: InstrumentDisableParams, options?: MutatingCallOptions): Promise<InstrumentDisableResult>;
 
     /**
      * Enable the external instrument mounted on a MIDI track.
      *
      * Requires the `soundsource.write` capability.
      */
-    enable(params: InstrumentEnableParams, options?: MutatingCallOptions): Promise<InstrumentEnableResult>;
+    enable(params?: InstrumentEnableParams, options?: MutatingCallOptions): Promise<InstrumentEnableResult>;
 
     /**
      * Set which MIDI channel a track's external instrument listens on.
@@ -3728,14 +4193,14 @@ export interface ProjectSynthesisStatusResult {
     isSynthesizing: boolean;
 }
 
-/** The `project` operations, mirroring the canonical operation tree 1:1. */
+/** The `project` operations, mirroring the canonical operation tree 1:1, and the subscription that reports when the subject changes. */
 export interface ProjectOperations {
     /**
      * Copy externally-referenced media into the bundle, then save.
      *
      * Requires the `project.lifecycle` capability.
      */
-    collectSave(params: ProjectCollectSaveParams, options?: MutatingCallOptions): Promise<ProjectCollectSaveResult>;
+    collectSave(params?: ProjectCollectSaveParams, options?: MutatingCallOptions): Promise<ProjectCollectSaveResult>;
 
     /**
      * Report whether the project has unsaved changes.
@@ -3756,7 +4221,7 @@ export interface ProjectOperations {
      *
      * Requires the `project.lifecycle` capability.
      */
-    'new'(params: ProjectNewParams, options?: MutatingCallOptions): Promise<ProjectNewResult>;
+    'new'(params?: ProjectNewParams, options?: MutatingCallOptions): Promise<ProjectNewResult>;
 
     /**
      * Open a project file, blocking until it is fully loaded.
@@ -3799,6 +4264,17 @@ export interface ProjectOperations {
      * Requires the `project.read` capability.
      */
     synthesisStatus(options?: CallOptions): Promise<ProjectSynthesisStatusResult>;
+
+    /**
+     * The open project changed identity or location: opened, closed, or its session
+     * folder relocated within the same session (Save-As / temp promotion, never a
+     * project switch — ADR 0026/0027). A peer re-fetches with `project info`.
+     *
+     * Listen for changes on the `project` channel. The event is a hint to re-read, not the new state.
+     *
+     * Requires the `project.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
+     */
+    onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
 }
 
 // --- recording -------------------------------------------------------------
@@ -4008,7 +4484,7 @@ export interface SelectionSetResult {
     };
 }
 
-/** The `selection` operations, mirroring the canonical operation tree 1:1. */
+/** The `selection` operations, mirroring the canonical operation tree 1:1, and the subscription that reports when the subject changes. */
 export interface SelectionOperations {
     /**
      * Read the current selection in the arrangement or editor scope.
@@ -4023,6 +4499,16 @@ export interface SelectionOperations {
      * Requires the `selection.write` capability.
      */
     set(params: SelectionSetParams, options?: MutatingCallOptions): Promise<SelectionSetResult>;
+
+    /**
+     * The arrangement selection moved: the selected tracks, the time range, or both.
+     * `changes` carries `tracks` and `range`. A peer re-fetches with `selection get`.
+     *
+     * Listen for changes on the `selection` channel. The event is a hint to re-read, not the new state.
+     *
+     * Requires the `selection.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
+     */
+    onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
 }
 
 // --- sound-source ----------------------------------------------------------
@@ -4309,14 +4795,14 @@ export interface SoundSourceOperations {
      *
      * Requires the `soundsource.read` capability.
      */
-    get(params: SoundSourceGetParams, options?: CallOptions): Promise<SoundSourceGetResult>;
+    get(params?: SoundSourceGetParams, options?: CallOptions): Promise<SoundSourceGetResult>;
 
     /**
      * List every sound source you can put on a track: voices, choirs, instruments, ensembles, external instruments.
      *
      * Requires the `soundsource.read` capability.
      */
-    list(params: SoundSourceListParams, options?: CallOptions): Promise<SoundSourceListResult>;
+    list(params?: SoundSourceListParams, options?: CallOptions): Promise<SoundSourceListResult>;
 
     /**
      * Load a sound source onto a track, addressing it by name.
@@ -4337,14 +4823,14 @@ export interface SoundSourceOperations {
      *
      * Requires the `soundsource.read` capability.
      */
-    tags(params: SoundSourceTagsParams, options?: CallOptions): Promise<SoundSourceTagsResult>;
+    tags(params?: SoundSourceTagsParams, options?: CallOptions): Promise<SoundSourceTagsResult>;
 
     /**
      * Remove a track's sound source, leaving a plain MIDI track behind.
      *
      * Requires the `soundsource.write` capability.
      */
-    unload(params: SoundSourceUnloadParams, options?: MutatingCallOptions): Promise<SoundSourceUnloadResult>;
+    unload(params?: SoundSourceUnloadParams, options?: MutatingCallOptions): Promise<SoundSourceUnloadResult>;
 }
 
 // --- tempo -----------------------------------------------------------------
@@ -4486,7 +4972,7 @@ export interface TempoSetPointResult {
     replaced: boolean;
 }
 
-/** The `tempo` operations, mirroring the canonical operation tree 1:1. */
+/** The `tempo` operations, mirroring the canonical operation tree 1:1, and the subscription that reports when the subject changes. */
 export interface TempoOperations {
     /**
      * Start beat/tempo analysis of an audio clip. Returns a job id immediately; observe it with the job group.
@@ -4535,7 +5021,7 @@ export interface TempoOperations {
      *
      * Requires the `tempo.write` capability.
      */
-    setDisplayRange(params: TempoSetDisplayRangeParams, options?: MutatingCallOptions): Promise<TempoSetDisplayRangeResult>;
+    setDisplayRange(params?: TempoSetDisplayRangeParams, options?: MutatingCallOptions): Promise<TempoSetDisplayRangeResult>;
 
     /**
      * Add or replace one tempo point at a position (upsert). Leaves every other point untouched.
@@ -4543,6 +5029,17 @@ export interface TempoOperations {
      * Requires the `tempo.write` capability.
      */
     setPoint(params: TempoSetPointParams, options?: PreconditionCallOptions): Promise<TempoSetPointResult>;
+
+    /**
+     * The tempo curve changed — a point added, moved, bent, or removed, or the whole
+     * curve replaced by a beat-analysis apply. A peer re-fetches with `tempo get`
+     * for the single-tempo view or `tempo points` for the curve.
+     *
+     * Listen for changes on the `tempo` channel. The event is a hint to re-read, not the new state.
+     *
+     * Requires the `tempo.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
+     */
+    onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
 }
 
 // --- timesig ---------------------------------------------------------------
@@ -4840,23 +5337,31 @@ export interface TrackGetResult {
     trackType: string;
 }
 
+/** Arguments for `track list`. */
+export interface TrackListParams {
+    /** Track kinds to list, in the spellings `track create --type` takes. Repeatable. Omit for the arrangement's content tracks, which is what this answered before the pinned bands were reachable. */
+    type?: string[] | null;
+}
+
 /** Success payload of `track list`. */
 export interface TrackListResult {
-    /** Number of content (non-empty-slot) tracks in the project; the length of `tracks`. */
+    /** The length of `tracks` — the arrangement's content (non-empty-slot) track count when no `type` filter narrows it. */
     contentTrackCount: number;
-    /** All content tracks, in arrangement order. */
+    /** The matching tracks: the arrangement in its own order, then the video band, then the marker band. */
     tracks: {
         /** Number of clips (patterns) on the track. */
         clipCount: number;
-        /** Sound-source name for note tracks; 'N-member choir'/'N-member ensemble' in choir/ensemble mode; empty for GenericMidi; omitted for Audio tracks. */
+        /** Which index space `trackIndex` counts in: 'arrangement' (the main track list), 'video', or 'marker'. */
+        region: string;
+        /** Sound-source name for Sing and Instrument tracks; 'N-member choir'/'N-member ensemble' in choir/ensemble mode; empty for GenericMidi, which carries an external instrument instead. Omitted for the types that can have none: Audio, Video and Marker. */
         soundSourceName?: string;
-        /** 0-based position in the arrangement. */
+        /** 0-based position, in the index space of `region`. */
         trackIndex: number;
         /** Current display name. */
         trackName: string;
-        /** One of: Sing, Instrument, GenericMidi, Audio, Unknown. */
+        /** One of: Sing, Instrument, GenericMidi, Audio, Video, Marker. */
         trackType: string;
-        /** Track UUID in braces format. */
+        /** Track UUID in braces format. The definitive handle: it works in every region, where an index needs `region` to be read. */
         trackUuid: string;
     }[];
 }
@@ -4980,14 +5485,14 @@ export interface TrackSetLanguageParams {
     trackUuid?: string | null;
 }
 
-/** The `track` operations, mirroring the canonical operation tree 1:1. */
+/** The `track` operations, mirroring the canonical operation tree 1:1, and the subscription that reports when the subject changes. */
 export interface TrackOperations {
     /**
      * Create a track of any creatable type, optionally at a given position.
      *
      * Requires the `track.write` capability.
      */
-    create(params: TrackCreateParams, options?: MutatingCallOptions): Promise<TrackCreateResult>;
+    create(params?: TrackCreateParams, options?: MutatingCallOptions): Promise<TrackCreateResult>;
 
     /**
      * Delete all currently selected tracks and their content.
@@ -5001,7 +5506,7 @@ export interface TrackOperations {
      *
      * Requires the `track.write` capability.
      */
-    duplicate(params: TrackDuplicateParams, options?: MutatingCallOptions): Promise<TrackDuplicateResult>;
+    duplicate(params?: TrackDuplicateParams, options?: MutatingCallOptions): Promise<TrackDuplicateResult>;
 
     /**
      * Get comprehensive metadata for one track by index.
@@ -5011,11 +5516,11 @@ export interface TrackOperations {
     get(params: TrackGetParams, options?: CallOptions): Promise<TrackGetResult>;
 
     /**
-     * List all content tracks with their basic metadata and total count.
+     * List tracks with their basic metadata and total count, optionally filtered to given track types.
      *
      * Requires the `track.read` capability.
      */
-    list(options?: CallOptions): Promise<TrackListResult>;
+    list(params?: TrackListParams, options?: CallOptions): Promise<TrackListResult>;
 
     /**
      * Rename a track. Pass an empty string to restore the default name.
@@ -5036,7 +5541,7 @@ export interface TrackOperations {
      *
      * Requires the `track.write` capability.
      */
-    set(params: TrackSetParams, options?: MutatingCallOptions): Promise<void>;
+    set(params?: TrackSetParams, options?: MutatingCallOptions): Promise<void>;
 
     /**
      * Set what a track records from: its input channel, its MIDI input, and how chords are captured.
@@ -5051,6 +5556,17 @@ export interface TrackOperations {
      * Requires the `track.write` capability.
      */
     setLanguage(params: TrackSetLanguageParams, options?: MutatingCallOptions): Promise<void>;
+
+    /**
+     * A track was added, removed, reordered, renamed, or had a mixer property
+     * change — in the arrangement or in either pinned band (ADR 0104). `changes`
+     * carries the affected track uuids. A peer re-fetches with `track list`.
+     *
+     * Listen for changes on the `tracks` channel. The event is a hint to re-read, not the new state.
+     *
+     * Requires the `track.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
+     */
+    onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
 }
 
 // --- transport -------------------------------------------------------------
@@ -5099,7 +5615,7 @@ export interface TransportStateResult {
     status: string;
 }
 
-/** The `transport` operations, mirroring the canonical operation tree 1:1. */
+/** The `transport` operations, mirroring the canonical operation tree 1:1, and the subscription that reports when the subject changes. */
 export interface TransportOperations {
     /**
      * Read the project loop region (active flag + start/end ticks).
@@ -5134,7 +5650,7 @@ export interface TransportOperations {
      *
      * Requires the `transport.control` capability.
      */
-    setLoop(params: TransportSetLoopParams, options?: PreconditionCallOptions): Promise<void>;
+    setLoop(params?: TransportSetLoopParams, options?: PreconditionCallOptions): Promise<void>;
 
     /**
      * Read the current transport state and playback head position.
@@ -5156,6 +5672,19 @@ export interface TransportOperations {
      * Requires the `transport.control` capability.
      */
     toggle(options?: MutatingCallOptions): Promise<void>;
+
+    /**
+     * Transport moved: play, stop, a user seek, or the loop region. `changes`
+     * carries `playing`, `position`, `loop`. Transitions only — the continuous
+     * playback position is deliberately not a channel, because a re-fetch per frame
+     * is what the coalescing cannot save; a throttled position feed is its own
+     * mechanism. A peer re-fetches with `transport state`.
+     *
+     * Listen for changes on the `transport` channel. The event is a hint to re-read, not the new state.
+     *
+     * Requires the `transport.state` capability — an ungranted subscription is refused at this call, not silently never delivered.
+     */
+    onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
 }
 
 // --- ui --------------------------------------------------------------------
@@ -5657,26 +6186,27 @@ export interface VoiceOperations {
      *
      * Requires the `voice.read` capability.
      */
-    community(params: VoiceCommunityParams, options?: CallOptions): Promise<VoiceCommunityResult>;
+    community(params?: VoiceCommunityParams, options?: CallOptions): Promise<VoiceCommunityResult>;
 
     /**
      * List the voice seeds you can put into a blend.
      *
      * Requires the `voice.read` capability.
      */
-    seeds(params: VoiceSeedsParams, options?: CallOptions): Promise<VoiceSeedsResult>;
+    seeds(params?: VoiceSeedsParams, options?: CallOptions): Promise<VoiceSeedsResult>;
 
     /**
      * List the vocal synth models, with the languages each sings and how many voices offer it.
      *
      * Requires the `voice.read` capability.
      */
-    synthModels(params: VoiceSynthModelsParams, options?: CallOptions): Promise<VoiceSynthModelsResult>;
+    synthModels(params?: VoiceSynthModelsParams, options?: CallOptions): Promise<VoiceSynthModelsResult>;
 }
 
 /** Every published operation, grouped by domain. A connection's client implements this; the runtime builds it from `OPERATIONS`. */
 export interface PublicBindings {
     readonly blend: BlendOperations;
+    readonly canvas: CanvasOperations;
     readonly caret: CaretOperations;
     readonly choir: ChoirOperations;
     readonly clip: ClipOperations;
@@ -5685,6 +6215,7 @@ export interface PublicBindings {
     readonly editor: EditorOperations;
     readonly ensemble: EnsembleOperations;
     readonly export: ExportOperations;
+    readonly generative: GenerativeOperations;
     readonly history: HistoryOperations;
     readonly import: ImportOperations;
     readonly instrument: InstrumentOperations;
@@ -5713,6 +6244,8 @@ export const OPERATIONS = [
     { path: 'blend remove', domain: 'blend', method: 'remove', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'blend reorder', domain: 'blend', method: 'reorder', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'blend set', domain: 'blend', method: 'set', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'canvas effective-size', domain: 'canvas', method: 'effectiveSize', capability: 'canvas.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'canvas info', domain: 'canvas', method: 'info', capability: 'canvas.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
     { path: 'caret get', domain: 'caret', method: 'get', capability: 'caret.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'caret set', domain: 'caret', method: 'set', capability: 'caret.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'choir add', domain: 'choir', method: 'add', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
@@ -5769,6 +6302,15 @@ export const OPERATIONS = [
     { path: 'export song-template', domain: 'export', method: 'songTemplate', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'membership' },
     { path: 'export video', domain: 'export', method: 'video', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'export vocal-sample', domain: 'export', method: 'vocalSample', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'membership' },
+    { path: 'generative add-layer', domain: 'generative', method: 'addLayer', capability: 'generative.add-layer', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(add-a-layer)' },
+    { path: 'generative enhance', domain: 'generative', method: 'enhance', capability: 'generative.enhance', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(music-enhancer)' },
+    { path: 'generative seed-audio', domain: 'generative', method: 'seedAudio', capability: 'generative.seed-audio', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(seed-audio)' },
+    { path: 'generative song', domain: 'generative', method: 'song', capability: 'generative.song', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(song-generator)' },
+    { path: 'generative sound-effects', domain: 'generative', method: 'soundEffects', capability: 'generative.sound-effects', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(sound-effects)' },
+    { path: 'generative stem-split', domain: 'generative', method: 'stemSplit', capability: 'generative.stem-split', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(stem-splitter)' },
+    { path: 'generative text2sample', domain: 'generative', method: 'text2sample', capability: 'generative.text2sample', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(text2sample)' },
+    { path: 'generative vocal2midi', domain: 'generative', method: 'vocal2midi', capability: 'generative.vocal2midi', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'generative voice-change', domain: 'generative', method: 'voiceChange', capability: 'generative.voice-change', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'history list', domain: 'history', method: 'list', capability: 'history.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'history redo', domain: 'history', method: 'redo', capability: 'history.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
     { path: 'history undo', domain: 'history', method: 'undo', capability: 'history.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
@@ -5828,7 +6370,7 @@ export const OPERATIONS = [
     { path: 'track delete', domain: 'track', method: 'delete', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
     { path: 'track duplicate', domain: 'track', method: 'duplicate', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'track get', domain: 'track', method: 'get', capability: 'track.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'track list', domain: 'track', method: 'list', capability: 'track.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'track list', domain: 'track', method: 'list', capability: 'track.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'track rename', domain: 'track', method: 'rename', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'track reorder', domain: 'track', method: 'reorder', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'track set', domain: 'track', method: 'set', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
@@ -5860,7 +6402,14 @@ export const OPERATIONS = [
 
 /** Every observable channel in this artifact, sorted by channel. The runtime builds one subscription per row and guards it with the row's capability; a channel absent from this table is not observable from this artifact at all. */
 export const NOTIFICATION_CHANNELS = [
+    { channel: 'canvas', domain: 'canvas', method: 'onChanged', capability: 'canvas.read' },
+    { channel: 'clips', domain: 'clip', method: 'onChanged', capability: 'clip.read' },
     { channel: 'jobs', domain: 'job', method: 'onChanged', capability: 'job.read' },
+    { channel: 'project', domain: 'project', method: 'onChanged', capability: 'project.read' },
+    { channel: 'selection', domain: 'selection', method: 'onChanged', capability: 'selection.read' },
+    { channel: 'tempo', domain: 'tempo', method: 'onChanged', capability: 'tempo.read' },
+    { channel: 'tracks', domain: 'track', method: 'onChanged', capability: 'track.read' },
+    { channel: 'transport', domain: 'transport', method: 'onChanged', capability: 'transport.state' },
     { channel: 'ui', domain: 'ui', method: 'onChanged', capability: 'ui.state' },
 ] as const satisfies readonly ChannelDescriptor[];
 
@@ -5874,6 +6423,8 @@ export const REQUIRED_TOKENS = {
     'blend remove': 'voice.write',
     'blend reorder': 'voice.write',
     'blend set': 'voice.write',
+    'canvas effective-size': 'canvas.read',
+    'canvas info': 'canvas.read',
     'caret get': 'caret.read',
     'caret set': 'caret.write',
     'choir add': 'soundsource.write',
@@ -5924,6 +6475,15 @@ export const REQUIRED_TOKENS = {
     'export song-template': 'export.invoke',
     'export video': 'export.invoke',
     'export vocal-sample': 'export.invoke',
+    'generative add-layer': 'generative.add-layer',
+    'generative enhance': 'generative.enhance',
+    'generative seed-audio': 'generative.seed-audio',
+    'generative song': 'generative.song',
+    'generative sound-effects': 'generative.sound-effects',
+    'generative stem-split': 'generative.stem-split',
+    'generative text2sample': 'generative.text2sample',
+    'generative vocal2midi': 'generative.vocal2midi',
+    'generative voice-change': 'generative.voice-change',
     'history list': 'history.read',
     'history redo': 'history.control',
     'history undo': 'history.control',
@@ -6015,11 +6575,12 @@ export const REQUIRED_TOKENS = {
 
 /** Each profile's transitive token expansion: a name for a bundle of capability tokens, so a grant can be measured against one name rather than token by token. A profile is met when every token here is granted. The capabilities are the contract — a profile is a convenience over them and grants nothing itself. Surface ceilings (ADR 0093 §6) sit here beside the versioned bundles (ADR 0022): a ceiling carries no version, moves with the Studio build enforcing it, and is not a capability to request. */
 export const PROFILES = {
-    'surface.cli-mcp': ['caret.read', 'caret.write', 'chord.read', 'chord.write', 'clip.read', 'clip.write', 'device.read', 'device.write', 'editor.read', 'editor.write', 'export.invoke', 'fx.read', 'fx.write', 'generative.add-layer', 'generative.enhance', 'generative.retake', 'generative.seed-audio', 'generative.song', 'generative.sound-effects', 'generative.stem-split', 'generative.text2sample', 'generative.vocal2midi', 'generative.voice-change', 'history.control', 'history.read', 'import.invoke', 'job.control', 'job.read', 'lyric.read', 'lyric.write', 'note.read', 'note.write', 'project.lifecycle', 'project.read', 'recording.control', 'selection.read', 'selection.write', 'soundsource.read', 'soundsource.write', 'tempo.analyze', 'tempo.applyV2', 'tempo.read', 'tempo.write', 'timesig.read', 'timesig.write', 'track.read', 'track.write', 'transport.control', 'transport.state', 'ui.control', 'ui.state', 'vocalparam.read', 'vocalparam.write', 'voice.read', 'voice.write'],
-    'surface.extension-sdk': ['session.handshake', 'session.ping', 'session.shutdown', 'workflow.dev', 'workflow.ui'],
+    'surface.cli-mcp': ['canvas.read', 'caret.read', 'caret.write', 'chord.read', 'chord.write', 'clip.read', 'clip.write', 'device.read', 'device.write', 'editor.read', 'editor.write', 'export.invoke', 'fx.read', 'fx.write', 'generative.add-layer', 'generative.enhance', 'generative.seed-audio', 'generative.song', 'generative.sound-effects', 'generative.stem-split', 'generative.text2sample', 'generative.vocal2midi', 'generative.voice-change', 'history.control', 'history.read', 'import.invoke', 'job.control', 'job.read', 'lyric.read', 'lyric.write', 'note.read', 'note.write', 'project.lifecycle', 'project.read', 'recording.control', 'selection.read', 'selection.write', 'soundsource.read', 'soundsource.write', 'tempo.analyze', 'tempo.applyV2', 'tempo.read', 'tempo.write', 'timesig.read', 'timesig.write', 'track.read', 'track.write', 'transport.control', 'transport.state', 'ui.control', 'ui.state', 'vocalparam.read', 'vocalparam.write', 'voice.read', 'voice.write'],
+    'surface.extension-sdk': ['canvas.read', 'session.handshake', 'session.ping', 'session.shutdown', 'workflow.dev', 'workflow.ui'],
+    'transport.v1': ['transport.control'],
     'ui.v1': ['workflow.ui'],
-    'project.v1': ['project.read'],
-    'generative.all.v1': ['generative.add-layer', 'generative.enhance', 'generative.retake', 'generative.seed-audio', 'generative.song', 'generative.sound-effects', 'generative.stem-split', 'generative.text2sample', 'generative.vocal2midi', 'generative.voice-change'],
+    'timeline.tempo.v1': ['tempo.applyV2'],
+    'generative.all.v1': ['generative.add-layer', 'generative.enhance', 'generative.seed-audio', 'generative.song', 'generative.sound-effects', 'generative.stem-split', 'generative.text2sample', 'generative.vocal2midi', 'generative.voice-change'],
 } as const satisfies Readonly<Record<string, readonly CapabilityToken[]>>;
 
 /** The profiles above the registry still marks draft (ADR 0093 §6): one may be re-cut in a later release, so what it covers today is not a promise. Depending on a draft profile by name is allowed and this is how to know you are. */

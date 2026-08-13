@@ -3,10 +3,11 @@
 import type { Unsubscribe } from '../types-runtime.js';
 
 /** A capability token declared in the IDL. Each method/notification is gated by exactly one (ADR 0015). */
-export type SessionCapability = 'session.handshake' | 'session.ping' | 'session.shutdown';
+export type SessionCapability = 'session.handshake' | 'session.move' | 'session.ping' | 'session.shutdown';
 
 export const SESSION_CAPABILITY_TOKENS: readonly SessionCapability[] = [
   'session.handshake',
+  'session.move',
   'session.ping',
   'session.shutdown',
 ];
@@ -15,6 +16,7 @@ export const SESSION_METHOD_CAPABILITIES: Readonly<Record<string, SessionCapabil
   'session.handshake': 'session.handshake',
   'session.ping': 'session.ping',
   'session.shutdown': 'session.shutdown',
+  'session.prepareMove': 'session.move',
 };
 
 export interface SessionPeer {
@@ -75,6 +77,18 @@ export interface ShutdownParams {
     graceMs: number;
 }
 
+/** Result of `session.prepareMove`. */
+export interface PrepareMoveResult {
+    /**
+     * True once the peer has stopped writing, flushed its state to disk, and
+     * released every handle under the session folder. The host proceeds with the
+     * copy only on a `true`: a `false`, or a reply that misses the host's
+     * deadline, fails the relocation rather than copying a tree someone is still
+     * writing to.
+     */
+    ready: boolean;
+}
+
 export class SessionClient {
     constructor(private readonly peer: SessionPeer) {}
 
@@ -92,6 +106,27 @@ export class SessionClient {
      */
     onSessionShutdown(callback: (event: ShutdownParams) => void): Unsubscribe {
         return this.peer.subscribe<ShutdownParams>('session.shutdown', callback);
+    }
+
+    /**
+     * Peer-served: the host calls this before relocating the session folder — a
+     * Save-As, or the first save of a project that until now lived in a temporary
+     * one — and blocks on the ack, so what it copies is a consistent, handle-free
+     * snapshot rather than one racing a live writer.
+     *
+     * Quiesce at the next boundary you control. This asks you to stop writing, not
+     * to finish long work: checkpoint what is in flight and resume it afterwards.
+     * How you learn the relocation finished, and where the folder went, is your
+     * driver's own signal — this verb covers only the quiesce.
+     *
+     * Distinct from `session.shutdown`: the process stays alive and in-memory state
+     * survives. Not `\@sdkManaged`, because only the peer knows what it holds open —
+     * the SDK hands this one to you as a handler. A peer that does not advertise
+     * `session.move` never receives the call, and the host degrades to relocating
+     * without the quiesce.
+     */
+    setSessionPrepareMoveHandler(handler: () => Promise<PrepareMoveResult> | PrepareMoveResult): void {
+        this.peer.setRequestHandler<void, PrepareMoveResult>('session.prepareMove', handler);
     }
 
 }

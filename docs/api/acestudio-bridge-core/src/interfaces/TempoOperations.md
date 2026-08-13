@@ -1,6 +1,6 @@
 # Interface: TempoOperations
 
-The `tempo` operations, mirroring the canonical operation tree 1:1.
+The `tempo` operations, mirroring the canonical operation tree 1:1, and the subscription that reports when the subject changes.
 
 ## Methods
 
@@ -75,6 +75,32 @@ Requires the `tempo.read` capability.
 #### Returns
 
 `Promise`\<[`TempoGetResult`](TempoGetResult.md)\>
+
+***
+
+### onChanged()
+
+```ts
+onChanged(listener): Unsubscribe;
+```
+
+The tempo curve changed — a point added, moved, bent, or removed, or the whole
+curve replaced by a beat-analysis apply. A peer re-fetches with `tempo get`
+for the single-tempo view or `tempo points` for the curve.
+
+Listen for changes on the `tempo` channel. The event is a hint to re-read, not the new state.
+
+Requires the `tempo.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
+
+#### Parameters
+
+##### listener
+
+(`event`) => `void`
+
+#### Returns
+
+[`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
 ***
 
@@ -155,7 +181,7 @@ Requires the `tempo.write` capability.
 ### setDisplayRange()
 
 ```ts
-setDisplayRange(params, options?): Promise<TempoSetDisplayRangeResult>;
+setDisplayRange(params?, options?): Promise<TempoSetDisplayRangeResult>;
 ```
 
 Set the BPM range the tempo curve editor draws (project-persisted, not a view preference).
@@ -164,7 +190,7 @@ Requires the `tempo.write` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`TempoSetDisplayRangeParams`](TempoSetDisplayRangeParams.md)
 

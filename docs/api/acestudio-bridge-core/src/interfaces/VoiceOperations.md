@@ -33,7 +33,7 @@ Requires the `voice.write` capability.
 ### community()
 
 ```ts
-community(params, options?): Promise<VoiceCommunityResult>;
+community(params?, options?): Promise<VoiceCommunityResult>;
 ```
 
 Browse the community voice catalog, one page at a time.
@@ -42,7 +42,7 @@ Requires the `voice.read` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`VoiceCommunityParams`](VoiceCommunityParams.md)
 
@@ -59,7 +59,7 @@ Requires the `voice.read` capability.
 ### seeds()
 
 ```ts
-seeds(params, options?): Promise<VoiceSeedsResult>;
+seeds(params?, options?): Promise<VoiceSeedsResult>;
 ```
 
 List the voice seeds you can put into a blend.
@@ -68,7 +68,7 @@ Requires the `voice.read` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`VoiceSeedsParams`](VoiceSeedsParams.md)
 
@@ -85,7 +85,7 @@ Requires the `voice.read` capability.
 ### synthModels()
 
 ```ts
-synthModels(params, options?): Promise<VoiceSynthModelsResult>;
+synthModels(params?, options?): Promise<VoiceSynthModelsResult>;
 ```
 
 List the vocal synth models, with the languages each sings and how many voices offer it.
@@ -94,7 +94,7 @@ Requires the `voice.read` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`VoiceSynthModelsParams`](VoiceSynthModelsParams.md)
 

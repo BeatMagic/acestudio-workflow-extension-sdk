@@ -7,7 +7,7 @@ The `sound-source` operations, mirroring the canonical operation tree 1:1.
 ### get()
 
 ```ts
-get(params, options?): Promise<SoundSourceGetResult>;
+get(params?, options?): Promise<SoundSourceGetResult>;
 ```
 
 Report what sound source a track carries, and how it is configured.
@@ -16,7 +16,7 @@ Requires the `soundsource.read` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`SoundSourceGetParams`](SoundSourceGetParams.md)
 
@@ -33,7 +33,7 @@ Requires the `soundsource.read` capability.
 ### list()
 
 ```ts
-list(params, options?): Promise<SoundSourceListResult>;
+list(params?, options?): Promise<SoundSourceListResult>;
 ```
 
 List every sound source you can put on a track: voices, choirs, instruments, ensembles, external instruments.
@@ -42,7 +42,7 @@ Requires the `soundsource.read` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`SoundSourceListParams`](SoundSourceListParams.md)
 
@@ -111,7 +111,7 @@ Requires the `soundsource.write` capability.
 ### tags()
 
 ```ts
-tags(params, options?): Promise<SoundSourceTagsResult>;
+tags(params?, options?): Promise<SoundSourceTagsResult>;
 ```
 
 Return the filter vocabulary for sound sources: languages, tags, instrument categories.
@@ -120,7 +120,7 @@ Requires the `soundsource.read` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`SoundSourceTagsParams`](SoundSourceTagsParams.md)
 
@@ -137,7 +137,7 @@ Requires the `soundsource.read` capability.
 ### unload()
 
 ```ts
-unload(params, options?): Promise<SoundSourceUnloadResult>;
+unload(params?, options?): Promise<SoundSourceUnloadResult>;
 ```
 
 Remove a track's sound source, leaving a plain MIDI track behind.
@@ -146,7 +146,7 @@ Requires the `soundsource.write` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`SoundSourceUnloadParams`](SoundSourceUnloadParams.md)
 

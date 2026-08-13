@@ -12,6 +12,14 @@ readonly blend: BlendOperations;
 
 ***
 
+### canvas
+
+```ts
+readonly canvas: CanvasOperations;
+```
+
+***
+
 ### caret
 
 ```ts
@@ -72,6 +80,14 @@ readonly ensemble: EnsembleOperations;
 
 ```ts
 readonly export: ExportOperations;
+```
+
+***
+
+### generative
+
+```ts
+readonly generative: GenerativeOperations;
 ```
 
 ***

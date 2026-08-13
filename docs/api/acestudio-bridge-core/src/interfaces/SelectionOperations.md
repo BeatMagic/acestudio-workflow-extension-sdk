@@ -1,6 +1,6 @@
 # Interface: SelectionOperations
 
-The `selection` operations, mirroring the canonical operation tree 1:1.
+The `selection` operations, mirroring the canonical operation tree 1:1, and the subscription that reports when the subject changes.
 
 ## Methods
 
@@ -27,6 +27,31 @@ Requires the `selection.read` capability.
 #### Returns
 
 `Promise`\<[`SelectionGetResult`](SelectionGetResult.md)\>
+
+***
+
+### onChanged()
+
+```ts
+onChanged(listener): Unsubscribe;
+```
+
+The arrangement selection moved: the selected tracks, the time range, or both.
+`changes` carries `tracks` and `range`. A peer re-fetches with `selection get`.
+
+Listen for changes on the `selection` channel. The event is a hint to re-read, not the new state.
+
+Requires the `selection.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
+
+#### Parameters
+
+##### listener
+
+(`event`) => `void`
+
+#### Returns
+
+[`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
 ***
 

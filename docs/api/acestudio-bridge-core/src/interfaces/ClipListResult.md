@@ -68,7 +68,7 @@ Display name (auto-generated when no raw name is set).
 clipType: string;
 ```
 
-Clip type: `sing`, `instrument`, `genericMidi`, `audio`, or `chord`.
+Clip type: `sing`, `instrument`, `genericMidi`, `audio`, `chord`, `video`, or `marker`.
 
 #### clipUuid
 

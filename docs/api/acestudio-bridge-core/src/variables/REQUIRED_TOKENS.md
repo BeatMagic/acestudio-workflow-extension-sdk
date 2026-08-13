@@ -10,6 +10,8 @@ const REQUIRED_TOKENS: {
   blend remove: "voice.write";
   blend reorder: "voice.write";
   blend set: "voice.write";
+  canvas effective-size: "canvas.read";
+  canvas info: "canvas.read";
   caret get: "caret.read";
   caret set: "caret.write";
   choir add: "soundsource.write";
@@ -60,6 +62,15 @@ const REQUIRED_TOKENS: {
   export song-template: "export.invoke";
   export video: "export.invoke";
   export vocal-sample: "export.invoke";
+  generative add-layer: "generative.add-layer";
+  generative enhance: "generative.enhance";
+  generative seed-audio: "generative.seed-audio";
+  generative song: "generative.song";
+  generative sound-effects: "generative.sound-effects";
+  generative stem-split: "generative.stem-split";
+  generative text2sample: "generative.text2sample";
+  generative vocal2midi: "generative.vocal2midi";
+  generative voice-change: "generative.voice-change";
   history list: "history.read";
   history redo: "history.control";
   history undo: "history.control";
@@ -200,6 +211,18 @@ readonly blend reorder: "voice.write" = 'voice.write';
 
 ```ts
 readonly blend set: "voice.write" = 'voice.write';
+```
+
+### canvas effective-size
+
+```ts
+readonly canvas effective-size: "canvas.read" = 'canvas.read';
+```
+
+### canvas info
+
+```ts
+readonly canvas info: "canvas.read" = 'canvas.read';
 ```
 
 ### caret get
@@ -500,6 +523,60 @@ readonly export video: "export.invoke" = 'export.invoke';
 
 ```ts
 readonly export vocal-sample: "export.invoke" = 'export.invoke';
+```
+
+### generative add-layer
+
+```ts
+readonly generative add-layer: "generative.add-layer" = 'generative.add-layer';
+```
+
+### generative enhance
+
+```ts
+readonly generative enhance: "generative.enhance" = 'generative.enhance';
+```
+
+### generative seed-audio
+
+```ts
+readonly generative seed-audio: "generative.seed-audio" = 'generative.seed-audio';
+```
+
+### generative song
+
+```ts
+readonly generative song: "generative.song" = 'generative.song';
+```
+
+### generative sound-effects
+
+```ts
+readonly generative sound-effects: "generative.sound-effects" = 'generative.sound-effects';
+```
+
+### generative stem-split
+
+```ts
+readonly generative stem-split: "generative.stem-split" = 'generative.stem-split';
+```
+
+### generative text2sample
+
+```ts
+readonly generative text2sample: "generative.text2sample" = 'generative.text2sample';
+```
+
+### generative vocal2midi
+
+```ts
+readonly generative vocal2midi: "generative.vocal2midi" = 'generative.vocal2midi';
+```
+
+### generative voice-change
+
+```ts
+readonly generative voice-change: "generative.voice-change" = 'generative.voice-change';
 ```
 
 ### history list

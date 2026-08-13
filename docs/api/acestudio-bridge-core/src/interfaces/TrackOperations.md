@@ -1,13 +1,13 @@
 # Interface: TrackOperations
 
-The `track` operations, mirroring the canonical operation tree 1:1.
+The `track` operations, mirroring the canonical operation tree 1:1, and the subscription that reports when the subject changes.
 
 ## Methods
 
 ### create()
 
 ```ts
-create(params, options?): Promise<TrackCreateResult>;
+create(params?, options?): Promise<TrackCreateResult>;
 ```
 
 Create a track of any creatable type, optionally at a given position.
@@ -16,7 +16,7 @@ Requires the `track.write` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`TrackCreateParams`](TrackCreateParams.md)
 
@@ -55,7 +55,7 @@ Requires the `track.write` capability.
 ### duplicate()
 
 ```ts
-duplicate(params, options?): Promise<TrackDuplicateResult>;
+duplicate(params?, options?): Promise<TrackDuplicateResult>;
 ```
 
 Duplicate a track with its clips and FX chain, next to the original.
@@ -64,7 +64,7 @@ Requires the `track.write` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`TrackDuplicateParams`](TrackDuplicateParams.md)
 
@@ -107,14 +107,18 @@ Requires the `track.read` capability.
 ### list()
 
 ```ts
-list(options?): Promise<TrackListResult>;
+list(params?, options?): Promise<TrackListResult>;
 ```
 
-List all content tracks with their basic metadata and total count.
+List tracks with their basic metadata and total count, optionally filtered to given track types.
 
 Requires the `track.read` capability.
 
 #### Parameters
+
+##### params?
+
+[`TrackListParams`](TrackListParams.md)
 
 ##### options?
 
@@ -123,6 +127,32 @@ Requires the `track.read` capability.
 #### Returns
 
 `Promise`\<[`TrackListResult`](TrackListResult.md)\>
+
+***
+
+### onChanged()
+
+```ts
+onChanged(listener): Unsubscribe;
+```
+
+A track was added, removed, reordered, renamed, or had a mixer property
+change — in the arrangement or in either pinned band (ADR 0104). `changes`
+carries the affected track uuids. A peer re-fetches with `track list`.
+
+Listen for changes on the `tracks` channel. The event is a hint to re-read, not the new state.
+
+Requires the `track.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
+
+#### Parameters
+
+##### listener
+
+(`event`) => `void`
+
+#### Returns
+
+[`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
 ***
 
@@ -181,7 +211,7 @@ Requires the `track.write` capability.
 ### set()
 
 ```ts
-set(params, options?): Promise<void>;
+set(params?, options?): Promise<void>;
 ```
 
 Update a track's mixer and display properties (color, pan, gain, mute, solo, monitor).
@@ -190,7 +220,7 @@ Requires the `track.write` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`TrackSetParams`](TrackSetParams.md)
 

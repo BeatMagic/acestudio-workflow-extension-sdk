@@ -33,7 +33,7 @@ Requires the `soundsource.write` capability.
 ### disable()
 
 ```ts
-disable(params, options?): Promise<ChoirDisableResult>;
+disable(params?, options?): Promise<ChoirDisableResult>;
 ```
 
 Turn choir mode off, leaving the leader as the track's only AI voice.
@@ -42,7 +42,7 @@ Requires the `soundsource.write` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`ChoirDisableParams`](ChoirDisableParams.md)
 
@@ -59,7 +59,7 @@ Requires the `soundsource.write` capability.
 ### enable()
 
 ```ts
-enable(params, options?): Promise<ChoirEnableResult>;
+enable(params?, options?): Promise<ChoirEnableResult>;
 ```
 
 Turn choir mode on for a Sing track, keeping its current AI voice as the leader.
@@ -68,7 +68,7 @@ Requires the `soundsource.write` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`ChoirEnableParams`](ChoirEnableParams.md)
 
@@ -85,7 +85,7 @@ Requires the `soundsource.write` capability.
 ### get()
 
 ```ts
-get(params, options?): Promise<ChoirGetResult>;
+get(params?, options?): Promise<ChoirGetResult>;
 ```
 
 Read a Sing track's choir: whether it is on, its settings, and every member.
@@ -94,7 +94,7 @@ Requires the `soundsource.read` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`ChoirGetParams`](ChoirGetParams.md)
 
@@ -163,7 +163,7 @@ Requires the `soundsource.write` capability.
 ### set()
 
 ```ts
-set(params, options?): Promise<void>;
+set(params?, options?): Promise<void>;
 ```
 
 Set the choir's timing and width, or one member's gain and mute.
@@ -172,7 +172,7 @@ Requires the `soundsource.write` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`ChoirSetParams`](ChoirSetParams.md)
 

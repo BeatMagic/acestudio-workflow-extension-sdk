@@ -51,7 +51,7 @@ async function flush(): Promise<void> {
 const TRACKS: TrackListResult = {
   contentTrackCount: 1,
   tracks: [
-    { clipCount: 2, region: "arrangement", trackIndex: 0, trackName: "Lead", trackType: "Sing", trackUuid: "{a}" },
+    { clipCount: 2, region: "video", trackIndex: 0, trackName: "Backdrop", trackType: "Video", trackUuid: "{a}" },
   ],
 };
 

@@ -1,6 +1,6 @@
 # Interface: ClipOperations
 
-The `clip` operations, mirroring the canonical operation tree 1:1.
+The `clip` operations, mirroring the canonical operation tree 1:1, and the subscription that reports when the subject changes.
 
 ## Methods
 
@@ -287,6 +287,33 @@ Requires the `clip.read` capability.
 #### Returns
 
 `Promise`\<[`ClipNoteContentResult`](ClipNoteContentResult.md)\>
+
+***
+
+### onChanged()
+
+```ts
+onChanged(listener): Unsubscribe;
+```
+
+A clip was added, removed, moved, trimmed, renamed, muted, or recoloured.
+`changes` carries the affected clip uuids. A peer re-fetches with `clip list`,
+which needs a track to address, so a uuid here names the clip and the peer
+reads the track it was told about on the `tracks` channel.
+
+Listen for changes on the `clips` channel. The event is a hint to re-read, not the new state.
+
+Requires the `clip.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
+
+#### Parameters
+
+##### listener
+
+(`event`) => `void`
+
+#### Returns
+
+[`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
 ***
 

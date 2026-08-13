@@ -41,6 +41,12 @@ import {
 export const HOST_METHODS = {
   handshake: "session.handshake",
   ping: "session.ping",
+  // Declared by the schema but not yet answered by this SDK: core has no
+  // `onPrepareMove` hook, and a peer that never advertises `session.prepareMove`
+  // is skipped by the host's `canEmit` check rather than broken (ADR 0121 §5).
+  // The name is spelled here so the surface stays pinned against the generated
+  // map; the hook itself is separate work.
+  prepareMove: "session.prepareMove",
   shutdown: "session.shutdown",
   changed: "state.changed",
 } as const;

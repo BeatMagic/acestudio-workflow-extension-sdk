@@ -1,6 +1,6 @@
 # Interface: ProjectOperations
 
-The `project` operations, mirroring the canonical operation tree 1:1.
+The `project` operations, mirroring the canonical operation tree 1:1, and the subscription that reports when the subject changes.
 
 ## Methods
 
@@ -97,6 +97,32 @@ Requires the `project.lifecycle` capability.
 #### Returns
 
 `Promise`\<[`ProjectNewResult`](ProjectNewResult.md)\>
+
+***
+
+### onChanged()
+
+```ts
+onChanged(listener): Unsubscribe;
+```
+
+The open project changed identity or location: opened, closed, or its session
+folder relocated within the same session (Save-As / temp promotion, never a
+project switch — ADR 0026/0027). A peer re-fetches with `project info`.
+
+Listen for changes on the `project` channel. The event is a hint to re-read, not the new state.
+
+Requires the `project.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
+
+#### Parameters
+
+##### listener
+
+(`event`) => `void`
+
+#### Returns
+
+[`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
 ***
 

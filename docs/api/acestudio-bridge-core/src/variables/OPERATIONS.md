@@ -74,6 +74,24 @@ const OPERATIONS: readonly [{
   takesParams: true;
   ungated: false;
 }, {
+  capability: "canvas.read";
+  domain: "canvas";
+  fingerprintPrecondition: false;
+  method: "effectiveSize";
+  mutating: false;
+  path: "canvas effective-size";
+  takesParams: false;
+  ungated: false;
+}, {
+  capability: "canvas.read";
+  domain: "canvas";
+  fingerprintPrecondition: false;
+  method: "info";
+  mutating: false;
+  path: "canvas info";
+  takesParams: false;
+  ungated: false;
+}, {
   capability: "caret.read";
   domain: "caret";
   fingerprintPrecondition: false;
@@ -577,6 +595,94 @@ const OPERATIONS: readonly [{
   method: "vocalSample";
   mutating: true;
   path: "export vocal-sample";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "generative.add-layer";
+  domain: "generative";
+  entitlement: "credits(add-a-layer)";
+  fingerprintPrecondition: false;
+  method: "addLayer";
+  mutating: true;
+  path: "generative add-layer";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "generative.enhance";
+  domain: "generative";
+  entitlement: "credits(music-enhancer)";
+  fingerprintPrecondition: false;
+  method: "enhance";
+  mutating: true;
+  path: "generative enhance";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "generative.seed-audio";
+  domain: "generative";
+  entitlement: "credits(seed-audio)";
+  fingerprintPrecondition: false;
+  method: "seedAudio";
+  mutating: true;
+  path: "generative seed-audio";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "generative.song";
+  domain: "generative";
+  entitlement: "credits(song-generator)";
+  fingerprintPrecondition: false;
+  method: "song";
+  mutating: true;
+  path: "generative song";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "generative.sound-effects";
+  domain: "generative";
+  entitlement: "credits(sound-effects)";
+  fingerprintPrecondition: false;
+  method: "soundEffects";
+  mutating: true;
+  path: "generative sound-effects";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "generative.stem-split";
+  domain: "generative";
+  entitlement: "credits(stem-splitter)";
+  fingerprintPrecondition: false;
+  method: "stemSplit";
+  mutating: true;
+  path: "generative stem-split";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "generative.text2sample";
+  domain: "generative";
+  entitlement: "credits(text2sample)";
+  fingerprintPrecondition: false;
+  method: "text2sample";
+  mutating: true;
+  path: "generative text2sample";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "generative.vocal2midi";
+  domain: "generative";
+  fingerprintPrecondition: false;
+  method: "vocal2midi";
+  mutating: true;
+  path: "generative vocal2midi";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "generative.voice-change";
+  domain: "generative";
+  fingerprintPrecondition: false;
+  method: "voiceChange";
+  mutating: true;
+  path: "generative voice-change";
   takesParams: true;
   ungated: false;
 }, {
@@ -1117,7 +1223,7 @@ const OPERATIONS: readonly [{
   method: "list";
   mutating: false;
   path: "track list";
-  takesParams: false;
+  takesParams: true;
   ungated: false;
 }, {
   capability: "track.write";

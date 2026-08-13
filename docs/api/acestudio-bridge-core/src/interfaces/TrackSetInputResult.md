@@ -20,7 +20,7 @@ Which audio input the track now records from, named as the device names it. Audi
 optional midiInput?: {
   channel?: string;
   deviceName?: string;
-  sourceType?: "none" | "all" | "keyboard" | "custom";
+  sourceType?: "keyboard" | "custom" | "none" | "all";
 };
 ```
 
@@ -45,7 +45,7 @@ The device name, when `sourceType` is 'custom'.
 #### sourceType?
 
 ```ts
-optional sourceType?: "none" | "all" | "keyboard" | "custom";
+optional sourceType?: "keyboard" | "custom" | "none" | "all";
 ```
 
 Where MIDI comes from.

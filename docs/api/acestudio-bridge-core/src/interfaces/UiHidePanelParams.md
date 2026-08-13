@@ -7,7 +7,7 @@ Arguments for `ui hide-panel`.
 ### panel
 
 ```ts
-panel: "mv" | "v2m" | "mixer" | "fx";
+panel: "fx" | "mv" | "v2m" | "mixer";
 ```
 
 Which dockable panel: `mixer`, `fx`, `mv`, or `v2m`.

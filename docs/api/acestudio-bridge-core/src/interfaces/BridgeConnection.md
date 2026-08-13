@@ -126,6 +126,44 @@ Listen for the connection dropping.
 
 ***
 
+### onPrepareMove()
+
+```ts
+onPrepareMove(listener): Unsubscribe;
+```
+
+Called before the host relocates the session folder — a Save-As, or the first
+save of a project that until now lived in a temporary one — while the host
+blocks on the answer, so what it copies is a consistent snapshot rather than
+one racing a live writer.
+
+Quiesce at the next boundary you control: stop writing and drop handles under
+the session folder, then return. This does not ask you to finish long work —
+checkpoint what is in flight and resume it afterwards. Where the folder went,
+and when the move finished, are not part of this verb.
+
+Every listener is awaited, and the host is told the move may proceed only
+once they all return. A listener that throws refuses the relocation instead
+of failing the request: the host would rather skip a Save-As than copy a tree
+someone is still writing to.
+
+With no listener registered the host is told to proceed, which is what makes
+this additive — a peer that holds nothing open needs no hook. Registering one
+does not ask for the `session.move` capability; that comes from the
+extension's manifest, and a peer without it is never called.
+
+#### Parameters
+
+##### listener
+
+() => `void` \| `Promise`\<`void`\>
+
+#### Returns
+
+[`Unsubscribe`](../type-aliases/Unsubscribe.md)
+
+***
+
 ### onShutdown()
 
 ```ts

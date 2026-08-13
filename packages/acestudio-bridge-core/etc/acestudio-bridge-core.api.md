@@ -259,6 +259,7 @@ export interface BridgeConnection {
     readonly grant: Grant;
     job<Result = unknown>(id: string): JobHandle<Result>;
     onClose(listener: () => void): Unsubscribe;
+    onPrepareMove(listener: () => Promise<void> | void): Unsubscribe;
     onShutdown(listener: (params: ShutdownParams) => void): Unsubscribe;
     onWarning(listener: (warning: OperationWarning) => void): Unsubscribe;
     readonly peer: BridgePeer;

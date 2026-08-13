@@ -1,5 +1,5 @@
 import { getEventListeners } from "node:events";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   CHANGE_METHOD_CAPABILITIES,
   connect,
@@ -217,6 +217,85 @@ describe("the core-served session verbs", () => {
     const fault = await host.request("session.nothingServesThis").catch((reason: unknown) => reason);
 
     expect(fault).toMatchObject({ code: -32601 });
+    connection.close();
+  });
+
+  it("clears the relocation when nothing is listening for it", async () => {
+    // The handler is registered in `connect`, before an extension could have wired
+    // anything up. A peer that holds nothing open needs no hook, and the host must
+    // not be left waiting out its deadline for an answer nobody was going to send.
+    const { connection, host } = await connectToScriptedHost();
+
+    await expect(host.prepareMove()).resolves.toEqual({ ready: true });
+    connection.close();
+  });
+
+  it("waits for every listener before it tells the host to proceed", async () => {
+    const { connection, host } = await connectToScriptedHost();
+    const release: Array<() => void> = [];
+    const quiesced = [false, false];
+    for (const [index] of quiesced.entries()) {
+      connection.onPrepareMove(
+        async () =>
+          new Promise<void>((resolve) => {
+            release.push(() => {
+              quiesced[index] = true;
+              resolve();
+            });
+          }),
+      );
+    }
+
+    const answer = host.prepareMove();
+    // Both listeners started, so they quiesce concurrently rather than in turn —
+    // the host is holding a deadline open and nobody asked for an ordering.
+    await vi.waitFor(() => {
+      expect(release).toHaveLength(2);
+    });
+    expect(quiesced).toEqual([false, false]);
+
+    for (const resume of release) {
+      resume();
+    }
+
+    await expect(answer).resolves.toEqual({ ready: true });
+    expect(quiesced).toEqual([true, true]);
+    connection.close();
+  });
+
+  it("refuses the relocation when a listener throws", async () => {
+    // `ready: false` rather than a JSON-RPC fault: the host needs to know the
+    // folder is unsafe to copy, which is a different thing from the peer being
+    // broken, and the two have different remedies. Failing closed is the right way
+    // round for a hook whose job is to stop a copy racing a writer.
+    const { connection, host } = await connectToScriptedHost();
+    let alsoRan = false;
+    connection.onPrepareMove(() => {
+      throw new Error("a render is still writing to the session folder");
+    });
+    connection.onPrepareMove(() => {
+      alsoRan = true;
+    });
+
+    await expect(host.prepareMove()).resolves.toEqual({ ready: false });
+    // One refusal does not cancel the others: every listener is given its chance
+    // to quiesce, because the relocation may yet be retried.
+    expect(alsoRan).toBe(true);
+    connection.close();
+  });
+
+  it("stops calling a listener that unsubscribed", async () => {
+    const { connection, host } = await connectToScriptedHost();
+    let calls = 0;
+    const unsubscribe = connection.onPrepareMove(() => {
+      calls += 1;
+    });
+
+    await expect(host.prepareMove()).resolves.toEqual({ ready: true });
+    unsubscribe();
+    await expect(host.prepareMove()).resolves.toEqual({ ready: true });
+
+    expect(calls).toBe(1);
     connection.close();
   });
 });

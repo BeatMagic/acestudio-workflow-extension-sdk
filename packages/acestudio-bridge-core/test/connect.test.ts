@@ -16,7 +16,11 @@ import { HOST_METHODS, ScriptedHostPeer, type ScriptedHostOptions } from "./supp
 /** Stand up a scripted host and connect to it over an in-memory transport pair. */
 async function connectToScriptedHost(
   options: ScriptedHostOptions = {},
-  connectOptions: { authToken?: string; requestedCapabilities?: readonly string[] } = {},
+  connectOptions: {
+    authToken?: string;
+    requestedCapabilities?: readonly string[];
+    onPrepareMove?: () => Promise<void> | void;
+  } = {},
 ): Promise<{ connection: BridgeConnection; host: ScriptedHostPeer }> {
   const { client, host: hostTransport } = createTransportPair();
   const host = new ScriptedHostPeer(hostTransport, options);
@@ -24,6 +28,7 @@ async function connectToScriptedHost(
     transport: client,
     authToken: connectOptions.authToken ?? "token-abc",
     requestedCapabilities: connectOptions.requestedCapabilities,
+    onPrepareMove: connectOptions.onPrepareMove,
   });
   return { connection, host };
 }
@@ -220,7 +225,7 @@ describe("the core-served session verbs", () => {
     connection.close();
   });
 
-  it("clears the relocation when nothing is listening for it", async () => {
+  it("acks the pre-move quiesce with no hook provided", async () => {
     // The handler is registered in `connect`, before an extension could have wired
     // anything up. A peer that holds nothing open needs no hook, and the host must
     // not be left waiting out its deadline for an answer nobody was going to send.
@@ -230,72 +235,77 @@ describe("the core-served session verbs", () => {
     connection.close();
   });
 
-  it("waits for every listener before it tells the host to proceed", async () => {
-    const { connection, host } = await connectToScriptedHost();
-    const release: Array<() => void> = [];
-    const quiesced = [false, false];
-    for (const [index] of quiesced.entries()) {
-      connection.onPrepareMove(
-        async () =>
+  it("runs the onPrepareMove hook before it acks", async () => {
+    // The ack is the host's licence to start copying, so it must not go out until
+    // the hook has actually released what it holds. A hook that resolves late is
+    // how a real quiesce behaves — flushing to disk is not instant.
+    let release: (() => void) | undefined;
+    let quiesced = false;
+    const { connection, host } = await connectToScriptedHost(
+      {},
+      {
+        onPrepareMove: async () =>
           new Promise<void>((resolve) => {
-            release.push(() => {
-              quiesced[index] = true;
+            release = () => {
+              quiesced = true;
               resolve();
-            });
+            };
           }),
-      );
-    }
+      },
+    );
 
     const answer = host.prepareMove();
-    // Both listeners started, so they quiesce concurrently rather than in turn —
-    // the host is holding a deadline open and nobody asked for an ordering.
+    // The hook has been entered — the ack is waiting on it, not racing it.
     await vi.waitFor(() => {
-      expect(release).toHaveLength(2);
+      expect(release).toBeDefined();
     });
-    expect(quiesced).toEqual([false, false]);
+    expect(quiesced).toBe(false);
 
-    for (const resume of release) {
-      resume();
-    }
-
+    release?.();
     await expect(answer).resolves.toEqual({ ready: true });
-    expect(quiesced).toEqual([true, true]);
+    expect(quiesced).toBe(true);
     connection.close();
   });
 
-  it("refuses the relocation when a listener throws", async () => {
-    // `ready: false` rather than a JSON-RPC fault: the host needs to know the
-    // folder is unsafe to copy, which is a different thing from the peer being
-    // broken, and the two have different remedies. Failing closed is the right way
-    // round for a hook whose job is to stop a copy racing a writer.
-    const { connection, host } = await connectToScriptedHost();
-    let alsoRan = false;
-    connection.onPrepareMove(() => {
-      throw new Error("a render is still writing to the session folder");
-    });
-    connection.onPrepareMove(() => {
-      alsoRan = true;
-    });
+  it("faults the call when the onPrepareMove hook throws", async () => {
+    // A throwing hook is a broken quiesce, not a considered refusal, so it travels
+    // as a fault rather than as `ready: false`. The host reads both as unsafe to
+    // copy and names which in its log, so nothing is lost by keeping them apart —
+    // and a bug in a hook never reads as the peer deliberately declining.
+    const { connection, host } = await connectToScriptedHost(
+      {},
+      {
+        onPrepareMove: () => {
+          throw new Error("a render is still writing to the project folder");
+        },
+      },
+    );
 
-    await expect(host.prepareMove()).resolves.toEqual({ ready: false });
-    // One refusal does not cancel the others: every listener is given its chance
-    // to quiesce, because the relocation may yet be retried.
-    expect(alsoRan).toBe(true);
+    const fault = await host.prepareMove().catch((reason: unknown) => reason);
+
+    expect(fault).toMatchObject({ code: -32603 });
     connection.close();
   });
 
-  it("stops calling a listener that unsubscribed", async () => {
+  it("hands the relocated project folder to every listener", async () => {
+    // The release half. The path is the payload that matters: a parked peer reopens
+    // under whatever arrives, and on an abandoned move that is the folder it
+    // already had — which is what makes an unchanged value a bare "carry on".
     const { connection, host } = await connectToScriptedHost();
-    let calls = 0;
-    const unsubscribe = connection.onPrepareMove(() => {
-      calls += 1;
+    const seen: string[] = [];
+    const unsubscribe = connection.onProjectRelocated((params) => {
+      seen.push(params.projectFolder);
     });
 
-    await expect(host.prepareMove()).resolves.toEqual({ ready: true });
+    host.relocateProject({ projectFolder: "/Users/me/Music/Saved As.acep" });
+    await vi.waitFor(() => {
+      expect(seen).toEqual(["/Users/me/Music/Saved As.acep"]);
+    });
+
     unsubscribe();
-    await expect(host.prepareMove()).resolves.toEqual({ ready: true });
-
-    expect(calls).toBe(1);
+    host.relocateProject({ projectFolder: "/Users/me/Music/Elsewhere.acep" });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(seen).toEqual(["/Users/me/Music/Saved As.acep"]);
     connection.close();
   });
 });

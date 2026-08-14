@@ -23,6 +23,7 @@ import {
   type PingParams,
   type PingResult,
   type PrepareMoveResult,
+  type ProjectRelocatedParams,
   type ShutdownParams,
 } from "./generated/Session.acerpc.js";
 import { createGrant, requireTokens, type Grant, type ProfileName } from "./grant.js";
@@ -67,6 +68,26 @@ export interface ConnectOptions {
    * it from the environment variable its dev tooling sets.
    */
   debug?: boolean;
+  /**
+   * Quiesce hook for `session.prepareMove` (ADR 0121 §5). The host calls this
+   * *before* it relocates the project folder — a Save-As, or the first save of a
+   * project that until now lived in a temporary one — and blocks the save until it
+   * acks. Stop writing under the project folder and release every handle you hold
+   * there, then resolve: the SDK acks `ready: true`, and the host then takes a
+   * consistent, handle-free copy.
+   *
+   * This does not ask you to finish long work. Checkpoint what is in flight and
+   * pick it up on the resume, which is {@link BridgeConnection.onProjectRelocated}
+   * — the folder's new path on a committed move, the path you already had on an
+   * abandoned one. Stay parked until it arrives; reopening as soon as this returns
+   * would race the copy the ack just authorized.
+   *
+   * If omitted, the SDK still acks `ready: true`, so a peer that advertises
+   * `session.move` without quiescing would let a live writer race the copy —
+   * provide this whenever `session.move` is in the manifest. A peer that does not
+   * hold `session.move` never receives the call, and needs no hook.
+   */
+  onPrepareMove?: () => Promise<void> | void;
 }
 
 /**
@@ -152,27 +173,17 @@ export interface BridgeConnection {
    */
   onShutdown(listener: (params: ShutdownParams) => void): Unsubscribe;
   /**
-   * Called before the host relocates the session folder — a Save-As, or the first
-   * save of a project that until now lived in a temporary one — while the host
-   * blocks on the answer, so what it copies is a consistent snapshot rather than
-   * one racing a live writer.
+   * Called when the host has finished relocating the project folder, which
+   * releases a peer parked by {@link ConnectOptions.onPrepareMove}. `projectFolder`
+   * is the destination on a committed move, and the path the peer already had on an
+   * abandoned one — so an unchanged value is the host saying "carry on where you
+   * are". Reopen what the quiesce released, under whichever path arrives.
    *
-   * Quiesce at the next boundary you control: stop writing and drop handles under
-   * the session folder, then return. This does not ask you to finish long work —
-   * checkpoint what is in flight and resume it afterwards. Where the folder went,
-   * and when the move finished, are not part of this verb.
-   *
-   * Every listener is awaited, and the host is told the move may proceed only
-   * once they all return. A listener that throws refuses the relocation instead
-   * of failing the request: the host would rather skip a Save-As than copy a tree
-   * someone is still writing to.
-   *
-   * With no listener registered the host is told to proceed, which is what makes
-   * this additive — a peer that holds nothing open needs no hook. Registering one
-   * does not ask for the `session.move` capability; that comes from the
-   * extension's manifest, and a peer without it is never called.
+   * This is the only end of the quiesce. There is no separate "the move failed"
+   * notice, because a peer parked forever is the failure mode that matters and one
+   * announcement covers both endings.
    */
-  onPrepareMove(listener: () => Promise<void> | void): Unsubscribe;
+  onProjectRelocated(listener: (params: ProjectRelocatedParams) => void): Unsubscribe;
   /** Listen for the connection dropping. */
   onClose(listener: () => void): Unsubscribe;
   /** Close the connection, failing every call in flight. */
@@ -199,6 +210,22 @@ export async function connect(options: ConnectOptions): Promise<BridgeConnection
   }) satisfies PingResult);
 
   const client = new SessionClient(peer);
+  // Served before the handshake goes out, for the same reason the ping is: the host
+  // may ask as soon as the session lands, and an unhandled request would leave it
+  // waiting out its deadline for an answer that was never coming. Registered
+  // unconditionally — a peer without `session.move` is simply never asked — and it
+  // acks with or without a hook, so a peer that holds nothing open needs none.
+  //
+  // A hook that throws faults the call rather than answering `ready: false`. Those
+  // are different statements: `false` is the peer declining a move it understood,
+  // a fault is the peer failing to answer. The host reads both as unsafe to copy
+  // and names which in the log, so the distinction costs nothing and keeps a bug in
+  // a quiesce hook from reading as a deliberate refusal.
+  client.setSessionPrepareMoveHandler(async () => {
+    await options.onPrepareMove?.();
+    return { ready: true } satisfies PrepareMoveResult;
+  });
+
   const request: HandshakeParams = {
     authToken: options.authToken,
     protocolVersion: PROTOCOL_VERSION,
@@ -241,7 +268,6 @@ class Connection implements BridgeConnection {
   private readonly session: SessionClient;
   private readonly debug: DebugLog;
   private readonly warningListeners = new Set<(warning: OperationWarning) => void>();
-  private readonly prepareMoveListeners = new Set<() => Promise<void> | void>();
 
   constructor(
     peer: BridgePeer,
@@ -272,14 +298,12 @@ class Connection implements BridgeConnection {
     session.onSessionShutdown((params) => {
       debug(`session ${this.sessionId}: the host is stopping this peer, ${String(params.graceMs)}ms grace`);
     });
+    session.onSessionProjectRelocated((params) => {
+      debug(`session ${this.sessionId}: the project folder is now ${params.projectFolder}`);
+    });
     peer.onClose(() => {
       debug(`session ${this.sessionId}: the connection closed`);
     });
-    // Registered here rather than on first `onPrepareMove` call, because the host
-    // may ask before the extension has finished wiring itself up. A peer with no
-    // listener yet still answers, where an unhandled request would leave the host
-    // waiting out its deadline for an answer that was never coming.
-    session.setSessionPrepareMoveHandler(() => this.prepareMove());
   }
 
   onWarning(listener: (warning: OperationWarning) => void): Unsubscribe {
@@ -310,11 +334,8 @@ class Connection implements BridgeConnection {
     return this.session.onSessionShutdown(listener);
   }
 
-  onPrepareMove(listener: () => Promise<void> | void): Unsubscribe {
-    this.prepareMoveListeners.add(listener);
-    return () => {
-      this.prepareMoveListeners.delete(listener);
-    };
+  onProjectRelocated(listener: (params: ProjectRelocatedParams) => void): Unsubscribe {
+    return this.session.onSessionProjectRelocated(listener);
   }
 
   onClose(listener: () => void): Unsubscribe {
@@ -333,40 +354,6 @@ class Connection implements BridgeConnection {
    * the call it was reporting on — the operation already succeeded, and an
    * advisory is not worth turning into an error — so it goes to the log instead.
    */
-  /**
-   * Answer the host's pre-relocation quiesce: run every listener, then say
-   * whether the move may proceed.
-   *
-   * Listeners run concurrently rather than in sequence — they quiesce independent
-   * things, and the host is holding a deadline open, so serialising them would
-   * spend it for no ordering anyone asked for. The snapshot is taken first so a
-   * listener that unsubscribes mid-quiesce does not reshape the set being walked.
-   *
-   * A listener that throws answers `ready: false`. The alternative — letting it
-   * out as a JSON-RPC fault — tells the host the peer is broken when what it
-   * needs to know is that the folder is not safe to copy, and those two have
-   * different remedies. `false` is also the answer that fails closed, which is
-   * the right way round for a hook whose whole job is to prevent a copy racing a
-   * writer.
-   */
-  private async prepareMove(): Promise<PrepareMoveResult> {
-    const listeners = [...this.prepareMoveListeners];
-    const settled = await Promise.allSettled(listeners.map(async (listener) => listener()));
-    const refused = settled.filter((outcome) => outcome.status === "rejected");
-    for (const outcome of refused) {
-      this.debug(
-        `session ${this.sessionId}: a prepare-move listener threw, refusing the relocation — ${describeCause(outcome.reason)}`,
-      );
-    }
-    if (refused.length > 0) {
-      return { ready: false };
-    }
-    this.debug(
-      `session ${this.sessionId}: quiesced for relocation, ${String(listeners.length)} listener(s)`,
-    );
-    return { ready: true };
-  }
-
   private reportWarning(warning: OperationWarning): void {
     if (this.warningListeners.size === 0) {
       logWarning(warning);

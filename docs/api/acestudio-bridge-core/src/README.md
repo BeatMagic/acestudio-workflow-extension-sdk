@@ -258,6 +258,7 @@ The connection core for programming against a running ACE Studio.
 - [ProjectOpenResult](interfaces/ProjectOpenResult.md)
 - [ProjectOperations](interfaces/ProjectOperations.md)
 - [ProjectRecentResult](interfaces/ProjectRecentResult.md)
+- [ProjectRelocatedParams](interfaces/ProjectRelocatedParams.md)
 - [ProjectSaveAsParams](interfaces/ProjectSaveAsParams.md)
 - [ProjectSaveAsResult](interfaces/ProjectSaveAsResult.md)
 - [ProjectSaveResult](interfaces/ProjectSaveResult.md)

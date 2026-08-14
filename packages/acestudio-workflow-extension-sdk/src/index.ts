@@ -26,7 +26,9 @@ export type {
   Extension,
   ExtensionDefinition,
   ExtensionHandler,
+  ExtensionResumeHandler,
   ExtensionRuntimeOptions,
+  ProjectRelocation,
 } from "./define-extension.js";
 export { ExtensionError } from "./errors.js";
 export { MANIFEST_VERSION, SDK_API_VERSION } from "./manifest.js";

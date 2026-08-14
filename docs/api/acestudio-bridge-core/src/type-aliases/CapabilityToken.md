@@ -40,6 +40,7 @@ type CapabilityToken =
   | "selection.read"
   | "selection.write"
   | "session.handshake"
+  | "session.move"
   | "session.ping"
   | "session.shutdown"
   | "soundsource.read"

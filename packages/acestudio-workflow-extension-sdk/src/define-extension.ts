@@ -20,6 +20,7 @@ import {
   LocalSocketTransport,
   type BridgeConnection,
   type DebugLog,
+  type ProjectRelocatedParams,
   type ShutdownParams,
   type Transport,
 } from "@timedomain/acestudio-bridge-core";
@@ -65,6 +66,31 @@ const GRACE_MARGIN_MS = 250;
 export type ExtensionHandler<M extends ExtensionManifest> = (context: ExtensionContext<M>) => void | Promise<void>;
 
 /**
+ * The token whose holder is asked to quiesce, and told when the move is over.
+ * Requesting it in the manifest is what makes {@link ExtensionDefinition.quiesce}
+ * mandatory.
+ */
+const SESSION_MOVE = "session.move";
+
+/**
+ * What {@link ExtensionDefinition.resume} is handed: where the project folder is
+ * now. Unchanged from what the extension already had means the move was abandoned.
+ *
+ * @public
+ */
+export type ProjectRelocation = ProjectRelocatedParams;
+
+/**
+ * The resume half of the move exchange, handed where the project folder ended up.
+ *
+ * @public
+ */
+export type ExtensionResumeHandler<M extends ExtensionManifest> = (
+  context: ExtensionContext<M>,
+  relocation: ProjectRelocation,
+) => void | Promise<void>;
+
+/**
  * What an extension is: its manifest, its entry point, and its wind-down.
  *
  * The `operations` key is reserved for a later ACE Studio and deliberately absent
@@ -99,6 +125,37 @@ export interface ExtensionDefinition<M extends ExtensionManifest> {
    * nor when the bridge drops, since by then every call inside it would fail.
    */
   readonly deactivate?: ExtensionHandler<M>;
+  /**
+   * Stop writing under the project folder, so ACE Studio can relocate it — a
+   * Save-As, or the first save of a project that until now lived in a temporary
+   * one. Flush what is in flight and release every handle you hold there, then
+   * resolve. The save blocks until you do.
+   *
+   * This is not a request the extension may decline. ACE Studio does not wait past
+   * its deadline, and an extension that cannot stop writing is in a state to fix
+   * rather than one to report — so there is no way to answer "no", and throwing
+   * says the extension is broken, not that it refused.
+   *
+   * Do not finish long work here. Checkpoint it and pick it up in
+   * {@link ExtensionDefinition.resume}, and stay stopped until then: reopening as
+   * soon as this resolves would race the copy the ack just authorized.
+   *
+   * Required when the manifest requests `session.move`, and refused otherwise —
+   * the token is the duty, and an extension holding it with no hook would have ACE
+   * Studio told the folder was quiesced by a peer that never stopped writing. An
+   * extension that holds nothing open declares an empty one, which says so.
+   */
+  readonly quiesce?: ExtensionHandler<M>;
+  /**
+   * The move is over and the extension may write again, told where the project
+   * folder is now — the destination on a committed move, the path it already had
+   * on an abandoned one, which is what makes an unchanged value a bare "carry on".
+   *
+   * Runs on both endings, because a quiesced extension that is never told parks
+   * for good. Optional: an extension that reopens nothing needs no resume, and one
+   * that holds only paths it recomputes needs none either.
+   */
+  readonly resume?: ExtensionResumeHandler<M>;
 }
 
 /**
@@ -244,6 +301,10 @@ class ExtensionRun<M extends ExtensionManifest> {
   private async run(): Promise<void> {
     let context: ExtensionContext<M>;
     try {
+      // Before the socket: a definition that contradicts its own manifest is
+      // wrong wherever it runs, and saying so without a bridge in the way is what
+      // makes it read as the author's mistake rather than a connection problem.
+      this.requireMoveHandlersToMatchManifest();
       const contract = readSpawnContract(this.options.env ?? process.env, {
         socketPathRequired: this.options.transport === undefined,
       });
@@ -284,6 +345,40 @@ class ExtensionRun<M extends ExtensionManifest> {
     }
   }
 
+  /**
+   * The manifest's `session.move` request and the `quiesce` hook have to agree,
+   * in both directions.
+   *
+   * Requesting the token without the hook is the shape that matters: core acks
+   * `ready: true` when no hook is supplied, which is right for a peer holding
+   * nothing open but a false assurance from one that asked to be asked — ACE
+   * Studio would copy the folder while this extension kept writing to it. The run
+   * refuses to start rather than carry that, since it is the author's own
+   * declaration and every save afterwards would be the one that corrupts.
+   *
+   * The other direction is a dead hook: a peer without the token is never called,
+   * so a `quiesce` that can never run means the manifest is missing the token the
+   * author thought they had.
+   *
+   * @throws ExtensionError when the two disagree.
+   */
+  private requireMoveHandlersToMatchManifest(): void {
+    const requested = this.definition.manifest.capabilities.includes(SESSION_MOVE);
+    const declared = this.definition.quiesce !== undefined;
+    if (requested === declared) {
+      return;
+    }
+    throw requested
+      ? new ExtensionError(`this extension requests \`${SESSION_MOVE}\` but declares no \`quiesce\``, {
+          hint:
+            "write `quiesce` to stop writing under the project folder and release your handles — " +
+            "an empty one if this extension holds nothing open, which says so rather than leaving it assumed",
+        })
+      : new ExtensionError(`this extension declares \`quiesce\` but does not request \`${SESSION_MOVE}\``, {
+          hint: `add "${SESSION_MOVE}" to the manifest's \`capabilities\`, or drop \`quiesce\` — without the token ACE Studio never asks, so it would never run`,
+        });
+  }
+
   private async openSession(contract: SpawnContract): Promise<BridgeConnection> {
     const transport =
       // `readSpawnContract` refused an environment without the endpoint, unless the
@@ -299,7 +394,57 @@ class ExtensionRun<M extends ExtensionManifest> {
       // Core keeps its own log rather than being handed this one: the option is what
       // its public surface takes, and one boolean is what decides both.
       debug: this.debugEnabled,
+      // Handed to `connect` rather than registered afterwards, because core serves
+      // this before the handshake goes out: the host can ask as soon as the session
+      // lands, and a hook attached a tick later would miss that call and let the
+      // default ack answer for an extension that had not stopped writing.
+      onPrepareMove: this.definition.quiesce === undefined ? undefined : () => this.runQuiesce(),
     });
+  }
+
+  /**
+   * Run the author's quiesce, and let a failure through.
+   *
+   * The rethrow is load-bearing: core turns a rejection into a fault, which the
+   * host reads as unsafe and fails the move on. Swallowing it the way
+   * `deactivate` failures are swallowed would ack `ready: true` for an extension
+   * that never stopped writing, and ACE Studio would copy the folder under it.
+   */
+  private async runQuiesce(): Promise<void> {
+    const { quiesce } = this.definition;
+    // No context yet means the host asked between the handler being served and
+    // `activate` being reached, so no handler of this extension's has run and it
+    // holds nothing under the project folder. The default ack is honest there.
+    if (quiesce === undefined || this.context === undefined) {
+      return;
+    }
+    this.debug("lifecycle: quiesce");
+    try {
+      await quiesce(this.context);
+      this.debug("lifecycle: quiesce returned");
+    } catch (error) {
+      console.error(`[ace-studio] quiesce failed: ${describeFailure(error)}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Tell the author where the project folder went. A failure stops here — this
+   * answers nothing, so there is nowhere for it to go but the log, and the run is
+   * otherwise healthy.
+   */
+  private async runResume(relocation: ProjectRelocation): Promise<void> {
+    const { resume } = this.definition;
+    this.debug(`lifecycle: the project move ended at ${relocation.projectFolder}`);
+    if (resume === undefined || this.context === undefined) {
+      return;
+    }
+    this.debug("lifecycle: resume");
+    try {
+      await resume(this.context, relocation);
+    } catch (error) {
+      console.error(`[ace-studio] resume failed: ${describeFailure(error)}`);
+    }
   }
 
   /**
@@ -378,6 +523,13 @@ class ExtensionRun<M extends ExtensionManifest> {
     this.context = context;
     connection.onShutdown((params) => {
       void this.finish(EXIT_OK, params);
+    });
+    // Subscribed whether or not `resume` was declared, so the debug log shows the
+    // move ending either way — an extension that parked and never came back is the
+    // failure this exchange exists to prevent, and silence here is what it looks
+    // like.
+    connection.onProjectRelocated((params) => {
+      void this.runResume(params);
     });
     connection.onClose(() => {
       this.onBridgeLost();

@@ -194,6 +194,45 @@ describe("the manifest and the hook have to agree", () => {
     logged.mockRestore();
   });
 
+  it("refuses to start when a resume is declared without the token", async () => {
+    const logged = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const { exitCode } = startRun(
+      {
+        manifest: { ...MOVER, capabilities: [] } as const satisfies ExtensionManifest,
+        activate: () => undefined,
+        resume: () => undefined,
+      },
+      { host: { grantedTokens: [] } },
+    );
+
+    // The token gates the announcement as well as the quiesce, so this hook is as
+    // unreachable as an orphaned `quiesce` — the same missing manifest entry.
+    await expect(exitCode).resolves.toBe(2);
+    expect(logged.mock.calls.flat().join("\n")).toContain("declares `resume` but does not request `session.move`");
+    logged.mockRestore();
+  });
+
+  it("starts an extension that holds the token with a quiesce but no resume", async () => {
+    // `resume` stays optional: an extension that reopens nothing has nothing to do
+    // when the move ends.
+    const activated = signal();
+    const { host, exitCode } = startRun(
+      {
+        manifest: MOVER,
+        activate: () => {
+          activated.announce();
+        },
+        quiesce: () => undefined,
+      },
+      { host: MOVE_HOST },
+    );
+    await activated.reached;
+    await expect(host.prepareMove()).resolves.toEqual({ ready: true });
+
+    host.notifyShutdown({ reason: "user stopped the workflow", graceMs: 5_000 });
+    await expect(exitCode).resolves.toBe(0);
+  });
+
   it("starts an extension that neither requests the token nor declares a hook", async () => {
     const { exitCode } = startRun(
       {

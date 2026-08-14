@@ -91,6 +91,10 @@ Runs on both endings, because a quiesced extension that is never told parks
 for good. Optional: an extension that reopens nothing needs no resume, and one
 that holds only paths it recomputes needs none either.
 
+Declaring it requires `session.move` in the manifest, which gates the
+announcement as well as the quiesce — without the token nothing is sent, and
+this would never run.
+
 ***
 
 ### ui?

@@ -154,6 +154,10 @@ export interface ExtensionDefinition<M extends ExtensionManifest> {
    * Runs on both endings, because a quiesced extension that is never told parks
    * for good. Optional: an extension that reopens nothing needs no resume, and one
    * that holds only paths it recomputes needs none either.
+   *
+   * Declaring it requires `session.move` in the manifest, which gates the
+   * announcement as well as the quiesce — without the token nothing is sent, and
+   * this would never run.
    */
   readonly resume?: ExtensionResumeHandler<M>;
 }
@@ -356,27 +360,36 @@ class ExtensionRun<M extends ExtensionManifest> {
    * refuses to start rather than carry that, since it is the author's own
    * declaration and every save afterwards would be the one that corrupts.
    *
-   * The other direction is a dead hook: a peer without the token is never called,
-   * so a `quiesce` that can never run means the manifest is missing the token the
-   * author thought they had.
+   * The other direction is a dead hook: the token gates both halves of the
+   * exchange, so a peer without it is neither asked nor told, and either hook
+   * declared without it can never run. That means the manifest is missing the
+   * token the author thought they had.
    *
-   * @throws ExtensionError when the two disagree.
+   * `resume` is not required in return. An extension that reopens nothing has
+   * nothing to do when the move ends, and the announcement it ignores costs it
+   * nothing.
+   *
+   * @throws ExtensionError when the manifest and the hooks disagree.
    */
   private requireMoveHandlersToMatchManifest(): void {
     const requested = this.definition.manifest.capabilities.includes(SESSION_MOVE);
-    const declared = this.definition.quiesce !== undefined;
-    if (requested === declared) {
-      return;
-    }
-    throw requested
-      ? new ExtensionError(`this extension requests \`${SESSION_MOVE}\` but declares no \`quiesce\``, {
+    const { quiesce, resume } = this.definition;
+    if (requested) {
+      if (quiesce === undefined) {
+        throw new ExtensionError(`this extension requests \`${SESSION_MOVE}\` but declares no \`quiesce\``, {
           hint:
             "write `quiesce` to stop writing under the project folder and release your handles — " +
             "an empty one if this extension holds nothing open, which says so rather than leaving it assumed",
-        })
-      : new ExtensionError(`this extension declares \`quiesce\` but does not request \`${SESSION_MOVE}\``, {
-          hint: `add "${SESSION_MOVE}" to the manifest's \`capabilities\`, or drop \`quiesce\` — without the token ACE Studio never asks, so it would never run`,
         });
+      }
+      return;
+    }
+    const orphan = quiesce !== undefined ? "quiesce" : resume !== undefined ? "resume" : undefined;
+    if (orphan !== undefined) {
+      throw new ExtensionError(`this extension declares \`${orphan}\` but does not request \`${SESSION_MOVE}\``, {
+        hint: `add "${SESSION_MOVE}" to the manifest's \`capabilities\`, or drop \`${orphan}\` — without the token ACE Studio neither asks nor announces, so it would never run`,
+      });
+    }
   }
 
   private async openSession(contract: SpawnContract): Promise<BridgeConnection> {

@@ -6,6 +6,7 @@
 
 import type { CapabilityToken } from '@timedomain/acestudio-bridge-core';
 import type { Grant } from '@timedomain/acestudio-bridge-core';
+import { ProjectRelocatedParams } from '@timedomain/acestudio-bridge-core';
 import type { Readable } from 'node:stream';
 import type { ScopedBindings } from '@timedomain/acestudio-bridge-core';
 import { Transport } from '@timedomain/acestudio-bridge-core';
@@ -72,6 +73,8 @@ export interface ExtensionDefinition<M extends ExtensionManifest> {
     readonly activate: ExtensionHandler<M>;
     readonly deactivate?: ExtensionHandler<M>;
     readonly manifest: M;
+    readonly quiesce?: ExtensionHandler<M>;
+    readonly resume?: ExtensionResumeHandler<M>;
     readonly ui?: ExtensionUiOptions;
 }
 
@@ -104,6 +107,9 @@ export interface ExtensionManifest {
     readonly publisher: string;
     readonly version: string;
 }
+
+// @public
+export type ExtensionResumeHandler<M extends ExtensionManifest> = (context: ExtensionContext<M>, relocation: ProjectRelocation) => void | Promise<void>;
 
 // @public
 export interface ExtensionRuntimeOptions {
@@ -164,6 +170,9 @@ export interface ManifestJson extends ExtensionManifest {
 
 // @public
 export type ParamsOf<C, K extends keyof C> = C[K] extends (params: never) => unknown ? Parameters<C[K]> : never;
+
+// @public
+export type ProjectRelocation = ProjectRelocatedParams;
 
 // @public
 export type RequestedCapability = CapabilityToken;

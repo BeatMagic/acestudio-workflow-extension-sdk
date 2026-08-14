@@ -92,7 +92,7 @@ export interface ProjectRelocatedParams {
 export interface PrepareMoveResult {
     /**
      * True once the peer has stopped writing, flushed its state to disk, and
-     * released every handle under the session folder. The host proceeds with the
+     * released every handle under the project folder. The host proceeds with the
      * copy only on a `true`: a `false`, an error, or a reply that misses the
      * host's deadline all fail the relocation rather than copying a tree someone
      * is still writing to.
@@ -126,7 +126,7 @@ export class SessionClient {
     }
 
     /**
-     * Peer-served: the host calls this before relocating the session folder — a
+     * Peer-served: the host calls this before relocating the project folder — a
      * Save-As, or the first save of a project that until now lived in a temporary
      * one — and blocks on the ack, so what it copies is a consistent, handle-free
      * snapshot rather than one racing a live writer.

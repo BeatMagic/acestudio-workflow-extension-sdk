@@ -11,7 +11,7 @@ ready: boolean;
 ```
 
 True once the peer has stopped writing, flushed its state to disk, and
-released every handle under the session folder. The host proceeds with the
+released every handle under the project folder. The host proceeds with the
 copy only on a `true`: a `false`, an error, or a reply that misses the
 host's deadline all fail the relocation rather than copying a tree someone
 is still writing to.

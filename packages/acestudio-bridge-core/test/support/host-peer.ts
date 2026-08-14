@@ -140,7 +140,7 @@ export class ScriptedHostPeer {
   }
 
   /**
-   * Ask the peer to quiesce before relocating the session folder, and resolve
+   * Ask the peer to quiesce before relocating the project folder, and resolve
    * with what it answered — the host blocks on this, so the answer is the whole
    * point of the call.
    */

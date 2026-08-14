@@ -97,7 +97,7 @@ authenticate with its one-time token and receive its Grant.
 setSessionPrepareMoveHandler(handler): void;
 ```
 
-Peer-served: the host calls this before relocating the session folder — a
+Peer-served: the host calls this before relocating the project folder — a
 Save-As, or the first save of a project that until now lived in a temporary
 one — and blocks on the ack, so what it copies is a consistent, handle-free
 snapshot rather than one racing a live writer.

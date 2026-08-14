@@ -259,6 +259,7 @@ export interface BridgeConnection {
     readonly grant: Grant;
     job<Result = unknown>(id: string): JobHandle<Result>;
     onClose(listener: () => void): Unsubscribe;
+    onProjectRelocated(listener: (params: ProjectRelocatedParams) => void): Unsubscribe;
     onShutdown(listener: (params: ShutdownParams) => void): Unsubscribe;
     onWarning(listener: (warning: OperationWarning) => void): Unsubscribe;
     readonly peer: BridgePeer;
@@ -1072,6 +1073,7 @@ export function connect(options: ConnectOptions): Promise<BridgeConnection>;
 export interface ConnectOptions {
     authToken: string;
     debug?: boolean;
+    onPrepareMove?: () => Promise<void> | void;
     requestedCapabilities?: readonly string[];
     signal?: AbortSignal;
     timeoutMs?: number;
@@ -4045,6 +4047,11 @@ export interface ProjectRecentResult {
 }
 
 // @public
+export interface ProjectRelocatedParams {
+    projectFolder: string;
+}
+
+// @public
 export interface ProjectSaveAsParams {
     path: string;
 }
@@ -4477,6 +4484,7 @@ export type SessionCapability = 'session.handshake' | 'session.move' | 'session.
 // @public (undocumented)
 export class SessionClient {
     constructor(peer: SessionPeer);
+    onSessionProjectRelocated(callback: (event: ProjectRelocatedParams) => void): Unsubscribe;
     onSessionShutdown(callback: (event: ShutdownParams) => void): Unsubscribe;
     sessionHandshake(params: HandshakeParams): Promise<HandshakeResult>;
     setSessionPrepareMoveHandler(handler: () => Promise<PrepareMoveResult> | PrepareMoveResult): void;

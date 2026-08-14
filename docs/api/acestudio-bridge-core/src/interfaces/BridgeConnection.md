@@ -126,6 +126,34 @@ Listen for the connection dropping.
 
 ***
 
+### onProjectRelocated()
+
+```ts
+onProjectRelocated(listener): Unsubscribe;
+```
+
+Called when the host has finished relocating the project folder, which
+releases a peer parked by [ConnectOptions.onPrepareMove](ConnectOptions.md#onpreparemove). `projectFolder`
+is the destination on a committed move, and the path the peer already had on an
+abandoned one — so an unchanged value is the host saying "carry on where you
+are". Reopen what the quiesce released, under whichever path arrives.
+
+This is the only end of the quiesce. There is no separate "the move failed"
+notice, because a peer parked forever is the failure mode that matters and one
+announcement covers both endings.
+
+#### Parameters
+
+##### listener
+
+(`params`) => `void`
+
+#### Returns
+
+[`Unsubscribe`](../type-aliases/Unsubscribe.md)
+
+***
+
 ### onShutdown()
 
 ```ts

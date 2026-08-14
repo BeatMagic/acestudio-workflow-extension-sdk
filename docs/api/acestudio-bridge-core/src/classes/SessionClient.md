@@ -20,6 +20,35 @@ new SessionClient(peer): SessionClient;
 
 ## Methods
 
+### onSessionProjectRelocated()
+
+```ts
+onSessionProjectRelocated(callback): Unsubscribe;
+```
+
+Host-emitted: the relocation this peer was quiesced for has finished, and the
+peer may write again. Adopt the path and, if parked, resume — an announcement
+carrying the path the peer already had means the move was abandoned and it
+should carry on where it is.
+
+Every quiesced peer receives this, on the committed path and the abandoned one
+alike, because a `prepareMove` with no answering announcement parks a peer for
+good. It shares `session.move` with the quiesce rather than taking a token of
+its own: the pair is one exchange, and a peer that can be parked is exactly the
+peer that has to be released.
+
+#### Parameters
+
+##### callback
+
+(`event`) => `void`
+
+#### Returns
+
+[`Unsubscribe`](../type-aliases/Unsubscribe.md)
+
+***
+
 ### onSessionShutdown()
 
 ```ts
@@ -75,8 +104,8 @@ snapshot rather than one racing a live writer.
 
 Quiesce at the next boundary you control. This asks you to stop writing, not
 to finish long work: checkpoint what is in flight and resume it afterwards.
-How you learn the relocation finished, and where the folder went, is your
-driver's own signal — this verb covers only the quiesce.
+Stay parked until `session.projectRelocated` arrives — returning from this
+handler and reopening immediately would race the copy the ack just authorized.
 
 Distinct from `session.shutdown`: the process stays alive and in-memory state
 survives. Not `\@sdkManaged`, because only the peer knows what it holds open —

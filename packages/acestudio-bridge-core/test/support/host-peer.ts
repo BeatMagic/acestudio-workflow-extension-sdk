@@ -33,6 +33,8 @@ import {
   type JsonRpcMessage,
   type PingParams,
   type PingResult,
+  type PrepareMoveResult,
+  type ProjectRelocatedParams,
   type ShutdownParams,
   type Transport,
 } from "@timedomain/acestudio-bridge-core";
@@ -41,12 +43,8 @@ import {
 export const HOST_METHODS = {
   handshake: "session.handshake",
   ping: "session.ping",
-  // Declared by the schema but not yet answered by this SDK: core has no
-  // `onPrepareMove` hook, and a peer that never advertises the `session.move`
-  // capability this method is gated by is skipped by the host's `canEmit` check
-  // rather than broken (ADR 0121 §5). The wire name is spelled here so the
-  // surface stays pinned against the generated map; the hook is separate work.
   prepareMove: "session.prepareMove",
+  projectRelocated: "session.projectRelocated",
   shutdown: "session.shutdown",
   changed: "state.changed",
 } as const;
@@ -139,6 +137,24 @@ export class ScriptedHostPeer {
   async ping(nonce: string): Promise<string> {
     const result = (await this.request(HOST_METHODS.ping, { nonce } satisfies PingParams)) as PingResult;
     return result.nonce;
+  }
+
+  /**
+   * Ask the peer to quiesce before relocating the session folder, and resolve
+   * with what it answered — the host blocks on this, so the answer is the whole
+   * point of the call.
+   */
+  async prepareMove(): Promise<PrepareMoveResult> {
+    return (await this.request(HOST_METHODS.prepareMove)) as PrepareMoveResult;
+  }
+
+  /**
+   * Tell the peer where the project folder ended up, which releases it from a
+   * quiesce. Fire-and-forget, as the host sends it: the peer resumes on receipt
+   * and there is nothing to answer.
+   */
+  relocateProject(params: ProjectRelocatedParams): void {
+    this.send({ jsonrpc: "2.0", method: HOST_METHODS.projectRelocated, params });
   }
 
   /** Open the shutdown grace window, as the host's stop routine does. */

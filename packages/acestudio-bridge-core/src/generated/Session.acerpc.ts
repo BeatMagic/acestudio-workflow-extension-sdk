@@ -17,6 +17,7 @@ export const SESSION_METHOD_CAPABILITIES: Readonly<Record<string, SessionCapabil
   'session.ping': 'session.ping',
   'session.shutdown': 'session.shutdown',
   'session.prepareMove': 'session.move',
+  'session.projectRelocated': 'session.move',
 };
 
 export interface SessionPeer {
@@ -77,6 +78,16 @@ export interface ShutdownParams {
     graceMs: number;
 }
 
+/** Payload of `session.projectRelocated`. */
+export interface ProjectRelocatedParams {
+    /**
+     * Where the peer's project folder is now. On a committed move this is the
+     * destination; on an abandoned one it is the path the peer already had, which
+     * is what makes an unchanged value a bare "carry on".
+     */
+    projectFolder: string;
+}
+
 /** Result of `session.prepareMove`. */
 export interface PrepareMoveResult {
     /**
@@ -116,8 +127,8 @@ export class SessionClient {
      *
      * Quiesce at the next boundary you control. This asks you to stop writing, not
      * to finish long work: checkpoint what is in flight and resume it afterwards.
-     * How you learn the relocation finished, and where the folder went, is your
-     * driver's own signal — this verb covers only the quiesce.
+     * Stay parked until `session.projectRelocated` arrives — returning from this
+     * handler and reopening immediately would race the copy the ack just authorized.
      *
      * Distinct from `session.shutdown`: the process stays alive and in-memory state
      * survives. Not `\@sdkManaged`, because only the peer knows what it holds open —
@@ -127,6 +138,22 @@ export class SessionClient {
      */
     setSessionPrepareMoveHandler(handler: () => Promise<PrepareMoveResult> | PrepareMoveResult): void {
         this.peer.setRequestHandler<void, PrepareMoveResult>('session.prepareMove', handler);
+    }
+
+    /**
+     * Host-emitted: the relocation this peer was quiesced for has finished, and the
+     * peer may write again. Adopt the path and, if parked, resume — an announcement
+     * carrying the path the peer already had means the move was abandoned and it
+     * should carry on where it is.
+     *
+     * Every quiesced peer receives this, on the committed path and the abandoned one
+     * alike, because a `prepareMove` with no answering announcement parks a peer for
+     * good. It shares `session.move` with the quiesce rather than taking a token of
+     * its own: the pair is one exchange, and a peer that can be parked is exactly the
+     * peer that has to be released.
+     */
+    onSessionProjectRelocated(callback: (event: ProjectRelocatedParams) => void): Unsubscribe {
+        return this.peer.subscribe<ProjectRelocatedParams>('session.projectRelocated', callback);
     }
 
 }

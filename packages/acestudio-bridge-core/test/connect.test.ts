@@ -1,5 +1,5 @@
 import { getEventListeners } from "node:events";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   CHANGE_METHOD_CAPABILITIES,
   connect,
@@ -16,7 +16,11 @@ import { HOST_METHODS, ScriptedHostPeer, type ScriptedHostOptions } from "./supp
 /** Stand up a scripted host and connect to it over an in-memory transport pair. */
 async function connectToScriptedHost(
   options: ScriptedHostOptions = {},
-  connectOptions: { authToken?: string; requestedCapabilities?: readonly string[] } = {},
+  connectOptions: {
+    authToken?: string;
+    requestedCapabilities?: readonly string[];
+    onPrepareMove?: () => Promise<void> | void;
+  } = {},
 ): Promise<{ connection: BridgeConnection; host: ScriptedHostPeer }> {
   const { client, host: hostTransport } = createTransportPair();
   const host = new ScriptedHostPeer(hostTransport, options);
@@ -24,6 +28,7 @@ async function connectToScriptedHost(
     transport: client,
     authToken: connectOptions.authToken ?? "token-abc",
     requestedCapabilities: connectOptions.requestedCapabilities,
+    onPrepareMove: connectOptions.onPrepareMove,
   });
   return { connection, host };
 }
@@ -217,6 +222,90 @@ describe("the core-served session verbs", () => {
     const fault = await host.request("session.nothingServesThis").catch((reason: unknown) => reason);
 
     expect(fault).toMatchObject({ code: -32601 });
+    connection.close();
+  });
+
+  it("acks the pre-move quiesce with no hook provided", async () => {
+    // The handler is registered in `connect`, before an extension could have wired
+    // anything up. A peer that holds nothing open needs no hook, and the host must
+    // not be left waiting out its deadline for an answer nobody was going to send.
+    const { connection, host } = await connectToScriptedHost();
+
+    await expect(host.prepareMove()).resolves.toEqual({ ready: true });
+    connection.close();
+  });
+
+  it("runs the onPrepareMove hook before it acks", async () => {
+    // The ack is the host's licence to start copying, so it must not go out until
+    // the hook has actually released what it holds. A hook that resolves late is
+    // how a real quiesce behaves — flushing to disk is not instant.
+    let release: (() => void) | undefined;
+    let quiesced = false;
+    const { connection, host } = await connectToScriptedHost(
+      {},
+      {
+        onPrepareMove: async () =>
+          new Promise<void>((resolve) => {
+            release = () => {
+              quiesced = true;
+              resolve();
+            };
+          }),
+      },
+    );
+
+    const answer = host.prepareMove();
+    // The hook has been entered — the ack is waiting on it, not racing it.
+    await vi.waitFor(() => {
+      expect(release).toBeDefined();
+    });
+    expect(quiesced).toBe(false);
+
+    release?.();
+    await expect(answer).resolves.toEqual({ ready: true });
+    expect(quiesced).toBe(true);
+    connection.close();
+  });
+
+  it("faults the call when the onPrepareMove hook throws", async () => {
+    // A throwing hook is a broken quiesce, not a considered refusal, so it travels
+    // as a fault rather than as `ready: false`. The host reads both as unsafe to
+    // copy and names which in its log, so nothing is lost by keeping them apart —
+    // and a bug in a hook never reads as the peer deliberately declining.
+    const { connection, host } = await connectToScriptedHost(
+      {},
+      {
+        onPrepareMove: () => {
+          throw new Error("a render is still writing to the project folder");
+        },
+      },
+    );
+
+    const fault = await host.prepareMove().catch((reason: unknown) => reason);
+
+    expect(fault).toMatchObject({ code: -32603 });
+    connection.close();
+  });
+
+  it("hands the relocated project folder to every listener", async () => {
+    // The release half. The path is the payload that matters: a parked peer reopens
+    // under whatever arrives, and on an abandoned move that is the folder it
+    // already had — which is what makes an unchanged value a bare "carry on".
+    const { connection, host } = await connectToScriptedHost();
+    const seen: string[] = [];
+    const unsubscribe = connection.onProjectRelocated((params) => {
+      seen.push(params.projectFolder);
+    });
+
+    host.relocateProject({ projectFolder: "/Users/me/Music/Saved As.acep" });
+    await vi.waitFor(() => {
+      expect(seen).toEqual(["/Users/me/Music/Saved As.acep"]);
+    });
+
+    unsubscribe();
+    host.relocateProject({ projectFolder: "/Users/me/Music/Elsewhere.acep" });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(seen).toEqual(["/Users/me/Music/Saved As.acep"]);
     connection.close();
   });
 });

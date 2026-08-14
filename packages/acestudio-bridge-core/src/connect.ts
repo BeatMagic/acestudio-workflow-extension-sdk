@@ -22,6 +22,8 @@ import {
   type HandshakeResult,
   type PingParams,
   type PingResult,
+  type PrepareMoveResult,
+  type ProjectRelocatedParams,
   type ShutdownParams,
 } from "./generated/Session.acerpc.js";
 import { createGrant, requireTokens, type Grant, type ProfileName } from "./grant.js";
@@ -66,6 +68,26 @@ export interface ConnectOptions {
    * it from the environment variable its dev tooling sets.
    */
   debug?: boolean;
+  /**
+   * Quiesce hook for `session.prepareMove` (ADR 0121 §5). The host calls this
+   * *before* it relocates the project folder — a Save-As, or the first save of a
+   * project that until now lived in a temporary one — and blocks the save until it
+   * acks. Stop writing under the project folder and release every handle you hold
+   * there, then resolve: the SDK acks `ready: true`, and the host then takes a
+   * consistent, handle-free copy.
+   *
+   * This does not ask you to finish long work. Checkpoint what is in flight and
+   * pick it up on the resume, which is {@link BridgeConnection.onProjectRelocated}
+   * — the folder's new path on a committed move, the path you already had on an
+   * abandoned one. Stay parked until it arrives; reopening as soon as this returns
+   * would race the copy the ack just authorized.
+   *
+   * If omitted, the SDK still acks `ready: true`, so a peer that advertises
+   * `session.move` without quiescing would let a live writer race the copy —
+   * provide this whenever `session.move` is in the manifest. A peer that does not
+   * hold `session.move` never receives the call, and needs no hook.
+   */
+  onPrepareMove?: () => Promise<void> | void;
 }
 
 /**
@@ -150,6 +172,18 @@ export interface BridgeConnection {
    * layer's job; core only surfaces the notice.
    */
   onShutdown(listener: (params: ShutdownParams) => void): Unsubscribe;
+  /**
+   * Called when the host has finished relocating the project folder, which
+   * releases a peer parked by {@link ConnectOptions.onPrepareMove}. `projectFolder`
+   * is the destination on a committed move, and the path the peer already had on an
+   * abandoned one — so an unchanged value is the host saying "carry on where you
+   * are". Reopen what the quiesce released, under whichever path arrives.
+   *
+   * This is the only end of the quiesce. There is no separate "the move failed"
+   * notice, because a peer parked forever is the failure mode that matters and one
+   * announcement covers both endings.
+   */
+  onProjectRelocated(listener: (params: ProjectRelocatedParams) => void): Unsubscribe;
   /** Listen for the connection dropping. */
   onClose(listener: () => void): Unsubscribe;
   /** Close the connection, failing every call in flight. */
@@ -176,6 +210,22 @@ export async function connect(options: ConnectOptions): Promise<BridgeConnection
   }) satisfies PingResult);
 
   const client = new SessionClient(peer);
+  // Served before the handshake goes out, for the same reason the ping is: the host
+  // may ask as soon as the session lands, and an unhandled request would leave it
+  // waiting out its deadline for an answer that was never coming. Registered
+  // unconditionally — a peer without `session.move` is simply never asked — and it
+  // acks with or without a hook, so a peer that holds nothing open needs none.
+  //
+  // A hook that throws faults the call rather than answering `ready: false`. Those
+  // are different statements: `false` is the peer declining a move it understood,
+  // a fault is the peer failing to answer. The host reads both as unsafe to copy
+  // and names which in the log, so the distinction costs nothing and keeps a bug in
+  // a quiesce hook from reading as a deliberate refusal.
+  client.setSessionPrepareMoveHandler(async () => {
+    await options.onPrepareMove?.();
+    return { ready: true } satisfies PrepareMoveResult;
+  });
+
   const request: HandshakeParams = {
     authToken: options.authToken,
     protocolVersion: PROTOCOL_VERSION,
@@ -248,6 +298,9 @@ class Connection implements BridgeConnection {
     session.onSessionShutdown((params) => {
       debug(`session ${this.sessionId}: the host is stopping this peer, ${String(params.graceMs)}ms grace`);
     });
+    session.onSessionProjectRelocated((params) => {
+      debug(`session ${this.sessionId}: the project folder is now ${params.projectFolder}`);
+    });
     peer.onClose(() => {
       debug(`session ${this.sessionId}: the connection closed`);
     });
@@ -279,6 +332,10 @@ class Connection implements BridgeConnection {
 
   onShutdown(listener: (params: ShutdownParams) => void): Unsubscribe {
     return this.session.onSessionShutdown(listener);
+  }
+
+  onProjectRelocated(listener: (params: ProjectRelocatedParams) => void): Unsubscribe {
+    return this.session.onSessionProjectRelocated(listener);
   }
 
   onClose(listener: () => void): Unsubscribe {

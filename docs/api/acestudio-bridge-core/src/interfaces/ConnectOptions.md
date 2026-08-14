@@ -29,6 +29,36 @@ it from the environment variable its dev tooling sets.
 
 ***
 
+### onPrepareMove?
+
+```ts
+optional onPrepareMove?: () => void | Promise<void>;
+```
+
+Quiesce hook for `session.prepareMove` (ADR 0121 §5). The host calls this
+*before* it relocates the project folder — a Save-As, or the first save of a
+project that until now lived in a temporary one — and blocks the save until it
+acks. Stop writing under the project folder and release every handle you hold
+there, then resolve: the SDK acks `ready: true`, and the host then takes a
+consistent, handle-free copy.
+
+This does not ask you to finish long work. Checkpoint what is in flight and
+pick it up on the resume, which is [BridgeConnection.onProjectRelocated](BridgeConnection.md#onprojectrelocated)
+— the folder's new path on a committed move, the path you already had on an
+abandoned one. Stay parked until it arrives; reopening as soon as this returns
+would race the copy the ack just authorized.
+
+If omitted, the SDK still acks `ready: true`, so a peer that advertises
+`session.move` without quiescing would let a live writer race the copy —
+provide this whenever `session.move` is in the manifest. A peer that does not
+hold `session.move` never receives the call, and needs no hook.
+
+#### Returns
+
+`void` \| `Promise`\<`void`\>
+
+***
+
 ### requestedCapabilities?
 
 ```ts

@@ -1,6 +1,6 @@
 # Interface: ConnectOptions
 
-What (connect:1) needs to open a session.
+What `connect()` needs to open a session.
 
 ## Properties
 

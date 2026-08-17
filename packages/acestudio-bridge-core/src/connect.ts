@@ -40,7 +40,7 @@ const DEFAULT_HANDSHAKE_TIMEOUT_MS = 10_000;
 const SESSION_PING = "session.ping";
 
 /**
- * What {@link (connect:1)} needs to open a session.
+ * What `connect()` needs to open a session.
  *
  * @public
  */
@@ -132,7 +132,7 @@ export interface BridgeConnection<Bindings = PublicBindings> {
   readonly client: Bindings;
   /**
    * The bridge protocol version the host accepted. Informational: it matched
-   * ours or {@link (connect:1)} would have refused the session.
+   * ours or `connect()` would have refused the session.
    */
   readonly protocolVersion: number;
   /**
@@ -305,7 +305,7 @@ export async function connect<Bindings = PublicBindings>(
   }
 }
 
-/** The live session {@link (connect:1)} hands back. */
+/** The live session `connect()` hands back. */
 class Connection implements BridgeConnection {
   readonly sessionId: string;
   readonly protocolVersion: number;
@@ -463,7 +463,7 @@ function readHandshakeResult(answer: unknown): HandshakeResult {
 
 /**
  * Codes that already say exactly what went wrong during a handshake, and so
- * travel out of {@link (connect:1)} unchanged.
+ * travel out of `connect()` unchanged.
  */
 const HANDSHAKE_PASSTHROUGH = new Set([
   "BRIDGE_UNREACHABLE",

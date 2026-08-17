@@ -29,6 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # the plan below reads package.json at the previous release tag
 
       - uses: actions/setup-node@v5
         with:
@@ -45,16 +47,30 @@ jobs:
       # picked up automatically — but note each package name still needs its own stage-only
       # trusted publisher configured on npmjs.com before staging it can succeed.
       #
-      # A package whose current version is already on the registry is skipped rather than
-      # attempted. The workspace versions move independently, so most tags change only some of
-      # them; without this the first unchanged package would be refused as a duplicate and take
-      # the rest of the run down with it, leaving a release that is half staged for reasons the
-      # log makes look like a registry fault. Skipping also makes a re-run of a partly failed
-      # tag safe, which is the state you most want to be able to retry.
+      # What a tag releases is whichever workspace versions it changed, so the plan is decided
+      # from the repository: each version against the same version at the release before this
+      # one. That earlier release is found through history rather than by tag name, because the
+      # tags are dated and nothing in a date says which release came first.
+      #
+      # The versions move independently, so most tags change only some of them, and offering the
+      # registry a version it already holds is refused — as `409 Cannot stage previously
+      # published version`, which is also what it answers for a version that is merely staged
+      # and still waiting for approval. Unfiltered, the first unchanged package takes the rest of
+      # the run down with it, leaving a half-staged release for a reason the log dresses up as a
+      # registry fault.
+      #
+      # The registry is still asked, but only about the workspaces that did change: that covers a
+      # re-run of a tag whose staging was approved and published in the meantime.
       - name: Plan the release
         id: plan
         run: |
           set -euo pipefail
+          previous=$(git describe --tags --match 'release-*' --abbrev=0 "${GITHUB_SHA}^" 2>/dev/null || true)
+          if [ -n "$previous" ]; then
+            echo "comparing versions against ${previous}"
+          else
+            echo "no earlier release tag — every publishable workspace counts as new"
+          fi
           plan=""
           for dir in packages/*/; do
             name=$(node -p "require('./${dir}package.json').name")
@@ -65,6 +81,16 @@ jobs:
               echo "skip ${name} (private)"
               continue
             fi
+            # A package added since the previous release has no package.json there, which leaves
+            # `was` empty and so unequal to any version — the reading a new package wants.
+            if [ -n "$previous" ]; then
+              was=$(git show "${previous}:${dir}package.json" 2>/dev/null \
+                | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version" 2>/dev/null || true)
+              if [ "$was" = "$version" ]; then
+                echo "skip ${name}@${version} (unchanged since ${previous})"
+                continue
+              fi
+            fi
             # `npm view` exits non-zero for an unpublished name as well as an unpublished
             # version, and both mean "go ahead", so only a clean exit is a reason to skip.
             if npm view "${name}@${version}" version >/dev/null 2>&1; then
@@ -74,10 +100,10 @@ jobs:
             echo "plan ${name}@${version}"
             plan="${plan}${dir}"$'\n'
           done
-          # Every version already live means the tag releases nothing. Left alone the loop below
-          # would do no work and the run would go green, which reads as a release that happened.
+          # No version moved means the tag releases nothing. Left alone the loop below would do no
+          # work and the run would go green, which reads as a release that happened.
           if [ -z "$plan" ]; then
-            echo "::error::${GITHUB_REF_NAME} releases nothing — every publishable workspace is already on the registry. Bump a version, then tag."
+            echo "::error::${GITHUB_REF_NAME} releases nothing — no publishable workspace changed version since ${previous:-the start of history}. Bump a version, then tag."
             exit 1
           fi
           { echo "dirs<<EOF"; printf '%s' "$plan"; echo "EOF"; } >> "$GITHUB_OUTPUT"

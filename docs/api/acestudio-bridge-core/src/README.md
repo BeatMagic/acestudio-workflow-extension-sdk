@@ -4,7 +4,7 @@ The connection core for programming against a running ACE Studio.
 
 ## Remarks
 
-[connect](functions/connect.md) runs the canonical capability handshake over a pluggable
+(connect:1) runs the canonical capability handshake over a pluggable
 [Transport](interfaces/Transport.md) and hands back a granted, session-established
 [BridgeConnection](interfaces/BridgeConnection.md). Anything that can be refused is refused as a
 [BridgeError](classes/BridgeError.md).

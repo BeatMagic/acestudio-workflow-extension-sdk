@@ -1079,7 +1079,14 @@ export interface ClipSplitResult {
 }
 
 // @public
-export function connect<Bindings = PublicBindings>(options: ConnectOptions): Promise<BridgeConnection<Bindings>>;
+export function connect(options: ConnectOptions & {
+    surface?: never;
+}): Promise<BridgeConnection>;
+
+// @public
+export function connect<Bindings>(options: ConnectOptions & {
+    surface: DriverSurface;
+}): Promise<BridgeConnection<Bindings>>;
 
 // @public
 export interface ConnectOptions {

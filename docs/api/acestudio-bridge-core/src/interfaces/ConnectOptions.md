@@ -1,6 +1,6 @@
 # Interface: ConnectOptions
 
-What [connect](../functions/connect.md) needs to open a session.
+What `connect()` needs to open a session.
 
 ## Properties
 

@@ -61,7 +61,7 @@ readonly protocolVersion: number;
 ```
 
 The bridge protocol version the host accepted. Informational: it matched
-ours or [connect](../functions/connect.md) would have refused the session.
+ours or `connect()` would have refused the session.
 
 ***
 

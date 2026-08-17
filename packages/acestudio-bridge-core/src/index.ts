@@ -2,7 +2,7 @@
  * The connection core for programming against a running ACE Studio.
  *
  * @remarks
- * {@link connect} runs the canonical capability handshake over a pluggable
+ * `connect()` runs the canonical capability handshake over a pluggable
  * {@link Transport} and hands back a granted, session-established
  * {@link BridgeConnection}. Anything that can be refused is refused as a
  * {@link BridgeError}.

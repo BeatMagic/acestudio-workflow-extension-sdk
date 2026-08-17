@@ -40,7 +40,7 @@ const DEFAULT_HANDSHAKE_TIMEOUT_MS = 10_000;
 const SESSION_PING = "session.ping";
 
 /**
- * What {@link connect} needs to open a session.
+ * What `connect()` needs to open a session.
  *
  * @public
  */
@@ -132,7 +132,7 @@ export interface BridgeConnection<Bindings = PublicBindings> {
   readonly client: Bindings;
   /**
    * The bridge protocol version the host accepted. Informational: it matched
-   * ours or {@link connect} would have refused the session.
+   * ours or `connect()` would have refused the session.
    */
   readonly protocolVersion: number;
   /**
@@ -220,6 +220,22 @@ export interface BridgeConnection<Bindings = PublicBindings> {
  *
  * @public
  */
+export function connect(options: ConnectOptions & { surface?: never }): Promise<BridgeConnection>;
+
+/**
+ * Open a session whose client spans the artifact `surface` describes.
+ *
+ * `Bindings` has no default here on purpose. Naming a surface and not naming
+ * what it builds leaves `client` as `unknown`, which is the honest answer and
+ * forces the caller to say which interface they passed the tables for — where a
+ * default would quietly hand back the public one instead.
+ *
+ * @public
+ */
+export function connect<Bindings>(
+  options: ConnectOptions & { surface: DriverSurface },
+): Promise<BridgeConnection<Bindings>>;
+
 export async function connect<Bindings = PublicBindings>(
   options: ConnectOptions,
 ): Promise<BridgeConnection<Bindings>> {
@@ -289,7 +305,7 @@ export async function connect<Bindings = PublicBindings>(
   }
 }
 
-/** The live session {@link connect} hands back. */
+/** The live session `connect()` hands back. */
 class Connection implements BridgeConnection {
   readonly sessionId: string;
   readonly protocolVersion: number;
@@ -447,7 +463,7 @@ function readHandshakeResult(answer: unknown): HandshakeResult {
 
 /**
  * Codes that already say exactly what went wrong during a handshake, and so
- * travel out of {@link connect} unchanged.
+ * travel out of `connect()` unchanged.
  */
 const HANDSHAKE_PASSTHROUGH = new Set([
   "BRIDGE_UNREACHABLE",

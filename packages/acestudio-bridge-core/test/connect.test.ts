@@ -10,9 +10,30 @@ import {
   PROTOCOL_VERSION,
   SESSION_METHOD_CAPABILITIES,
   type BridgeConnection,
+  type DriverSurface,
+  type PublicBindings,
   type Transport,
 } from "@timedomain/acestudio-bridge-core";
 import { HOST_METHODS, ScriptedHostPeer, type ScriptedHostOptions } from "./support/host-peer.js";
+
+/**
+ * What a caller may claim about `client`, as call sites `tsc` checks.
+ *
+ * Never invoked: the point is the diagnostics, and an `@ts-expect-error` that
+ * stops being an error fails the build. The guarantee is that naming a bindings
+ * type without passing the surface that builds it does not compile — the runtime
+ * would hand back the public client, and every group the claim added would be
+ * `undefined` on first use.
+ */
+function surfaceClaimsThatCompile(transport: Transport, surface: DriverSurface): void {
+  // No surface, no type argument: the public client, which is what gets built.
+  void connect({ transport, authToken: "t" });
+  // A surface, and the caller naming what its tables build.
+  void connect<PublicBindings>({ transport, authToken: "t", surface });
+  // @ts-expect-error -- a wider client claimed without the tables that build it
+  void connect<PublicBindings & { privileged: unknown }>({ transport, authToken: "t" });
+}
+void surfaceClaimsThatCompile;
 
 /** Stand up a scripted host and connect to it over an in-memory transport pair. */
 async function connectToScriptedHost(

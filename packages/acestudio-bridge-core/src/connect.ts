@@ -15,7 +15,7 @@
 import { buildBindings, type OperationWarning } from "./bindings.js";
 import { createDebugLog, type DebugLog } from "./debug.js";
 import { BridgeError, describeCause } from "./errors.js";
-import type { CapabilityToken, PublicBindings } from "./generated/bindings.js";
+import { PUBLIC_SURFACE, type CapabilityToken, type DriverSurface, type PublicBindings } from "./generated/bindings.js";
 import {
   SessionClient,
   type HandshakeParams,
@@ -55,6 +55,17 @@ export interface ConnectOptions {
    * drivers that do resolve a request against the registry.
    */
   requestedCapabilities?: readonly string[];
+  /**
+   * The generated tables this driver carries, bundled. Defaults to
+   * `PUBLIC_SURFACE`, so a consumer of the published operations alone never
+   * sets it.
+   *
+   * A driver holding the privileged artifact passes `PRIVILEGED_SURFACE` from
+   * `@beatmagic/bridge-privileged-bindings` and gets those domain groups on its
+   * client beside the published ones (ADR 0094 §2, amended 2026-08-17). The
+   * type is not inferred from the value — name it on the call.
+   */
+  surface?: DriverSurface;
   /** Deadline for the handshake, in milliseconds. */
   timeoutMs?: number;
   /** Abort the handshake. */
@@ -95,7 +106,7 @@ export interface ConnectOptions {
  *
  * @public
  */
-export interface BridgeConnection {
+export interface BridgeConnection<Bindings = PublicBindings> {
   /** The session id the host minted. */
   readonly sessionId: string;
   /**
@@ -108,8 +119,17 @@ export interface BridgeConnection {
    * The typed operation surface: `client.track.list()`, `client.clip.create()` —
    * the canonical operation tree, one method per operation. A call the grant
    * cannot reach is refused here rather than on the wire.
+   *
+   * `PublicBindings` unless {@link ConnectOptions.surface} carried another
+   * artifact, in which case name the union at the call:
+   *
+   * ```ts
+   * const connection = await connect<PublicBindings & PrivilegedBindings>({
+   *   transport, authToken, surface: PRIVILEGED_SURFACE,
+   * });
+   * ```
    */
-  readonly client: PublicBindings;
+  readonly client: Bindings;
   /**
    * The bridge protocol version the host accepted. Informational: it matched
    * ours or {@link connect} would have refused the session.
@@ -200,7 +220,9 @@ export interface BridgeConnection {
  *
  * @public
  */
-export async function connect(options: ConnectOptions): Promise<BridgeConnection> {
+export async function connect<Bindings = PublicBindings>(
+  options: ConnectOptions,
+): Promise<BridgeConnection<Bindings>> {
   const debug = createDebugLog(options.debug ?? false);
   const peer = new BridgePeer(options.transport);
   // Served before the handshake goes out: the host starts probing as soon as the
@@ -248,7 +270,17 @@ export async function connect(options: ConnectOptions): Promise<BridgeConnection
       throw mismatch;
     }
     debug(`handshake: session ${result.sessionId} granted [${result.grantedTokens.join(", ")}]`);
-    return new Connection(peer, client, result, options.requestedCapabilities ?? [], debug);
+    // The cast is the one place the caller's `Bindings` is taken on trust: the
+    // runtime builds whatever `surface` describes, and only the caller knows
+    // which artifact's interface that is.
+    return new Connection(
+      peer,
+      client,
+      result,
+      options.requestedCapabilities ?? [],
+      debug,
+      options.surface ?? PUBLIC_SURFACE,
+    ) as unknown as BridgeConnection<Bindings>;
   } catch (cause) {
     peer.close();
     const failure = handshakeFailure(cause);
@@ -275,13 +307,14 @@ class Connection implements BridgeConnection {
     result: HandshakeResult,
     requested: readonly string[],
     debug: DebugLog,
+    surface: DriverSurface,
   ) {
     this.peer = peer;
     this.session = session;
     this.debug = debug;
     this.sessionId = result.sessionId;
     this.protocolVersion = result.acceptedProtocolVersion;
-    this.grant = createGrant(result.sessionId, requested, result.grantedTokens);
+    this.grant = createGrant(result.sessionId, requested, result.grantedTokens, surface.tokens);
     // The generated interface is what type-checks the callers; the runtime
     // builds every method from one table row, so there is nothing per-method
     // here for the compiler to check the construction against.
@@ -292,6 +325,7 @@ class Connection implements BridgeConnection {
         this.reportWarning(warning);
       },
       debug,
+      surface,
     ) as unknown as PublicBindings;
     // Subscribed once here rather than wrapped around each listener, so one event
     // is one line however many places in the SDK are listening for it.

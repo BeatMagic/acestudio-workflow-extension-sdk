@@ -189,6 +189,19 @@ export interface BulkFieldDescriptor {
     readonly dtype: Dtype | null;
 }
 
+/** One artifact's tables, bundled so a driver passes what it carries as a single value. The binding runtime reads a surface rather than importing one artifact's tables directly, which is what lets the privileged remainder ride the same runtime as the published set (ADR 0094 §2) instead of needing a second copy of it. Tokens are typed `string` here and against each artifact's own union at the table that declares them, so bundling widens nothing a consumer relies on. */
+export interface DriverSurface {
+    readonly operations: readonly OperationDescriptor[];
+    readonly channels: readonly ChannelDescriptor[];
+    readonly tokens: readonly string[];
+    readonly requiredTokens: Readonly<Record<string, string>>;
+    readonly fieldCapabilities: Readonly<Record<string, Readonly<Record<string, string>>>>;
+    readonly bulk: {
+        readonly params: Readonly<Record<string, readonly BulkFieldDescriptor[]>>;
+        readonly result: Readonly<Record<string, readonly BulkFieldDescriptor[]>>;
+    };
+}
+
 /** A capability token on the public surface. `grant.tokens` narrows to this union, so a token name typos at compile time. */
 export type CapabilityToken =
     'canvas.read'
@@ -6154,7 +6167,7 @@ export interface VoiceOperations {
     synthModels(params?: VoiceSynthModelsParams, options?: CallOptions): Promise<VoiceSynthModelsResult>;
 }
 
-/** Every published operation, grouped by domain. A connection's client implements this; the runtime builds it from `OPERATIONS`. */
+/** Every published operation, grouped by domain. A connection's client implements this; the runtime builds it from `PUBLIC_SURFACE`. */
 export interface PublicBindings {
     readonly blend: BlendOperations;
     readonly canvas: CanvasOperations;
@@ -6547,3 +6560,13 @@ export const BULK_PARAM_FIELDS = {} as const satisfies Readonly<Record<string, r
 
 /** Where the bulk fields sit in each operation's result object, for the encode/decode pass that swaps typed arrays for the base64 envelope. */
 export const BULK_RESULT_FIELDS = {} as const satisfies Readonly<Record<string, readonly BulkFieldDescriptor[]>>;
+
+/** Everything the binding runtime needs to build this artifact's client. Pass it to `connect` as the driver's surface; the public one is that call's default, so a consumer of the published set alone never names it. */
+export const PUBLIC_SURFACE = {
+    operations: OPERATIONS,
+    channels: NOTIFICATION_CHANNELS,
+    tokens: CAPABILITY_TOKENS,
+    requiredTokens: REQUIRED_TOKENS,
+    fieldCapabilities: FIELD_CAPABILITIES,
+    bulk: { params: BULK_PARAM_FIELDS, result: BULK_RESULT_FIELDS },
+} as const satisfies DriverSurface;

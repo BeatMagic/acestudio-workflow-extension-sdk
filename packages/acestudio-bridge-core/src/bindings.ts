@@ -21,14 +21,11 @@ import type { DebugLog } from "./debug.js";
 import { BridgeError } from "./errors.js";
 import { capabilityDenied, channelDenied, missingCapabilityRow, type Grant } from "./grant.js";
 import {
-  BULK_PARAM_FIELDS,
-  BULK_RESULT_FIELDS,
-  FIELD_CAPABILITIES,
-  NOTIFICATION_CHANNELS,
-  OPERATIONS,
-  REQUIRED_TOKENS,
+  PUBLIC_SURFACE,
   type CapabilityToken,
   type ChangeEvent,
+  type ChannelDescriptor,
+  type DriverSurface,
   type JobOperations,
   type OperationDescriptor,
   type PreconditionCallOptions,
@@ -103,10 +100,14 @@ export interface BulkTables {
   readonly result: BulkTable;
 }
 
-const GENERATED_BULK_TABLES: BulkTables = { params: BULK_PARAM_FIELDS, result: BULK_RESULT_FIELDS };
-
 /**
- * Build the client the generated `PublicBindings` interface describes.
+ * Build the client one artifact's bindings interface describes.
+ *
+ * The tables come from `surface` rather than from this package's own generated
+ * ones, which is what lets a driver carrying the privileged artifact reach this
+ * runtime instead of needing a copy of it (ADR 0094 §2, amended 2026-08-17).
+ * The public bundle is the default, so a consumer of the published set alone
+ * passes nothing.
  *
  * The return type is deliberately loose here and asserted at the seam that hands
  * it out — `BridgeConnection.client`. Every method is built by the same closure
@@ -118,22 +119,23 @@ export function buildBindings(
   grant: Grant,
   warn: WarningSink,
   debug: DebugLog,
-  bulk: BulkTables = GENERATED_BULK_TABLES,
+  surface: DriverSurface = PUBLIC_SURFACE,
   jobs: JobClassTable = JOB_CLASS_OPERATIONS,
 ): Record<string, unknown> {
+  const bulk: BulkTables = surface.bulk;
   const client = new OperationClient(peer);
   const root: Record<string, unknown> = {};
   // Read when a launch answers, never while building: the `job` group is one of
   // the methods this loop is still assembling.
   const jobGroup = (): JobOperations => root[domainKey("job")] as JobOperations;
 
-  for (const operation of OPERATIONS) {
+  for (const operation of surface.operations) {
     const invoke: BoundMethod = async (...args) => {
       const params = operation.takesParams ? args[0] : undefined;
       const options = ((operation.takesParams ? args[1] : args[0]) ?? {}) as PreconditionCallOptions;
       // The pre-wire guard, refusing without a round trip and with the error the
       // host would have sent back.
-      const denial = guardCall(grant, operation, params);
+      const denial = guardCall(grant, operation, params, surface.fieldCapabilities, surface.requiredTokens);
       if (denial !== undefined) {
         debug(`call ${operation.path}: refused before the wire, ${denial.code}`);
         throw denial;
@@ -177,7 +179,7 @@ export function buildBindings(
     group[operation.method] = invoke;
   }
 
-  bindChannels(peer, grant, root, debug);
+  bindChannels(peer, grant, root, debug, surface.channels);
   return root;
 }
 
@@ -204,10 +206,16 @@ function failureName(cause: unknown): string {
  * difference visible, with the same error a call to an ungranted operation
  * raises.
  */
-function bindChannels(peer: BridgePeer, grant: Grant, root: Record<string, unknown>, debug: DebugLog): void {
-  for (const descriptor of NOTIFICATION_CHANNELS) {
+function bindChannels(
+  peer: BridgePeer,
+  grant: Grant,
+  root: Record<string, unknown>,
+  debug: DebugLog,
+  channels: readonly ChannelDescriptor[],
+): void {
+  for (const descriptor of channels) {
     const subscribe = (listener: (event: ChangeEvent) => void): Unsubscribe => {
-      if (!grant.has(descriptor.capability)) {
+      if (!holds(grant, descriptor.capability)) {
         debug(
           `channel ${descriptor.notification}: subscription refused, needs ${descriptor.capability}`,
         );
@@ -231,15 +239,31 @@ function bindChannels(peer: BridgePeer, grant: Grant, root: Record<string, unkno
 function operationDenial(
   grant: Grant,
   operation: { path: string; ungated: boolean },
+  requiredTokens: Readonly<Record<string, string>>,
 ): BridgeError<"CAPABILITY_DENIED"> | undefined {
   if (operation.ungated) {
     return undefined;
   }
-  const token = REQUIRED_TOKENS[operation.path as keyof typeof REQUIRED_TOKENS] as CapabilityToken | undefined;
+  const token = requiredTokens[operation.path];
   if (token === undefined) {
     return missingCapabilityRow(operation.path);
   }
-  return grant.has(token) ? undefined : capabilityDenied(operation.path, token);
+  return holds(grant, token) ? undefined : capabilityDenied(operation.path, token);
+}
+
+/**
+ * Whether the grant holds a token a table named.
+ *
+ * A surface widens its token columns to `string` so one type spans both
+ * artifacts, whose unions are disjoint by construction — a privileged driver's
+ * tokens are precisely the ones `CapabilityToken` cannot name. The narrowing is
+ * not lost, only spent earlier: each table is checked against its own artifact's
+ * union at the declaration that builds it, which is the only place that could
+ * check it honestly. `Grant.has` reads the host's answer verbatim rather than
+ * the roster-filtered view, so it answers correctly for either artifact.
+ */
+function holds(grant: Grant, token: string): boolean {
+  return grant.has(token as CapabilityToken);
 }
 
 /**
@@ -254,9 +278,13 @@ export function guardCall(
   grant: Grant,
   operation: { path: string; ungated: boolean },
   params: unknown,
-  fieldTable: Readonly<Record<string, Readonly<Record<string, CapabilityToken>>>> = FIELD_CAPABILITIES,
+  fieldTable: Readonly<Record<string, Readonly<Record<string, string>>>> = PUBLIC_SURFACE.fieldCapabilities,
+  requiredTokens: Readonly<Record<string, string>> = PUBLIC_SURFACE.requiredTokens,
 ): BridgeError<"CAPABILITY_DENIED"> | undefined {
-  return operationDenial(grant, operation) ?? fieldDenial(grant, operation.path, params, fieldTable);
+  return (
+    operationDenial(grant, operation, requiredTokens) ??
+    fieldDenial(grant, operation.path, params, fieldTable)
+  );
 }
 
 /**
@@ -269,7 +297,7 @@ function fieldDenial(
   grant: Grant,
   path: string,
   params: unknown,
-  fieldTable: Readonly<Record<string, Readonly<Record<string, CapabilityToken>>>>,
+  fieldTable: Readonly<Record<string, Readonly<Record<string, string>>>>,
 ): BridgeError<"CAPABILITY_DENIED"> | undefined {
   const gated = fieldTable[path];
   if (gated === undefined || params === null || typeof params !== "object") {
@@ -277,7 +305,7 @@ function fieldDenial(
   }
   const args = params as Record<string, unknown>;
   for (const [field, token] of Object.entries(gated)) {
-    if (args[field] !== undefined && !grant.has(token)) {
+    if (args[field] !== undefined && !holds(grant, token)) {
       return capabilityDenied(`${path} --${field}`, token);
     }
   }

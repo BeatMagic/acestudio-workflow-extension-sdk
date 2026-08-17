@@ -253,8 +253,8 @@ export interface BlendSetResult {
 }
 
 // @public
-export interface BridgeConnection {
-    readonly client: PublicBindings;
+export interface BridgeConnection<Bindings = PublicBindings> {
+    readonly client: Bindings;
     close(): void;
     readonly grant: Grant;
     job<Result = unknown>(id: string): JobHandle<Result>;
@@ -1079,7 +1079,7 @@ export interface ClipSplitResult {
 }
 
 // @public
-export function connect(options: ConnectOptions): Promise<BridgeConnection>;
+export function connect<Bindings = PublicBindings>(options: ConnectOptions): Promise<BridgeConnection<Bindings>>;
 
 // @public
 export interface ConnectOptions {
@@ -1088,6 +1088,7 @@ export interface ConnectOptions {
     onPrepareMove?: () => Promise<void> | void;
     requestedCapabilities?: readonly string[];
     signal?: AbortSignal;
+    surface?: DriverSurface;
     timeoutMs?: number;
     transport: Transport;
 }
@@ -1249,6 +1250,25 @@ export interface DeviceSetAudioResult {
 
 // @public
 export const DRAFT_PROFILES: readonly ["surface.extension-sdk"];
+
+// @public
+export interface DriverSurface {
+    // (undocumented)
+    readonly bulk: {
+        readonly params: Readonly<Record<string, readonly BulkFieldDescriptor[]>>;
+        readonly result: Readonly<Record<string, readonly BulkFieldDescriptor[]>>;
+    };
+    // (undocumented)
+    readonly channels: readonly ChannelDescriptor[];
+    // (undocumented)
+    readonly fieldCapabilities: Readonly<Record<string, Readonly<Record<string, string>>>>;
+    // (undocumented)
+    readonly operations: readonly OperationDescriptor[];
+    // (undocumented)
+    readonly requiredTokens: Readonly<Record<string, string>>;
+    // (undocumented)
+    readonly tokens: readonly string[];
+}
 
 // @public
 export type Dtype = 'u8' | 'i16le' | 'i32le' | 'i64le' | 'f32le' | 'f64le';
@@ -4125,6 +4145,1688 @@ export interface ProjectSynthesisStatusResult {
 
 // @public
 export const PROTOCOL_VERSION = 1;
+
+// @public
+export const PUBLIC_SURFACE: {
+    readonly operations: readonly [{
+        readonly path: "blend add";
+        readonly domain: "blend";
+        readonly method: "add";
+        readonly capability: "voice.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "blend create";
+        readonly domain: "blend";
+        readonly method: "create";
+        readonly capability: "voice.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "blend delete";
+        readonly domain: "blend";
+        readonly method: "delete";
+        readonly capability: "voice.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "blend get";
+        readonly domain: "blend";
+        readonly method: "get";
+        readonly capability: "voice.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "blend list";
+        readonly domain: "blend";
+        readonly method: "list";
+        readonly capability: "voice.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "blend remove";
+        readonly domain: "blend";
+        readonly method: "remove";
+        readonly capability: "voice.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "blend reorder";
+        readonly domain: "blend";
+        readonly method: "reorder";
+        readonly capability: "voice.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "blend set";
+        readonly domain: "blend";
+        readonly method: "set";
+        readonly capability: "voice.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "canvas effective-size";
+        readonly domain: "canvas";
+        readonly method: "effectiveSize";
+        readonly capability: "canvas.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "canvas info";
+        readonly domain: "canvas";
+        readonly method: "info";
+        readonly capability: "canvas.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "caret get";
+        readonly domain: "caret";
+        readonly method: "get";
+        readonly capability: "caret.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "caret set";
+        readonly domain: "caret";
+        readonly method: "set";
+        readonly capability: "caret.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "choir add";
+        readonly domain: "choir";
+        readonly method: "add";
+        readonly capability: "soundsource.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "choir disable";
+        readonly domain: "choir";
+        readonly method: "disable";
+        readonly capability: "soundsource.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "choir enable";
+        readonly domain: "choir";
+        readonly method: "enable";
+        readonly capability: "soundsource.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "choir get";
+        readonly domain: "choir";
+        readonly method: "get";
+        readonly capability: "soundsource.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "choir remove";
+        readonly domain: "choir";
+        readonly method: "remove";
+        readonly capability: "soundsource.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "choir reorder";
+        readonly domain: "choir";
+        readonly method: "reorder";
+        readonly capability: "soundsource.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "choir set";
+        readonly domain: "choir";
+        readonly method: "set";
+        readonly capability: "soundsource.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "clip audio-content";
+        readonly domain: "clip";
+        readonly method: "audioContent";
+        readonly capability: "clip.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "clip consolidate";
+        readonly domain: "clip";
+        readonly method: "consolidate";
+        readonly capability: "clip.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "clip create";
+        readonly domain: "clip";
+        readonly method: "create";
+        readonly capability: "clip.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "clip delete";
+        readonly domain: "clip";
+        readonly method: "delete";
+        readonly capability: "clip.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "clip detach-audio";
+        readonly domain: "clip";
+        readonly method: "detachAudio";
+        readonly capability: "clip.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "clip duplicate";
+        readonly domain: "clip";
+        readonly method: "duplicate";
+        readonly capability: "clip.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "clip get";
+        readonly domain: "clip";
+        readonly method: "get";
+        readonly capability: "clip.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "clip list";
+        readonly domain: "clip";
+        readonly method: "list";
+        readonly capability: "clip.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "clip lyrics";
+        readonly domain: "clip";
+        readonly method: "lyrics";
+        readonly capability: "clip.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "clip move";
+        readonly domain: "clip";
+        readonly method: "move";
+        readonly capability: "clip.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "clip note-content";
+        readonly domain: "clip";
+        readonly method: "noteContent";
+        readonly capability: "clip.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "clip reattach-audio";
+        readonly domain: "clip";
+        readonly method: "reattachAudio";
+        readonly capability: "clip.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "clip replace-content";
+        readonly domain: "clip";
+        readonly method: "replaceContent";
+        readonly capability: "clip.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "clip resize";
+        readonly domain: "clip";
+        readonly method: "resize";
+        readonly capability: "clip.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "clip set";
+        readonly domain: "clip";
+        readonly method: "set";
+        readonly capability: "clip.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "clip set-enabled";
+        readonly domain: "clip";
+        readonly method: "setEnabled";
+        readonly capability: "clip.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "clip set-fades";
+        readonly domain: "clip";
+        readonly method: "setFades";
+        readonly capability: "clip.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "clip set-gain";
+        readonly domain: "clip";
+        readonly method: "setGain";
+        readonly capability: "clip.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "clip set-muted";
+        readonly domain: "clip";
+        readonly method: "setMuted";
+        readonly capability: "clip.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "clip split";
+        readonly domain: "clip";
+        readonly method: "split";
+        readonly capability: "clip.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "convert editor-to-global";
+        readonly domain: "convert";
+        readonly method: "editorToGlobal";
+        readonly capability: "convert.editor-to-global";
+        readonly ungated: true;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "convert global-to-editor";
+        readonly domain: "convert";
+        readonly method: "globalToEditor";
+        readonly capability: "convert.global-to-editor";
+        readonly ungated: true;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "convert measure-to-tick";
+        readonly domain: "convert";
+        readonly method: "measureToTick";
+        readonly capability: "convert.measure-to-tick";
+        readonly ungated: true;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "convert tick-to-measure";
+        readonly domain: "convert";
+        readonly method: "tickToMeasure";
+        readonly capability: "convert.tick-to-measure";
+        readonly ungated: true;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "convert tick-to-time";
+        readonly domain: "convert";
+        readonly method: "tickToTime";
+        readonly capability: "convert.tick-to-time";
+        readonly ungated: true;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "convert time-to-tick";
+        readonly domain: "convert";
+        readonly method: "timeToTick";
+        readonly capability: "convert.time-to-tick";
+        readonly ungated: true;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "device current";
+        readonly domain: "device";
+        readonly method: "current";
+        readonly capability: "device.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "device list";
+        readonly domain: "device";
+        readonly method: "list";
+        readonly capability: "device.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "device set-audio";
+        readonly domain: "device";
+        readonly method: "setAudio";
+        readonly capability: "device.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "editor current-clip";
+        readonly domain: "editor";
+        readonly method: "currentClip";
+        readonly capability: "editor.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "editor open";
+        readonly domain: "editor";
+        readonly method: "open";
+        readonly capability: "editor.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "editor status";
+        readonly domain: "editor";
+        readonly method: "status";
+        readonly capability: "editor.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "editor tick-range";
+        readonly domain: "editor";
+        readonly method: "tickRange";
+        readonly capability: "editor.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "ensemble add";
+        readonly domain: "ensemble";
+        readonly method: "add";
+        readonly capability: "soundsource.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "ensemble disable";
+        readonly domain: "ensemble";
+        readonly method: "disable";
+        readonly capability: "soundsource.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "ensemble enable";
+        readonly domain: "ensemble";
+        readonly method: "enable";
+        readonly capability: "soundsource.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "ensemble get";
+        readonly domain: "ensemble";
+        readonly method: "get";
+        readonly capability: "soundsource.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "ensemble remove";
+        readonly domain: "ensemble";
+        readonly method: "remove";
+        readonly capability: "soundsource.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "ensemble reorder";
+        readonly domain: "ensemble";
+        readonly method: "reorder";
+        readonly capability: "soundsource.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "ensemble set";
+        readonly domain: "ensemble";
+        readonly method: "set";
+        readonly capability: "soundsource.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "export audio";
+        readonly domain: "export";
+        readonly method: "audio";
+        readonly capability: "export.invoke";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "export fcpxml";
+        readonly domain: "export";
+        readonly method: "fcpxml";
+        readonly capability: "export.invoke";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "export lrc";
+        readonly domain: "export";
+        readonly method: "lrc";
+        readonly capability: "export.invoke";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "export midi";
+        readonly domain: "export";
+        readonly method: "midi";
+        readonly capability: "export.invoke";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "export song-template";
+        readonly domain: "export";
+        readonly method: "songTemplate";
+        readonly capability: "export.invoke";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+        readonly entitlement: "membership";
+    }, {
+        readonly path: "export video";
+        readonly domain: "export";
+        readonly method: "video";
+        readonly capability: "export.invoke";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "export vocal-sample";
+        readonly domain: "export";
+        readonly method: "vocalSample";
+        readonly capability: "export.invoke";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+        readonly entitlement: "membership";
+    }, {
+        readonly path: "generative add-layer";
+        readonly domain: "generative";
+        readonly method: "addLayer";
+        readonly capability: "generative.add-layer";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+        readonly entitlement: "credits(add-a-layer)";
+    }, {
+        readonly path: "generative enhance";
+        readonly domain: "generative";
+        readonly method: "enhance";
+        readonly capability: "generative.enhance";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+        readonly entitlement: "credits(music-enhancer)";
+    }, {
+        readonly path: "generative seed-audio";
+        readonly domain: "generative";
+        readonly method: "seedAudio";
+        readonly capability: "generative.seed-audio";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+        readonly entitlement: "credits(seed-audio)";
+    }, {
+        readonly path: "generative song";
+        readonly domain: "generative";
+        readonly method: "song";
+        readonly capability: "generative.song";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+        readonly entitlement: "credits(song-generator)";
+    }, {
+        readonly path: "generative sound-effects";
+        readonly domain: "generative";
+        readonly method: "soundEffects";
+        readonly capability: "generative.sound-effects";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+        readonly entitlement: "credits(sound-effects)";
+    }, {
+        readonly path: "generative stem-split";
+        readonly domain: "generative";
+        readonly method: "stemSplit";
+        readonly capability: "generative.stem-split";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+        readonly entitlement: "credits(stem-splitter)";
+    }, {
+        readonly path: "generative text2sample";
+        readonly domain: "generative";
+        readonly method: "text2sample";
+        readonly capability: "generative.text2sample";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+        readonly entitlement: "credits(text2sample)";
+    }, {
+        readonly path: "generative vocal2midi";
+        readonly domain: "generative";
+        readonly method: "vocal2midi";
+        readonly capability: "generative.vocal2midi";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "generative voice-change";
+        readonly domain: "generative";
+        readonly method: "voiceChange";
+        readonly capability: "generative.voice-change";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "history list";
+        readonly domain: "history";
+        readonly method: "list";
+        readonly capability: "history.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "history redo";
+        readonly domain: "history";
+        readonly method: "redo";
+        readonly capability: "history.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "history undo";
+        readonly domain: "history";
+        readonly method: "undo";
+        readonly capability: "history.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "import file";
+        readonly domain: "import";
+        readonly method: "file";
+        readonly capability: "import.invoke";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "instrument disable";
+        readonly domain: "instrument";
+        readonly method: "disable";
+        readonly capability: "soundsource.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "instrument enable";
+        readonly domain: "instrument";
+        readonly method: "enable";
+        readonly capability: "soundsource.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "instrument set";
+        readonly domain: "instrument";
+        readonly method: "set";
+        readonly capability: "soundsource.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "job cancel";
+        readonly domain: "job";
+        readonly method: "cancel";
+        readonly capability: "job.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "job discard-result";
+        readonly domain: "job";
+        readonly method: "discardResult";
+        readonly capability: "job.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "job get";
+        readonly domain: "job";
+        readonly method: "get";
+        readonly capability: "job.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "job list";
+        readonly domain: "job";
+        readonly method: "list";
+        readonly capability: "job.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "job place";
+        readonly domain: "job";
+        readonly method: "place";
+        readonly capability: "clip.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "job results";
+        readonly domain: "job";
+        readonly method: "results";
+        readonly capability: "job.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "job wait";
+        readonly domain: "job";
+        readonly method: "wait";
+        readonly capability: "job.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "note add";
+        readonly domain: "note";
+        readonly method: "add";
+        readonly capability: "note.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "note delete";
+        readonly domain: "note";
+        readonly method: "delete";
+        readonly capability: "note.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "note get";
+        readonly domain: "note";
+        readonly method: "get";
+        readonly capability: "note.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "note move";
+        readonly domain: "note";
+        readonly method: "move";
+        readonly capability: "note.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "note resize";
+        readonly domain: "note";
+        readonly method: "resize";
+        readonly capability: "note.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "note set-articulation";
+        readonly domain: "note";
+        readonly method: "setArticulation";
+        readonly capability: "note.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "note set-lyric";
+        readonly domain: "note";
+        readonly method: "setLyric";
+        readonly capability: "note.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "note split";
+        readonly domain: "note";
+        readonly method: "split";
+        readonly capability: "note.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "project collect-save";
+        readonly domain: "project";
+        readonly method: "collectSave";
+        readonly capability: "project.lifecycle";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "project dirty";
+        readonly domain: "project";
+        readonly method: "dirty";
+        readonly capability: "project.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "project info";
+        readonly domain: "project";
+        readonly method: "info";
+        readonly capability: "project.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "project new";
+        readonly domain: "project";
+        readonly method: "new";
+        readonly capability: "project.lifecycle";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "project open";
+        readonly domain: "project";
+        readonly method: "open";
+        readonly capability: "project.lifecycle";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "project recent";
+        readonly domain: "project";
+        readonly method: "recent";
+        readonly capability: "project.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "project recent-clear";
+        readonly domain: "project";
+        readonly method: "recentClear";
+        readonly capability: "project.lifecycle";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "project save";
+        readonly domain: "project";
+        readonly method: "save";
+        readonly capability: "project.lifecycle";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "project save-as";
+        readonly domain: "project";
+        readonly method: "saveAs";
+        readonly capability: "project.lifecycle";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "project synthesis-status";
+        readonly domain: "project";
+        readonly method: "synthesisStatus";
+        readonly capability: "project.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "recording start";
+        readonly domain: "recording";
+        readonly method: "start";
+        readonly capability: "recording.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "recording stop";
+        readonly domain: "recording";
+        readonly method: "stop";
+        readonly capability: "recording.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "selection get";
+        readonly domain: "selection";
+        readonly method: "get";
+        readonly capability: "selection.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "selection set";
+        readonly domain: "selection";
+        readonly method: "set";
+        readonly capability: "selection.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "sound-source get";
+        readonly domain: "sound-source";
+        readonly method: "get";
+        readonly capability: "soundsource.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "sound-source list";
+        readonly domain: "sound-source";
+        readonly method: "list";
+        readonly capability: "soundsource.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "sound-source load";
+        readonly domain: "sound-source";
+        readonly method: "load";
+        readonly capability: "soundsource.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "sound-source set";
+        readonly domain: "sound-source";
+        readonly method: "set";
+        readonly capability: "soundsource.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "sound-source tags";
+        readonly domain: "sound-source";
+        readonly method: "tags";
+        readonly capability: "soundsource.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "sound-source unload";
+        readonly domain: "sound-source";
+        readonly method: "unload";
+        readonly capability: "soundsource.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "tempo analyze";
+        readonly domain: "tempo";
+        readonly method: "analyze";
+        readonly capability: "tempo.analyze";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "tempo apply-beat-analysis";
+        readonly domain: "tempo";
+        readonly method: "applyBeatAnalysis";
+        readonly capability: "tempo.applyV2";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "tempo get";
+        readonly domain: "tempo";
+        readonly method: "get";
+        readonly capability: "tempo.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "tempo points";
+        readonly domain: "tempo";
+        readonly method: "points";
+        readonly capability: "tempo.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "tempo remove-point";
+        readonly domain: "tempo";
+        readonly method: "removePoint";
+        readonly capability: "tempo.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "tempo set";
+        readonly domain: "tempo";
+        readonly method: "set";
+        readonly capability: "tempo.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "tempo set-display-range";
+        readonly domain: "tempo";
+        readonly method: "setDisplayRange";
+        readonly capability: "tempo.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "tempo set-point";
+        readonly domain: "tempo";
+        readonly method: "setPoint";
+        readonly capability: "tempo.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "timesig get";
+        readonly domain: "timesig";
+        readonly method: "get";
+        readonly capability: "timesig.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "timesig list";
+        readonly domain: "timesig";
+        readonly method: "list";
+        readonly capability: "timesig.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "timesig remove-at";
+        readonly domain: "timesig";
+        readonly method: "removeAt";
+        readonly capability: "timesig.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "timesig set";
+        readonly domain: "timesig";
+        readonly method: "set";
+        readonly capability: "timesig.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "timesig set-at";
+        readonly domain: "timesig";
+        readonly method: "setAt";
+        readonly capability: "timesig.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "track create";
+        readonly domain: "track";
+        readonly method: "create";
+        readonly capability: "track.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "track delete";
+        readonly domain: "track";
+        readonly method: "delete";
+        readonly capability: "track.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "track duplicate";
+        readonly domain: "track";
+        readonly method: "duplicate";
+        readonly capability: "track.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "track get";
+        readonly domain: "track";
+        readonly method: "get";
+        readonly capability: "track.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "track list";
+        readonly domain: "track";
+        readonly method: "list";
+        readonly capability: "track.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "track rename";
+        readonly domain: "track";
+        readonly method: "rename";
+        readonly capability: "track.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "track reorder";
+        readonly domain: "track";
+        readonly method: "reorder";
+        readonly capability: "track.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "track set";
+        readonly domain: "track";
+        readonly method: "set";
+        readonly capability: "track.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "track set-input";
+        readonly domain: "track";
+        readonly method: "setInput";
+        readonly capability: "track.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "track set-language";
+        readonly domain: "track";
+        readonly method: "setLanguage";
+        readonly capability: "track.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "transport loop";
+        readonly domain: "transport";
+        readonly method: "loop";
+        readonly capability: "transport.state";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "transport metronome";
+        readonly domain: "transport";
+        readonly method: "metronome";
+        readonly capability: "transport.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "transport play";
+        readonly domain: "transport";
+        readonly method: "play";
+        readonly capability: "transport.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "transport seek";
+        readonly domain: "transport";
+        readonly method: "seek";
+        readonly capability: "transport.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "transport set-loop";
+        readonly domain: "transport";
+        readonly method: "setLoop";
+        readonly capability: "transport.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "transport state";
+        readonly domain: "transport";
+        readonly method: "state";
+        readonly capability: "transport.state";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "transport stop";
+        readonly domain: "transport";
+        readonly method: "stop";
+        readonly capability: "transport.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "transport toggle";
+        readonly domain: "transport";
+        readonly method: "toggle";
+        readonly capability: "transport.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "ui get";
+        readonly domain: "ui";
+        readonly method: "get";
+        readonly capability: "ui.state";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: false;
+    }, {
+        readonly path: "ui hide-panel";
+        readonly domain: "ui";
+        readonly method: "hidePanel";
+        readonly capability: "ui.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "ui hide-special-track";
+        readonly domain: "ui";
+        readonly method: "hideSpecialTrack";
+        readonly capability: "ui.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "ui hide-window";
+        readonly domain: "ui";
+        readonly method: "hideWindow";
+        readonly capability: "ui.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "ui show-panel";
+        readonly domain: "ui";
+        readonly method: "showPanel";
+        readonly capability: "ui.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "ui show-special-track";
+        readonly domain: "ui";
+        readonly method: "showSpecialTrack";
+        readonly capability: "ui.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "ui show-window";
+        readonly domain: "ui";
+        readonly method: "showWindow";
+        readonly capability: "ui.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "vocalparam layers";
+        readonly domain: "vocalparam";
+        readonly method: "layers";
+        readonly capability: "vocalparam.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "vocalparam read";
+        readonly domain: "vocalparam";
+        readonly method: "read";
+        readonly capability: "vocalparam.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "vocalparam write";
+        readonly domain: "vocalparam";
+        readonly method: "write";
+        readonly capability: "vocalparam.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "voice collect";
+        readonly domain: "voice";
+        readonly method: "collect";
+        readonly capability: "voice.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "voice community";
+        readonly domain: "voice";
+        readonly method: "community";
+        readonly capability: "voice.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "voice seeds";
+        readonly domain: "voice";
+        readonly method: "seeds";
+        readonly capability: "voice.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "voice synth-models";
+        readonly domain: "voice";
+        readonly method: "synthModels";
+        readonly capability: "voice.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }];
+    readonly channels: readonly [{
+        readonly notification: "canvas.changed";
+        readonly domain: "canvas";
+        readonly method: "onChanged";
+        readonly capability: "canvas.read";
+    }, {
+        readonly notification: "clips.changed";
+        readonly domain: "clip";
+        readonly method: "onChanged";
+        readonly capability: "clip.read";
+    }, {
+        readonly notification: "jobs.changed";
+        readonly domain: "job";
+        readonly method: "onChanged";
+        readonly capability: "job.read";
+    }, {
+        readonly notification: "project.changed";
+        readonly domain: "project";
+        readonly method: "onChanged";
+        readonly capability: "project.read";
+    }, {
+        readonly notification: "selection.changed";
+        readonly domain: "selection";
+        readonly method: "onChanged";
+        readonly capability: "selection.read";
+    }, {
+        readonly notification: "tempo.changed";
+        readonly domain: "tempo";
+        readonly method: "onChanged";
+        readonly capability: "tempo.read";
+    }, {
+        readonly notification: "tracks.changed";
+        readonly domain: "track";
+        readonly method: "onChanged";
+        readonly capability: "track.read";
+    }, {
+        readonly notification: "transport.changed";
+        readonly domain: "transport";
+        readonly method: "onChanged";
+        readonly capability: "transport.state";
+    }, {
+        readonly notification: "ui.changed";
+        readonly domain: "ui";
+        readonly method: "onChanged";
+        readonly capability: "ui.state";
+    }];
+    readonly tokens: readonly ["canvas.read", "caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "fx.read", "fx.write", "generative.add-layer", "generative.enhance", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "session.handshake", "session.move", "session.ping", "session.shutdown", "soundsource.read", "soundsource.write", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.read", "track.write", "transport.control", "transport.state", "ui.control", "ui.state", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write", "workflow.dev", "workflow.ui"];
+    readonly requiredTokens: {
+        readonly 'blend add': "voice.write";
+        readonly 'blend create': "voice.write";
+        readonly 'blend delete': "voice.write";
+        readonly 'blend get': "voice.read";
+        readonly 'blend list': "voice.read";
+        readonly 'blend remove': "voice.write";
+        readonly 'blend reorder': "voice.write";
+        readonly 'blend set': "voice.write";
+        readonly 'canvas effective-size': "canvas.read";
+        readonly 'canvas info': "canvas.read";
+        readonly 'caret get': "caret.read";
+        readonly 'caret set': "caret.write";
+        readonly 'choir add': "soundsource.write";
+        readonly 'choir disable': "soundsource.write";
+        readonly 'choir enable': "soundsource.write";
+        readonly 'choir get': "soundsource.read";
+        readonly 'choir remove': "soundsource.write";
+        readonly 'choir reorder': "soundsource.write";
+        readonly 'choir set': "soundsource.write";
+        readonly 'clip audio-content': "clip.read";
+        readonly 'clip consolidate': "clip.write";
+        readonly 'clip create': "clip.write";
+        readonly 'clip delete': "clip.write";
+        readonly 'clip detach-audio': "clip.write";
+        readonly 'clip duplicate': "clip.write";
+        readonly 'clip get': "clip.read";
+        readonly 'clip list': "clip.read";
+        readonly 'clip lyrics': "clip.read";
+        readonly 'clip move': "clip.write";
+        readonly 'clip note-content': "clip.read";
+        readonly 'clip reattach-audio': "clip.write";
+        readonly 'clip replace-content': "clip.write";
+        readonly 'clip resize': "clip.write";
+        readonly 'clip set': "clip.write";
+        readonly 'clip set-enabled': "clip.write";
+        readonly 'clip set-fades': "clip.write";
+        readonly 'clip set-gain': "clip.write";
+        readonly 'clip set-muted': "clip.write";
+        readonly 'clip split': "clip.write";
+        readonly 'device current': "device.read";
+        readonly 'device list': "device.read";
+        readonly 'device set-audio': "device.write";
+        readonly 'editor current-clip': "editor.read";
+        readonly 'editor open': "editor.write";
+        readonly 'editor status': "editor.read";
+        readonly 'editor tick-range': "editor.read";
+        readonly 'ensemble add': "soundsource.write";
+        readonly 'ensemble disable': "soundsource.write";
+        readonly 'ensemble enable': "soundsource.write";
+        readonly 'ensemble get': "soundsource.read";
+        readonly 'ensemble remove': "soundsource.write";
+        readonly 'ensemble reorder': "soundsource.write";
+        readonly 'ensemble set': "soundsource.write";
+        readonly 'export audio': "export.invoke";
+        readonly 'export fcpxml': "export.invoke";
+        readonly 'export lrc': "export.invoke";
+        readonly 'export midi': "export.invoke";
+        readonly 'export song-template': "export.invoke";
+        readonly 'export video': "export.invoke";
+        readonly 'export vocal-sample': "export.invoke";
+        readonly 'generative add-layer': "generative.add-layer";
+        readonly 'generative enhance': "generative.enhance";
+        readonly 'generative seed-audio': "generative.seed-audio";
+        readonly 'generative song': "generative.song";
+        readonly 'generative sound-effects': "generative.sound-effects";
+        readonly 'generative stem-split': "generative.stem-split";
+        readonly 'generative text2sample': "generative.text2sample";
+        readonly 'generative vocal2midi': "generative.vocal2midi";
+        readonly 'generative voice-change': "generative.voice-change";
+        readonly 'history list': "history.read";
+        readonly 'history redo': "history.control";
+        readonly 'history undo': "history.control";
+        readonly 'import file': "import.invoke";
+        readonly 'instrument disable': "soundsource.write";
+        readonly 'instrument enable': "soundsource.write";
+        readonly 'instrument set': "soundsource.write";
+        readonly 'job cancel': "job.control";
+        readonly 'job discard-result': "job.control";
+        readonly 'job get': "job.read";
+        readonly 'job list': "job.read";
+        readonly 'job place': "clip.write";
+        readonly 'job results': "job.read";
+        readonly 'job wait': "job.read";
+        readonly 'note add': "note.write";
+        readonly 'note delete': "note.write";
+        readonly 'note get': "note.read";
+        readonly 'note move': "note.write";
+        readonly 'note resize': "note.write";
+        readonly 'note set-articulation': "note.write";
+        readonly 'note set-lyric': "note.write";
+        readonly 'note split': "note.write";
+        readonly 'project collect-save': "project.lifecycle";
+        readonly 'project dirty': "project.read";
+        readonly 'project info': "project.read";
+        readonly 'project new': "project.lifecycle";
+        readonly 'project open': "project.lifecycle";
+        readonly 'project recent': "project.read";
+        readonly 'project recent-clear': "project.lifecycle";
+        readonly 'project save': "project.lifecycle";
+        readonly 'project save-as': "project.lifecycle";
+        readonly 'project synthesis-status': "project.read";
+        readonly 'recording start': "recording.control";
+        readonly 'recording stop': "recording.control";
+        readonly 'selection get': "selection.read";
+        readonly 'selection set': "selection.write";
+        readonly 'sound-source get': "soundsource.read";
+        readonly 'sound-source list': "soundsource.read";
+        readonly 'sound-source load': "soundsource.write";
+        readonly 'sound-source set': "soundsource.write";
+        readonly 'sound-source tags': "soundsource.read";
+        readonly 'sound-source unload': "soundsource.write";
+        readonly 'tempo analyze': "tempo.analyze";
+        readonly 'tempo apply-beat-analysis': "tempo.applyV2";
+        readonly 'tempo get': "tempo.read";
+        readonly 'tempo points': "tempo.read";
+        readonly 'tempo remove-point': "tempo.write";
+        readonly 'tempo set': "tempo.write";
+        readonly 'tempo set-display-range': "tempo.write";
+        readonly 'tempo set-point': "tempo.write";
+        readonly 'timesig get': "timesig.read";
+        readonly 'timesig list': "timesig.read";
+        readonly 'timesig remove-at': "timesig.write";
+        readonly 'timesig set': "timesig.write";
+        readonly 'timesig set-at': "timesig.write";
+        readonly 'track create': "track.write";
+        readonly 'track delete': "track.write";
+        readonly 'track duplicate': "track.write";
+        readonly 'track get': "track.read";
+        readonly 'track list': "track.read";
+        readonly 'track rename': "track.write";
+        readonly 'track reorder': "track.write";
+        readonly 'track set': "track.write";
+        readonly 'track set-input': "track.write";
+        readonly 'track set-language': "track.write";
+        readonly 'transport loop': "transport.state";
+        readonly 'transport metronome': "transport.control";
+        readonly 'transport play': "transport.control";
+        readonly 'transport seek': "transport.control";
+        readonly 'transport set-loop': "transport.control";
+        readonly 'transport state': "transport.state";
+        readonly 'transport stop': "transport.control";
+        readonly 'transport toggle': "transport.control";
+        readonly 'ui get': "ui.state";
+        readonly 'ui hide-panel': "ui.control";
+        readonly 'ui hide-special-track': "ui.control";
+        readonly 'ui hide-window': "ui.control";
+        readonly 'ui show-panel': "ui.control";
+        readonly 'ui show-special-track': "ui.control";
+        readonly 'ui show-window': "ui.control";
+        readonly 'vocalparam layers': "vocalparam.read";
+        readonly 'vocalparam read': "vocalparam.read";
+        readonly 'vocalparam write': "vocalparam.write";
+        readonly 'voice collect': "voice.write";
+        readonly 'voice community': "voice.read";
+        readonly 'voice seeds': "voice.read";
+        readonly 'voice synth-models': "voice.read";
+    };
+    readonly fieldCapabilities: {};
+    readonly bulk: {
+        readonly params: {};
+        readonly result: {};
+    };
+};
 
 // @public
 export interface PublicBindings {

@@ -81,6 +81,23 @@ Abort the handshake.
 
 ***
 
+### surface?
+
+```ts
+optional surface?: DriverSurface;
+```
+
+The generated tables this driver carries, bundled. Defaults to
+`PUBLIC_SURFACE`, so a consumer of the published operations alone never
+sets it.
+
+A driver holding the privileged artifact passes `PRIVILEGED_SURFACE` from
+`@beatmagic/bridge-privileged-bindings` and gets those domain groups on its
+client beside the published ones (ADR 0094 §2, amended 2026-08-17). The
+type is not inferred from the value — name it on the call.
+
+***
+
 ### timeoutMs?
 
 ```ts

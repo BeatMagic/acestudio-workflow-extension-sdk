@@ -10,7 +10,7 @@ Success payload of `timesig list`.
 fingerprint: Fingerprint;
 ```
 
-Content fingerprint of the whole time-signature list. Carry it back as `--if-match` on `timesig set-at`, `timesig remove-at` or `timesig set` to fail STALE_WRITE instead of overwriting edits made since this read.
+Content fingerprint of the whole time-signature list. Carry it back as the reserved `fingerprint` argument on `timesig set-at`, `timesig remove-at` or `timesig set` to fail STALE_WRITE instead of overwriting edits made since this read.
 
 ***
 
@@ -20,7 +20,7 @@ Content fingerprint of the whole time-signature list. Carry it back as `--if-mat
 nativeUnit: "bar";
 ```
 
-Which unit the stored positions are authoritative in. Always `bar` for the time-signature list.
+The unit a `timesig list` position is authoritative in. Always `bar`: a signature entry is addressed by the bar it takes effect from, and the `tick` and `sec` reported beside it are derived from the current grid.
 
 ***
 
@@ -30,7 +30,7 @@ Which unit the stored positions are authoritative in. Always `bar` for the time-
 signatureCount: number;
 ```
 
-Number of entries in signatures (convenience field).
+Number of entries in `signatures` (convenience field).
 
 ***
 
@@ -46,7 +46,7 @@ signatures: {
 }[];
 ```
 
-All time-signature entries, in ascending barPos order. Dual-unit: `barPos` is authoritative, `tick` and `sec` are where that bar falls under the current meter and tempo.
+All time-signature entries, in ascending barPos order.
 
 #### barPos
 
@@ -54,7 +54,7 @@ All time-signature entries, in ascending barPos order. Dual-unit: `barPos` is au
 barPos: number;
 ```
 
-The bar this signature takes effect from, counted from 0 as the project stores it. The native unit, and what `set-at --bar-pos` takes verbatim. Reported as `bar` counting from 1 instead under `--bars human`.
+The bar this signature takes effect from, counted from 0 as the project stores it. The native unit, and what `set-at` takes verbatim.
 
 #### denominator
 

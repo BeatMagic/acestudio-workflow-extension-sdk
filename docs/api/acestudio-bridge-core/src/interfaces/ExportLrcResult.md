@@ -10,7 +10,7 @@ Success payload of `export lrc`.
 optional lineCount?: number;
 ```
 
-How many timed lyric lines were written. Zero means the track had no lyrics in range -- the file is still written, and still valid LRC.
+How many timed lyric lines were written. Zero means the track had no lyrics in range — the file is still written, and still valid LRC.
 
 ***
 

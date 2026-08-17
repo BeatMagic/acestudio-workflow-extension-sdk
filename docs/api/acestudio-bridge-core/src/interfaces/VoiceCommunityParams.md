@@ -7,7 +7,7 @@ Arguments for `voice community`.
 ### isMyCollection?
 
 ```ts
-optional isMyCollection?: boolean | null;
+optional isMyCollection?: boolean;
 ```
 
 Only return voices you have already collected.
@@ -17,7 +17,7 @@ Only return voices you have already collected.
 ### keyword?
 
 ```ts
-optional keyword?: string | null;
+optional keyword?: string;
 ```
 
 Filter by name substring, case-insensitive.
@@ -27,7 +27,7 @@ Filter by name substring, case-insensitive.
 ### language?
 
 ```ts
-optional language?: string | null;
+optional language?: string;
 ```
 
 Filter by language, as a full English name such as `Japanese`.
@@ -37,7 +37,7 @@ Filter by language, as a full English name such as `Japanese`.
 ### page?
 
 ```ts
-optional page?: number | null;
+optional page?: number;
 ```
 
 Which page to fetch, 0-based. Each page holds up to 30 voices. Defaults to the first page.
@@ -47,7 +47,7 @@ Which page to fetch, 0-based. Each page holds up to 30 voices. Defaults to the f
 ### tags?
 
 ```ts
-optional tags?: string[] | null;
+optional tags?: string[];
 ```
 
 Filter by tag name, case-insensitive, matching any of the given tags.

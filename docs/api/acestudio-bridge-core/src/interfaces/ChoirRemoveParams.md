@@ -10,14 +10,14 @@ Arguments for `choir remove`.
 member: number;
 ```
 
-*Required.** Which member to remove. `0` is the leader and is refused.
+Which member to remove. `0` is the leader and is refused.
 
 ***
 
 ### trackIndex?
 
 ```ts
-optional trackIndex?: number | null;
+optional trackIndex?: number;
 ```
 
 0-based index in the arrangement.
@@ -27,7 +27,7 @@ optional trackIndex?: number | null;
 ### trackUuid?
 
 ```ts
-optional trackUuid?: string | null;
+optional trackUuid?: string;
 ```
 
 Track UUID in braces format.

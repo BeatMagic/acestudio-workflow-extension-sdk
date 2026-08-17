@@ -10,7 +10,7 @@ Arguments for `generative sound-effects`.
 from: number;
 ```
 
-Where the generated clip starts. Ticks (`3840t`), clock time (`1.5s`), or a musical position (`4.1.0`).
+Where the generated clip starts, in ticks.
 
 ***
 
@@ -20,19 +20,17 @@ Where the generated clip starts. Ticks (`3840t`), clock time (`1.5s`), or a musi
 optional influence?: "low" | "mid" | "high";
 ```
 
-How strictly to follow the prompt: `low`, `mid` (default) or `high`.
+How much the prompt overrides what the source material suggests. The Sound Effects panel offers exactly these three steps rather than a continuous slider, and the contract keeps the panel's vocabulary instead of inventing a number the UI cannot express.
 
 ***
 
 ### loop?
 
 ```ts
-optional loop?: boolean | null;
+optional loop?: boolean;
 ```
 
 Generate a seamlessly loopable effect. Off by default.
-
-The clap id is `loopable` because `loop` is a Rust keyword, with the user-facing long name pinned back to `--loop` so the flag reads the way the panel's checkbox does; the wire key is `loop` to match.
 
 ***
 
@@ -52,7 +50,7 @@ The effect to generate ("distant thunder", "door creak"). Required.
 to: number;
 ```
 
-Where the generated clip ends (exclusive). This is what fixes the generation's length.
+Where the generated clip ends (exclusive), in ticks.
 
 ***
 
@@ -62,4 +60,4 @@ Where the generated clip ends (exclusive). This is what fixes the generation's l
 trackUuid: string;
 ```
 
-The Audio track the generated clip lands on, by id. Required: the panel takes it from the arrangement selection, which is not something a script can rely on (ADR 0087). Its content in the range is moved aside the same way the panel's own launch moves it, as one undo entry.
+The Audio track the generated clip lands on, by id.

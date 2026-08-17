@@ -4,13 +4,13 @@ Arguments for `job wait`.
 
 ## Properties
 
-### any
+### any?
 
 ```ts
-any: boolean;
+optional any?: boolean;
 ```
 
-Return as soon as the first job finishes, instead of waiting for all.
+Return as soon as the first job finishes, instead of waiting for all. Absent waits for all of them.
 
 ***
 
@@ -27,7 +27,7 @@ One or more job ids to wait on.
 ### timeoutMs?
 
 ```ts
-optional timeoutMs?: number | null;
+optional timeoutMs?: number;
 ```
 
-Maximum time to wait, e.g. `30s`, `500ms`, `5m`, `1h`. On expiry the CLI exits with code 4 and never cancels the job. Omit to wait indefinitely.
+Maximum time to wait, in milliseconds. On the CLI this bounds the whole client-side wait (exit code 4 on expiry, the job left untouched); an MCP peer reads it as the server-side long-poll cap (ADR 0092 §5). Omitted waits indefinitely.

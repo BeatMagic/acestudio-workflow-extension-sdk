@@ -7,7 +7,7 @@ Arguments for `sound-source list`.
 ### category?
 
 ```ts
-optional category?: string | null;
+optional category?: string;
 ```
 
 Filter AI instruments by category name, such as `Piano`.
@@ -17,7 +17,7 @@ Filter AI instruments by category name, such as `Piano`.
 ### keyword?
 
 ```ts
-optional keyword?: string | null;
+optional keyword?: string;
 ```
 
 Filter by name substring, case-insensitive.
@@ -27,19 +27,17 @@ Filter by name substring, case-insensitive.
 ### kind?
 
 ```ts
-optional kind?: 
-  | ("voice" | "choir" | "instrument" | "ensemble" | "external-instrument")[]
-  | null;
+optional kind?: ("voice" | "choir" | "instrument" | "ensemble" | "external-instrument")[];
 ```
 
-Only list sources of this kind. Repeatable, so `--kind voice --kind choir` gives you both. Omit for everything.
+Only list sources of these kinds. Omit for everything.
 
 ***
 
 ### language?
 
 ```ts
-optional language?: string | null;
+optional language?: string;
 ```
 
 Filter by language, as a full English name such as `Japanese`. Applies to voices and choirs; other kinds have no language.
@@ -49,7 +47,7 @@ Filter by language, as a full English name such as `Japanese`. Applies to voices
 ### model?
 
 ```ts
-optional model?: string | null;
+optional model?: string;
 ```
 
 Only list voices that work with this vocal synth model. Takes either a model name (`Verse24`) or a generation (`v1`, `v2`), and a generation selects the voices that generation recommends a model for.
@@ -59,17 +57,17 @@ Only list voices that work with this vocal synth model. Takes either a model nam
 ### origin?
 
 ```ts
-optional origin?: ("premade" | "cloned" | "community" | "blended")[] | null;
+optional origin?: ("premade" | "cloned" | "community" | "blended")[];
 ```
 
-Only list sources from this library. Repeatable. Omit for everything.
+Only list sources from these libraries. Omit for everything.
 
 ***
 
 ### showRefs?
 
 ```ts
-optional showRefs?: boolean | null;
+optional showRefs?: boolean;
 ```
 
 Show each source's `ref` in the human listing. Refs are always present in the JSON payload; this is for reading them without first provoking an ambiguity error.
@@ -79,7 +77,7 @@ Show each source's `ref` in the human listing. Refs are always present in the JS
 ### tags?
 
 ```ts
-optional tags?: string[] | null;
+optional tags?: string[];
 ```
 
 Filter by tag name, case-insensitive, matching any of the given tags.
@@ -89,7 +87,7 @@ Filter by tag name, case-insensitive, matching any of the given tags.
 ### vendor?
 
 ```ts
-optional vendor?: string | null;
+optional vendor?: string;
 ```
 
 Filter external instruments by plugin vendor.

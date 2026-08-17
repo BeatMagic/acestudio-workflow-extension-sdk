@@ -41,7 +41,7 @@ Whether the file is still on disk. A recent entry outlives the file it names.
 lastRead: string;
 ```
 
-When the project was last opened, ISO 8601. Empty if the record carries no timestamp.
+When the project was last opened, ISO 8601. Empty if the record never got a timestamp written.
 
 #### path
 

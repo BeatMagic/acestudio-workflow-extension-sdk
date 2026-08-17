@@ -10,7 +10,7 @@ Success payload of `timesig get`.
 signatureCount: number;
 ```
 
-Number of entries in signatures (convenience field).
+Number of entries in `signatures` (convenience field).
 
 ***
 

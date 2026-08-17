@@ -10,7 +10,7 @@ Success payload of `import file`.
 optional clipCount?: number;
 ```
 
-Project kinds only: how many clips were placed and are addressable in `clips`.
+Foreign-project kinds only: how many clips were placed and are addressable in `clips`.
 
 ***
 
@@ -30,7 +30,7 @@ Media kinds only: display name of the placed clip.
 optional clips?: Record<string, unknown>[];
 ```
 
-Project kinds only: one row per placed clip, each with clipUuid / clipType / clipName / geometry. A MIDI file with four tracks yields four rows.
+Foreign-project kinds only: one row per placed clip, each an open map — this surface declares no fixed key set for an entry. A MIDI file with four tracks yields four rows.
 
 ***
 
@@ -40,7 +40,7 @@ Project kinds only: one row per placed clip, each with clipUuid / clipType / cli
 optional clipType?: string;
 ```
 
-Media kinds only: clip type the extension resolved to, 'audio' or 'video' (a still image becomes a Video clip).
+Media kinds only: clip type the extension resolved to, `audio` or `video` (a still image becomes a Video clip).
 
 ***
 
@@ -50,7 +50,17 @@ Media kinds only: clip type the extension resolved to, 'audio' or 'video' (a sti
 optional clipUuid?: string;
 ```
 
-Media kinds only: id of the placed clip -- the handle every later clip write takes.
+Media kinds only: id of the placed clip — the handle every later clip write takes.
+
+***
+
+### createdTrack?
+
+```ts
+optional createdTrack?: boolean;
+```
+
+Media kinds only: whether this call created the track the clip landed on, rather than placing it on one that already existed. Two ways it becomes true: the region had no track to place on, or the target span was occupied and the clip was bumped to a fresh track above it. Neither is predictable from the arguments.
 
 ***
 
@@ -60,7 +70,7 @@ Media kinds only: id of the placed clip -- the handle every later clip write tak
 optional geometry?: Record<string, unknown>;
 ```
 
-Media kinds only: the placed clip's geometry, in ticks -- the same shape `clip get` reports, so `end` can be read rather than computed.
+Media kinds only: the placed clip's geometry, in ticks — the same shape `clip get` reports. An open map here: this surface declares no fixed key set for it.
 
 ***
 
@@ -70,7 +80,7 @@ Media kinds only: the placed clip's geometry, in ticks -- the same shape `clip g
 optional loadingState?: string;
 ```
 
-Audio clips only: 'not_loaded', 'loaded_success' or 'loaded_failed'. Usually 'not_loaded' -- decoding continues after this command returns. Poll `clip audio-content` and compare its fingerprint to see it settle.
+Audio clips only: `not_loaded`, `loaded_success` or `loaded_failed`. Usually `not_loaded` — decoding continues after this call returns. Poll `clip audio-content` and compare its fingerprint to see it settle.
 
 ***
 
@@ -80,7 +90,7 @@ Audio clips only: 'not_loaded', 'loaded_success' or 'loaded_failed'. Usually 'no
 optional naturalDur?: number;
 ```
 
-Media kinds only: the source's own length in ticks, before any --clip-in / --dur window was applied. Compare with geometry to see how much of the file is showing.
+Media kinds only: the source's own length in ticks, before any `clipIn` / `dur` window was applied, measured at the position the clip landed on — the same axis `dur` is on, so a caller can size a window from it. Compare with `geometry` to see how much of the file is showing.
 
 ***
 
@@ -90,7 +100,7 @@ Media kinds only: the source's own length in ticks, before any --clip-in / --dur
 optional sourceFormat?: string;
 ```
 
-Project kinds only: 'midi', 'musicxml' or 'ufdata'. Its presence is what distinguishes the two output shapes.
+Foreign-project kinds only: `midi`, `musicxml` or `ufdata`. Its presence is what distinguishes the two output shapes.
 
 ***
 
@@ -110,7 +120,7 @@ The path that was imported, echoed back unchanged. The only field both shapes ca
 optional tempoImported?: boolean;
 ```
 
-Project kinds only: whether the source's tempo map was applied to the project (echoes --with-tempo, default false).
+Foreign-project kinds only: whether the source's tempo map was applied to the project (echoes `withTempo`, default false).
 
 ***
 
@@ -120,7 +130,7 @@ Project kinds only: whether the source's tempo map was applied to the project (e
 optional timeSignaturesImported?: boolean;
 ```
 
-Project kinds only: whether the source's time signatures were applied (echoes --with-time-signatures, default false).
+Foreign-project kinds only: whether the source's time signatures were applied (echoes `withTimeSignatures`, default false).
 
 ***
 
@@ -130,7 +140,7 @@ Project kinds only: whether the source's time signatures were applied (echoes --
 optional trackCount?: number;
 ```
 
-Project kinds only: how many tracks the source file held. Larger than clipCount only if a placed clip could not be identified afterwards.
+Foreign-project kinds only: how many tracks the source file held. Larger than `clipCount` only if a placed clip could not be identified afterwards.
 
 ***
 
@@ -141,3 +151,13 @@ optional trackName?: string;
 ```
 
 Media kinds only: name of the track the clip landed on, which may be one this command created.
+
+***
+
+### trackUuid?
+
+```ts
+optional trackUuid?: string;
+```
+
+Media kinds only: id of the track the clip landed on — the handle a later track write takes. Not derivable from `trackName`, which is a display string and not unique.

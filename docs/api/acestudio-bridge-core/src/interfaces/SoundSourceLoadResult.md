@@ -7,10 +7,10 @@ Success payload of `sound-source load`.
 ### format?
 
 ```ts
-optional format?: "vst3" | "vst2" | "au";
+optional format?: string;
 ```
 
-Which plugin format was mounted. Always reported for an external instrument, including when it was defaulted rather than requested, so a caller knows what it actually got.
+Which plugin format was mounted (`vst3`, `vst2`, `au`). Always reported for an external instrument, including when it was defaulted rather than requested, so a caller knows what it actually got.
 
 ***
 
@@ -20,7 +20,7 @@ Which plugin format was mounted. Always reported for an external instrument, inc
 kind: "voice" | "choir" | "instrument" | "ensemble" | "external-instrument";
 ```
 
-What kind of source landed.
+What a sound source is — the roster every `kind` takes, whether it filters a listing or reports what a row turned out to be. A track carries exactly one kind at a time, and loading a source of another kind converts the track to suit it.
 
 ***
 
@@ -60,7 +60,7 @@ Display name of that source.
 ref: string;
 ```
 
-Ref of the source that landed, resolved from `--source`.
+Ref of the source that landed, resolved from `source`.
 
 ***
 
@@ -80,7 +80,7 @@ trackIndex: number;
 trackType: string;
 ```
 
-What the track ended up as. Loading a voice onto a MIDI track converts it to 'Sing'.
+What the track ended up as. Loading a voice onto a MIDI track converts it to `Sing`.
 
 ***
 

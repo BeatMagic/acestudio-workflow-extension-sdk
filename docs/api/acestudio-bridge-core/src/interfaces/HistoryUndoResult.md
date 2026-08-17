@@ -43,7 +43,7 @@ entry: {
 };
 ```
 
-The entry this call moved over: undone by `history undo`, re-applied by `history redo`.
+One stack entry, as every verb here reports it.
 
 #### actor
 

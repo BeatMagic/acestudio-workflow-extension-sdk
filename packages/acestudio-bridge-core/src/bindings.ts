@@ -197,42 +197,25 @@ function failureName(cause: unknown): string {
 /**
  * Add each declared channel's subscription to its domain group.
  *
- * One wire notification carries every channel, so there is one subscription on
- * the peer and the demultiplexing happens here. There is no subscribe call to
- * make: the host sends a channel to whoever may read it, so what a listener
- * registers is purely local — which is exactly why the guard matters. Without it
- * an ungranted subscription is not an error, it is a callback that never fires,
- * and nothing distinguishes that from a subject that simply has not changed.
+ * A channel is its own wire notification, so a listener binds straight onto the
+ * one it wants and the host does the routing. What this adds is the guard:
+ * subscribing costs nothing on the wire, so an ungranted subscription would
+ * otherwise be a callback that never fires — indistinguishable from a subject
+ * that simply has not changed. Refusing at the subscribe is what makes the
+ * difference visible, with the same error a call to an ungranted operation
+ * raises.
  */
 function bindChannels(peer: BridgePeer, grant: Grant, root: Record<string, unknown>, debug: DebugLog): void {
-  const listeners = new Map<string, Set<(event: ChangeEvent) => void>>();
-  new ChangeClient(peer).onStateChanged((event) => {
-    // A channel with no listeners — including one this artifact cannot name —
-    // is dropped. The host decides what to send; this side decides what it
-    // asked to hear about.
-    const forChannel = [...(listeners.get(event.channel) ?? [])];
-    debug(`channel ${event.channel}: ${String(forChannel.length)} listening`);
-    for (const listener of forChannel) {
-      listener(event);
-    }
-  });
-
   for (const descriptor of NOTIFICATION_CHANNELS) {
     const subscribe = (listener: (event: ChangeEvent) => void): Unsubscribe => {
       if (!grant.has(descriptor.capability)) {
-        debug(`channel ${descriptor.channel}: subscription refused, needs ${descriptor.capability}`);
-        throw channelDenied(descriptor.channel, descriptor.capability);
+        debug(
+          `channel ${descriptor.notification}: subscription refused, needs ${descriptor.capability}`,
+        );
+        throw channelDenied(descriptor.notification, descriptor.capability);
       }
-      debug(`channel ${descriptor.channel}: subscribed`);
-      let group = listeners.get(descriptor.channel);
-      if (group === undefined) {
-        group = new Set();
-        listeners.set(descriptor.channel, group);
-      }
-      group.add(listener);
-      return () => {
-        group.delete(listener);
-      };
+      debug(`channel ${descriptor.notification}: subscribed`);
+      return peer.subscribe<ChangeEvent>(descriptor.notification, listener);
     };
     const domain = (root[domainKey(descriptor.domain)] ??= {}) as Record<string, unknown>;
     domain[descriptor.method] = subscribe;

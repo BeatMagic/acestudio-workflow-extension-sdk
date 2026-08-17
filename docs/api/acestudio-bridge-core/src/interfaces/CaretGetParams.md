@@ -7,7 +7,7 @@ Arguments for `caret get`.
 ### scope?
 
 ```ts
-optional scope?: string | null;
+optional scope?: string;
 ```
 
-Scope to query: `"global"`, `"arrangement"` (alias for global), or `"editor"` (pattern editor, if open). Defaults to `"global"` when omitted.
+Scope to query: `"global"`, `"arrangement"` (an alias for global), or `"editor"` (the pattern editor, if one is open). Omitted reads global.

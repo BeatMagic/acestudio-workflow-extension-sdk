@@ -10,7 +10,7 @@ Arguments for `choir reorder`.
 member: number;
 ```
 
-*Required.** Which member to move.
+Which member to move.
 
 ***
 
@@ -20,14 +20,14 @@ member: number;
 to: number;
 ```
 
-*Required.** Where to move it. `0` promotes it to leader.
+Where to move it. `0` promotes it to leader.
 
 ***
 
 ### trackIndex?
 
 ```ts
-optional trackIndex?: number | null;
+optional trackIndex?: number;
 ```
 
 0-based index in the arrangement.
@@ -37,7 +37,7 @@ optional trackIndex?: number | null;
 ### trackUuid?
 
 ```ts
-optional trackUuid?: string | null;
+optional trackUuid?: string;
 ```
 
 Track UUID in braces format.

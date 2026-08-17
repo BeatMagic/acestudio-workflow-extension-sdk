@@ -10,7 +10,7 @@ Arguments for `export vocal-sample`.
 clipUuids: string[];
 ```
 
-Which clips to write. Repeatable; at least one is required. Clips from several tracks are kept grouped by track in the file.
+Which clips to write. At least one is required. Clips from several tracks are kept grouped by track in the file.
 
 ***
 

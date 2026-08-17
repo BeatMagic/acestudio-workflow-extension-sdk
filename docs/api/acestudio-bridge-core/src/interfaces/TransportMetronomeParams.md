@@ -10,4 +10,4 @@ Arguments for `transport metronome`.
 on: boolean;
 ```
 
-Desired metronome state: `on` or `off`.
+Desired metronome state: true = on, false = off.

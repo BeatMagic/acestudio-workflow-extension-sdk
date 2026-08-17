@@ -7,17 +7,17 @@ Arguments for `choir set`.
 ### gain?
 
 ```ts
-optional gain?: number | null;
+optional gain?: number;
 ```
 
-Member gain in dB. Requires `--member`.
+Member gain in dB. Requires `member`.
 
 ***
 
 ### member?
 
 ```ts
-optional member?: number | null;
+optional member?: number;
 ```
 
 Which member to configure. `0` is the leader. Omit to configure the choir as a whole instead.
@@ -27,17 +27,17 @@ Which member to configure. `0` is the leader. Omit to configure the choir as a w
 ### mute?
 
 ```ts
-optional mute?: boolean | null;
+optional mute?: boolean;
 ```
 
-Whether to mute this member. Requires `--member`.
+Whether to mute this member. Requires `member`.
 
 ***
 
 ### offset?
 
 ```ts
-optional offset?: number | null;
+optional offset?: number;
 ```
 
 Timing offset between members, in milliseconds. Choir-level.
@@ -47,7 +47,7 @@ Timing offset between members, in milliseconds. Choir-level.
 ### spread?
 
 ```ts
-optional spread?: number | null;
+optional spread?: number;
 ```
 
 Stereo spread across the members, 0 to 1. Choir-level.
@@ -57,7 +57,7 @@ Stereo spread across the members, 0 to 1. Choir-level.
 ### trackIndex?
 
 ```ts
-optional trackIndex?: number | null;
+optional trackIndex?: number;
 ```
 
 0-based index in the arrangement.
@@ -67,7 +67,7 @@ optional trackIndex?: number | null;
 ### trackUuid?
 
 ```ts
-optional trackUuid?: string | null;
+optional trackUuid?: string;
 ```
 
 Track UUID in braces format.

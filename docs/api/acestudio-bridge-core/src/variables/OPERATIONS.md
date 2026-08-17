@@ -1196,7 +1196,7 @@ const OPERATIONS: readonly [{
   method: "delete";
   mutating: true;
   path: "track delete";
-  takesParams: false;
+  takesParams: true;
   ungated: false;
 }, {
   capability: "track.write";
@@ -1415,7 +1415,6 @@ const OPERATIONS: readonly [{
   takesParams: true;
   ungated: false;
 }, {
-  bulkEncoding: "base64";
   capability: "vocalparam.read";
   domain: "vocalparam";
   fingerprintPrecondition: false;
@@ -1425,7 +1424,6 @@ const OPERATIONS: readonly [{
   takesParams: true;
   ungated: false;
 }, {
-  bulkEncoding: "base64";
   capability: "vocalparam.write";
   domain: "vocalparam";
   fingerprintPrecondition: true;

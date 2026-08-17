@@ -7,7 +7,7 @@ Arguments for `sound-source set`.
 ### member?
 
 ```ts
-optional member?: number | null;
+optional member?: number;
 ```
 
 Which member to retarget on a choir or ensemble track. `0` is the leader. Omit to set the model for the whole source, which on a single-voice track is the only thing there is to set.
@@ -20,16 +20,14 @@ Which member to retarget on a choir or ensemble track. `0` is the leader. Omit t
 model: string;
 ```
 
-**Required.** Which vocal synth model to sing through, by model name (`Verse24`) or by generation (`v1`, `v2`). A generation picks that generation's recommended model for this voice.
-
-A name that names no model is an error; nothing is substituted, so a typo surfaces here rather than as a track that quietly sings through something else.
+**Required.** Which vocal synth model to sing through, by model name (`Verse24`) or by generation (`v1`, `v2`). A generation picks that generation's recommended model for this voice. A name that names no model is an error; nothing is substituted, so a typo surfaces here rather than as a track that quietly sings through something else.
 
 ***
 
 ### trackIndex?
 
 ```ts
-optional trackIndex?: number | null;
+optional trackIndex?: number;
 ```
 
 0-based index in the arrangement.
@@ -39,7 +37,7 @@ optional trackIndex?: number | null;
 ### trackUuid?
 
 ```ts
-optional trackUuid?: string | null;
+optional trackUuid?: string;
 ```
 
 Track UUID in braces format.

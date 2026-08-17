@@ -7,27 +7,27 @@ Arguments for `transport set-loop`.
 ### active?
 
 ```ts
-optional active?: boolean | null;
+optional active?: boolean;
 ```
 
-Whether the loop region is engaged. Pass `--active` to enable, `--no-active` to disable. Omit to leave the flag untouched.
+Whether the loop region is engaged. Omit to leave the flag untouched.
 
 ***
 
 ### endTick?
 
 ```ts
-optional endTick?: number | null;
+optional endTick?: number;
 ```
 
-Loop region end (exclusive). Ticks (`3840t`), clock time (`1.5s`), or musical position (`4.1.0`). See `help time-values`.
+Exclusive upper bound, in project ticks. Must be greater than `startTick`.
 
 ***
 
 ### startTick?
 
 ```ts
-optional startTick?: number | null;
+optional startTick?: number;
 ```
 
-Loop region start. Ticks (`3840t`), clock time (`1.5s`), or musical position (`4.1.0`). Must be \< `end-tick`. See `help time-values`.
+Inclusive lower bound, in project ticks. Must be non-negative and less than `endTick`.

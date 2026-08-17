@@ -60,11 +60,11 @@ onChanged(listener): Unsubscribe;
 
 Transport moved: play, stop, a user seek, or the loop region. `changes`
 carries `playing`, `position`, `loop`. Transitions only — the continuous
-playback position is deliberately not a channel, because a re-fetch per frame
-is what the coalescing cannot save; a throttled position feed is its own
+playback position is deliberately not a subject here, because a re-fetch per
+frame is what the coalescing cannot save; a throttled position feed is its own
 mechanism. A peer re-fetches with `transport state`.
 
-Listen for changes on the `transport` channel. The event is a hint to re-read, not the new state.
+Listen for `transport.changed`. The event is a hint to re-read, not the new state.
 
 Requires the `transport.state` capability — an ungranted subscription is refused at this call, not silently never delivered.
 

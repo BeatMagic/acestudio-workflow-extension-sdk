@@ -7,7 +7,7 @@ Arguments for `blend create`.
 ### avatar?
 
 ```ts
-optional avatar?: number | null;
+optional avatar?: number;
 ```
 
 Avatar id. Omit to fall back to the first seed's avatar.
@@ -17,7 +17,7 @@ Avatar id. Omit to fall back to the first seed's avatar.
 ### language?
 
 ```ts
-optional language?: string | null;
+optional language?: string;
 ```
 
 The blend's native language, as a full English name. Omit to take the first one the model and seeds allow.
@@ -40,14 +40,14 @@ model: string;
 name: string;
 ```
 
-*Required.** Display name for the new blend.
+**Required.** Display name for the new blend.
 
 ***
 
 ### tags?
 
 ```ts
-optional tags?: string[] | null;
+optional tags?: string[];
 ```
 
 Tag names to attach, for filtering in `sound-source list`.

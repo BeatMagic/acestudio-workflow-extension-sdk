@@ -10,7 +10,7 @@ Arguments for `convert tick-to-measure`.
 considerBeatMode: boolean;
 ```
 
-When true, return bar + beat + tickOffset; when false, return bar + tickOffset only.
+When true, answer bar + beat + tickOffset; when false, answer bar + tickOffset only.
 
 ***
 
@@ -20,4 +20,4 @@ When true, return bar + beat + tickOffset; when false, return bar + tickOffset o
 tick: number;
 ```
 
-Project tick position to convert (must be \>= 0).
+Project tick position to convert. Must be non-negative — the handler refuses a negative value.

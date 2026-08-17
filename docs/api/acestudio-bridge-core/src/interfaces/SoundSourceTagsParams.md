@@ -7,9 +7,7 @@ Arguments for `sound-source tags`.
 ### kind?
 
 ```ts
-optional kind?: 
-  | ("voice" | "choir" | "instrument" | "ensemble" | "external-instrument")[]
-  | null;
+optional kind?: ("voice" | "choir" | "instrument" | "ensemble" | "external-instrument")[];
 ```
 
-Only return the filter vocabulary that applies to this kind. Repeatable. Omit for everything.
+Only return the filter vocabulary that applies to these kinds. Omit for everything.

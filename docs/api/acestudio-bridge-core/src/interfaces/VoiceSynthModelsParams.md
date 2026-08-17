@@ -7,7 +7,7 @@ Arguments for `voice synth-models`.
 ### language?
 
 ```ts
-optional language?: string | null;
+optional language?: string;
 ```
 
 Only list models that can sing this language, as a full English name.

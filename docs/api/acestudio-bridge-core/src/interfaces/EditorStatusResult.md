@@ -70,7 +70,7 @@ Clip type of the active editor: Sing, Instrument, GenericMidi, Audio, or Chord. 
 isAvailable: boolean;
 ```
 
-Whether a pattern editor has valid content loaded. When false, the clip-context fields are absent.
+Whether a pattern editor has valid content loaded. When false, every clip-context field below is absent.
 
 ***
 

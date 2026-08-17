@@ -4,10 +4,20 @@ Arguments for `convert time-to-tick`.
 
 ## Properties
 
-### time
+### time?
 
 ```ts
-time: number;
+optional time?: number;
 ```
 
-Time in seconds to convert (must be \>= 0.0).
+Time in seconds to convert. Must be non-negative — the handler refuses a negative value.
+
+***
+
+### times?
+
+```ts
+optional times?: number[];
+```
+
+Times in seconds to convert. Each must be non-negative. An empty array answers an empty `ticks`.

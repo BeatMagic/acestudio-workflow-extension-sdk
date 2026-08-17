@@ -10,7 +10,7 @@ Success payload of `project collect-save`.
 collected: "copied" | "noNeed";
 ```
 
-`copied` = external media was pulled into the bundle; `noNeed` = every referenced file already lived inside it.
+What the collect step of `project collect-save` had to do before the save.
 
 ***
 
@@ -20,8 +20,6 @@ collected: "copied" | "noNeed";
 isNewProject: boolean;
 ```
 
-True for a just-created project that has never been saved.
-
 ***
 
 ### isTempProject
@@ -29,8 +27,6 @@ True for a just-created project that has never been saved.
 ```ts
 isTempProject: boolean;
 ```
-
-True while the project lives in the temporary workspace rather than a saved bundle.
 
 ***
 
@@ -40,8 +36,6 @@ True while the project lives in the temporary workspace rather than a saved bund
 projectName: string;
 ```
 
-Project filename without extension. Empty for a temporary or never-saved project.
-
 ***
 
 ### projectPath
@@ -50,8 +44,6 @@ Project filename without extension. Empty for a temporary or never-saved project
 projectPath: string;
 ```
 
-Absolute path of the project file. Empty for a temporary project.
-
 ***
 
 ### savedPath
@@ -59,5 +51,3 @@ Absolute path of the project file. Empty for a temporary project.
 ```ts
 savedPath: string;
 ```
-
-Where the project was actually written. A save wraps the requested path in a project folder, so this is the file to reopen -- not necessarily the path that was asked for.

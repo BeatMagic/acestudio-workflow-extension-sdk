@@ -10,7 +10,7 @@ Success payload of `track create`.
 optional language?: string;
 ```
 
-Full English name of the track's default note language. Present only when `track create --source` built a Sing track, which is the one moment a track's language is decided; changing it afterwards is `track set-language`.
+Full English name of the track's default note language. Present only when `track create`'s `source` built a Sing track — the one moment a track's language is decided.
 
 ***
 
@@ -30,7 +30,7 @@ Which index space `trackIndex` counts in: 'arrangement' (the main track list), '
 optional soundSourceName?: string;
 ```
 
-The sound source the track was created with. Present only when `track create --source` put one there.
+The sound source the track was created with. Present only when `track create`'s `source` put one there.
 
 ***
 

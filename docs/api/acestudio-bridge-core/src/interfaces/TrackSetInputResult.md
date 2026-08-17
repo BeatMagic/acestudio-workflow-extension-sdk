@@ -24,7 +24,7 @@ optional midiInput?: {
 };
 ```
 
-Which MIDI input the track now records from. Note tracks only.
+Which MIDI input the track now records from, as `track set-input` reports it.
 
 #### channel?
 
@@ -40,7 +40,7 @@ Which channel it listens on: '1' through '16', or 'all'.
 optional deviceName?: string;
 ```
 
-The device name, when `sourceType` is 'custom'.
+The device name, when `sourceType` is custom.
 
 #### sourceType?
 
@@ -48,7 +48,7 @@ The device name, when `sourceType` is 'custom'.
 optional sourceType?: "keyboard" | "custom" | "none" | "all";
 ```
 
-Where MIDI comes from.
+Where a note track's MIDI takes its input from. `custom` is the only value that carries a device: it means one named device, reported in the sibling `deviceName`. `all` listens to every connected device at once and `none` listens to nothing, so neither names one. `keyboard` is the computer keyboard playing notes, not a MIDI device at all. The values are the same vocabulary `track set-input`'s `midiDevice` takes, so a value read here can be handed straight back to a write.
 
 ***
 
@@ -58,7 +58,7 @@ Where MIDI comes from.
 optional recordMode?: "monophonic" | "polyphonic";
 ```
 
-How chords played onto a Sing track are captured. Sing tracks only.
+How a chord played onto a Sing track is captured. Exactly one applies at a time: `monophonic` trims the overlaps into one vocal part, `polyphonic` splits the chord into separate parts.
 
 ***
 

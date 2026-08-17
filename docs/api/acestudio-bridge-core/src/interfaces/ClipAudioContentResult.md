@@ -20,7 +20,7 @@ Project-relative path (starting with './') in full; absolute paths are truncated
 fingerprint: Fingerprint;
 ```
 
-Content fingerprint of the clip's source media -- the path and its load state (ADR 0088 §5). No write on this surface replaces a clip's media, so this is a change-detection token rather than an `--if-match` precondition: re-read and compare to learn that the media was swapped or finished loading. Hashed over the full path even though `audioFileName` is redacted, so a swap between same-named files in different folders still shows up.
+Content fingerprint of the clip's source media (ADR 0088 §5): the path and its load state. No write on this surface replaces a clip's media, so this is a change-detection token rather than a precondition — re-read and compare to learn that the media was swapped or finished loading. Hashed over the full path even though `audioFileName` is redacted, so a swap between same-named files in different folders still shows up.
 
 ***
 
@@ -30,4 +30,4 @@ Content fingerprint of the clip's source media -- the path and its load state (A
 loadingState: string;
 ```
 
-Audio load state: 'not_loaded', 'loaded_success', or 'loaded_failed'.
+Audio load state: `not_loaded`, `loaded_success`, or `loaded_failed`.

@@ -10,7 +10,7 @@ Success payload of `caret get`.
 focus: string;
 ```
 
-Which UI area currently holds caret focus: 'arrangement' (track view) or 'editor' (pattern editor).
+Which UI area holds caret focus: `arrangement` (track view) or `editor` (pattern editor). Folded in from the retired `marker get-focus`, because a caret position without the view that owns it is ambiguous.
 
 ***
 
@@ -20,7 +20,7 @@ Which UI area currently holds caret focus: 'arrangement' (track view) or 'editor
 scope: string;
 ```
 
-The scope actually used: 'global' or 'editor' ('arrangement' is normalized to 'global').
+The scope actually used — `global` or `editor`. `arrangement` normalizes to `global`, so the answer names one of the two the caret really has.
 
 ***
 
@@ -30,7 +30,7 @@ The scope actually used: 'global' or 'editor' ('arrangement' is normalized to 'g
 tick: number;
 ```
 
-Caret position in ticks: global ticks for 'global' scope, local ticks inside the open clip for 'editor' scope.
+Caret position in ticks: global ticks under `global` scope, ticks local to the open clip under `editor` scope.
 
 ***
 

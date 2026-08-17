@@ -53,7 +53,7 @@ Stack entries newest first (descending index). Truncated to `limit` when one was
 actor: string;
 ```
 
-The peer that authored the entry, or empty when the user authored it in Studio directly.
+The peer that authored the entry, or empty for a user edit.
 
 #### applied
 
@@ -77,7 +77,7 @@ The entry's 0-based position on the stack, oldest = 0.
 name: string;
 ```
 
-The entry's user-readable name, as shown in Studio's Undo menu. Localized to the app language.
+The entry's user-readable name.
 
 ***
 

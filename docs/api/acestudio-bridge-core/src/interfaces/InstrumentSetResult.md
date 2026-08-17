@@ -17,10 +17,10 @@ Whether the instrument is processing. A disabled instrument stays mounted with i
 ### format?
 
 ```ts
-optional format?: "vst3" | "vst2" | "au";
+optional format?: string;
 ```
 
-Which format is mounted.
+Which format is mounted: `vst3`, `vst2`, or `au`. Absent when the scan reported none.
 
 ***
 
@@ -30,7 +30,7 @@ Which format is mounted.
 midiChannel: string;
 ```
 
-Which MIDI channel it listens on: '1' through '16'. Never 'all' — a mounted instrument addresses exactly one channel.
+Which MIDI channel it listens on: `1` through `16`. Never `all` — a mounted instrument addresses exactly one channel.
 
 ***
 
@@ -70,4 +70,4 @@ UUID of that track.
 optional vendor?: string;
 ```
 
-Plugin vendor.
+Plugin vendor. Absent when the scan reported none.

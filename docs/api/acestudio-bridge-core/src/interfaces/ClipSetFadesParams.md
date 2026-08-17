@@ -10,54 +10,54 @@ Arguments for `clip set-fades`.
 clipUuids: string[];
 ```
 
-UUID of the target clip (single-clip form). Repeat the flag exactly twice for the crossfade form.
+UUID of the target clip (single-clip form). Repeat exactly twice for the crossfade form.
 
 ***
 
 ### crossfade?
 
 ```ts
-optional crossfade?: number | null;
+optional crossfade?: number;
 ```
 
-Crossfade length, for the two-clip form. Clock time (`1.5s`, `500ms`) or ticks (`240t`); `0s` removes it.
+Crossfade length in seconds, for the two-clip form; `0` removes it.
 
 ***
 
 ### fadeIn?
 
 ```ts
-optional fadeIn?: number | null;
+optional fadeIn?: number;
 ```
 
-Fade-in length. Clock time (`1.5s`, `500ms`) or ticks (`240t`); `0s` removes the fade. Single-clip form only.
+Fade-in length in seconds; `0` removes the fade. Single-clip form only.
 
 ***
 
 ### fadeInShape?
 
 ```ts
-optional fadeInShape?: number[] | null;
+optional fadeInShape?: number[];
 ```
 
-Fade-in curve shape as `x,y`, each in [-0.5, 0.5]. `0,0` is linear.
+Fade-in curve shape as `[x, y]`, each in [-0.5, 0.5]. `[0, 0]` is linear.
 
 ***
 
 ### fadeOut?
 
 ```ts
-optional fadeOut?: number | null;
+optional fadeOut?: number;
 ```
 
-Fade-out length. Clock time (`1.5s`, `500ms`) or ticks (`240t`); `0s` removes the fade. Single-clip form only.
+Fade-out length in seconds; `0` removes the fade. Single-clip form only.
 
 ***
 
 ### fadeOutShape?
 
 ```ts
-optional fadeOutShape?: number[] | null;
+optional fadeOutShape?: number[];
 ```
 
-Fade-out curve shape as `x,y`, each in [-0.5, 0.5]. `0,0` is linear.
+Fade-out curve shape as `[x, y]`, each in [-0.5, 0.5]. `[0, 0]` is linear.

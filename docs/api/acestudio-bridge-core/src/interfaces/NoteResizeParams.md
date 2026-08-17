@@ -10,7 +10,7 @@ Arguments for `note resize`.
 dur: number;
 ```
 
-New duration for every named note. Ticks (`480t`), a note value (`1/4`, `1/8.`), beats (`2b`), or measures (`1bar`). Must be positive. See `help time-values`.
+New duration for every named note, in ticks. Must be positive.
 
 ***
 
@@ -20,4 +20,4 @@ New duration for every named note. Ticks (`480t`), a note value (`1/4`, `1/8.`),
 noteUuids: string[];
 ```
 
-UUIDs of the notes to resize, from `clip note-content`. Repeat the flag or pass several values after one flag.
+UUIDs of the notes to resize, from `clip note-content`.

@@ -30,7 +30,7 @@ Exclusive upper bound, in project ticks.
 fingerprint: Fingerprint;
 ```
 
-Content fingerprint of the loop region; carry into a later `transport set-loop` to fail loudly (STALE_WRITE) if the region changed in between.
+Content fingerprint of the loop region (ADR 0088 §5); carry it into a later `transport set-loop` to fail loudly (STALE_WRITE) if the region changed in between.
 
 ***
 

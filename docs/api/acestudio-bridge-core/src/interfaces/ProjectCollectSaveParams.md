@@ -7,7 +7,7 @@ Arguments for `project collect-save`.
 ### path?
 
 ```ts
-optional path?: string | null;
+optional path?: string;
 ```
 
 Destination .acep path. Omit to collect into the current project and save in place (which needs a project that has been saved before).

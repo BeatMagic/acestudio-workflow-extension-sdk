@@ -42,6 +42,8 @@ head: {
 };
 ```
 
+One note's full row: the geometry every note carries, plus the fields its clip type adds. Shared by `note split` (`head`/`tail`) and `note set-articulation` (`notes`) — `note get` answers the same fields flattened at its own top level rather than nested under one, so it is not declared against this type.
+
 #### articulation?
 
 ```ts
@@ -159,6 +161,8 @@ tail: {
   tailConsonants?: number[];
 };
 ```
+
+One note's full row: the geometry every note carries, plus the fields its clip type adds. Shared by `note split` (`head`/`tail`) and `note set-articulation` (`notes`) — `note get` answers the same fields flattened at its own top level rather than nested under one, so it is not declared against this type.
 
 #### articulation?
 

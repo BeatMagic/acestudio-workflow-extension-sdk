@@ -19,6 +19,8 @@ The length of `tracks` — the arrangement's content (non-empty-slot) track coun
 ```ts
 tracks: {
   clipCount: number;
+  isProtected?: boolean;
+  protectedRole?: string;
   region: string;
   soundSourceName?: string;
   trackIndex: number;
@@ -37,6 +39,22 @@ clipCount: number;
 ```
 
 Number of clips (patterns) on the track.
+
+#### isProtected?
+
+```ts
+optional isProtected?: boolean;
+```
+
+Whether this marker track is system-owned and so protected from user delete and rename. **Marker tracks only** — omitted for every other type, which cannot be protected at all, rather than reported false.
+
+#### protectedRole?
+
+```ts
+optional protectedRole?: string;
+```
+
+Which system role a protected marker track fills: `sections` or `lyrics`. Stable and locale-independent, unlike `trackName`, which is the localized display string derived from it. Reported because it is the idempotency key `track ensure-system` is addressed by: without it, the only way to learn which marker track holds which role is to call `track ensure-system` again and read back the id, turning an observation into a write-shaped probe. **Protected marker tracks only** — omitted for an ordinary one, which fills no role.
 
 #### region
 

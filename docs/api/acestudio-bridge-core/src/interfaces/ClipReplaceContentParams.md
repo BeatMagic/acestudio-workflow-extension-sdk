@@ -10,7 +10,7 @@ Arguments for `clip replace-content`.
 clipUuid: string;
 ```
 
-UUID of the target clip. Accepted with or without curly braces. The clip must be a note clip (Sing, Instrument, or GenericMidi).
+UUID of the target clip. The clip must be a note clip (Sing, Instrument, or GenericMidi).
 
 ***
 
@@ -18,21 +18,21 @@ UUID of the target clip. Accepted with or without curly braces. The clip must be
 
 ```ts
 notes: {
-  articulation?: string | null;
+  articulation?: string;
   dur: number;
-  language?: string | null;
-  lyric?: string | null;
+  language?: string;
+  lyric?: string;
   pitch: number;
   pos: number;
 }[];
 ```
 
-The clip's new notes, as a JSON array in clip-local ticks. An empty array (`[]`) clears the clip.
+The clip's new notes, in clip-local ticks. An empty array clears the clip.
 
 #### articulation?
 
 ```ts
-optional articulation?: string | null;
+optional articulation?: string;
 ```
 
 Articulation name for Instrument clips. Defaults to the track's default articulation.
@@ -48,7 +48,7 @@ Note duration in ticks. Must be positive.
 #### language?
 
 ```ts
-optional language?: string | null;
+optional language?: string;
 ```
 
 Per-note language override for Sing clips: `CHN`, `JPN`, `ENG`, `SPA`, or `KOR`. Defaults to the track's default language.
@@ -56,10 +56,10 @@ Per-note language override for Sing clips: `CHN`, `JPN`, `ENG`, `SPA`, or `KOR`.
 #### lyric?
 
 ```ts
-optional lyric?: string | null;
+optional lyric?: string;
 ```
 
-Lyric text. Required for Sing clips; `-` marks a tenuto that extends the previous syllable (see `help note-exclusivity`). Ignored for Instrument and GenericMidi clips.
+Lyric text. Required for Sing clips; `-` marks a tenuto that extends the previous syllable. Ignored for Instrument and GenericMidi clips.
 
 #### pitch
 

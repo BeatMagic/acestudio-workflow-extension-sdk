@@ -7,7 +7,7 @@ Arguments for `export video`.
 ### bitRate?
 
 ```ts
-optional bitRate?: number | null;
+optional bitRate?: number;
 ```
 
 Video bit rate in kbps. Omit for the encoder's default for the resolved geometry.
@@ -17,7 +17,7 @@ Video bit rate in kbps. Omit for the encoder's default for the resolved geometry
 ### fps?
 
 ```ts
-optional fps?: number | null;
+optional fps?: number;
 ```
 
 Frame rate. Omit for the composition canvas's frame rate.
@@ -27,17 +27,17 @@ Frame rate. Omit for the composition canvas's frame rate.
 ### from?
 
 ```ts
-optional from?: number | null;
+optional from?: number;
 ```
 
-Where the rendered range starts. Omit for the top of the project.
+Where the rendered range starts, in project ticks. Omit for the top of the project.
 
 ***
 
 ### height?
 
 ```ts
-optional height?: number | null;
+optional height?: number;
 ```
 
 Frame height in pixels. Omit for the composition canvas's height.
@@ -57,17 +57,17 @@ Where to write the rendered video.
 ### to?
 
 ```ts
-optional to?: number | null;
+optional to?: number;
 ```
 
-Where the rendered range ends (exclusive). Omit for the end of the project's content.
+Where the rendered range ends (exclusive), in project ticks. Omit for the end of the project's content.
 
 ***
 
 ### width?
 
 ```ts
-optional width?: number | null;
+optional width?: number;
 ```
 
 Frame width in pixels. Omit for the composition canvas's width.

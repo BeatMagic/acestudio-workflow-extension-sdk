@@ -21,7 +21,7 @@ seeds: {
   code: number;
   labels?: string[];
   name: string;
-  origin?: "premade" | "cloned" | "community";
+  origin?: string;
   ref: string;
 }[];
 ```
@@ -55,10 +55,10 @@ Display name.
 #### origin?
 
 ```ts
-optional origin?: "premade" | "cloned" | "community";
+optional origin?: string;
 ```
 
-Which library the seed comes from.
+Which library the seed comes from: `premade`, `cloned`, or `community`.
 
 #### ref
 

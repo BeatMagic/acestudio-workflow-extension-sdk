@@ -10,37 +10,37 @@ Arguments for `generative add-layer`.
 from: number;
 ```
 
-Where the generated clip starts. Ticks (`3840t`), clock time (`1.5s`), or a musical position (`4.1.0`).
+Where the generated clip starts, in ticks.
 
 ***
 
 ### instrument?
 
 ```ts
-optional instrument?: string | null;
+optional instrument?: string;
 ```
 
-Which instrument to add ("nylon guitar", "upright bass"). **`--sound-type custom` only** -- naming an instrument is what that type is for, and every other type already names one.
+Which instrument to add ("nylon guitar", "upright bass"). **`soundType` "custom" only**.
 
 ***
 
 ### lyrics?
 
 ```ts
-optional lyrics?: string | null;
+optional lyrics?: string;
 ```
 
-Lyrics for a sung layer. **`song-track`, `vocals` and `backing-vocals` only** -- the three types that sing. Passing it elsewhere is an error rather than a silent no-op.
+Lyrics for a sung layer. **"song-track", "vocals" and "backing-vocals" only**.
 
 ***
 
 ### prompt?
 
 ```ts
-optional prompt?: string | null;
+optional prompt?: string;
 ```
 
-Style notes for the layer, on top of what the arrangement already implies. Accepted by every `--sound-type`.
+Style notes for the layer, on top of what the arrangement already implies. Accepted by every `soundType`.
 
 ***
 
@@ -65,7 +65,7 @@ optional soundType?:
   | "custom";
 ```
 
-What kind of layer to add. Default `instrumental`. See [`LayerType`] for the full list and which content arguments each accepts.
+What an Add-a-Layer call generates — the panel's own fifteen choices. Which of the three content parameters each accepts is fixed per type and mirrors `AddALayerTypeHelper::toConfig`, which is what greys the panel's fields in and out: - `prompt` (styles): every type. - `lyrics`: `song-track`, `vocals`, `backing-vocals` — the three that sing. - `instrument`: `custom` alone, which is what makes it custom. Passing one to a type that does not take it is an error rather than a silent drop, because the layer that came back would not be the layer that was asked for.
 
 ***
 
@@ -75,7 +75,7 @@ What kind of layer to add. Default `instrumental`. See [`LayerType`] for the ful
 to: number;
 ```
 
-Where the generated clip ends (exclusive). This is what fixes the generation's length.
+Where the generated clip ends (exclusive), in ticks.
 
 ***
 
@@ -85,4 +85,4 @@ Where the generated clip ends (exclusive). This is what fixes the generation's l
 trackUuid: string;
 ```
 
-The Audio track the generated clip lands on, by id. Required: the panel takes it from the arrangement selection, which is not something a script can rely on (ADR 0087). Its content in the range is moved aside the same way the panel's own launch moves it, as one undo entry.
+The Audio track the generated clip lands on, by id.

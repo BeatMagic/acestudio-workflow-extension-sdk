@@ -7,37 +7,37 @@ Arguments for `generative song`.
 ### instrumental?
 
 ```ts
-optional instrumental?: boolean | null;
+optional instrumental?: boolean;
 ```
 
-Generate without vocals. **Idea mode only** -- in lyrics mode there are lyrics to sing, so an instrumental would contradict the request, and passing it there is an error rather than a silent no-op.
+Generate without vocals. **Idea mode only** — lyrics mode has lyrics to sing, so an instrumental would contradict the request.
 
 ***
 
 ### lyrics?
 
 ```ts
-optional lyrics?: string | null;
+optional lyrics?: string;
 ```
 
-Lyrics to sing. Passing this selects the panel's "From Lyrics" mode. Either this or `--prompt` is required -- with neither there is nothing to generate from.
+Lyrics to sing. Passing this selects lyrics mode.
 
 ***
 
 ### prompt?
 
 ```ts
-optional prompt?: string | null;
+optional prompt?: string;
 ```
 
-What to generate. Without `--lyrics` this is the whole brief ("a slow piano ballad about leaving home"); with it, this is the style the lyrics should be sung in ("dream pop, female vocal").
+What to generate. Idea mode without `lyrics`; the style with it.
 
 ***
 
 ### title?
 
 ```ts
-optional title?: string | null;
+optional title?: string;
 ```
 
-Title for the generated song. **Lyrics mode only.** Omit to take the panel's derived title (the opening of the lyrics, or the style prefixed with "(Instrumental)").
+Title for the generated song. **Lyrics mode only** — idea mode derives its own title. Omit for the derived title (the opening of the lyrics, or the style prefixed with "(Instrumental)").

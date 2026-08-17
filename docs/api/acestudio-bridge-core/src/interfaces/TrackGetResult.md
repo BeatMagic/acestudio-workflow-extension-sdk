@@ -45,7 +45,7 @@ mixer: {
 };
 ```
 
-Mixer settings.
+Mixer settings, as `track get` reports them.
 
 #### gain
 
@@ -100,14 +100,14 @@ recordInput: {
   midiInput?: {
      channel?: number;
      deviceName?: string;
-     sourceType: string;
+     sourceType: "keyboard" | "custom" | "none" | "all";
   };
   record: boolean;
-  recordMode?: string;
+  recordMode?: "monophonic" | "polyphonic";
 };
 ```
 
-Record-input configuration.
+Record-input configuration, as `track get` reports it.
 
 #### inputChannelIndex?
 
@@ -131,11 +131,11 @@ Whether input monitoring is enabled.
 optional midiInput?: {
   channel?: number;
   deviceName?: string;
-  sourceType: string;
+  sourceType: "keyboard" | "custom" | "none" | "all";
 };
 ```
 
-MIDI input source. Note tracks only.
+MIDI input source, as `track get` reports it. Note tracks only.
 
 ##### midiInput.channel?
 
@@ -143,7 +143,7 @@ MIDI input source. Note tracks only.
 optional channel?: number;
 ```
 
-Custom MIDI channel: -1 = all, 0-15 = specific. Present only when sourceType is custom.
+Custom MIDI channel: -1 = all, 0-15 = specific. Present only when `sourceType` is custom.
 
 ##### midiInput.deviceName?
 
@@ -151,15 +151,15 @@ Custom MIDI channel: -1 = all, 0-15 = specific. Present only when sourceType is 
 optional deviceName?: string;
 ```
 
-Custom MIDI device name. Present only when sourceType is custom.
+Custom MIDI device name. Present only when `sourceType` is custom.
 
 ##### midiInput.sourceType
 
 ```ts
-sourceType: string;
+sourceType: "keyboard" | "custom" | "none" | "all";
 ```
 
-One of: none, all, computerKeyboard, custom.
+Where a note track's MIDI takes its input from. `custom` is the only value that carries a device: it means one named device, reported in the sibling `deviceName`. `all` listens to every connected device at once and `none` listens to nothing, so neither names one. `keyboard` is the computer keyboard playing notes, not a MIDI device at all. The values are the same vocabulary `track set-input`'s `midiDevice` takes, so a value read here can be handed straight back to a write.
 
 #### record
 
@@ -172,10 +172,10 @@ Whether the track is record-armed.
 #### recordMode?
 
 ```ts
-optional recordMode?: string;
+optional recordMode?: "monophonic" | "polyphonic";
 ```
 
-MIDI record mode: monophonic or polyphonic. Sing tracks only.
+How a chord played onto a Sing track is captured. Exactly one applies at a time: `monophonic` trims the overlaps into one vocal part, `polyphonic` splits the chord into separate parts.
 
 ***
 
@@ -207,7 +207,7 @@ optional soundSourceInfo?: {
 };
 ```
 
-Sound-source detail. Note tracks only (omitted for Audio); shape varies with track type and choir/ensemble mode.
+Sound-source detail for a track, as `track get` reports it. Note tracks only (omitted for Audio); shape varies with track type and choir/ensemble mode.
 
 #### category?
 
@@ -223,7 +223,7 @@ Instrument category name. Instrument (non-ensemble) mode only.
 optional hasSource?: boolean;
 ```
 
-Whether the track carries a sound source. A GenericMidi track with an external instrument mounted reports true: the slot is a sound source in every sense that matters, and reporting it empty made a mounted plugin indistinguishable from no plugin at all. Other keys are absent when this is false. `sound-source get` reports the same thing in more detail.
+Whether the track carries a sound source. A GenericMidi track with an external instrument mounted reports true: the slot is a sound source in every sense that matters, and reporting it empty made a mounted plugin indistinguishable from no plugin at all. Other fields are absent when this is false. `sound-source get` reports the same thing in more detail.
 
 #### isVoiceBlend?
 
@@ -259,7 +259,7 @@ optional metadata?: {
 };
 ```
 
-Group-level settings. Choir/ensemble modes only.
+Group-level settings for a choir/ensemble track, as `track get` reports it.
 
 ##### metadata.memberCount?
 

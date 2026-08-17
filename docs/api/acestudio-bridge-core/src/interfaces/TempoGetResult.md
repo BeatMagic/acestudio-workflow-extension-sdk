@@ -10,7 +10,7 @@ Success payload of `tempo get`.
 pointCount: number;
 ```
 
-Number of entries in points (convenience field).
+Number of entries in `points` (convenience field).
 
 ***
 

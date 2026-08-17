@@ -14,16 +14,6 @@ Coarse list of what changed, to narrow the re-fetch. May be empty.
 
 ***
 
-### channel
-
-```ts
-readonly channel: string;
-```
-
-The channel that moved — the subject the subscription named.
-
-***
-
 ### revision
 
 ```ts

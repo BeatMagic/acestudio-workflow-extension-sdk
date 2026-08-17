@@ -53,7 +53,7 @@ inputDevices: {
 };
 ```
 
-Available input devices under the current device type.
+One direction's device catalog, as `device list` reports it: every device name the current backend exposes plus which one is selected.
 
 #### currentDevice
 
@@ -61,7 +61,7 @@ Available input devices under the current device type.
 currentDevice: string;
 ```
 
-Name of the selected input device.
+Name of the selected device in this direction.
 
 #### devices
 
@@ -69,7 +69,7 @@ Name of the selected input device.
 devices: string[];
 ```
 
-All input device names; may be empty.
+All device names in this direction; may be empty.
 
 ***
 
@@ -111,7 +111,7 @@ outputDevices: {
 };
 ```
 
-Available output devices under the current device type.
+One direction's device catalog, as `device list` reports it: every device name the current backend exposes plus which one is selected.
 
 #### currentDevice
 
@@ -119,7 +119,7 @@ Available output devices under the current device type.
 currentDevice: string;
 ```
 
-Name of the selected output device.
+Name of the selected device in this direction.
 
 #### devices
 
@@ -127,4 +127,4 @@ Name of the selected output device.
 devices: string[];
 ```
 
-All output device names; may be empty.
+All device names in this direction; may be empty.

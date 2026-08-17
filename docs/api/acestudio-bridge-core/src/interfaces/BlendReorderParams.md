@@ -10,7 +10,7 @@ Arguments for `blend reorder`.
 blend: string;
 ```
 
-*Required.** Which blend, by display name or ref.
+**Required.** Which blend, by display name or ref.
 
 ***
 
@@ -20,7 +20,7 @@ blend: string;
 member: number;
 ```
 
-*Required.** Which seed to move, by 0-based position.
+**Required.** Which seed to move, by 0-based position.
 
 ***
 
@@ -30,4 +30,4 @@ member: number;
 to: number;
 ```
 
-*Required.** Where to move it.
+**Required.** Where to move it.

@@ -39,7 +39,7 @@ onChanged(listener): Unsubscribe;
 The arrangement selection moved: the selected tracks, the time range, or both.
 `changes` carries `tracks` and `range`. A peer re-fetches with `selection get`.
 
-Listen for changes on the `selection` channel. The event is a hint to re-read, not the new state.
+Listen for `selection.changed`. The event is a hint to re-read, not the new state.
 
 Requires the `selection.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
 

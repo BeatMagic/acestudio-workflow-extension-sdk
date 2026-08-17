@@ -40,7 +40,7 @@ Display name of the created clip (auto-generated when no name was given).
 clipType: string;
 ```
 
-Type of the placed clip: `sing`, `instrument`, or `genericMidi`.
+Type of the created clip, echoing `type` in its canonical spelling: `sing`, `instrument`, `genericMidi`, `marker` or `chord`. Echoed because `type` is matched case-insensitively, so this is how a caller learns the spelling the rest of the surface will report.
 
 ***
 
@@ -70,7 +70,7 @@ Number of notes in the new clip.
 noteUuids: string[];
 ```
 
-UUIDs of the initial notes, in the clip's own note order — the order `clip note-content` reports, which is not necessarily the order they were given in. Empty when the clip was created without content.
+UUIDs of the initial notes, in the clip's own note order — the order `clip note-content` reports. Empty when the clip was created without content.
 
 ***
 

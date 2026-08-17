@@ -10,7 +10,7 @@ Arguments for `note add`.
 clipUuid: string;
 ```
 
-UUID of the target clip. Accepted with or without curly braces. The clip must be a note clip (Sing, Instrument, or GenericMidi).
+UUID of the target clip. The clip must be a note clip (Sing, Instrument, or GenericMidi).
 
 ***
 
@@ -18,25 +18,21 @@ UUID of the target clip. Accepted with or without curly braces. The clip must be
 
 ```ts
 notes: {
-  articulation?: string | null;
+  articulation?: string;
   dur: number;
-  language?: string | null;
-  lyric?: string | null;
+  language?: string;
+  lyric?: string;
   pitch: number;
   pos: number;
 }[];
 ```
 
-Notes to add, as a JSON array. Each note takes `pos` and `dur` in clip-local ticks plus `pitch`; Sing notes also take `lyric` and optional `language`, Instrument notes optional `articulation`.
-
-Bulk is the primitive, not a convenience: on a Sing clip the whole batch is resolved against the monophonic rule at once (`help note-exclusivity`).
-
-Example: `--notes '[\{"pos":0,"dur":480,"pitch":60,"lyric":"la"\}]'`
+Notes to add. Bulk is the primitive, not a convenience: on a Sing clip the whole batch is resolved against the monophonic rule at once (see `help note-exclusivity`). Must be non-empty.
 
 #### articulation?
 
 ```ts
-optional articulation?: string | null;
+optional articulation?: string;
 ```
 
 Articulation name for Instrument clips. Defaults to the track's default articulation.
@@ -52,7 +48,7 @@ Note duration in ticks. Must be positive.
 #### language?
 
 ```ts
-optional language?: string | null;
+optional language?: string;
 ```
 
 Per-note language override for Sing clips: `CHN`, `JPN`, `ENG`, `SPA`, or `KOR`. Defaults to the track's default language.
@@ -60,7 +56,7 @@ Per-note language override for Sing clips: `CHN`, `JPN`, `ENG`, `SPA`, or `KOR`.
 #### lyric?
 
 ```ts
-optional lyric?: string | null;
+optional lyric?: string;
 ```
 
 Lyric text. Required for Sing clips; `-` marks a tenuto that extends the previous syllable (see `help note-exclusivity`). Ignored for Instrument and GenericMidi clips.

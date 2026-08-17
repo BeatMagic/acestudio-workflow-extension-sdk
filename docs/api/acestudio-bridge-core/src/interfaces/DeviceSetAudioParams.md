@@ -7,7 +7,7 @@ Arguments for `device set-audio`.
 ### deviceType?
 
 ```ts
-optional deviceType?: string | null;
+optional deviceType?: string;
 ```
 
 Audio backend to use, from `availableDeviceTypes` in `device list` (e.g. `CoreAudio`, `ASIO`, `Windows Audio`).
@@ -17,7 +17,7 @@ Audio backend to use, from `availableDeviceTypes` in `device list` (e.g. `CoreAu
 ### inputDevice?
 
 ```ts
-optional inputDevice?: string | null;
+optional inputDevice?: string;
 ```
 
 Input device name, from `inputDevices.devices` in `device list`. Recording needs one of these.
@@ -27,7 +27,7 @@ Input device name, from `inputDevices.devices` in `device list`. Recording needs
 ### outputDevice?
 
 ```ts
-optional outputDevice?: string | null;
+optional outputDevice?: string;
 ```
 
 Output device name, from `outputDevices.devices` in `device list`.

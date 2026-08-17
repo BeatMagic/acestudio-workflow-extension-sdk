@@ -60,7 +60,7 @@ Note end in clip-local ticks (pos + dur).
 fingerprint: Fingerprint;
 ```
 
-Content fingerprint of the whole clip's note content (ADR 0088 §5). Carry it back as `--if-match` on any `note` write or `clip replace-content` to fail STALE_WRITE instead of overwriting edits made since this read.
+Content fingerprint of the whole clip's note content (ADR 0088 §5). Carry it forward as the reserved `fingerprint` argument on any `note` write, or on `clip replace-content`, to fail STALE_WRITE instead of overwriting edits made since this read.
 
 ***
 

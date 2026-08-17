@@ -10,7 +10,7 @@ Arguments for `clip set-enabled`.
 clipUuids: string[];
 ```
 
-UUIDs of the target clips. Repeat the flag to name several.
+UUIDs of the target clips. Repeat to name several.
 
 ***
 

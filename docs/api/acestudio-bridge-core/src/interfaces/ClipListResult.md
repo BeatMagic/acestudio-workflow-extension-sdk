@@ -24,6 +24,7 @@ clips: {
   clipName: string;
   clipType: string;
   clipUuid: string;
+  enabled: boolean;
   noteCount?: number;
 }[];
 ```
@@ -76,7 +77,15 @@ Clip type: `sing`, `instrument`, `genericMidi`, `audio`, `chord`, `video`, or `m
 clipUuid: string;
 ```
 
-Stable clip UUID, with braces. Use with `clip move-edges`.
+Stable clip UUID, with braces. Every id-taking clip write takes it — `clip move`, `clip resize`, `clip delete`.
+
+#### enabled
+
+```ts
+enabled: boolean;
+```
+
+Whether the clip is enabled. A disabled clip is skipped at playback and export; an enabled one still goes silent under a track mute or another track's solo, so this is the clip's own switch, not final audibility. Reported per row so a caller learns which clips are live from the same call that enumerates them, rather than one `clip get` per clip. That matters for the question this answers most often: whether any MIDI-like track holds an enabled clip, which decides whether a tempo sync would de-align content that owns the current grid. Mute is a different question and does not appear here — muted content still owns the grid.
 
 #### noteCount?
 

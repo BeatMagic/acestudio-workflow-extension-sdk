@@ -20,7 +20,7 @@ Number of rows returned.
 soundSources: {
   category?: string;
   categoryId?: number;
-  formats?: ("vst3" | "vst2" | "au")[];
+  formats?: string[];
   generations?: ("v1" | "v2")[];
   group?: string;
   id?: number;
@@ -49,7 +49,7 @@ Every source matching the filters, across every kind. Never truncated and never 
 optional category?: string;
 ```
 
-Category name, e.g. 'Piano'. AI instruments only.
+Category name, e.g. `Piano`. AI instruments only.
 
 #### categoryId?
 
@@ -62,10 +62,10 @@ Numeric category id. AI instruments only.
 #### formats?
 
 ```ts
-optional formats?: ("vst3" | "vst2" | "au")[];
+optional formats?: string[];
 ```
 
-Every format this plugin was scanned in. One plugin in three formats is one row, not three. External instruments only.
+Every format this plugin was scanned in (`vst3`, `vst2`, `au`). One plugin in three formats is one row, not three. External instruments only.
 
 #### generations?
 
@@ -73,7 +73,7 @@ Every format this plugin was scanned in. One plugin in three formats is one row,
 optional generations?: ("v1" | "v2")[];
 ```
 
-Which model generations recommend a model for this voice: 'v1', 'v2', or both. Generation is a per-voice curation published by the backend, not a property of a model, so it is reported per row and only on pre-made voices.
+Which model generations recommend a model for this voice. Reported per row and only on pre-made voices.
 
 #### group?
 
@@ -105,7 +105,7 @@ Whether a community voice is already in your library. Community voices only; an 
 kind: "voice" | "choir" | "instrument" | "ensemble" | "external-instrument";
 ```
 
-What this source is.
+What a sound source is — the roster every `kind` takes, whether it filters a listing or reports what a row turned out to be. A track carries exactly one kind at a time, and loading a source of another kind converts the track to suit it.
 
 #### memberCount?
 
@@ -153,7 +153,7 @@ Full English name of the language this source sings natively. Voices and choirs 
 optional origin?: "premade" | "cloned" | "community" | "blended";
 ```
 
-Which library it comes from. Absent for external instruments, which come from the plugin scan rather than the account's library.
+Where a sound source comes from: the Voice Library's tabs, which is how a user thinks about it, and the project file's `group` discriminator spelled in words. An external instrument has none — it comes from the plugin scan, not from the account's library.
 
 #### ref
 
@@ -161,7 +161,7 @@ Which library it comes from. Absent for external instruments, which come from th
 ref: string;
 ```
 
-Precise handle for this source, accepted by `--source` anywhere a name is. One of `singer:\<id\>` (pre-made), `singer:#\<id\>` (cloned), `singer:\@\<id\>` (community), `singer:\<library\>/\<id\>` (blend), `choir:\<group\>/\<id\>`, `instrument:\<id\>`, `ensemble:\<group\>/\<id\>`, or `plugin:\<format\>:\<typeId\>` (external instrument).
+Precise handle for this source, accepted by `source` anywhere a name is. One of `singer:\<id\>` (pre-made), `singer:#\<id\>` (cloned), `singer:\@\<id\>` (community), `singer:\<library\>/\<id\>` (blend), `choir:\<group\>/\<id\>`, `instrument:\<id\>`, `ensemble:\<group\>/\<id\>`, or `plugin:\<format\>:\<typeId\>` (external instrument).
 
 #### seedCount?
 

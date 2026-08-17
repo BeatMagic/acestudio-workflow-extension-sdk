@@ -10,18 +10,14 @@ Arguments for `instrument set`.
 midiChannel: string;
 ```
 
-**Required.** Which MIDI channel the instrument listens on: `1` through `16`.
-
-Channels are numbered the way every MIDI device numbers them. The wire used to carry two different numberings for the same concept, one of them 0-based; the translation now lives in the handler where it belongs.
-
-`all` is deliberately not accepted. A mounted instrument listens on one channel, and the slot has no every-channel state — so asking for it is an error rather than a value quietly stored as 1. The track's *input* (`track set-input --midi-channel`) does accept `all`.
+Which MIDI channel the instrument should listen on: `1` through `16`. Channels are numbered the way every MIDI device numbers them. `all` is deliberately not accepted: a mounted instrument listens on one channel and the slot has no every-channel state, so asking for it is an error rather than a value quietly stored as 1. The track's *input* (`track set-input --midi-channel`) does accept `all`.
 
 ***
 
 ### trackIndex?
 
 ```ts
-optional trackIndex?: number | null;
+optional trackIndex?: number;
 ```
 
 0-based index in the arrangement.
@@ -31,7 +27,7 @@ optional trackIndex?: number | null;
 ### trackUuid?
 
 ```ts
-optional trackUuid?: string | null;
+optional trackUuid?: string;
 ```
 
 Track UUID in braces format.

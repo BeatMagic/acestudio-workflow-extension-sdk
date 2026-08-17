@@ -7,7 +7,7 @@ Arguments for `blend add`.
 ### at?
 
 ```ts
-optional at?: number | null;
+optional at?: number;
 ```
 
 Where to insert the seed. Defaults to the end of the recipe.
@@ -20,14 +20,14 @@ Where to insert the seed. Defaults to the end of the recipe.
 blend: string;
 ```
 
-*Required.** Which blend to add to, by display name or ref.
+**Required.** Which blend to add to, by display name or ref.
 
 ***
 
 ### link?
 
 ```ts
-optional link?: boolean | null;
+optional link?: boolean;
 ```
 
 Whether Style should follow Timbre for this seed.
@@ -47,7 +47,7 @@ seed: string;
 ### style?
 
 ```ts
-optional style?: number | null;
+optional style?: number;
 ```
 
 Style weight for the new seed, 0 to 1. Defaults to 0.2. An error on a timbre-only model, which has no Style axis.
@@ -57,7 +57,7 @@ Style weight for the new seed, 0 to 1. Defaults to 0.2. An error on a timbre-onl
 ### timbre?
 
 ```ts
-optional timbre?: number | null;
+optional timbre?: number;
 ```
 
 Timbre weight for the new seed, 0 to 1. Defaults to 0.2, matching the app: a seed you add is an alteration to the blend's base voice, not an equal partner in it.

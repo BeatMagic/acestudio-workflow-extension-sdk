@@ -7,17 +7,17 @@ Arguments for `tempo set-display-range`.
 ### maxBpm?
 
 ```ts
-optional maxBpm?: number | null;
+optional maxBpm?: number;
 ```
 
-Upper bound of the editor's BPM axis. Must be \> `--min`. Omit to keep the current upper bound.
+Upper bound of the editor's BPM axis. Must be \> `minBpm`. Omit to keep the current upper bound.
 
 ***
 
 ### minBpm?
 
 ```ts
-optional minBpm?: number | null;
+optional minBpm?: number;
 ```
 
-Lower bound of the editor's BPM axis. Must be \< `--max`. Omit to keep the current lower bound.
+Lower bound of the editor's BPM axis. Must be \< `maxBpm`. Omit to keep the current lower bound.

@@ -10,4 +10,4 @@ Arguments for `clip delete`.
 clipUuids: string[];
 ```
 
-UUIDs of the clips to delete, with or without curly braces. Repeat the flag to name several. All-or-nothing: a UUID naming no clip fails before anything is deleted.
+UUIDs of the clips to delete, with or without curly braces. All-or-nothing: a UUID naming no clip fails before anything is deleted.

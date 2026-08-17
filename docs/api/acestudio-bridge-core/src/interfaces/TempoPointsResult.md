@@ -10,7 +10,7 @@ Success payload of `tempo points`.
 fingerprint: Fingerprint;
 ```
 
-Content fingerprint of the whole tempo point list. Carry it back as `--if-match` on `tempo set-point`, `tempo remove-point` or `tempo set` to fail STALE_WRITE instead of overwriting edits made since this read.
+Content fingerprint of the whole tempo point list. Carry it back as the reserved `fingerprint` argument on `tempo set-point`, `tempo remove-point` or `tempo set` to fail STALE_WRITE instead of overwriting edits made since this read.
 
 ***
 
@@ -20,7 +20,7 @@ Content fingerprint of the whole tempo point list. Carry it back as `--if-match`
 nativeUnit: "tick";
 ```
 
-Which unit the stored positions are authoritative in. Always `tick` for the tempo curve.
+The unit a `tempo points` position is authoritative in. Always `tick`: a tempo point is addressed by the tick it sits on, and the `posSec` reported beside it is derived from the very curve these points define.
 
 ***
 
@@ -30,7 +30,7 @@ Which unit the stored positions are authoritative in. Always `tick` for the temp
 pointCount: number;
 ```
 
-Number of entries in points (convenience field).
+Number of entries in `points` (convenience field).
 
 ***
 
@@ -45,7 +45,7 @@ points: {
 }[];
 ```
 
-All tempo points, in ascending pos order. Dual-unit: `pos` is authoritative, `posSec` is that position read back through the very curve these points define.
+All tempo points, in ascending pos order.
 
 #### bend
 
@@ -61,7 +61,7 @@ Curve control toward the next point; 0.0 = linear.
 pos: number;
 ```
 
-Point position, in project ticks. The native unit -- what `set-point` and `remove-point` address.
+Point position, in project ticks. The native unit — what `set-point` and `remove-point` address.
 
 #### posSec
 

@@ -10,9 +10,7 @@ Arguments for `generative stem-split`.
 clipUuid: string;
 ```
 
-The audio clip to split, by id. Its stem tracks are inserted below its source track, the way the panel inserts them.
-
-One clip per launch, because one launch returns one job id and the producer opens a job **per clip** (`AiPluginTaskStemSplitterScheduler` schedules an attempt each). Splitting several clips is several launches -- which also lets each one be waited on and cancelled independently.
+The audio clip to split, by id. Its stem tracks are inserted below its source track.
 
 ***
 
@@ -22,26 +20,24 @@ One clip per launch, because one launch returns one job id and the producer open
 optional mode?: "basic" | "professional" | "advanced" | "customized";
 ```
 
-Which stems to produce: `basic` (default), `professional`, `advanced` or `customized`. The first two are free; the last two bill different SKUs, so this is never inferred.
+Which stem set a split produces — the Stem Splitter panel's four choices. `basic` and `professional` are free; `advanced` and `customized` bill their own SKUs. That is why the mode is a parameter and never inferred: a caller choosing between them is choosing what to spend.
 
 ***
 
 ### prompt?
 
 ```ts
-optional prompt?: string | null;
+optional prompt?: string;
 ```
 
-Which sound to isolate, in words ("just the horns"). **`--mode customized` only**, and required there -- that mode has no fixed stem set, so without a prompt there is nothing to separate.
+Which sound to isolate, in words ("just the horns"). **`mode` "customized" only**, and required there.
 
 ***
 
 ### removeReverb?
 
 ```ts
-optional removeReverb?: boolean | null;
+optional removeReverb?: boolean;
 ```
 
-Strip reverb from the separated vocal. Off by default.
-
-**`basic` and `professional` only.** The two fine-grained modes do not support it (`StemSplitterModeNS::isRemoveReverbSupported`), so passing it there is an error rather than a flag that is quietly dropped.
+Strip reverb from the separated vocal. Off by default. **"basic" and "professional" only** — the two fine-grained modes do not support it.

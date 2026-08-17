@@ -10,8 +10,6 @@ Success payload of `generative stem-split`.
 cancellable: boolean;
 ```
 
-Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending -- the server-side kits (song, enhance) have no in-flight cancel.
-
 ***
 
 ### clipUuid
@@ -30,7 +28,7 @@ The source clip being split.
 delivery: string;
 ```
 
-How this class delivers results: 'staged' means they land in the session history for audition and reach the project only through `job place`; 'direct' means they auto-place as one attributed undo entry. See `help streaming-results`.
+Always "direct".
 
 ***
 
@@ -40,7 +38,7 @@ How this class delivers results: 'staged' means they land in the session history
 jobClass: string;
 ```
 
-The job class, as `job get` reports it and `job list` can be filtered on: 'song-generate', 'music-enhance', 'text2sample', 'seed-audio', 'sound-effects', 'add-a-layer', 'stem-split', 'voice-changer' or 'vocal2midi'.
+Always "stem-split".
 
 ***
 
@@ -50,17 +48,15 @@ The job class, as `job get` reports it and `job list` can be filtered on: 'song-
 jobId: string;
 ```
 
-The launched job's id. Pass it to `job get` / `job wait` / `job results`. Present on every successful launch -- nothing has been generated when this returns.
-
 ***
 
 ### mode?
 
 ```ts
-optional mode?: string;
+optional mode?: "basic" | "professional" | "advanced" | "customized";
 ```
 
-The split that was launched: 'basic', 'professional', 'advanced' or 'customized'.
+Which stem set a split produces — the Stem Splitter panel's four choices. `basic` and `professional` are free; `advanced` and `customized` bill their own SKUs. That is why the mode is a parameter and never inferred: a caller choosing between them is choosing what to spend.
 
 ***
 

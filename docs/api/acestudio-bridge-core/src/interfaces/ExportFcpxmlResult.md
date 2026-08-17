@@ -10,7 +10,7 @@ Success payload of `export fcpxml`.
 optional format?: string;
 ```
 
-The format actually written, after resolving --format or the path's extension.
+The format actually written, after resolving `format` (midi only) or the path's extension.
 
 ***
 
@@ -20,7 +20,7 @@ The format actually written, after resolving --format or the path's extension.
 paths: string[];
 ```
 
-Every file written, in the order written. Usually one; `export midi --split-tracks` writes one per exported track, each with the track's name appended to the base name.
+Every file written, in the order written. Usually one.
 
 ***
 
@@ -30,4 +30,4 @@ Every file written, in the order written. Usually one; `export midi --split-trac
 optional trackCount?: number;
 ```
 
-How many tracks contributed to the export. The tracks that reached the file, not every track that was considered -- `export midi` counts the ones carrying notes the format can represent, `export fcpxml` the ones carrying timeline content.
+How many tracks contributed to the export — the tracks that reached the file, not every track that was considered.

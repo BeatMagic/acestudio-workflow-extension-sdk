@@ -23,7 +23,7 @@ input: {
 };
 ```
 
-Selected input device and its channels.
+Selected input device and its channels, as `device current` reports it.
 
 #### availableChannels
 
@@ -54,7 +54,7 @@ output: {
 };
 ```
 
-Selected output device and its channel-pair state.
+Selected output device and its channel-pair state, as `device current` reports it.
 
 #### availableChannelPairs
 
@@ -70,7 +70,7 @@ Stereo channel pair names the device exposes.
 optional currentChannelPair?: string;
 ```
 
-Name of the active channel pair. Omitted when currentChannelPairIndex is out of range.
+Name of the active channel pair. Absent when `currentChannelPairIndex` is out of range.
 
 #### currentChannelPairIndex
 
@@ -78,7 +78,7 @@ Name of the active channel pair. Omitted when currentChannelPairIndex is out of 
 currentChannelPairIndex: number;
 ```
 
-0-based index of the active channel pair within availableChannelPairs; may be out of range if none is active.
+0-based index of the active channel pair within `availableChannelPairs`; may be out of range if none is active.
 
 #### deviceName
 
@@ -99,7 +99,7 @@ properties: {
 };
 ```
 
-Current device properties.
+Current device properties, as `device current` reports them.
 
 #### bufferSize
 

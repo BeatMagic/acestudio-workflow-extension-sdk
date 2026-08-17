@@ -17,37 +17,47 @@ UUID of the target clip, with or without curly braces.
 ### moveEarlier?
 
 ```ts
-optional moveEarlier?: number | null;
+optional moveEarlier?: number;
 ```
 
-Shift the clip earlier by this much. Refused when it would start the clip before the project start.
+Shift the clip earlier by this many ticks. Refused when it would start the clip before the project start.
 
 ***
 
 ### moveLater?
 
 ```ts
-optional moveLater?: number | null;
+optional moveLater?: number;
 ```
 
-Shift the clip later by this much. A note value (`1/4`), beats (`2b`), whole measures (`1bar`), or ticks (`480t`).
+Shift the clip later by this many ticks. No seconds twin: the relative moves are this surface's own addition, so there is no earlier contract to restore, and an absolute `posSec` already reaches every destination.
 
 ***
 
 ### onOccupied?
 
 ```ts
-optional onOccupied?: string | null;
+optional onOccupied?: string;
 ```
 
-What to do when the destination is already occupied: `fail` (default), `cover` (trim the clips in the way, as a drag does; not for video), or `relocate` (stack on a new track above; video only).
+What to do when the destination is already occupied: `fail` (default), `cover` (trim the clips in the way; not for video), or `relocate` (stack on a new track above; video only).
 
 ***
 
 ### pos?
 
 ```ts
-optional pos?: number | null;
+optional pos?: number;
 ```
 
-Absolute destination for the clip's start. Ticks (`3840t`), clock time (`1.5s`, `1:23.5`), or musical position (`4.1.0`). See `help time-values`. Mutually exclusive with `--move-later` / `--move-earlier`.
+Absolute destination for the clip's start, in ticks. Mutually exclusive with `moveLater` / `moveEarlier`.
+
+***
+
+### posSec?
+
+```ts
+optional posSec?: number;
+```
+
+Absolute destination for the clip's start, in seconds. OPTIONAL, and when present it WINS over `pos` — including at 0, which is a position like any other. Mutually exclusive with `moveLater` / `moveEarlier`. The pair the retired `moveVideoClip` carried, restored: converting between the units needs the tempo curve, and the CLI's time-value grammar does not stand in for it — that compiles `1.5s` to ticks client-side, so a caller on the wire is left with a `convert time-to-tick` round trip.

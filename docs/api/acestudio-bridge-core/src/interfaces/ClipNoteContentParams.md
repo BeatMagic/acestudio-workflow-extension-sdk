@@ -17,7 +17,7 @@ Clip index within the track (0-based). Clip must be Sing, Instrument, or Generic
 ### rangeBegin?
 
 ```ts
-optional rangeBegin?: number | null;
+optional rangeBegin?: number;
 ```
 
 Start of the time-range filter in ticks. Defaults to `clipBegin` (the start of the clip's visible region).
@@ -27,7 +27,7 @@ Start of the time-range filter in ticks. Defaults to `clipBegin` (the start of t
 ### rangeEnd?
 
 ```ts
-optional rangeEnd?: number | null;
+optional rangeEnd?: number;
 ```
 
 End of the time-range filter in ticks. Defaults to `clipEnd`.
@@ -37,10 +37,10 @@ End of the time-range filter in ticks. Defaults to `clipEnd`.
 ### rangeScope?
 
 ```ts
-optional rangeScope?: string | null;
+optional rangeScope?: string;
 ```
 
-Coordinate system for `rangeBegin`/`rangeEnd`. `project` (default) = global timeline; `clip-local` = coordinates from the clip's own start.
+Coordinate system for `rangeBegin`/`rangeEnd`: `project` (default) = global timeline; `clip-local` = coordinates from the clip's own start.
 
 ***
 

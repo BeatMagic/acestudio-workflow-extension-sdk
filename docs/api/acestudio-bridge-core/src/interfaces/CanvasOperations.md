@@ -55,11 +55,11 @@ onChanged(listener): Unsubscribe;
 ```
 
 The canvas changed — the authored setting, or the effective raster the
-compositor adopted after an adaptive re-derivation (ADR 0066). Which of the two
-moved is not reported, because the host signal does not say: a peer re-fetches
-with `canvas info`, `canvas effective-size`, or both.
+compositor adopted after an adaptive re-derivation (ADR 0066). Which of the
+two moved is not reported, because the host signal does not say: a peer
+re-fetches with `canvas info`, `canvas effective-size`, or both.
 
-Listen for changes on the `canvas` channel. The event is a hint to re-read, not the new state.
+Listen for `canvas.changed`. The event is a hint to re-read, not the new state.
 
 Requires the `canvas.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
 

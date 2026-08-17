@@ -10,17 +10,17 @@ Arguments for `export midi`.
 optional format?: "midi" | "ufdata";
 ```
 
-Which format to write. Omit to take it from `--path`'s extension.
+The note-data format `export midi` writes. Omitted, it is taken from `path`'s extension (`.mid`/`.midi` → midi, `.ufdata` → ufdata). The two are not interchangeable: UfData carries a Sing track's lyrics and syllables and exports Sing tracks only, while MIDI carries neither and exports the instrument, generic-MIDI and chord tracks UfData skips.
 
 ***
 
 ### from?
 
 ```ts
-optional from?: number | null;
+optional from?: number;
 ```
 
-Where the exported range starts. Omit for the top of the project.
+Where the exported range starts, in project ticks. Omit for the top of the project.
 
 ***
 
@@ -30,14 +30,14 @@ Where the exported range starts. Omit for the top of the project.
 path: string;
 ```
 
-Where to write. With `--split-tracks` this is the template: each track's name is appended to the base name.
+Where to write. With `splitTracks` this is the template: each track's name is appended to the base name.
 
 ***
 
 ### splitTracks?
 
 ```ts
-optional splitTracks?: boolean | null;
+optional splitTracks?: boolean;
 ```
 
 Write one file per track instead of one file holding every track. Off by default.
@@ -47,29 +47,27 @@ Write one file per track instead of one file holding every track. Off by default
 ### to?
 
 ```ts
-optional to?: number | null;
+optional to?: number;
 ```
 
-Where the exported range ends (exclusive). Omit for the end of the project's content.
+Where the exported range ends (exclusive), in project ticks. Omit for the end of the project's content.
 
 ***
 
 ### trackUuids?
 
 ```ts
-optional trackUuids?: string[] | null;
+optional trackUuids?: string[];
 ```
 
-Which tracks to export. Repeatable. Omit for every track that carries notes the chosen format can represent.
-
-`Option` so the schema says optional, matching "omit for every track" -- a bare `Vec` generates a required field.
+Which tracks to export. Omit for every track that carries notes the chosen format can represent.
 
 ***
 
 ### withLyrics?
 
 ```ts
-optional withLyrics?: boolean | null;
+optional withLyrics?: boolean;
 ```
 
 Carry each note's lyric into the file. **UfData only.**
@@ -79,7 +77,7 @@ Carry each note's lyric into the file. **UfData only.**
 ### withSyllables?
 
 ```ts
-optional withSyllables?: boolean | null;
+optional withSyllables?: boolean;
 ```
 
 Carry each note's syllable breakdown into the file. **UfData only.**

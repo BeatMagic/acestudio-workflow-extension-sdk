@@ -7,7 +7,7 @@ Arguments for `ui show-panel`.
 ### panel
 
 ```ts
-panel: "fx" | "mv" | "v2m" | "mixer";
+panel: "fx" | "mixer" | "mv" | "v2m";
 ```
 
-Which dockable panel: `mixer`, `fx`, `mv`, or `v2m`.
+The dockable panels `ui show-panel` / `ui hide-panel` take one of.

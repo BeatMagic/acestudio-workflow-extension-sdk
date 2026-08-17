@@ -3,12 +3,38 @@
 import type { Unsubscribe } from '../types-runtime.js';
 
 /** A capability token declared in the IDL. Each method/notification is gated by exactly one (ADR 0015). */
-export type ChangeCapability = never;
+export type ChangeCapability = 'audio.context' | 'auth.token' | 'canvas.read' | 'clip.read' | 'job.read' | 'monitor.stream' | 'mvupdate.status' | 'project.read' | 'selection.read' | 'tempo.read' | 'track.read' | 'transport.state' | 'ui.state';
 
 export const CHANGE_CAPABILITY_TOKENS: readonly ChangeCapability[] = [
+  'audio.context',
+  'auth.token',
+  'canvas.read',
+  'clip.read',
+  'job.read',
+  'monitor.stream',
+  'mvupdate.status',
+  'project.read',
+  'selection.read',
+  'tempo.read',
+  'track.read',
+  'transport.state',
+  'ui.state',
 ];
 
 export const CHANGE_METHOD_CAPABILITIES: Readonly<Record<string, ChangeCapability>> = {
+  'jobs.changed': 'job.read',
+  'ui.changed': 'ui.state',
+  'tracks.changed': 'track.read',
+  'clips.changed': 'clip.read',
+  'selection.changed': 'selection.read',
+  'transport.changed': 'transport.state',
+  'tempo.changed': 'tempo.read',
+  'contextAudio.changed': 'audio.context',
+  'canvas.changed': 'canvas.read',
+  'project.changed': 'project.read',
+  'monitor.changed': 'monitor.stream',
+  'auth.changed': 'auth.token',
+  'mvupdate.changed': 'mvupdate.status',
 };
 
 export interface ChangePeer {
@@ -19,19 +45,12 @@ export interface ChangePeer {
 }
 
 /**
- * Payload of `state.changed` — the canonical notification envelope (ADR 0083
- * §2.4), field for field. CapabilityNotification.h is the core's in-process
- * form of the same payload; this is its wire form, and no driver re-shapes it.
+ * What every change notification carries. There is no second, in-process form
+ * of it: a driver fills this and the generated emitter sends it as declared.
  */
-export interface ChangedParams {
+export interface ChangeParams {
     /**
-     * The revisioned subject that moved, as the registry's `notification`
-     * declarations spell it (`"jobs"`). A peer re-fetches this subject's
-     * snapshot; an undeclared channel is never sent.
-     */
-    channel: string;
-    /**
-     * The channel's monotonic revision *after* the change. A peer compares it
+     * The subject's monotonic revision *after* the change. A peer compares it
      * against the revision its last snapshot was stamped with and re-fetches
      * only when this one is newer, which is what makes reconnects and dropped
      * notifications self-correcting rather than silently stale.
@@ -49,15 +68,127 @@ export class ChangeClient {
     constructor(private readonly peer: ChangePeer) {}
 
     /**
-     * Host-emitted: a subject the peer may read has moved to a new revision.
-     *
-     * Gated by its payload, not by this notification — see `\@payloadGated` in the
-     * header note. Emitted per recipient: a peer whose grant does not reach the
-     * channel is sent nothing at all, and gets no denial either, because it never
-     * asked (an unsolicited error would itself confirm the change).
+     * The job ledger (ADR 0084): a job's lifecycle or result transition. `changes`
+     * carries the affected job ids.
      */
-    onStateChanged(callback: (event: ChangedParams) => void): Unsubscribe {
-        return this.peer.subscribe<ChangedParams>('state.changed', callback);
+    onJobsChanged(callback: (event: ChangeParams) => void): Unsubscribe {
+        return this.peer.subscribe<ChangeParams>('jobs.changed', callback);
+    }
+
+    /**
+     * Studio chrome: a panel, tool window, or arrangement-view row was shown or
+     * hidden. `changes` carries the affected citizens as their paths in the `ui get`
+     * payload — `panels.mixer`, `specialTracks.chord`, `windows.video-monitor` —
+     * plus `sharedPanelSlot.selected` when MV and V2M swap the slot without either
+     * becoming visible. A peer re-fetches with `ui get`.
+     */
+    onUiChanged(callback: (event: ChangeParams) => void): Unsubscribe {
+        return this.peer.subscribe<ChangeParams>('ui.changed', callback);
+    }
+
+    /**
+     * A track was added, removed, reordered, renamed, or had a mixer property
+     * change — in the arrangement or in either pinned band (ADR 0104). `changes`
+     * carries the affected track uuids. A peer re-fetches with `track list`.
+     */
+    onTracksChanged(callback: (event: ChangeParams) => void): Unsubscribe {
+        return this.peer.subscribe<ChangeParams>('tracks.changed', callback);
+    }
+
+    /**
+     * A clip was added, removed, moved, trimmed, renamed, muted, or recoloured.
+     * `changes` carries the affected clip uuids. A peer re-fetches with `clip list`,
+     * which needs a track to address, so a uuid here names the clip and the peer
+     * reads the track it was told about on `tracks.changed`.
+     */
+    onClipsChanged(callback: (event: ChangeParams) => void): Unsubscribe {
+        return this.peer.subscribe<ChangeParams>('clips.changed', callback);
+    }
+
+    /**
+     * The arrangement selection moved: the selected tracks, the time range, or both.
+     * `changes` carries `tracks` and `range`. A peer re-fetches with `selection get`.
+     */
+    onSelectionChanged(callback: (event: ChangeParams) => void): Unsubscribe {
+        return this.peer.subscribe<ChangeParams>('selection.changed', callback);
+    }
+
+    /**
+     * Transport moved: play, stop, a user seek, or the loop region. `changes`
+     * carries `playing`, `position`, `loop`. Transitions only — the continuous
+     * playback position is deliberately not a subject here, because a re-fetch per
+     * frame is what the coalescing cannot save; a throttled position feed is its own
+     * mechanism. A peer re-fetches with `transport state`.
+     */
+    onTransportChanged(callback: (event: ChangeParams) => void): Unsubscribe {
+        return this.peer.subscribe<ChangeParams>('transport.changed', callback);
+    }
+
+    /**
+     * The tempo curve changed — a point added, moved, bent, or removed, or the whole
+     * curve replaced by a beat-analysis apply. A peer re-fetches with `tempo get`
+     * for the single-tempo view or `tempo points` for the curve.
+     */
+    onTempoChanged(callback: (event: ChangeParams) => void): Unsubscribe {
+        return this.peer.subscribe<ChangeParams>('tempo.changed', callback);
+    }
+
+    /**
+     * The session's context-audio export started, finished, or failed. A peer
+     * re-fetches with `context-audio get`.
+     */
+    onContextAudioChanged(callback: (event: ChangeParams) => void): Unsubscribe {
+        return this.peer.subscribe<ChangeParams>('contextAudio.changed', callback);
+    }
+
+    /**
+     * The canvas changed — the authored setting, or the effective raster the
+     * compositor adopted after an adaptive re-derivation (ADR 0066). Which of the
+     * two moved is not reported, because the host signal does not say: a peer
+     * re-fetches with `canvas info`, `canvas effective-size`, or both.
+     */
+    onCanvasChanged(callback: (event: ChangeParams) => void): Unsubscribe {
+        return this.peer.subscribe<ChangeParams>('canvas.changed', callback);
+    }
+
+    /**
+     * The open project changed identity or location: opened, closed, or its session
+     * folder relocated within the same session (Save-As / temp promotion, never a
+     * project switch — ADR 0026/0027). A peer re-fetches with `project info`.
+     */
+    onProjectChanged(callback: (event: ChangeParams) => void): Unsubscribe {
+        return this.peer.subscribe<ChangeParams>('project.changed', callback);
+    }
+
+    /**
+     * The video Monitor stream came up, renegotiated, or went down. A peer
+     * re-fetches with `monitor stream-info` — the same call that BRINGS the stream
+     * up (ADR 0038), which is what a peer subscribed here wants, since it is
+     * attached to the monitor. Silent before login: the stream belongs to an MV
+     * session, so until one is up there is nothing to report.
+     */
+    onMonitorChanged(callback: (event: ChangeParams) => void): Unsubscribe {
+        return this.peer.subscribe<ChangeParams>('monitor.changed', callback);
+    }
+
+    /**
+     * The access token was replaced, or a refresh failed. A peer re-fetches with
+     * `auth get-token`. The token never rides the notification: a fresh credential
+     * pushed to every subscriber is a copy of a secret in more places than the one
+     * peer that asked for it.
+     */
+    onAuthChanged(callback: (event: ChangeParams) => void): Unsubscribe {
+        return this.peer.subscribe<ChangeParams>('auth.changed', callback);
+    }
+
+    /**
+     * The MV runtime's update standing moved (checking, available, downloading,
+     * failed). A peer re-fetches with `update status`. Named for its token's domain
+     * rather than after the verb, because the subject is one peer's updater and a
+     * bare `update` would collide with the next peer that wants one.
+     */
+    onMvupdateChanged(callback: (event: ChangeParams) => void): Unsubscribe {
+        return this.peer.subscribe<ChangeParams>('mvupdate.changed', callback);
     }
 
 }

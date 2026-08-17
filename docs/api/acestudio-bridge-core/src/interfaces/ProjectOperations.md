@@ -110,7 +110,7 @@ The open project changed identity or location: opened, closed, or its session
 folder relocated within the same session (Save-As / temp promotion, never a
 project switch — ADR 0026/0027). A peer re-fetches with `project info`.
 
-Listen for changes on the `project` channel. The event is a hint to re-read, not the new state.
+Listen for `project.changed`. The event is a hint to re-read, not the new state.
 
 Requires the `project.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
 

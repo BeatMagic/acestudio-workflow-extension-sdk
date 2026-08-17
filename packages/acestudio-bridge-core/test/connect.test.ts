@@ -6,6 +6,7 @@ import {
   createTransportPair,
   isBridgeError,
   isCode,
+  NOTIFICATION_CHANNELS,
   PROTOCOL_VERSION,
   SESSION_METHOD_CAPABILITIES,
   type BridgeConnection,
@@ -37,16 +38,19 @@ describe("the session wire", () => {
   it("is the one the schema declares", () => {
     // The harness spells the host's method names by hand, as the host does.
     // This is what keeps that spelling from drifting from the generated surface.
-    const { changed, ...session } = HOST_METHODS;
-    expect(Object.keys(SESSION_METHOD_CAPABILITIES).sort()).toEqual([...Object.values(session)].sort());
+    expect(Object.keys(SESSION_METHOD_CAPABILITIES).sort()).toEqual(
+      [...Object.values(HOST_METHODS)].sort(),
+    );
 
-    // The change notification cannot be checked the same way: it is payload-gated,
-    // so there is no capability row anywhere to compare its name against. What pins
-    // its spelling is the delivery round trip in bindings.test.ts — the harness
-    // sends this name and the generated client subscribes to its own, so a
-    // disagreement is a change that never arrives.
-    expect(Object.keys(CHANGE_METHOD_CAPABILITIES)).toEqual([]);
-    expect(changed).toBe("state.changed");
+    // Changes are checkable the same way now. A channel is its own declared
+    // notification rather than a payload on one shared envelope, so each has a
+    // capability row — where the old single `state.changed` was payload-gated and
+    // had none to compare against. Every channel the runtime binds must be one the
+    // schema gates, under the same token the subscribe guard reads, or the guard is
+    // refusing against a name the host never sends.
+    for (const row of NOTIFICATION_CHANNELS) {
+      expect(CHANGE_METHOD_CAPABILITIES[row.notification]).toBe(row.capability);
+    }
   });
 });
 

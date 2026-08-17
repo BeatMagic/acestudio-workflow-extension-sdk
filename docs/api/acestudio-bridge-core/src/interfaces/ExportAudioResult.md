@@ -10,7 +10,7 @@ Success payload of `export audio`.
 optional cancellable?: boolean;
 ```
 
-Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending.
+Whether `job cancel` will be honored for this job.
 
 ***
 
@@ -20,7 +20,7 @@ Whether `job cancel` will be honored for this job. False means a cancel returns 
 optional jobClass?: string;
 ```
 
-The job class, as `job get` reports it: 'export-audio' or 'export-video'.
+The job class, as `job get` reports it: always "export-audio".
 
 ***
 
@@ -30,7 +30,7 @@ The job class, as `job get` reports it: 'export-audio' or 'export-video'.
 jobId: string;
 ```
 
-The launched job's id. Pass it to `job get` / `job wait` / `job cancel`. Present on every successful launch -- the render has NOT finished when this returns.
+The launched job's id. Pass it to `job get` / `job wait` / `job cancel`.
 
 ***
 
@@ -40,17 +40,17 @@ The launched job's id. Pass it to `job get` / `job wait` / `job cancel`. Present
 paths: string[];
 ```
 
-Every file the render will write, resolved at launch. One entry for 'master'; one per exported track for the per-track scopes, already de-duplicated the way the Export dialog de-duplicates colliding track names. These files do not exist yet -- wait on the job before reading them.
+Every file the render will write, resolved at launch. One entry for "master"; one per exported track for the per-track scopes. These files do not exist yet — wait on the job before reading them.
 
 ***
 
 ### scope?
 
 ```ts
-optional scope?: string;
+optional scope?: "master" | "selected-tracks" | "all-tracks" | "tracks";
 ```
 
-The scope that was launched: 'master', 'selected-tracks', 'all-tracks' or 'tracks'.
+What an `export audio` call renders. Omitted on the way in it falls back to `master`, the Export dialog's own default; the launch result reports the value it resolved to, so a caller can always see which one ran.
 
 ***
 
@@ -60,4 +60,4 @@ The scope that was launched: 'master', 'selected-tracks', 'all-tracks' or 'track
 optional trackCount?: number;
 ```
 
-How many tracks the render covers. Per-track scopes only; absent for 'master'.
+How many tracks the render covers. Per-track scopes only; absent for "master".

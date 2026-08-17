@@ -7,81 +7,77 @@ Arguments for `track set`.
 ### color?
 
 ```ts
-optional color?: string | null;
+optional color?: string;
 ```
 
-Palette color hex string, e.g. `#EC4F44`. Must be one of the values returned by `color-palette`. Also affects the default color for new clips on this track.
+Palette color hex string, e.g. `#EC4F44`. Must be one of the values `color-palette` returns. Also affects the default color for new clips on this track. The master bus has no color.
 
 ***
 
 ### gain?
 
 ```ts
-optional gain?: number | null;
+optional gain?: number;
 ```
 
-Volume gain level: 0.0 and above; 1.0 = unity; above 1.0 = boost.
+Volume gain level: 0.0 and above; 1.0 = unity; above 1.0 = boost. The only property the master bus accepts.
 
 ***
 
 ### monitor?
 
 ```ts
-optional monitor?: boolean | null;
+optional monitor?: boolean;
 ```
 
-Whether the track monitors its live input.
-
-This was `track set-monitor`, a verb of its own for one boolean. It behaves differently from its neighbours under undo — it lands no entry — but that is ours to handle, not a reason to make the caller learn a second verb for a switch that sits beside mute and solo in the mixer.
+Whether the track monitors its live input. The master bus has no monitor switch, and this field lands no undo entry.
 
 ***
 
 ### mute?
 
 ```ts
-optional mute?: boolean | null;
+optional mute?: boolean;
 ```
 
-Mute the track (true) or unmute (false). When muted the track is silenced but still renders.
+Mute the track (true) or unmute (false). When muted the track is silenced but still renders. The master bus has no mute.
 
 ***
 
 ### pan?
 
 ```ts
-optional pan?: number | null;
+optional pan?: number;
 ```
 
-Stereo pan position: -1.0 (full left) to 1.0 (full right); 0.0 = center.
+Stereo pan position: -1.0 (full left) to 1.0 (full right); 0.0 = center. The master bus has no pan.
 
 ***
 
 ### solo?
 
 ```ts
-optional solo?: boolean | null;
+optional solo?: boolean;
 ```
 
-Solo the track (true) or unsolo (false). When any track is soloed, all non-soloed tracks are effectively muted.
+Solo the track (true) or unsolo (false). When any track is soloed, all non-soloed tracks are effectively muted. The master bus has no solo.
 
 ***
 
 ### trackIndex?
 
 ```ts
-optional trackIndex?: number | null;
+optional trackIndex?: number;
 ```
 
-0-based track index. Addresses the arrangement only — the master bus has no index, so `--track-uuid master` is how you reach it.
+0-based track index. Addresses the arrangement only — the master bus has no index, so `trackUuid: "master"` is how you reach it.
 
 ***
 
 ### trackUuid?
 
 ```ts
-optional trackUuid?: string | null;
+optional trackUuid?: string;
 ```
 
 Track UUID in braces format, e.g. `\{12345678-abcd-...\}`, or the well-known id `master` for the project's master bus.
-
-The master is a track like any other here — it has no domain of its own (ledger §2.11). It carries only a gain, so `--gain` is the one property it accepts; the rest are refused rather than silently dropped.

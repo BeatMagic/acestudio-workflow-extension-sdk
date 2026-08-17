@@ -10,7 +10,7 @@ Success payload of `sound-source unload`.
 newType: string;
 ```
 
-What the track is now. A Sing or Instrument track becomes 'GenericMidi'; a MIDI track that merely had its external instrument unmounted stays 'GenericMidi'.
+What the track is now. A Sing or Instrument track becomes `GenericMidi`; a MIDI track that merely had its external instrument unmounted stays `GenericMidi`.
 
 ***
 

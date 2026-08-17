@@ -14,12 +14,12 @@ export type AtRoot<T extends CapabilityToken> = Extract<Reachable<T>, {
 
 // @public
 export interface BlendAddParams {
-    at?: number | null;
+    at?: number;
     blend: string;
-    link?: boolean | null;
+    link?: boolean;
     seed: string;
-    style?: number | null;
-    timbre?: number | null;
+    style?: number;
+    timbre?: number;
 }
 
 // @public
@@ -48,11 +48,11 @@ export interface BlendAddResult {
 
 // @public
 export interface BlendCreateParams {
-    avatar?: number | null;
-    language?: string | null;
+    avatar?: number;
+    language?: string;
     model: string;
     name: string;
-    tags?: string[] | null;
+    tags?: string[];
 }
 
 // @public
@@ -123,8 +123,8 @@ export interface BlendGetResult {
 
 // @public
 export interface BlendListParams {
-    keyword?: string | null;
-    showRefs?: boolean | null;
+    keyword?: string;
+    showRefs?: boolean;
 }
 
 // @public
@@ -217,15 +217,15 @@ export interface BlendReorderResult {
 
 // @public
 export interface BlendSetParams {
-    avatar?: number | null;
+    avatar?: number;
     blend: string;
-    language?: string | null;
-    link?: boolean | null;
-    member?: number | null;
-    name?: string | null;
-    style?: number | null;
-    tags?: string[] | null;
-    timbre?: number | null;
+    language?: string;
+    link?: boolean;
+    member?: number;
+    name?: string;
+    style?: number;
+    tags?: string[];
+    timbre?: number;
 }
 
 // @public
@@ -280,7 +280,7 @@ export class BridgeError<C extends AnyBridgeErrorCode = AnyBridgeErrorCode> exte
 }
 
 // @public
-export type BridgeErrorCode = 'ALREADY_RECORDING' | 'AMBIGUOUS_SOURCE' | 'ANALYSIS_UNUSABLE' | 'BAD_ARGS' | 'BRIDGE_UNREACHABLE' | 'CAPABILITY_DENIED' | 'CAPABILITY_OUT_OF_SURFACE' | 'CHAIN_NOT_GROWN' | 'CLIP_OVERLAP' | 'COLLECT_FAILED' | 'CONFIRMATION_REQUIRED' | 'CREATE_TIMEOUT' | 'CREDIT_INSUFFICIENT' | 'EDITOR_NOT_READY' | 'EDIT_TIMEOUT' | 'EXPORT_IN_PROGRESS' | 'EXPORT_START_FAILED' | 'FILE_NOT_FOUND' | 'FINGERPRINT_SCOPE_MISMATCH' | 'FIXTURE_FAILED' | 'FLUSH_TIMEOUT' | 'FORMAT_UNAVAILABLE' | 'GESTURE_HELD' | 'HANDLER_FAILED' | 'IMPORT_FAILED' | 'INSERT_FAILED' | 'INVALID_ARG' | 'IO_ERROR' | 'JOB_NOT_CANCELLABLE' | 'MEMBERSHIP_REQUIRED' | 'MISSING_ARG' | 'NEW_FAILED' | 'NOTE_OVERLAP' | 'NOT_FOUND' | 'NOT_READY' | 'NO_FIXTURE' | 'NO_GESTURE' | 'NO_MASTER_CHAIN' | 'NO_PATTERN_EDIT_OPEN' | 'NO_PROJECT' | 'NO_PROJECT_OPEN' | 'NO_SCENE' | 'NO_STATE' | 'NO_TRACK_VIEW' | 'NO_WINDOW' | 'OPEN_FAILED' | 'PLAYBACK_START_FAILED' | 'RECORD_START_FAILED' | 'SAVE_FAILED' | 'SCENARIO_FAILED' | 'SESSION_INVALID' | 'STALE_WRITE' | 'TIMEOUT' | 'TIME_UNIT_REQUIRED' | 'TRACK_CREATE_FAILED' | 'UNAVAILABLE' | 'UNKNOWN_CAPABILITY' | 'UNKNOWN_COMMAND' | 'UNKNOWN_SCENARIO' | 'UNSAVED_CHANGES' | 'USER_BUSY';
+export type BridgeErrorCode = 'ALREADY_RECORDING' | 'AMBIGUOUS_SOURCE' | 'ANALYSIS_UNUSABLE' | 'BAD_ARGS' | 'BRIDGE_UNREACHABLE' | 'CAPABILITY_DENIED' | 'CAPABILITY_OUT_OF_SURFACE' | 'CHAIN_NOT_GROWN' | 'CLIP_OVERLAP' | 'CLIP_RANGE' | 'COLLECT_FAILED' | 'CONFIRMATION_REQUIRED' | 'CREATE_TIMEOUT' | 'CREDIT_INSUFFICIENT' | 'EDITOR_NOT_READY' | 'EDIT_TIMEOUT' | 'EXPORT_IN_PROGRESS' | 'EXPORT_START_FAILED' | 'FILE_NOT_FOUND' | 'FINGERPRINT_SCOPE_MISMATCH' | 'FIXTURE_FAILED' | 'FLUSH_TIMEOUT' | 'FORMAT_UNAVAILABLE' | 'GESTURE_HELD' | 'HANDLER_FAILED' | 'IMPORT_FAILED' | 'INSERT_FAILED' | 'INVALID_ARG' | 'IO_ERROR' | 'JOB_NOT_CANCELLABLE' | 'MEMBERSHIP_REQUIRED' | 'MISSING_ARG' | 'NEW_FAILED' | 'NOTE_OVERLAP' | 'NOT_FOUND' | 'NOT_READY' | 'NO_FIXTURE' | 'NO_GESTURE' | 'NO_MASTER_CHAIN' | 'NO_PATTERN_EDIT_OPEN' | 'NO_PROJECT' | 'NO_PROJECT_OPEN' | 'NO_SCENE' | 'NO_STATE' | 'NO_TRACK_VIEW' | 'NO_WINDOW' | 'OPEN_FAILED' | 'PLAYBACK_START_FAILED' | 'RECORD_START_FAILED' | 'SAVE_FAILED' | 'SCENARIO_FAILED' | 'SESSION_INVALID' | 'STALE_WRITE' | 'TIMEOUT' | 'TIME_UNIT_REQUIRED' | 'TRACK_CREATE_FAILED' | 'TRACK_NOT_EMPTY' | 'TRACK_PROTECTED' | 'UNAVAILABLE' | 'UNKNOWN_CAPABILITY' | 'UNKNOWN_COMMAND' | 'UNKNOWN_SCENARIO' | 'UNSAVED_CHANGES' | 'USER_BUSY';
 
 // @public
 export interface BridgeErrorDetails {
@@ -326,23 +326,10 @@ export class BridgePeer {
 }
 
 // @public
-export const BULK_PARAM_FIELDS: {
-    readonly 'vocalparam write': readonly [{
-        readonly field: "points";
-        readonly dtype: null;
-    }];
-};
+export const BULK_PARAM_FIELDS: {};
 
 // @public
-export const BULK_RESULT_FIELDS: {
-    readonly 'vocalparam read': readonly [{
-        readonly field: "effective.points";
-        readonly dtype: "f64le";
-    }, {
-        readonly field: "layers[].points";
-        readonly dtype: "f64le";
-    }];
-};
+export const BULK_RESULT_FIELDS: {};
 
 // @public
 export interface BulkBlob<D extends Dtype = Dtype> {
@@ -399,7 +386,7 @@ export type CapabilityToken = 'canvas.read' | 'caret.read' | 'caret.write' | 'ch
 
 // @public
 export interface CaretGetParams {
-    scope?: string | null;
+    scope?: string;
 }
 
 // @public
@@ -418,12 +405,12 @@ export interface CaretOperations {
 
 // @public
 export interface CaretSetParams {
-    forceSeek?: boolean | null;
-    is_global_tick?: boolean | null;
-    scope?: string | null;
-    set_to_line_selection?: boolean | null;
+    forceSeek?: boolean;
+    is_global_tick?: boolean;
+    scope?: string;
+    set_to_line_selection?: boolean;
     tick: number;
-    trackIndex?: number | null;
+    trackIndex?: number;
 }
 
 // @public (undocumented)
@@ -433,26 +420,36 @@ export const CHANGE_CAPABILITY_TOKENS: readonly ChangeCapability[];
 export const CHANGE_METHOD_CAPABILITIES: Readonly<Record<string, ChangeCapability>>;
 
 // @public
-export type ChangeCapability = never;
+export type ChangeCapability = 'audio.context' | 'auth.token' | 'canvas.read' | 'clip.read' | 'job.read' | 'monitor.stream' | 'mvupdate.status' | 'project.read' | 'selection.read' | 'tempo.read' | 'track.read' | 'transport.state' | 'ui.state';
 
 // @public (undocumented)
 export class ChangeClient {
     constructor(peer: ChangePeer);
-    onStateChanged(callback: (event: ChangedParams) => void): Unsubscribe;
-}
-
-// @public
-export interface ChangedParams {
-    changes: string[];
-    channel: string;
-    revision: number;
+    onAuthChanged(callback: (event: ChangeParams) => void): Unsubscribe;
+    onCanvasChanged(callback: (event: ChangeParams) => void): Unsubscribe;
+    onClipsChanged(callback: (event: ChangeParams) => void): Unsubscribe;
+    onContextAudioChanged(callback: (event: ChangeParams) => void): Unsubscribe;
+    onJobsChanged(callback: (event: ChangeParams) => void): Unsubscribe;
+    onMonitorChanged(callback: (event: ChangeParams) => void): Unsubscribe;
+    onMvupdateChanged(callback: (event: ChangeParams) => void): Unsubscribe;
+    onProjectChanged(callback: (event: ChangeParams) => void): Unsubscribe;
+    onSelectionChanged(callback: (event: ChangeParams) => void): Unsubscribe;
+    onTempoChanged(callback: (event: ChangeParams) => void): Unsubscribe;
+    onTracksChanged(callback: (event: ChangeParams) => void): Unsubscribe;
+    onTransportChanged(callback: (event: ChangeParams) => void): Unsubscribe;
+    onUiChanged(callback: (event: ChangeParams) => void): Unsubscribe;
 }
 
 // @public
 export interface ChangeEvent {
     readonly changes: readonly string[];
-    readonly channel: string;
     readonly revision: number;
+}
+
+// @public
+export interface ChangeParams {
+    changes: string[];
+    revision: number;
 }
 
 // @public (undocumented)
@@ -470,18 +467,18 @@ export interface ChangePeer {
 // @public
 export interface ChannelDescriptor {
     readonly capability: string;
-    readonly channel: string;
     readonly domain: string;
     readonly method: string;
+    readonly notification: string;
 }
 
 // @public
 export interface ChoirAddParams {
-    at?: number | null;
-    model?: string | null;
+    at?: number;
+    model?: string;
     source: string;
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -496,8 +493,8 @@ export interface ChoirAddResult {
 
 // @public
 export interface ChoirDisableParams {
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -510,8 +507,8 @@ export interface ChoirDisableResult {
 
 // @public
 export interface ChoirEnableParams {
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -524,8 +521,8 @@ export interface ChoirEnableResult {
 
 // @public
 export interface ChoirGetParams {
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -563,8 +560,8 @@ export interface ChoirOperations {
 // @public
 export interface ChoirRemoveParams {
     member: number;
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -581,8 +578,8 @@ export interface ChoirRemoveResult {
 export interface ChoirReorderParams {
     member: number;
     to: number;
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -597,13 +594,13 @@ export interface ChoirReorderResult {
 
 // @public
 export interface ChoirSetParams {
-    gain?: number | null;
-    member?: number | null;
-    mute?: boolean | null;
-    offset?: number | null;
-    spread?: number | null;
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    gain?: number;
+    member?: number;
+    mute?: boolean;
+    offset?: number;
+    spread?: number;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -621,7 +618,7 @@ export interface ClipAudioContentResult {
 
 // @public
 export interface ClipConsolidateParams {
-    name?: string | null;
+    name?: string;
     rangeBegin: number;
     rangeEnd: number;
     trackUuids: string[];
@@ -634,7 +631,14 @@ export interface ClipConsolidateResult {
         clipType: string;
         clipUuid: string;
         consolidatedClipCount: number;
-        geometry: Record<string, unknown>;
+        geometry: {
+            clipIn: number;
+            dur: number;
+            end: number;
+            pos: number;
+            sourceDur: number;
+            sourcePos: number;
+        };
         trackName: string;
         trackUuid: string;
     }[];
@@ -646,18 +650,18 @@ export interface ClipConsolidateResult {
 // @public
 export interface ClipCreateParams {
     dur: number;
-    name?: string | null;
+    name?: string;
     notes?: {
-        articulation?: string | null;
+        articulation?: string;
         dur: number;
-        language?: string | null;
-        lyric?: string | null;
+        language?: string;
+        lyric?: string;
         pitch: number;
         pos: number;
-    }[] | null;
-    onOccupied?: string | null;
+    }[];
+    onOccupied?: string;
     pos: number;
-    trackIndex?: number | null;
+    trackIndex?: number;
     type: string;
 }
 
@@ -701,9 +705,9 @@ export interface ClipDetachAudioResult {
 // @public
 export interface ClipDuplicateParams {
     clipUuid: string;
-    onOccupied?: string | null;
-    pos?: number | null;
-    trackIndex?: number | null;
+    onOccupied?: string;
+    pos?: number;
+    trackIndex?: number;
 }
 
 // @public
@@ -712,13 +716,12 @@ export interface ClipDuplicateResult {
     clipType: string;
     clipUuid: string;
     geometry: {
-        clipBegin: number;
-        clipDur: number;
-        clipEnd: number;
-        clipPos: number;
+        clipIn: number;
         dur: number;
         end: number;
         pos: number;
+        sourceDur: number;
+        sourcePos: number;
     };
     sourceClipUuid: string;
     trackName: string;
@@ -726,9 +729,10 @@ export interface ClipDuplicateResult {
 
 // @public
 export interface ClipGetParams {
-    clipIndex: number;
-    preferredTimeUnit?: string | null;
-    trackIndex: number;
+    clipIndex?: number;
+    clipUuid?: string;
+    preferredTimeUnit?: string;
+    trackIndex?: number;
 }
 
 // @public
@@ -754,8 +758,8 @@ export interface ClipGetResult {
 
 // @public
 export interface ClipListParams {
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -768,6 +772,7 @@ export interface ClipListResult {
         clipName: string;
         clipType: string;
         clipUuid: string;
+        enabled: boolean;
         noteCount?: number;
     }[];
 }
@@ -775,9 +780,9 @@ export interface ClipListResult {
 // @public
 export interface ClipLyricsParams {
     clipIndex: number;
-    rangeBegin?: number | null;
-    rangeEnd?: number | null;
-    rangeScope?: string | null;
+    rangeBegin?: number;
+    rangeEnd?: number;
+    rangeScope?: string;
     trackIndex: number;
 }
 
@@ -800,10 +805,11 @@ export interface ClipLyricsResult {
 // @public
 export interface ClipMoveParams {
     clipUuid: string;
-    moveEarlier?: number | null;
-    moveLater?: number | null;
-    onOccupied?: string | null;
-    pos?: number | null;
+    moveEarlier?: number;
+    moveLater?: number;
+    onOccupied?: string;
+    pos?: number;
+    posSec?: number;
 }
 
 // @public
@@ -812,22 +818,25 @@ export interface ClipMoveResult {
     clipType: string;
     clipUuid: string;
     geometry: {
-        clipBegin: number;
-        clipDur: number;
-        clipEnd: number;
-        clipPos: number;
+        clipIn: number;
         dur: number;
         end: number;
         pos: number;
+        sourceDur: number;
+        sourcePos: number;
     };
+    warnings?: {
+        code: string;
+        hint?: string;
+    }[];
 }
 
 // @public
 export interface ClipNoteContentParams {
     clipIndex: number;
-    rangeBegin?: number | null;
-    rangeEnd?: number | null;
-    rangeScope?: string | null;
+    rangeBegin?: number;
+    rangeEnd?: number;
+    rangeScope?: string;
     trackIndex: number;
 }
 
@@ -863,7 +872,7 @@ export interface ClipOperations {
     delete(params: ClipDeleteParams, options?: MutatingCallOptions): Promise<ClipDeleteResult>;
     detachAudio(params: ClipDetachAudioParams, options?: MutatingCallOptions): Promise<ClipDetachAudioResult>;
     duplicate(params: ClipDuplicateParams, options?: MutatingCallOptions): Promise<ClipDuplicateResult>;
-    get(params: ClipGetParams, options?: CallOptions): Promise<ClipGetResult>;
+    get(params?: ClipGetParams, options?: CallOptions): Promise<ClipGetResult>;
     list(params?: ClipListParams, options?: CallOptions): Promise<ClipListResult>;
     lyrics(params: ClipLyricsParams, options?: CallOptions): Promise<ClipLyricsResult>;
     move(params: ClipMoveParams, options?: MutatingCallOptions): Promise<ClipMoveResult>;
@@ -895,10 +904,10 @@ export interface ClipReattachAudioResult {
 export interface ClipReplaceContentParams {
     clipUuid: string;
     notes: {
-        articulation?: string | null;
+        articulation?: string;
         dur: number;
-        language?: string | null;
-        lyric?: string | null;
+        language?: string;
+        lyric?: string;
         pitch: number;
         pos: number;
     }[];
@@ -915,11 +924,14 @@ export interface ClipReplaceContentResult {
 
 // @public
 export interface ClipResizeParams {
-    clipIn?: number | null;
+    clipIn?: number;
+    clipInSec?: number;
     clipUuid: string;
-    dur?: number | null;
-    onOccupied?: string | null;
-    pos?: number | null;
+    dur?: number;
+    durSec?: number;
+    onOccupied?: string;
+    pos?: number;
+    posSec?: number;
 }
 
 // @public
@@ -928,14 +940,17 @@ export interface ClipResizeResult {
     clipType: string;
     clipUuid: string;
     geometry: {
-        clipBegin: number;
-        clipDur: number;
-        clipEnd: number;
-        clipPos: number;
+        clipIn: number;
         dur: number;
         end: number;
         pos: number;
+        sourceDur: number;
+        sourcePos: number;
     };
+    warnings?: {
+        code: string;
+        hint?: string;
+    }[];
 }
 
 // @public
@@ -956,11 +971,11 @@ export interface ClipSetEnabledResult {
 // @public
 export interface ClipSetFadesParams {
     clipUuids: string[];
-    crossfade?: number | null;
-    fadeIn?: number | null;
-    fadeInShape?: number[] | null;
-    fadeOut?: number | null;
-    fadeOutShape?: number[] | null;
+    crossfade?: number;
+    fadeIn?: number;
+    fadeInShape?: number[];
+    fadeOut?: number;
+    fadeOutShape?: number[];
 }
 
 // @public
@@ -1003,9 +1018,9 @@ export interface ClipSetMutedResult {
 // @public
 export interface ClipSetParams {
     clipUuid: string;
-    color?: string | null;
-    colorLinkToTrack?: boolean | null;
-    name?: string | null;
+    color?: string;
+    colorLinkToTrack?: boolean;
+    name?: string;
 }
 
 // @public
@@ -1015,13 +1030,12 @@ export interface ClipSetResult {
     clipUuid: string;
     color: string;
     geometry?: {
-        clipBegin: number;
-        clipDur: number;
-        clipEnd: number;
-        clipPos: number;
+        clipIn: number;
         dur: number;
         end: number;
         pos: number;
+        sourceDur: number;
+        sourcePos: number;
     };
     isColorLinkToTrack: boolean;
     rawName: string;
@@ -1041,13 +1055,12 @@ export interface ClipSplitResult {
         clipType: string;
         clipUuid: string;
         geometry: {
-            clipBegin: number;
-            clipDur: number;
-            clipEnd: number;
-            clipPos: number;
+            clipIn: number;
             dur: number;
             end: number;
             pos: number;
+            sourceDur: number;
+            sourcePos: number;
         };
     };
     tail: {
@@ -1055,13 +1068,12 @@ export interface ClipSplitResult {
         clipType: string;
         clipUuid: string;
         geometry: {
-            clipBegin: number;
-            clipDur: number;
-            clipEnd: number;
-            clipPos: number;
+            clipIn: number;
             dur: number;
             end: number;
             pos: number;
+            sourceDur: number;
+            sourcePos: number;
         };
     };
 }
@@ -1103,7 +1115,7 @@ export interface ConvertGlobalToEditorResult {
 // @public
 export interface ConvertMeasureToTickParams {
     barPos: number;
-    beatPos?: number | null;
+    beatPos?: number;
     considerBeatMode: boolean;
     tickOffset: number;
 }
@@ -1119,8 +1131,8 @@ export interface ConvertOperations {
     globalToEditor(params: ConvertGlobalToEditorParams, options?: CallOptions): Promise<ConvertGlobalToEditorResult>;
     measureToTick(params: ConvertMeasureToTickParams, options?: CallOptions): Promise<ConvertMeasureToTickResult>;
     tickToMeasure(params: ConvertTickToMeasureParams, options?: CallOptions): Promise<ConvertTickToMeasureResult>;
-    tickToTime(params: ConvertTickToTimeParams, options?: CallOptions): Promise<ConvertTickToTimeResult>;
-    timeToTick(params: ConvertTimeToTickParams, options?: CallOptions): Promise<ConvertTimeToTickResult>;
+    tickToTime(params?: ConvertTickToTimeParams, options?: CallOptions): Promise<ConvertTickToTimeResult>;
+    timeToTick(params?: ConvertTimeToTickParams, options?: CallOptions): Promise<ConvertTimeToTickResult>;
 }
 
 // @public
@@ -1138,22 +1150,26 @@ export interface ConvertTickToMeasureResult {
 
 // @public
 export interface ConvertTickToTimeParams {
-    tick: number;
+    tick?: number;
+    ticks?: number[];
 }
 
 // @public
 export interface ConvertTickToTimeResult {
-    time: number;
+    time?: number;
+    times?: number[];
 }
 
 // @public
 export interface ConvertTimeToTickParams {
-    time: number;
+    time?: number;
+    times?: number[];
 }
 
 // @public
 export interface ConvertTimeToTickResult {
-    tick: number;
+    tick?: number;
+    ticks?: number[];
 }
 
 // @public
@@ -1219,9 +1235,9 @@ export interface DeviceOperations {
 
 // @public
 export interface DeviceSetAudioParams {
-    deviceType?: string | null;
-    inputDevice?: string | null;
-    outputDevice?: string | null;
+    deviceType?: string;
+    inputDevice?: string;
+    outputDevice?: string;
 }
 
 // @public
@@ -1288,10 +1304,10 @@ export function encodeFrame(message: string): Buffer;
 
 // @public
 export interface EnsembleAddParams {
-    at?: number | null;
+    at?: number;
     source: string;
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -1306,8 +1322,8 @@ export interface EnsembleAddResult {
 
 // @public
 export interface EnsembleDisableParams {
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -1320,8 +1336,8 @@ export interface EnsembleDisableResult {
 
 // @public
 export interface EnsembleEnableParams {
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -1334,8 +1350,8 @@ export interface EnsembleEnableResult {
 
 // @public
 export interface EnsembleGetParams {
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -1372,8 +1388,8 @@ export interface EnsembleOperations {
 // @public
 export interface EnsembleRemoveParams {
     member: number;
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -1390,8 +1406,8 @@ export interface EnsembleRemoveResult {
 export interface EnsembleReorderParams {
     member: number;
     to: number;
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -1406,28 +1422,28 @@ export interface EnsembleReorderResult {
 
 // @public
 export interface EnsembleSetParams {
-    gain?: number | null;
-    member?: number | null;
-    mute?: boolean | null;
-    offset?: number | null;
-    spread?: number | null;
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    gain?: number;
+    member?: number;
+    mute?: boolean;
+    offset?: number;
+    spread?: number;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
 export interface ExportAudioParams {
-    bitDepth?: number | null;
-    bitRate?: number | null;
-    channels?: number | null;
+    bitDepth?: number;
+    bitRate?: number;
+    channels?: number;
     format?: 'wav' | 'mp3';
-    from?: number | null;
+    from?: number;
     path: string;
-    sampleRate?: number | null;
+    sampleRate?: number;
     scope?: 'master' | 'selected-tracks' | 'all-tracks' | 'tracks';
-    to?: number | null;
-    trackUuids?: string[] | null;
-    withoutEffects?: boolean | null;
+    to?: number;
+    trackUuids?: string[];
+    withoutEffects?: boolean;
 }
 
 // @public
@@ -1436,7 +1452,7 @@ export interface ExportAudioResult {
     jobClass?: string;
     jobId: string;
     paths: string[];
-    scope?: string;
+    scope?: 'master' | 'selected-tracks' | 'all-tracks' | 'tracks';
     trackCount?: number;
 }
 
@@ -1468,13 +1484,13 @@ export interface ExportLrcResult {
 // @public
 export interface ExportMidiParams {
     format?: 'midi' | 'ufdata';
-    from?: number | null;
+    from?: number;
     path: string;
-    splitTracks?: boolean | null;
-    to?: number | null;
-    trackUuids?: string[] | null;
-    withLyrics?: boolean | null;
-    withSyllables?: boolean | null;
+    splitTracks?: boolean;
+    to?: number;
+    trackUuids?: string[];
+    withLyrics?: boolean;
+    withSyllables?: boolean;
 }
 
 // @public
@@ -1507,13 +1523,13 @@ export interface ExportSongTemplateResult {
 
 // @public
 export interface ExportVideoParams {
-    bitRate?: number | null;
-    fps?: number | null;
-    from?: number | null;
-    height?: number | null;
+    bitRate?: number;
+    fps?: number;
+    from?: number;
+    height?: number;
     path: string;
-    to?: number | null;
-    width?: number | null;
+    to?: number;
+    width?: number;
 }
 
 // @public
@@ -1556,9 +1572,9 @@ export class FrameDecoder {
 // @public
 export interface GenerativeAddLayerParams {
     from: number;
-    instrument?: string | null;
-    lyrics?: string | null;
-    prompt?: string | null;
+    instrument?: string;
+    lyrics?: string;
+    prompt?: string;
     soundType?: 'instrumental' | 'song-track' | 'drums' | 'bass' | 'guitar' | 'keyboard' | 'percussion' | 'strings' | 'synth' | 'fx' | 'brass' | 'woodwinds' | 'vocals' | 'backing-vocals' | 'custom';
     to: number;
     trackUuid: string;
@@ -1577,12 +1593,12 @@ export interface GenerativeAddLayerResult {
 
 // @public
 export interface GenerativeEnhanceParams {
-    clipUuid?: string | null;
-    influence?: number | null;
-    lyrics?: string | null;
-    path?: string | null;
-    prompt?: string | null;
-    title?: string | null;
+    clipUuid?: string;
+    influence?: number;
+    lyrics?: string;
+    path?: string;
+    prompt?: string;
+    title?: string;
 }
 
 // @public
@@ -1611,8 +1627,8 @@ export interface GenerativeOperations {
 export interface GenerativeSeedAudioParams {
     from: number;
     prompt: string;
-    referenceAudio?: string[] | null;
-    referenceImage?: string | null;
+    referenceAudio?: string[];
+    referenceImage?: string;
     to: number;
     trackUuid: string;
 }
@@ -1630,10 +1646,10 @@ export interface GenerativeSeedAudioResult {
 
 // @public
 export interface GenerativeSongParams {
-    instrumental?: boolean | null;
-    lyrics?: string | null;
-    prompt?: string | null;
-    title?: string | null;
+    instrumental?: boolean;
+    lyrics?: string;
+    prompt?: string;
+    title?: string;
 }
 
 // @public
@@ -1649,7 +1665,7 @@ export interface GenerativeSongResult {
 export interface GenerativeSoundEffectsParams {
     from: number;
     influence?: 'low' | 'mid' | 'high';
-    loop?: boolean | null;
+    loop?: boolean;
     prompt: string;
     to: number;
     trackUuid: string;
@@ -1670,18 +1686,20 @@ export interface GenerativeSoundEffectsResult {
 export interface GenerativeStemSplitParams {
     clipUuid: string;
     mode?: 'basic' | 'professional' | 'advanced' | 'customized';
-    prompt?: string | null;
-    removeReverb?: boolean | null;
+    prompt?: string;
+    removeReverb?: boolean;
 }
 
 // @public
 export interface GenerativeStemSplitResult {
+    // (undocumented)
     cancellable: boolean;
     clipUuid: string;
     delivery: string;
     jobClass: string;
+    // (undocumented)
     jobId: string;
-    mode?: string;
+    mode?: 'basic' | 'professional' | 'advanced' | 'customized';
     trackIds: string[];
 }
 
@@ -1689,8 +1707,8 @@ export interface GenerativeStemSplitResult {
 export interface GenerativeText2sampleParams {
     from: number;
     prompt: string;
-    referenceAudio?: string | null;
-    soundHint?: string | null;
+    referenceAudio?: string;
+    soundHint?: string;
     to: number;
     trackUuid: string;
 }
@@ -1708,10 +1726,10 @@ export interface GenerativeText2sampleResult {
 
 // @public
 export interface GenerativeVocal2midiParams {
-    applyPitch?: boolean | null;
+    applyPitch?: boolean;
     clipUuid: string;
     language: 'chinese' | 'english' | 'japanese' | 'spanish' | 'korean' | 'french' | 'italian' | 'portuguese' | 'notes-only';
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 // @public
@@ -1727,24 +1745,26 @@ export interface GenerativeVocal2midiResult {
 
 // @public
 export interface GenerativeVoiceChangeParams {
-    correctToKey?: string | null;
-    correctToScale?: string | null;
+    correctToKey?: string;
+    correctToScale?: string;
     from: number;
     modelIds: number[];
-    pitchCorrection?: number | null;
-    randomOffset?: number | null;
-    removeInstrument?: boolean | null;
-    removeReverb?: boolean | null;
-    semitones?: number | null;
+    pitchCorrection?: number;
+    randomOffset?: number;
+    removeInstrument?: boolean;
+    removeReverb?: boolean;
+    semitones?: number;
     to: number;
     trackUuids: string[];
 }
 
 // @public
 export interface GenerativeVoiceChangeResult {
+    // (undocumented)
     cancellable: boolean;
     delivery: string;
     jobClass: string;
+    // (undocumented)
     jobId: string;
     modelIds: number[];
     trackIds: string[];
@@ -1782,7 +1802,7 @@ export interface HandshakeResult {
 
 // @public
 export interface HistoryListParams {
-    limit?: number | null;
+    limit?: number;
 }
 
 // @public
@@ -1832,16 +1852,20 @@ export interface HistoryUndoResult {
 
 // @public
 export interface ImportFileParams {
-    clipIn?: number | null;
-    dur?: number | null;
-    muted?: boolean | null;
-    onOccupied?: string | null;
+    clipIn?: number;
+    clipInSec?: number;
+    dur?: number;
+    durSec?: number;
+    muted?: boolean;
+    onOccupied?: string;
     path: string;
-    pos?: number | null;
-    splitPolyphonic?: boolean | null;
-    trackIndex?: number | null;
-    withTempo?: boolean | null;
-    withTimeSignatures?: boolean | null;
+    pos?: number;
+    posSec?: number;
+    splitPolyphonic?: boolean;
+    trackId?: string;
+    trackIndex?: number;
+    withTempo?: boolean;
+    withTimeSignatures?: boolean;
 }
 
 // @public
@@ -1851,6 +1875,7 @@ export interface ImportFileResult {
     clips?: Record<string, unknown>[];
     clipType?: string;
     clipUuid?: string;
+    createdTrack?: boolean;
     geometry?: Record<string, unknown>;
     loadingState?: string;
     naturalDur?: number;
@@ -1860,6 +1885,7 @@ export interface ImportFileResult {
     timeSignaturesImported?: boolean;
     trackCount?: number;
     trackName?: string;
+    trackUuid?: string;
 }
 
 // @public
@@ -1874,14 +1900,14 @@ export type InDomain<T extends CapabilityToken> = Exclude<Reachable<T>, {
 
 // @public
 export interface InstrumentDisableParams {
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
 export interface InstrumentDisableResult {
     enabled: boolean;
-    format?: 'vst3' | 'vst2' | 'au';
+    format?: string;
     midiChannel: string;
     name: string;
     trackIndex: number;
@@ -1891,14 +1917,14 @@ export interface InstrumentDisableResult {
 
 // @public
 export interface InstrumentEnableParams {
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
 export interface InstrumentEnableResult {
     enabled: boolean;
-    format?: 'vst3' | 'vst2' | 'au';
+    format?: string;
     midiChannel: string;
     name: string;
     trackIndex: number;
@@ -1916,14 +1942,14 @@ export interface InstrumentOperations {
 // @public
 export interface InstrumentSetParams {
     midiChannel: string;
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
 export interface InstrumentSetResult {
     enabled: boolean;
-    format?: 'vst3' | 'vst2' | 'au';
+    format?: string;
     midiChannel: string;
     name: string;
     trackIndex: number;
@@ -1984,6 +2010,7 @@ export interface JobGetResult {
     progress?: number;
     results: {
         id: string;
+        payload?: Record<string, unknown>;
         state: 'pending' | 'streaming' | 'settled' | 'failed';
     }[];
     streamingCapable: boolean;
@@ -2000,8 +2027,8 @@ export interface JobHandle<Result = unknown> {
 
 // @public
 export interface JobListParams {
-    mine: boolean;
-    running: boolean;
+    mine?: boolean;
+    running?: boolean;
 }
 
 // @public
@@ -2018,6 +2045,7 @@ export interface JobListResult {
         progress?: number;
         results: {
             id: string;
+            payload?: Record<string, unknown>;
             state: 'pending' | 'streaming' | 'settled' | 'failed';
         }[];
         streamingCapable: boolean;
@@ -2029,7 +2057,7 @@ export interface JobOperations {
     cancel(params: JobCancelParams, options?: MutatingCallOptions): Promise<void>;
     discardResult(params: JobDiscardResultParams, options?: MutatingCallOptions): Promise<void>;
     get(params: JobGetParams, options?: CallOptions): Promise<JobGetResult>;
-    list(params: JobListParams, options?: CallOptions): Promise<JobListResult>;
+    list(params?: JobListParams, options?: CallOptions): Promise<JobListResult>;
     onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
     place(params: JobPlaceParams, options?: MutatingCallOptions): Promise<JobPlaceResult>;
     results(params: JobResultsParams, options?: CallOptions): Promise<JobResultsResult>;
@@ -2038,7 +2066,7 @@ export interface JobOperations {
 
 // @public
 export interface JobPlaceParams {
-    at?: number | null;
+    at?: number;
     resultId: string;
     trackId: string;
 }
@@ -2067,6 +2095,7 @@ export interface JobResultsParams {
 export interface JobResultsResult {
     results: {
         id: string;
+        payload?: Record<string, unknown>;
         state: 'pending' | 'streaming' | 'settled' | 'failed';
     }[];
 }
@@ -2089,9 +2118,9 @@ export interface JobWaitOutcome {
 
 // @public
 export interface JobWaitParams {
-    any: boolean;
+    any?: boolean;
     ids: string[];
-    timeoutMs?: number | null;
+    timeoutMs?: number;
 }
 
 // @public
@@ -2110,6 +2139,7 @@ export interface JobWaitResult {
         progress?: number;
         results: {
             id: string;
+            payload?: Record<string, unknown>;
             state: 'pending' | 'streaming' | 'settled' | 'failed';
         }[];
         streamingCapable: boolean;
@@ -2164,10 +2194,10 @@ export interface MutatingCallOptions extends CallOptions {
 export interface NoteAddParams {
     clipUuid: string;
     notes: {
-        articulation?: string | null;
+        articulation?: string;
         dur: number;
-        language?: string | null;
-        lyric?: string | null;
+        language?: string;
+        lyric?: string;
         pitch: number;
         pos: number;
     }[];
@@ -2218,13 +2248,13 @@ export interface NoteGetResult {
 
 // @public
 export interface NoteMoveParams {
-    moveEarlier?: number | null;
-    moveLater?: number | null;
+    moveEarlier?: number;
+    moveLater?: number;
     noteUuids: string[];
-    pitch?: number | null;
-    pitchDelta?: number | null;
-    pos?: number | null;
-    posScope?: string | null;
+    pitch?: number;
+    pitchDelta?: number;
+    pos?: number;
+    posScope?: string;
 }
 
 // @public
@@ -2298,9 +2328,9 @@ export interface NoteSetArticulationResult {
 
 // @public
 export interface NoteSetLyricParams {
-    language?: string | null;
-    lyric?: string | null;
-    lyrics?: string[] | null;
+    language?: string;
+    lyric?: string;
+    lyrics?: string[];
     noteUuids: string[];
 }
 
@@ -2324,7 +2354,6 @@ export interface NoteSplitParams {
 export interface NoteSplitResult {
     clipType: string;
     clipUuid: string;
-    // (undocumented)
     head: {
         articulation?: string;
         dur: number;
@@ -2339,7 +2368,6 @@ export interface NoteSplitResult {
         tailConsonants?: number[];
     };
     noteUuids: string[];
-    // (undocumented)
     tail: {
         articulation?: string;
         dur: number;
@@ -2357,47 +2385,47 @@ export interface NoteSplitResult {
 
 // @public
 export const NOTIFICATION_CHANNELS: readonly [{
-    readonly channel: "canvas";
+    readonly notification: "canvas.changed";
     readonly domain: "canvas";
     readonly method: "onChanged";
     readonly capability: "canvas.read";
 }, {
-    readonly channel: "clips";
+    readonly notification: "clips.changed";
     readonly domain: "clip";
     readonly method: "onChanged";
     readonly capability: "clip.read";
 }, {
-    readonly channel: "jobs";
+    readonly notification: "jobs.changed";
     readonly domain: "job";
     readonly method: "onChanged";
     readonly capability: "job.read";
 }, {
-    readonly channel: "project";
+    readonly notification: "project.changed";
     readonly domain: "project";
     readonly method: "onChanged";
     readonly capability: "project.read";
 }, {
-    readonly channel: "selection";
+    readonly notification: "selection.changed";
     readonly domain: "selection";
     readonly method: "onChanged";
     readonly capability: "selection.read";
 }, {
-    readonly channel: "tempo";
+    readonly notification: "tempo.changed";
     readonly domain: "tempo";
     readonly method: "onChanged";
     readonly capability: "tempo.read";
 }, {
-    readonly channel: "tracks";
+    readonly notification: "tracks.changed";
     readonly domain: "track";
     readonly method: "onChanged";
     readonly capability: "track.read";
 }, {
-    readonly channel: "transport";
+    readonly notification: "transport.changed";
     readonly domain: "transport";
     readonly method: "onChanged";
     readonly capability: "transport.state";
 }, {
-    readonly channel: "ui";
+    readonly notification: "ui.changed";
     readonly domain: "ui";
     readonly method: "onChanged";
     readonly capability: "ui.state";
@@ -3641,7 +3669,7 @@ export const OPERATIONS: readonly [{
     readonly ungated: false;
     readonly mutating: true;
     readonly fingerprintPrecondition: false;
-    readonly takesParams: false;
+    readonly takesParams: true;
 }, {
     readonly path: "track duplicate";
     readonly domain: "track";
@@ -3867,7 +3895,6 @@ export const OPERATIONS: readonly [{
     readonly mutating: false;
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
-    readonly bulkEncoding: "base64";
 }, {
     readonly path: "vocalparam write";
     readonly domain: "vocalparam";
@@ -3877,7 +3904,6 @@ export const OPERATIONS: readonly [{
     readonly mutating: true;
     readonly fingerprintPrecondition: true;
     readonly takesParams: true;
-    readonly bulkEncoding: "base64";
 }, {
     readonly path: "voice collect";
     readonly domain: "voice";
@@ -3962,25 +3988,34 @@ export type ProfileTokens<P extends ProfileName> = (typeof PROFILES)[P][number];
 
 // @public
 export interface ProjectCollectSaveParams {
-    path?: string | null;
+    path?: string;
 }
 
 // @public
 export interface ProjectCollectSaveResult {
     collected: 'copied' | 'noNeed';
+    // (undocumented)
     isNewProject: boolean;
+    // (undocumented)
     isTempProject: boolean;
+    // (undocumented)
     projectName: string;
+    // (undocumented)
     projectPath: string;
+    // (undocumented)
     savedPath: string;
 }
 
 // @public
 export interface ProjectDirtyResult {
     dirty: boolean;
+    // (undocumented)
     isNewProject: boolean;
+    // (undocumented)
     isTempProject: boolean;
+    // (undocumented)
     projectName: string;
+    // (undocumented)
     projectPath: string;
 }
 
@@ -3995,7 +4030,7 @@ export interface ProjectInfoResult {
 // @public
 export interface ProjectNewParams {
     discardChanges?: boolean;
-    template?: string | null;
+    template?: string;
 }
 
 // @public
@@ -4048,6 +4083,7 @@ export interface ProjectRecentResult {
 
 // @public
 export interface ProjectRelocatedParams {
+    previousProjectFolder?: string;
     projectFolder: string;
 }
 
@@ -4058,18 +4094,26 @@ export interface ProjectSaveAsParams {
 
 // @public
 export interface ProjectSaveAsResult {
+    // (undocumented)
     isNewProject: boolean;
+    // (undocumented)
     isTempProject: boolean;
+    // (undocumented)
     projectName: string;
+    // (undocumented)
     projectPath: string;
     savedPath: string;
 }
 
 // @public
 export interface ProjectSaveResult {
+    // (undocumented)
     isNewProject: boolean;
+    // (undocumented)
     isTempProject: boolean;
+    // (undocumented)
     projectName: string;
+    // (undocumented)
     projectPath: string;
     savedPath: string;
 }
@@ -4389,6 +4433,10 @@ export interface SelectionGetResult {
         begin: number;
         end: number;
     };
+    horizontalSelectionSec?: {
+        beginSec: number;
+        endSec: number;
+    };
     isLineSelection?: boolean;
     notes?: {
         dur: number;
@@ -4421,33 +4469,31 @@ export interface SelectionSetParams {
     horizontalSelection?: {
         begin: number;
         end: number;
-    } | null;
-    mode?: string | null;
+    };
+    mode?: string;
     notesToDeselect?: {
         uuid: string;
-    }[] | null;
+    }[];
     notesToSelect?: {
         uuid: string;
-    }[] | null;
-    rangeBegin?: number | null;
-    rangeEnd?: number | null;
+    }[];
+    rangeBegin?: number;
+    rangeEnd?: number;
     scope: string;
-    selectNotes?: boolean | null;
-    tracks?: ({
-        trackIndex: number;
-    } | {
-        trackUuid: string;
-    })[] | null;
+    selectNotes?: boolean;
+    tracks?: {
+        trackIndex?: number;
+        trackUuid?: string;
+    }[];
     verticalSelection?: {
         begin: number;
         end: number;
-    } | null;
+    };
 }
 
 // @public
 export interface SelectionSetResult {
     editorType?: string;
-    // (undocumented)
     horizontalSelection?: {
         begin: number;
         end: number;
@@ -4459,13 +4505,11 @@ export interface SelectionSetResult {
     rangeBegin?: number;
     rangeEnd?: number;
     selectionCount?: number;
-    // (undocumented)
     selectionRange?: {
         begin: number;
         end: number;
     };
     success?: boolean;
-    // (undocumented)
     verticalSelection?: {
         begin: number;
         end: number;
@@ -4510,8 +4554,8 @@ export interface ShutdownParams {
 
 // @public
 export interface SoundSourceGetParams {
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -4529,7 +4573,7 @@ export interface SoundSourceGetResult {
     soundSource?: {
         category?: string;
         categoryId?: number;
-        formats?: ('vst3' | 'vst2' | 'au')[];
+        formats?: string[];
         generations?: ('v1' | 'v2')[];
         group?: string;
         id?: number;
@@ -4556,15 +4600,15 @@ export interface SoundSourceGetResult {
 
 // @public
 export interface SoundSourceListParams {
-    category?: string | null;
-    keyword?: string | null;
-    kind?: ('voice' | 'choir' | 'instrument' | 'ensemble' | 'external-instrument')[] | null;
-    language?: string | null;
-    model?: string | null;
-    origin?: ('premade' | 'cloned' | 'community' | 'blended')[] | null;
-    showRefs?: boolean | null;
-    tags?: string[] | null;
-    vendor?: string | null;
+    category?: string;
+    keyword?: string;
+    kind?: ('voice' | 'choir' | 'instrument' | 'ensemble' | 'external-instrument')[];
+    language?: string;
+    model?: string;
+    origin?: ('premade' | 'cloned' | 'community' | 'blended')[];
+    showRefs?: boolean;
+    tags?: string[];
+    vendor?: string;
 }
 
 // @public
@@ -4573,7 +4617,7 @@ export interface SoundSourceListResult {
     soundSources: {
         category?: string;
         categoryId?: number;
-        formats?: ('vst3' | 'vst2' | 'au')[];
+        formats?: string[];
         generations?: ('v1' | 'v2')[];
         group?: string;
         id?: number;
@@ -4597,16 +4641,16 @@ export interface SoundSourceListResult {
 // @public
 export interface SoundSourceLoadParams {
     format?: 'vst3' | 'vst2' | 'au';
-    model?: string | null;
+    model?: string;
     source: string;
-    trackIndex?: number | null;
-    trackUuid?: string | null;
-    vendor?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
+    vendor?: string;
 }
 
 // @public
 export interface SoundSourceLoadResult {
-    format?: 'vst3' | 'vst2' | 'au';
+    format?: string;
     kind: 'voice' | 'choir' | 'instrument' | 'ensemble' | 'external-instrument';
     language?: string;
     modelName?: string;
@@ -4630,10 +4674,10 @@ export interface SoundSourceOperations {
 
 // @public
 export interface SoundSourceSetParams {
-    member?: number | null;
+    member?: number;
     model: string;
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -4647,7 +4691,7 @@ export interface SoundSourceSetResult {
 
 // @public
 export interface SoundSourceTagsParams {
-    kind?: ('voice' | 'choir' | 'instrument' | 'ensemble' | 'external-instrument')[] | null;
+    kind?: ('voice' | 'choir' | 'instrument' | 'ensemble' | 'external-instrument')[];
 }
 
 // @public
@@ -4666,8 +4710,8 @@ export interface SoundSourceTagsResult {
 
 // @public
 export interface SoundSourceUnloadParams {
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -4679,7 +4723,7 @@ export interface SoundSourceUnloadResult {
 }
 
 // @public
-export const SURFACE_VERSION = "6.1";
+export const SURFACE_VERSION = "7.0";
 
 // @public
 export interface TempoAnalyzeParams {
@@ -4696,7 +4740,7 @@ export interface TempoAnalyzeResult {
 // @public
 export interface TempoApplyBeatAnalysisParams {
     analysisId: string;
-    anchor?: number | null;
+    anchor?: number;
 }
 
 // @public
@@ -4757,8 +4801,8 @@ export interface TempoRemovePointResult {
 
 // @public
 export interface TempoSetDisplayRangeParams {
-    maxBpm?: number | null;
-    minBpm?: number | null;
+    maxBpm?: number;
+    minBpm?: number;
 }
 
 // @public
@@ -4769,8 +4813,9 @@ export interface TempoSetDisplayRangeResult {
 
 // @public
 export interface TempoSetParams {
+    // (undocumented)
     points: {
-        bend?: number | null;
+        bend?: number;
         pos: number;
         value: number;
     }[];
@@ -4778,7 +4823,7 @@ export interface TempoSetParams {
 
 // @public
 export interface TempoSetPointParams {
-    bend?: number | null;
+    bend?: number;
     bpm: number;
     pos: number;
 }
@@ -4851,6 +4896,7 @@ export interface TimesigSetAtResult {
 
 // @public
 export interface TimesigSetParams {
+    // (undocumented)
     signatures: {
         barPos: number;
         denominator: number;
@@ -4860,10 +4906,10 @@ export interface TimesigSetParams {
 
 // @public
 export interface TrackCreateParams {
-    index?: number | null;
-    name?: string | null;
-    source?: string | null;
-    type?: string | null;
+    index?: number;
+    name?: string;
+    source?: string;
+    type?: string;
 }
 
 // @public
@@ -4878,9 +4924,20 @@ export interface TrackCreateResult {
 }
 
 // @public
+export interface TrackDeleteParams {
+    removeContents?: boolean;
+    trackUuids?: string[];
+}
+
+// @public
+export interface TrackDeleteResult {
+    deleted: string[];
+}
+
+// @public
 export interface TrackDuplicateParams {
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -4917,10 +4974,10 @@ export interface TrackGetResult {
         midiInput?: {
             channel?: number;
             deviceName?: string;
-            sourceType: string;
+            sourceType: 'none' | 'all' | 'keyboard' | 'custom';
         };
         record: boolean;
-        recordMode?: string;
+        recordMode?: 'monophonic' | 'polyphonic';
     };
     soundSourceInfo?: {
         category?: string;
@@ -4951,7 +5008,7 @@ export interface TrackGetResult {
 
 // @public
 export interface TrackListParams {
-    type?: string[] | null;
+    type?: string[];
 }
 
 // @public
@@ -4959,6 +5016,8 @@ export interface TrackListResult {
     contentTrackCount: number;
     tracks: {
         clipCount: number;
+        isProtected?: boolean;
+        protectedRole?: string;
         region: string;
         soundSourceName?: string;
         trackIndex: number;
@@ -4971,7 +5030,7 @@ export interface TrackListResult {
 // @public
 export interface TrackOperations {
     create(params?: TrackCreateParams, options?: MutatingCallOptions): Promise<TrackCreateResult>;
-    delete(options?: MutatingCallOptions): Promise<void>;
+    delete(params?: TrackDeleteParams, options?: MutatingCallOptions): Promise<TrackDeleteResult>;
     duplicate(params?: TrackDuplicateParams, options?: MutatingCallOptions): Promise<TrackDuplicateResult>;
     get(params: TrackGetParams, options?: CallOptions): Promise<TrackGetResult>;
     list(params?: TrackListParams, options?: CallOptions): Promise<TrackListResult>;
@@ -4992,8 +5051,8 @@ export interface TrackRenameParams {
 // @public
 export interface TrackReorderParams {
     toIndex: number;
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -5009,10 +5068,10 @@ export interface TrackReorderResult {
 
 // @public
 export interface TrackSetInputParams {
-    inputChannel?: string | null;
-    midiChannel?: string | null;
-    midiDevice?: string | null;
-    recordMode?: string | null;
+    inputChannel?: string;
+    midiChannel?: string;
+    midiDevice?: string;
+    recordMode?: string;
     trackIndex: number;
 }
 
@@ -5031,20 +5090,20 @@ export interface TrackSetInputResult {
 // @public
 export interface TrackSetLanguageParams {
     language: string;
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
 export interface TrackSetParams {
-    color?: string | null;
-    gain?: number | null;
-    monitor?: boolean | null;
-    mute?: boolean | null;
-    pan?: number | null;
-    solo?: boolean | null;
-    trackIndex?: number | null;
-    trackUuid?: string | null;
+    color?: string;
+    gain?: number;
+    monitor?: boolean;
+    mute?: boolean;
+    pan?: number;
+    solo?: boolean;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -5095,9 +5154,9 @@ export interface TransportSeekParams {
 
 // @public
 export interface TransportSetLoopParams {
-    active?: boolean | null;
-    endTick?: number | null;
-    startTick?: number | null;
+    active?: boolean;
+    endTick?: number;
+    startTick?: number;
 }
 
 // @public
@@ -5131,7 +5190,7 @@ export interface UiGetResult {
     };
     sharedPanelSlot: {
         open: boolean;
-        selected: 'mv' | 'v2m';
+        selected: string;
     };
     specialTracks: {
         chord: {
@@ -5236,9 +5295,10 @@ export interface VocalparamOperations {
 export interface VocalparamReadParams {
     category: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
     clipUuid: string;
+    encoding?: 'json' | 'base64';
     layer?: 'baseline' | 'user' | 'envelope' | 'direct' | 'effective';
-    rangeBegin?: number | null;
-    rangeEnd?: number | null;
+    rangeBegin?: number;
+    rangeEnd?: number;
 }
 
 // @public
@@ -5253,7 +5313,7 @@ export interface VocalparamReadResult {
             end: number;
         }[];
         layer: 'baseline' | 'user' | 'envelope' | 'direct' | 'effective';
-        points: TypedArrayFor<'f64le'>;
+        points: unknown;
         role: string;
         sparse: boolean;
     };
@@ -5266,7 +5326,7 @@ export interface VocalparamReadResult {
             end: number;
         }[];
         layer: 'baseline' | 'user' | 'envelope' | 'direct' | 'effective';
-        points: TypedArrayFor<'f64le'>;
+        points: unknown;
         role: string;
         sparse: boolean;
     }[];
@@ -5286,8 +5346,9 @@ export interface VocalparamReadResult {
 export interface VocalparamWriteParams {
     category: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
     clipUuid: string;
+    encoding?: 'json' | 'base64';
     layer: 'baseline' | 'user' | 'envelope' | 'direct';
-    points: TypedArrayFor<Dtype>;
+    points: unknown;
     posBegin: number;
 }
 
@@ -5317,11 +5378,11 @@ export interface VoiceCollectResult {
 
 // @public
 export interface VoiceCommunityParams {
-    isMyCollection?: boolean | null;
-    keyword?: string | null;
-    language?: string | null;
-    page?: number | null;
-    tags?: string[] | null;
+    isMyCollection?: boolean;
+    keyword?: string;
+    language?: string;
+    page?: number;
+    tags?: string[];
 }
 
 // @public
@@ -5354,9 +5415,9 @@ export interface VoiceOperations {
 
 // @public
 export interface VoiceSeedsParams {
-    community?: boolean | null;
-    keyword?: string | null;
-    model?: string | null;
+    community?: boolean;
+    keyword?: string;
+    model?: string;
 }
 
 // @public
@@ -5366,14 +5427,14 @@ export interface VoiceSeedsResult {
         code: number;
         labels?: string[];
         name: string;
-        origin?: 'premade' | 'cloned' | 'community';
+        origin?: string;
         ref: string;
     }[];
 }
 
 // @public
 export interface VoiceSynthModelsParams {
-    language?: string | null;
+    language?: string;
 }
 
 // @public

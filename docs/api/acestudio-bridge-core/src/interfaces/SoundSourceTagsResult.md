@@ -29,7 +29,7 @@ Numeric category id.
 name: string;
 ```
 
-Category name, e.g. 'Piano'.
+Category name, e.g. `Piano`.
 
 ***
 
@@ -50,7 +50,7 @@ Every language the installed voices can sing.
 code: string;
 ```
 
-Short code, e.g. 'zh'.
+Short code, e.g. `zh`.
 
 #### name
 
@@ -58,7 +58,7 @@ Short code, e.g. 'zh'.
 name: string;
 ```
 
-Full English name, e.g. 'Chinese'.
+Full English name, e.g. `Chinese`.
 
 ***
 

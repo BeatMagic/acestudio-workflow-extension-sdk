@@ -10,7 +10,7 @@ Success payload of `selection set`.
 optional editorType?: string;
 ```
 
-Clip type of the active editor (editor scope).
+Clip type of the active editor.
 
 ***
 
@@ -23,13 +23,15 @@ optional horizontalSelection?: {
 };
 ```
 
+A `\{begin, end\}` range: ticks for the arrangement's horizontal (time) and vertical (track index) selection, local ticks for the editor's note selection range.
+
 #### begin
 
 ```ts
 begin: number;
 ```
 
-Inclusive start of the applied time range, in project ticks.
+Inclusive start of the range.
 
 #### end
 
@@ -37,7 +39,7 @@ Inclusive start of the applied time range, in project ticks.
 end: number;
 ```
 
-Exclusive end of the applied time range, in project ticks.
+Exclusive end of the range.
 
 ***
 
@@ -47,7 +49,7 @@ Exclusive end of the applied time range, in project ticks.
 optional itemsSelected?: number;
 ```
 
-Number of notes/chords selected (editor scope, range mode).
+Number of notes/chords selected (range form).
 
 ***
 
@@ -57,7 +59,7 @@ Number of notes/chords selected (editor scope, range mode).
 optional notesDeselected?: number;
 ```
 
-Notes deselected by this call (editor scope, UUID modify mode).
+Notes deselected by this call (UUID modify form).
 
 ***
 
@@ -67,7 +69,7 @@ Notes deselected by this call (editor scope, UUID modify mode).
 optional notesNotFound?: number;
 ```
 
-UUIDs that did not match any note (editor scope, UUID mode).
+UUIDs that did not match any note (UUID form).
 
 ***
 
@@ -77,7 +79,7 @@ UUIDs that did not match any note (editor scope, UUID mode).
 optional notesSelected?: number;
 ```
 
-Notes newly selected by this call (editor scope, UUID mode).
+Notes newly selected by this call (UUID form).
 
 ***
 
@@ -87,7 +89,7 @@ Notes newly selected by this call (editor scope, UUID mode).
 optional rangeBegin?: number;
 ```
 
-Inclusive selection start applied, in local ticks (editor scope).
+Inclusive selection start applied, in local ticks (range form).
 
 ***
 
@@ -97,7 +99,7 @@ Inclusive selection start applied, in local ticks (editor scope).
 optional rangeEnd?: number;
 ```
 
-Exclusive selection end applied, in local ticks (editor scope).
+Exclusive selection end applied, in local ticks (range form).
 
 ***
 
@@ -107,7 +109,7 @@ Exclusive selection end applied, in local ticks (editor scope).
 optional selectionCount?: number;
 ```
 
-Total notes selected after the operation (editor scope, UUID mode).
+Total notes selected after the operation (UUID form).
 
 ***
 
@@ -120,13 +122,15 @@ optional selectionRange?: {
 };
 ```
 
+A `\{begin, end\}` range: ticks for the arrangement's horizontal (time) and vertical (track index) selection, local ticks for the editor's note selection range.
+
 #### begin
 
 ```ts
 begin: number;
 ```
 
-Inclusive selection start in local ticks (editor scope, UUID mode).
+Inclusive start of the range.
 
 #### end
 
@@ -134,7 +138,7 @@ Inclusive selection start in local ticks (editor scope, UUID mode).
 end: number;
 ```
 
-Exclusive selection end in local ticks (editor scope, UUID mode).
+Exclusive end of the range.
 
 ***
 
@@ -144,7 +148,7 @@ Exclusive selection end in local ticks (editor scope, UUID mode).
 optional success?: boolean;
 ```
 
-True on success (editor scope).
+True on success.
 
 ***
 
@@ -157,13 +161,15 @@ optional verticalSelection?: {
 };
 ```
 
+A `\{begin, end\}` range: ticks for the arrangement's horizontal (time) and vertical (track index) selection, local ticks for the editor's note selection range.
+
 #### begin
 
 ```ts
 begin: number;
 ```
 
-Inclusive start of the applied track index range (0-based; negative for special tracks).
+Inclusive start of the range.
 
 #### end
 
@@ -171,4 +177,4 @@ Inclusive start of the applied track index range (0-based; negative for special 
 end: number;
 ```
 
-Exclusive end of the applied track index range (0-based; negative for special tracks).
+Exclusive end of the range.

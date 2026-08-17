@@ -22,18 +22,17 @@ head: {
   clipType: string;
   clipUuid: string;
   geometry: {
-     clipBegin: number;
-     clipDur: number;
-     clipEnd: number;
-     clipPos: number;
+     clipIn: number;
      dur: number;
      end: number;
      pos: number;
+     sourceDur: number;
+     sourcePos: number;
   };
 };
 ```
 
-The earlier half, which reuses the original clip.
+The identity+geometry row every plain geometry write echoes back, always in ticks.
 
 #### clipName
 
@@ -63,49 +62,24 @@ UUID of the clip, with braces.
 
 ```ts
 geometry: {
-  clipBegin: number;
-  clipDur: number;
-  clipEnd: number;
-  clipPos: number;
+  clipIn: number;
   dur: number;
   end: number;
   pos: number;
+  sourceDur: number;
+  sourcePos: number;
 };
 ```
 
-Clip geometry after the write, always in ticks.
+A clip's geometry in the *wire* vocabulary a write speaks, always in ticks. A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set.
 
-##### geometry.clipBegin
-
-```ts
-clipBegin: number;
-```
-
-Visible region start on the global timeline.
-
-##### geometry.clipDur
+##### geometry.clipIn
 
 ```ts
-clipDur: number;
+clipIn: number;
 ```
 
-Duration of the visible (clipped) region.
-
-##### geometry.clipEnd
-
-```ts
-clipEnd: number;
-```
-
-Visible region end on the global timeline.
-
-##### geometry.clipPos
-
-```ts
-clipPos: number;
-```
-
-Start of the visible (clipped) region, pattern-local.
+Offset into the source the visible region starts at — what a write's `clipIn` sets.
 
 ##### geometry.dur
 
@@ -113,7 +87,7 @@ Start of the visible (clipped) region, pattern-local.
 dur: number;
 ```
 
-Full pattern duration, including trimmed-away regions.
+Visible region duration — what a write's `dur` sets.
 
 ##### geometry.end
 
@@ -121,7 +95,7 @@ Full pattern duration, including trimmed-away regions.
 end: number;
 ```
 
-Pattern end on the global timeline (pos + dur).
+Visible region end on the global timeline (pos + dur). Reported, never accepted: a caller wanting an end names `pos` and `dur`, and reads this back to check itself.
 
 ##### geometry.pos
 
@@ -129,7 +103,23 @@ Pattern end on the global timeline (pos + dur).
 pos: number;
 ```
 
-Pattern start on the global timeline.
+Visible region start on the global timeline — what a write's `pos` sets.
+
+##### geometry.sourceDur
+
+```ts
+sourceDur: number;
+```
+
+Duration of the full editable (source) region.
+
+##### geometry.sourcePos
+
+```ts
+sourcePos: number;
+```
+
+Start of the full editable (source) region on the global timeline. Reported for completeness; a write never addresses it directly, because a move slides the source underneath so the visible region lands where asked.
 
 ***
 
@@ -141,18 +131,17 @@ tail: {
   clipType: string;
   clipUuid: string;
   geometry: {
-     clipBegin: number;
-     clipDur: number;
-     clipEnd: number;
-     clipPos: number;
+     clipIn: number;
      dur: number;
      end: number;
      pos: number;
+     sourceDur: number;
+     sourcePos: number;
   };
 };
 ```
 
-The later half, a new clip over the same source.
+The identity+geometry row every plain geometry write echoes back, always in ticks.
 
 #### clipName
 
@@ -182,49 +171,24 @@ UUID of the clip, with braces.
 
 ```ts
 geometry: {
-  clipBegin: number;
-  clipDur: number;
-  clipEnd: number;
-  clipPos: number;
+  clipIn: number;
   dur: number;
   end: number;
   pos: number;
+  sourceDur: number;
+  sourcePos: number;
 };
 ```
 
-Clip geometry after the write, always in ticks.
+A clip's geometry in the *wire* vocabulary a write speaks, always in ticks. A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set.
 
-##### geometry.clipBegin
-
-```ts
-clipBegin: number;
-```
-
-Visible region start on the global timeline.
-
-##### geometry.clipDur
+##### geometry.clipIn
 
 ```ts
-clipDur: number;
+clipIn: number;
 ```
 
-Duration of the visible (clipped) region.
-
-##### geometry.clipEnd
-
-```ts
-clipEnd: number;
-```
-
-Visible region end on the global timeline.
-
-##### geometry.clipPos
-
-```ts
-clipPos: number;
-```
-
-Start of the visible (clipped) region, pattern-local.
+Offset into the source the visible region starts at — what a write's `clipIn` sets.
 
 ##### geometry.dur
 
@@ -232,7 +196,7 @@ Start of the visible (clipped) region, pattern-local.
 dur: number;
 ```
 
-Full pattern duration, including trimmed-away regions.
+Visible region duration — what a write's `dur` sets.
 
 ##### geometry.end
 
@@ -240,7 +204,7 @@ Full pattern duration, including trimmed-away regions.
 end: number;
 ```
 
-Pattern end on the global timeline (pos + dur).
+Visible region end on the global timeline (pos + dur). Reported, never accepted: a caller wanting an end names `pos` and `dur`, and reads this back to check itself.
 
 ##### geometry.pos
 
@@ -248,4 +212,20 @@ Pattern end on the global timeline (pos + dur).
 pos: number;
 ```
 
-Pattern start on the global timeline.
+Visible region start on the global timeline — what a write's `pos` sets.
+
+##### geometry.sourceDur
+
+```ts
+sourceDur: number;
+```
+
+Duration of the full editable (source) region.
+
+##### geometry.sourcePos
+
+```ts
+sourcePos: number;
+```
+
+Start of the full editable (source) region on the global timeline. Reported for completeness; a write never addresses it directly, because a move slides the source underneath so the visible region lands where asked.

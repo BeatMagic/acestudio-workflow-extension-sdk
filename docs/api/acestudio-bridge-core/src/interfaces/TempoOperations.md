@@ -88,7 +88,7 @@ The tempo curve changed — a point added, moved, bent, or removed, or the whole
 curve replaced by a beat-analysis apply. A peer re-fetches with `tempo get`
 for the single-tempo view or `tempo points` for the curve.
 
-Listen for changes on the `tempo` channel. The event is a hint to re-read, not the new state.
+Listen for `tempo.changed`. The event is a hint to re-read, not the new state.
 
 Requires the `tempo.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
 

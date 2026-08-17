@@ -17,7 +17,7 @@ UUID of the target clip, with or without curly braces.
 ### color?
 
 ```ts
-optional color?: string | null;
+optional color?: string;
 ```
 
 New color as `#RRGGBB` or a named color. Setting a color stops the clip following its track.
@@ -27,17 +27,17 @@ New color as `#RRGGBB` or a named color. Setting a color stops the clip followin
 ### colorLinkToTrack?
 
 ```ts
-optional colorLinkToTrack?: boolean | null;
+optional colorLinkToTrack?: boolean;
 ```
 
-Make the clip follow its track's color (`true`) or carry its own (`false`). Passing `true` together with `--color` is contradictory and is refused.
+Make the clip follow its track's color (`true`) or carry its own (`false`). Passing `true` together with `color` is contradictory and is refused.
 
 ***
 
 ### name?
 
 ```ts
-optional name?: string | null;
+optional name?: string;
 ```
 
 New name. Pass an empty string to clear it and fall back to the auto-generated name.

@@ -347,7 +347,10 @@ describe("the change subscriptions", () => {
     expect(host.notifyChange("jobs", ["job-7"])).toBe(true);
     await flush();
 
-    expect(seen).toEqual([{ channel: "jobs", revision: 1, changes: ["job-7"] }]);
+    // No `channel` on the payload: the notification's own name is what says which
+    // subject moved, so carrying it again in the body would be two places to
+    // disagree.
+    expect(seen).toEqual([{ revision: 1, changes: ["job-7"] }]);
 
     // Unsubscribing is what it claims: the next change reaches nobody, even
     // though the host still sent it.
@@ -408,19 +411,19 @@ describe("the change subscriptions", () => {
     connection.close();
   });
 
-  it("demultiplexes by channel, so one subject's listener never sees another's", async () => {
+  it("keeps one subject's listener from seeing another's", async () => {
     const { connection, host } = await connectToScriptedHost({ grantedTokens: ["job.read"] });
-    const seen: string[] = [];
-    connection.client.job.onChanged((event) => seen.push(event.channel));
+    const seen: number[] = [];
+    connection.client.job.onChanged((event) => seen.push(event.revision));
 
-    // A channel this artifact cannot name, arriving on the same wire notification.
-    // Nothing listens for it, so it is dropped rather than fanned out to whoever
-    // happens to be subscribed.
+    // A channel is its own notification, so the host routes by name and this one
+    // reaches nothing. Binding every channel to a single wire name would land it
+    // on the job listener instead, which is the regression this catches.
     host.notifyUnknownChannel("project");
     expect(host.notifyChange("jobs")).toBe(true);
     await flush();
 
-    expect(seen).toEqual(["jobs"]);
+    expect(seen).toHaveLength(1);
     connection.close();
   });
 });

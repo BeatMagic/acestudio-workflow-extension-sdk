@@ -20,4 +20,4 @@ UUID of the clip to split, with or without curly braces.
 pos: number;
 ```
 
-Where to cut, on the global timeline. Must fall strictly inside the clip and leave both halves at least one grid cell long.
+Where to cut, on the global timeline, in ticks. Must fall strictly inside the clip and leave both halves at least one grid cell long.

@@ -3,50 +3,50 @@
 ```ts
 const NOTIFICATION_CHANNELS: readonly [{
   capability: "canvas.read";
-  channel: "canvas";
   domain: "canvas";
   method: "onChanged";
+  notification: "canvas.changed";
 }, {
   capability: "clip.read";
-  channel: "clips";
   domain: "clip";
   method: "onChanged";
+  notification: "clips.changed";
 }, {
   capability: "job.read";
-  channel: "jobs";
   domain: "job";
   method: "onChanged";
+  notification: "jobs.changed";
 }, {
   capability: "project.read";
-  channel: "project";
   domain: "project";
   method: "onChanged";
+  notification: "project.changed";
 }, {
   capability: "selection.read";
-  channel: "selection";
   domain: "selection";
   method: "onChanged";
+  notification: "selection.changed";
 }, {
   capability: "tempo.read";
-  channel: "tempo";
   domain: "tempo";
   method: "onChanged";
+  notification: "tempo.changed";
 }, {
   capability: "track.read";
-  channel: "tracks";
   domain: "track";
   method: "onChanged";
+  notification: "tracks.changed";
 }, {
   capability: "transport.state";
-  channel: "transport";
   domain: "transport";
   method: "onChanged";
+  notification: "transport.changed";
 }, {
   capability: "ui.state";
-  channel: "ui";
   domain: "ui";
   method: "onChanged";
+  notification: "ui.changed";
 }];
 ```
 
-Every observable channel in this artifact, sorted by channel. The runtime builds one subscription per row and guards it with the row's capability; a channel absent from this table is not observable from this artifact at all.
+Every observable channel in this artifact, sorted by notification. The runtime binds one handler per row and guards the subscribe with the row's capability; a channel absent from this table is not observable from this artifact at all.

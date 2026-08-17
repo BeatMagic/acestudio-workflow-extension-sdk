@@ -7,7 +7,7 @@ Arguments for `clip consolidate`.
 ### name?
 
 ```ts
-optional name?: string | null;
+optional name?: string;
 ```
 
 Name for the consolidated clip(s). Omit for the generated `Consolidate_\<n\>_\<track\>`, which is what the timeline's own Consolidate produces.
@@ -20,7 +20,7 @@ Name for the consolidated clip(s). Omit for the generated `Consolidate_\<n\>_\<t
 rangeBegin: number;
 ```
 
-Start of the range to consolidate, on the global timeline. Ticks (`3840t`), clock time (`1.5s`), or a musical position (`4.1.0`).
+Start of the range to consolidate, on the global timeline, in ticks.
 
 ***
 
@@ -30,7 +30,7 @@ Start of the range to consolidate, on the global timeline. Ticks (`3840t`), cloc
 rangeEnd: number;
 ```
 
-End of the range (exclusive), on the global timeline.
+End of the range (exclusive), on the global timeline, in ticks.
 
 ***
 
@@ -41,5 +41,3 @@ trackUuids: string[];
 ```
 
 Track to consolidate within. Repeat for several tracks; each produces its own consolidated clip, and the whole call is one undo entry.
-
-Tracks are named by id, not index: indices shift as tracks come and go, and this op deletes clips, so a stale index is worth designing out. Read them from `track list`.

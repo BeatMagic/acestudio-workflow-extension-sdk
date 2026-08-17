@@ -33,14 +33,18 @@ Requires the `track.write` capability.
 ### delete()
 
 ```ts
-delete(options?): Promise<void>;
+delete(params?, options?): Promise<TrackDeleteResult>;
 ```
 
-Delete all currently selected tracks and their content.
+Delete tracks by uuid, or the current selection when none are named.
 
 Requires the `track.write` capability.
 
 #### Parameters
+
+##### params?
+
+[`TrackDeleteParams`](TrackDeleteParams.md)
 
 ##### options?
 
@@ -48,7 +52,7 @@ Requires the `track.write` capability.
 
 #### Returns
 
-`Promise`\<`void`\>
+`Promise`\<[`TrackDeleteResult`](TrackDeleteResult.md)\>
 
 ***
 
@@ -140,7 +144,7 @@ A track was added, removed, reordered, renamed, or had a mixer property
 change — in the arrangement or in either pinned band (ADR 0104). `changes`
 carries the affected track uuids. A peer re-fetches with `track list`.
 
-Listen for changes on the `tracks` channel. The event is a hint to re-read, not the new state.
+Listen for `tracks.changed`. The event is a hint to re-read, not the new state.
 
 Requires the `track.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
 

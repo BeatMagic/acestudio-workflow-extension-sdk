@@ -20,7 +20,7 @@ Number of points in the table after the write.
 pos: number;
 ```
 
-The position acted on, in project ticks -- resolved, so a caller that passed a musical or clock form learns which tick it hit.
+The position acted on, in project ticks — resolved, so a caller that passed a musical or clock form learns which tick it hit.
 
 ***
 

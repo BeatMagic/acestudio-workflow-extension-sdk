@@ -14,7 +14,7 @@ optional filteredRange?: {
 };
 ```
 
-Actual tick range used for filtering. Present only when rangeBegin and/or rangeEnd was supplied.
+The actual tick range used for filtering `clip note-content` / `clip lyrics`. Present only when `rangeBegin` and/or `rangeEnd` was supplied.
 
 #### begin
 
@@ -22,7 +22,7 @@ Actual tick range used for filtering. Present only when rangeBegin and/or rangeE
 begin: number;
 ```
 
-Filter range start, in ticks, in the coordinate system named by scope.
+Filter range start, in ticks, in the coordinate system named by `scope`.
 
 #### end
 
@@ -30,7 +30,7 @@ Filter range start, in ticks, in the coordinate system named by scope.
 end: number;
 ```
 
-Filter range end (exclusive), in ticks, in the coordinate system named by scope.
+Filter range end (exclusive), in ticks, in the coordinate system named by `scope`.
 
 #### scope
 
@@ -38,7 +38,7 @@ Filter range end (exclusive), in ticks, in the coordinate system named by scope.
 scope: string;
 ```
 
-Coordinate system of begin/end: `project` or `clip-local`.
+Coordinate system of `begin`/`end`: `project` or `clip-local`.
 
 ***
 
@@ -48,7 +48,7 @@ Coordinate system of begin/end: `project` or `clip-local`.
 fingerprint: Fingerprint;
 ```
 
-Content fingerprint of the whole clip's note content (ADR 0088 §5). Carry it back as `--if-match` on `clip replace-content` or any `note` write to fail STALE_WRITE instead of overwriting edits made since this read. Always covers the full clip, even when the read was range-filtered.
+Content fingerprint of the whole clip's note content (ADR 0088 §5). Carry it back as the `fingerprint` argument on `clip replace-content` or any `note` write to fail STALE_WRITE instead of overwriting edits made since this read. Always covers the full clip, even when the read was range-filtered.
 
 ***
 
@@ -88,7 +88,7 @@ Notes overlapping the filter range, in pattern order.
 optional articulation?: string;
 ```
 
-Articulation name, empty string for Smart (auto). Instrument clips only.
+Instrument notes only: the note's articulation.
 
 #### dur
 
@@ -112,7 +112,7 @@ Note end in clip-local ticks (pos + dur).
 optional headConsonants?: number[];
 ```
 
-Head consonant lengths in seconds (may be empty). Sing clips only.
+Sing notes only: leading consonant lengths in seconds.
 
 #### language?
 
@@ -120,7 +120,7 @@ Head consonant lengths in seconds (may be empty). Sing clips only.
 optional language?: string;
 ```
 
-Full language name. Sing clips only.
+Sing notes only: the note's language, spelled in full English.
 
 #### lyric?
 
@@ -128,7 +128,7 @@ Full language name. Sing clips only.
 optional lyric?: string;
 ```
 
-Lyric text. Sing clips only.
+Sing notes only: the note's lyric. `-` marks a tenuto continuing the previous syllable.
 
 #### noteUuid
 
@@ -160,7 +160,7 @@ Note start in clip-local ticks.
 optional syllable?: string;
 ```
 
-Space-separated phonemes. Sing clips only.
+Sing notes only: the phonemes the engine derived from the lyric.
 
 #### tailConsonants?
 
@@ -168,4 +168,4 @@ Space-separated phonemes. Sing clips only.
 optional tailConsonants?: number[];
 ```
 
-Tail consonant lengths in seconds (may be empty). Sing clips only.
+Sing notes only: trailing consonant lengths in seconds.

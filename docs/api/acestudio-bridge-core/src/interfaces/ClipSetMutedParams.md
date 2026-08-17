@@ -10,7 +10,7 @@ Arguments for `clip set-muted`.
 clipUuids: string[];
 ```
 
-UUIDs of the target clips. Video clips only. Repeat the flag to name several.
+UUIDs of the target clips. Video clips only.
 
 ***
 

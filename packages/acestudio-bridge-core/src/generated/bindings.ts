@@ -3,10 +3,10 @@
 // The public capability bindings: the operations the capability registry
 // publishes (ADR 0094 §2), plus the scaffolding every consumer shares.
 //
-// Surface version: 6.1
+// Surface version: 7.0
 
 /** The contract surface version these bindings were generated from (`major.minor`). The handshake compares it against the host's: a major mismatch is a typed error at connect, minor drift is fine under the tolerant-reader rule. */
-export const SURFACE_VERSION = '6.1';
+export const SURFACE_VERSION = '7.0';
 
 /** Every canonical error code, as a string-literal union. `BridgeError.code` narrows against it, so error handling is exhaustiveness-checked by the compiler. Codes are a contract; the message beside one is not. */
 export type BridgeErrorCode =
@@ -19,6 +19,7 @@ export type BridgeErrorCode =
   | 'CAPABILITY_OUT_OF_SURFACE'
   | 'CHAIN_NOT_GROWN'
   | 'CLIP_OVERLAP'
+  | 'CLIP_RANGE'
   | 'COLLECT_FAILED'
   | 'CONFIRMATION_REQUIRED'
   | 'CREATE_TIMEOUT'
@@ -65,6 +66,8 @@ export type BridgeErrorCode =
   | 'TIMEOUT'
   | 'TIME_UNIT_REQUIRED'
   | 'TRACK_CREATE_FAILED'
+  | 'TRACK_NOT_EMPTY'
+  | 'TRACK_PROTECTED'
   | 'UNAVAILABLE'
   | 'UNKNOWN_CAPABILITY'
   | 'UNKNOWN_COMMAND'
@@ -162,18 +165,16 @@ export type Unsubscribe = () => void;
 
 /** What a change notification carries (ADR 0083 §2.4). It is a hint to re-read, never the new state: notifications coalesce, so a listener that treats `changes` as the complete diff will drift. Compare `revision` against the one your last snapshot was stamped with, and re-fetch when it is behind. */
 export interface ChangeEvent {
-    /** The channel that moved — the subject the subscription named. */
-    readonly channel: string;
     /** The channel's monotonic revision after the change. */
     readonly revision: number;
     /** Coarse list of what changed, to narrow the re-fetch. May be empty. */
     readonly changes: readonly string[];
 }
 
-/** What one observable channel is, for the runtime that binds the subscriptions below onto a connection. One wire notification carries every channel, so the runtime demultiplexes on `channel` and guards the subscribe with `capability` — the same refusal a call to an ungranted operation raises, so an extension learns at the subscribe rather than waiting for a callback that never fires. */
+/** What one observable channel is, for the runtime that binds the subscriptions below onto a connection. Each channel is its own wire notification, so the runtime binds a handler per `notification` and guards the subscribe with `capability` — the same refusal a call to an ungranted operation raises, so an extension learns at the subscribe rather than waiting for a callback that never fires. */
 export interface ChannelDescriptor {
-    /** Channel name as it travels in the notification envelope. */
-    readonly channel: string;
+    /** The wire notification the host sends for this channel. */
+    readonly notification: string;
     /** Domain group the subscription nests under; never empty. */
     readonly domain: string;
     /** Binding method name for the subscription. */
@@ -322,17 +323,17 @@ export const CAPABILITY_TOKENS = [
 /** Arguments for `blend add`. */
 export interface BlendAddParams {
     /** Where to insert the seed. Defaults to the end of the recipe. */
-    at?: number | null;
-    /** *Required.** Which blend to add to, by display name or ref. */
+    at?: number;
+    /** **Required.** Which blend to add to, by display name or ref. */
     blend: string;
     /** Whether Style should follow Timbre for this seed. */
-    link?: boolean | null;
+    link?: boolean;
     /** **Required.** Which voice seed to add, by seed name or ref. Use `voice seeds --model \<name\>` to see what the blend's model allows. */
     seed: string;
     /** Style weight for the new seed, 0 to 1. Defaults to 0.2. An error on a timbre-only model, which has no Style axis. */
-    style?: number | null;
+    style?: number;
     /** Timbre weight for the new seed, 0 to 1. Defaults to 0.2, matching the app: a seed you add is an alteration to the blend's base voice, not an equal partner in it. */
-    timbre?: number | null;
+    timbre?: number;
 }
 
 /** Success payload of `blend add`. */
@@ -381,15 +382,15 @@ export interface BlendAddResult {
 /** Arguments for `blend create`. */
 export interface BlendCreateParams {
     /** Avatar id. Omit to fall back to the first seed's avatar. */
-    avatar?: number | null;
+    avatar?: number;
     /** The blend's native language, as a full English name. Omit to take the first one the model and seeds allow. */
-    language?: string | null;
+    language?: string;
     /** **Required.** Which vocal synth model the blend sings through, by model name or generation. Fixed for the life of the blend: it decides which seeds are available, which languages the blend can sing, and whether the Style axis exists at all. */
     model: string;
-    /** *Required.** Display name for the new blend. */
+    /** **Required.** Display name for the new blend. */
     name: string;
     /** Tag names to attach, for filtering in `sound-source list`. */
-    tags?: string[] | null;
+    tags?: string[];
 }
 
 /** Success payload of `blend create`. */
@@ -437,7 +438,7 @@ export interface BlendCreateResult {
 
 /** Arguments for `blend delete`. */
 export interface BlendDeleteParams {
-    /** *Required.** Which blend to delete, by display name or ref. */
+    /** **Required.** Which blend to delete, by display name or ref. */
     blend: string;
 }
 
@@ -505,9 +506,9 @@ export interface BlendGetResult {
 /** Arguments for `blend list`. */
 export interface BlendListParams {
     /** Filter by name substring, case-insensitive. */
-    keyword?: string | null;
+    keyword?: string;
     /** Show each blend's `ref` in the human listing. Refs are always present in the JSON payload; this is for reading them without first provoking an ambiguity error. Blend names collide as readily as any other sound source's, so the same escape hatch belongs here. */
-    showRefs?: boolean | null;
+    showRefs?: boolean;
 }
 
 /** Success payload of `blend list`. */
@@ -537,9 +538,9 @@ export interface BlendListResult {
 
 /** Arguments for `blend remove`. */
 export interface BlendRemoveParams {
-    /** *Required.** Which blend, by display name or ref. */
+    /** **Required.** Which blend, by display name or ref. */
     blend: string;
-    /** *Required.** Which seed to remove, by 0-based position in the recipe. */
+    /** **Required.** Which seed to remove, by 0-based position in the recipe. */
     member: number;
 }
 
@@ -588,11 +589,11 @@ export interface BlendRemoveResult {
 
 /** Arguments for `blend reorder`. */
 export interface BlendReorderParams {
-    /** *Required.** Which blend, by display name or ref. */
+    /** **Required.** Which blend, by display name or ref. */
     blend: string;
-    /** *Required.** Which seed to move, by 0-based position. */
+    /** **Required.** Which seed to move, by 0-based position. */
     member: number;
-    /** *Required.** Where to move it. */
+    /** **Required.** Where to move it. */
     to: number;
 }
 
@@ -642,23 +643,23 @@ export interface BlendReorderResult {
 /** Arguments for `blend set`. */
 export interface BlendSetParams {
     /** New avatar id. Blend-level. */
-    avatar?: number | null;
-    /** *Required.** Which blend, by display name or ref. */
+    avatar?: number;
+    /** **Required.** Which blend, by display name or ref. */
     blend: string;
     /** New native language, as a full English name. Must be one the model and seeds allow. Blend-level. */
-    language?: string | null;
-    /** Whether Style should follow Timbre for this seed. Requires `--member`. */
-    link?: boolean | null;
+    language?: string;
+    /** Whether Style should follow Timbre for this seed. Requires `member`. */
+    link?: boolean;
     /** Which seed to configure, by 0-based position in the recipe. Omit to configure the blend itself instead. */
-    member?: number | null;
+    member?: number;
     /** New display name. Blend-level. */
-    name?: string | null;
-    /** This seed's Style weight, 0 to 1. Requires `--member`, and requires a model that has a Style axis: on a timbre-only model this is an error rather than a value that silently does nothing. */
-    style?: number | null;
+    name?: string;
+    /** This seed's Style weight, 0 to 1. Requires `member`, and requires a model that has a Style axis: on a timbre-only model this is an error rather than a value that silently does nothing. */
+    style?: number;
     /** Replacement tag list. Replaces the existing tags rather than adding to them. Blend-level. */
-    tags?: string[] | null;
-    /** This seed's Timbre weight, 0 to 1. Requires `--member`. */
-    timbre?: number | null;
+    tags?: string[];
+    /** This seed's Timbre weight, 0 to 1. Requires `member`. */
+    timbre?: number;
 }
 
 /** Success payload of `blend set`. */
@@ -805,11 +806,11 @@ export interface CanvasOperations {
 
     /**
      * The canvas changed — the authored setting, or the effective raster the
-     * compositor adopted after an adaptive re-derivation (ADR 0066). Which of the two
-     * moved is not reported, because the host signal does not say: a peer re-fetches
-     * with `canvas info`, `canvas effective-size`, or both.
+     * compositor adopted after an adaptive re-derivation (ADR 0066). Which of the
+     * two moved is not reported, because the host signal does not say: a peer
+     * re-fetches with `canvas info`, `canvas effective-size`, or both.
      *
-     * Listen for changes on the `canvas` channel. The event is a hint to re-read, not the new state.
+     * Listen for `canvas.changed`. The event is a hint to re-read, not the new state.
      *
      * Requires the `canvas.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
      */
@@ -820,17 +821,17 @@ export interface CanvasOperations {
 
 /** Arguments for `caret get`. */
 export interface CaretGetParams {
-    /** Scope to query: `"global"`, `"arrangement"` (alias for global), or `"editor"` (pattern editor, if open). Defaults to `"global"` when omitted. */
-    scope?: string | null;
+    /** Scope to query: `"global"`, `"arrangement"` (an alias for global), or `"editor"` (the pattern editor, if one is open). Omitted reads global. */
+    scope?: string;
 }
 
 /** Success payload of `caret get`. */
 export interface CaretGetResult {
-    /** Which UI area currently holds caret focus: 'arrangement' (track view) or 'editor' (pattern editor). */
+    /** Which UI area holds caret focus: `arrangement` (track view) or `editor` (pattern editor). Folded in from the retired `marker get-focus`, because a caret position without the view that owns it is ambiguous. */
     focus: string;
-    /** The scope actually used: 'global' or 'editor' ('arrangement' is normalized to 'global'). */
+    /** The scope actually used — `global` or `editor`. `arrangement` normalizes to `global`, so the answer names one of the two the caret really has. */
     scope: string;
-    /** Caret position in ticks: global ticks for 'global' scope, local ticks inside the open clip for 'editor' scope. */
+    /** Caret position in ticks: global ticks under `global` scope, ticks local to the open clip under `editor` scope. */
     tick: number;
     /** 0-based track index of the caret. Users see tracks starting from 1. */
     trackIndex: number;
@@ -838,18 +839,18 @@ export interface CaretGetResult {
 
 /** Arguments for `caret set`. */
 export interface CaretSetParams {
-    /** Force playback to seek to the new position even if the transport is currently playing. Defaults to `false`. */
-    forceSeek?: boolean | null;
-    /** Whether `tick` is in global (project-level) coordinates. When `false`, `tick` is treated as a local tick inside the open editor clip. Defaults to `true`. */
-    is_global_tick?: boolean | null;
-    /** Scope to target: `"arrangement"` / `"global"` or `"editor"`. Defaults to whichever view currently has focus. */
-    scope?: string | null;
-    /** Whether to snap the selection to line selection after moving. Defaults to `true`. */
-    set_to_line_selection?: boolean | null;
-    /** Target position. Ticks (`3840t`), clock time (`1.5s`, `1:23.5`), or musical position (`4.1.0`). Must be non-negative. Required. See `help time-values`. */
+    /** Force playback to seek to the new position even while the transport is playing. Omitted means it does not. */
+    forceSeek?: boolean;
+    /** Whether `tick` is in global (project-level) coordinates. False treats it as a tick local to the open editor clip. Omitted means global. */
+    is_global_tick?: boolean;
+    /** Scope to target: `"arrangement"` / `"global"`, or `"editor"`. Omitted targets whichever view currently has focus. */
+    scope?: string;
+    /** Whether to snap the selection to line selection after moving. Omitted means it does. */
+    set_to_line_selection?: boolean;
+    /** Target position in ticks. Must be non-negative. */
     tick: number;
-    /** Track index (0-based). When omitted, the current track is kept. Users see tracks starting from 1, so user "track 2" = `--track-index 1`. */
-    trackIndex?: number | null;
+    /** Track index (0-based). Omitted keeps the current track. */
+    trackIndex?: number;
 }
 
 /** The `caret` operations, mirroring the canonical operation tree 1:1. */
@@ -873,16 +874,16 @@ export interface CaretOperations {
 
 /** Arguments for `choir add`. */
 export interface ChoirAddParams {
-    /** Where to insert the new member. Defaults to the end. `0` makes the new voice the leader and pushes the rest down. */
-    at?: number | null;
+    /** Where to insert the new member. Omit for the end. `0` makes the new voice the leader and pushes the rest down. */
+    at?: number;
     /** Which vocal synth model the new member sings through, by model name or generation. Omit for the voice's default. */
-    model?: string | null;
-    /** **Required.** Which voice to add, by display name or ref — the same thing `sound-source load --source` accepts, including a blended voice. */
+    model?: string;
+    /** Which voice to add, by display name or ref — the same thing `sound-source load --source` accepts, including a blended voice. */
     source: string;
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** Success payload of `choir add`. */
@@ -904,9 +905,9 @@ export interface ChoirAddResult {
 /** Arguments for `choir disable`. */
 export interface ChoirDisableParams {
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** Success payload of `choir disable`. */
@@ -924,9 +925,9 @@ export interface ChoirDisableResult {
 /** Arguments for `choir enable`. */
 export interface ChoirEnableParams {
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** Success payload of `choir enable`. */
@@ -944,9 +945,9 @@ export interface ChoirEnableResult {
 /** Arguments for `choir get`. */
 export interface ChoirGetParams {
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** Success payload of `choir get`. */
@@ -988,12 +989,12 @@ export interface ChoirGetResult {
 
 /** Arguments for `choir remove`. */
 export interface ChoirRemoveParams {
-    /** *Required.** Which member to remove. `0` is the leader and is refused. */
+    /** Which member to remove. `0` is the leader and is refused. */
     member: number;
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** Success payload of `choir remove`. */
@@ -1014,14 +1015,14 @@ export interface ChoirRemoveResult {
 
 /** Arguments for `choir reorder`. */
 export interface ChoirReorderParams {
-    /** *Required.** Which member to move. */
+    /** Which member to move. */
     member: number;
-    /** *Required.** Where to move it. `0` promotes it to leader. */
+    /** Where to move it. `0` promotes it to leader. */
     to: number;
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** Success payload of `choir reorder`. */
@@ -1042,20 +1043,20 @@ export interface ChoirReorderResult {
 
 /** Arguments for `choir set`. */
 export interface ChoirSetParams {
-    /** Member gain in dB. Requires `--member`. */
-    gain?: number | null;
+    /** Member gain in dB. Requires `member`. */
+    gain?: number;
     /** Which member to configure. `0` is the leader. Omit to configure the choir as a whole instead. */
-    member?: number | null;
-    /** Whether to mute this member. Requires `--member`. */
-    mute?: boolean | null;
+    member?: number;
+    /** Whether to mute this member. Requires `member`. */
+    mute?: boolean;
     /** Timing offset between members, in milliseconds. Choir-level. */
-    offset?: number | null;
+    offset?: number;
     /** Stereo spread across the members, 0 to 1. Choir-level. */
-    spread?: number | null;
+    spread?: number;
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** The `choir` operations, mirroring the canonical operation tree 1:1. */
@@ -1124,25 +1125,21 @@ export interface ClipAudioContentParams {
 export interface ClipAudioContentResult {
     /** Project-relative path (starting with './') in full; absolute paths are truncated to the file name for privacy. */
     audioFileName: string;
-    /** Content fingerprint of the clip's source media -- the path and its load state (ADR 0088 §5). No write on this surface replaces a clip's media, so this is a change-detection token rather than an `--if-match` precondition: re-read and compare to learn that the media was swapped or finished loading. Hashed over the full path even though `audioFileName` is redacted, so a swap between same-named files in different folders still shows up. */
+    /** Content fingerprint of the clip's source media (ADR 0088 §5): the path and its load state. No write on this surface replaces a clip's media, so this is a change-detection token rather than a precondition — re-read and compare to learn that the media was swapped or finished loading. Hashed over the full path even though `audioFileName` is redacted, so a swap between same-named files in different folders still shows up. */
     fingerprint: Fingerprint;
-    /** Audio load state: 'not_loaded', 'loaded_success', or 'loaded_failed'. */
+    /** Audio load state: `not_loaded`, `loaded_success`, or `loaded_failed`. */
     loadingState: string;
 }
 
 /** Arguments for `clip consolidate`. */
 export interface ClipConsolidateParams {
     /** Name for the consolidated clip(s). Omit for the generated `Consolidate_\<n\>_\<track\>`, which is what the timeline's own Consolidate produces. */
-    name?: string | null;
-    /** Start of the range to consolidate, on the global timeline. Ticks (`3840t`), clock time (`1.5s`), or a musical position (`4.1.0`). */
+    name?: string;
+    /** Start of the range to consolidate, on the global timeline, in ticks. */
     rangeBegin: number;
-    /** End of the range (exclusive), on the global timeline. */
+    /** End of the range (exclusive), on the global timeline, in ticks. */
     rangeEnd: number;
-    /**
-     * Track to consolidate within. Repeat for several tracks; each produces its own consolidated clip, and the whole call is one undo entry.
-     *
-     * Tracks are named by id, not index: indices shift as tracks come and go, and this op deletes clips, so a stale index is worth designing out. Read them from `track list`.
-     */
+    /** Track to consolidate within. Repeat for several tracks; each produces its own consolidated clip, and the whole call is one undo entry. */
     trackUuids: string[];
 }
 
@@ -1150,7 +1147,7 @@ export interface ClipConsolidateParams {
 export interface ClipConsolidateResult {
     /** One consolidated clip per track that had material in the range. A named track with nothing in the range is skipped rather than producing an empty clip. */
     clips: {
-        /** Generated name, `Consolidate_\<n\>_\<track\>` unless --name was given. */
+        /** Generated name, `Consolidate_\<n\>_\<track\>` unless `name` was given. */
         clipName: string;
         /** Clip type, matching its track. */
         clipType: string;
@@ -1158,8 +1155,21 @@ export interface ClipConsolidateResult {
         clipUuid: string;
         /** How many source clips contributed to this one. */
         consolidatedClipCount: number;
-        /** The consolidated clip's geometry: exactly the requested range. */
-        geometry: Record<string, unknown>;
+        /** A clip's geometry in the *wire* vocabulary a write speaks, always in ticks. A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set. */
+        geometry: {
+            /** Offset into the source the visible region starts at — what a write's `clipIn` sets. */
+            clipIn: number;
+            /** Visible region duration — what a write's `dur` sets. */
+            dur: number;
+            /** Visible region end on the global timeline (pos + dur). Reported, never accepted: a caller wanting an end names `pos` and `dur`, and reads this back to check itself. */
+            end: number;
+            /** Visible region start on the global timeline — what a write's `pos` sets. */
+            pos: number;
+            /** Duration of the full editable (source) region. */
+            sourceDur: number;
+            /** Start of the full editable (source) region on the global timeline. Reported for completeness; a write never addresses it directly, because a move slides the source underneath so the visible region lands where asked. */
+            sourcePos: number;
+        };
         /** Name of that track. */
         trackName: string;
         /** Id of the track it was placed on. */
@@ -1169,56 +1179,38 @@ export interface ClipConsolidateResult {
     rangeBegin: number;
     /** Range end actually used (exclusive), in ticks. */
     rangeEnd: number;
-    /** How many tracks produced a consolidated clip -- at most the number of trackUuids given. */
+    /** How many tracks produced a consolidated clip — at most the number of `trackUuids` given. */
     trackCount: number;
 }
 
 /** Arguments for `clip create`. */
 export interface ClipCreateParams {
-    /** Clip duration. Ticks (`3840t`), a note value (`1/4`, `1/8.`), beats (`2b`), or whole measures (`2bar`, anchored at `--pos`). See `help time-values`. */
+    /** Clip duration, in ticks. */
     dur: number;
-    /**
-     * Optional custom name. Omit to let ACE Studio auto-generate a name.
-     *
-     * For a `marker` clip this is the marker's annotation text, and omitting it is normal — the timeline then shows its "double click to write text" prompt.
-     */
-    name?: string | null;
-    /**
-     * Initial notes, as a JSON array in clip-local ticks — the same shape `note add` takes. Omit to create an empty clip.
-     *
-     * Rejected for `marker` and `chord`, which hold no notes.
-     *
-     * Example: `--notes '[\{"pos":0,"dur":480,"pitch":60,"lyric":"la"\}]'`
-     */
+    /** Optional custom name. Omit to let ACE Studio auto-generate a name. For a `marker` clip this is the marker's annotation text. */
+    name?: string;
+    /** Initial notes, in clip-local ticks — the same document `note add` takes. Omit to create an empty clip. Rejected for `marker` and `chord`, which hold no notes. */
     notes?: {
         /** Articulation name for Instrument clips. Defaults to the track's default articulation. */
-        articulation?: string | null;
+        articulation?: string;
         /** Note duration in ticks. Must be positive. */
         dur: number;
         /** Per-note language override for Sing clips: `CHN`, `JPN`, `ENG`, `SPA`, or `KOR`. Defaults to the track's default language. */
-        language?: string | null;
-        /** Lyric text. Required for Sing clips; `-` marks a tenuto that extends the previous syllable (see `help note-exclusivity`). Ignored for Instrument and GenericMidi clips. */
-        lyric?: string | null;
+        language?: string;
+        /** Lyric text. Required for Sing clips; `-` marks a tenuto that extends the previous syllable. Ignored for Instrument and GenericMidi clips. */
+        lyric?: string;
         /** MIDI pitch, 0-127. */
         pitch: number;
         /** Note start in clip-local ticks. */
         pos: number;
-    }[] | null;
+    }[];
     /** What to do when the new clip's span is already occupied on the target track: `fail` (default), or `cover` to trim the clips in the way. */
-    onOccupied?: string | null;
-    /** Clip start position. Ticks (`3840t`), clock time (`1.5s`, `1:23.5`), or musical position (`4.1.0`). See `help time-values`. */
+    onOccupied?: string;
+    /** Clip start position, in ticks. */
     pos: number;
-    /**
-     * Target track index (0-based). Empty tracks are automatically converted to the appropriate type.
-     *
-     * Required for `sing`, `instrument` and `genericMidi`. **Rejected** for `marker` and `chord`: there is exactly one track of each, so the clip type already names the target, and passing an index would look like a choice you do not have.
-     */
-    trackIndex?: number | null;
-    /**
-     * Clip type: `sing`, `instrument`, `genericMidi`, `marker`, or `chord` — the same spellings `clipType` is reported in. Matched case-insensitively.
-     *
-     * `audio` and `video` are not creatable here: a media clip's duration comes from the file, not from `--dur`. Use `import file` instead.
-     */
+    /** Target track index (0-based). Empty tracks are automatically converted to the appropriate type. Required for `sing`, `instrument` and `genericMidi`, where it is the arrangement index. For `marker` it is OPTIONAL and means something else: the local index of the lane inside the Marker band, which is an ordered first-class region (ADR 0019/0104) rather than a single fixture. Omit for the band's first lane. Read the band with `track list --type marker`, whose rows carry `protectedRole` for finding the Sections or Lyrics lane by role. Rejected only for `chord`: there is exactly one Chord track, so an index beside the type would suggest a choice that does not exist. */
+    trackIndex?: number;
+    /** Clip type: `sing`, `instrument`, `genericMidi`, `marker`, or `chord` — the same spellings `clipType` is reported in. Matched case-insensitively. `audio` and `video` are not creatable here: a media clip's duration comes from the file, not from `dur`. Use `import file` instead. */
     type: string;
 }
 
@@ -1230,13 +1222,13 @@ export interface ClipCreateResult {
     clipEnd: number;
     /** Display name of the created clip (auto-generated when no name was given). */
     clipName: string;
-    /** Type of the placed clip: `sing`, `instrument`, or `genericMidi`. */
+    /** Type of the created clip, echoing `type` in its canonical spelling: `sing`, `instrument`, `genericMidi`, `marker` or `chord`. Echoed because `type` is matched case-insensitively, so this is how a caller learns the spelling the rest of the surface will report. */
     clipType: string;
     /** UUID of the created clip, with braces. Address it with `clip get`, `note add`, and the other id-taking commands. */
     clipUuid: string;
     /** Number of notes in the new clip. */
     noteCount: number;
-    /** UUIDs of the initial notes, in the clip's own note order — the order `clip note-content` reports, which is not necessarily the order they were given in. Empty when the clip was created without content. */
+    /** UUIDs of the initial notes, in the clip's own note order — the order `clip note-content` reports. Empty when the clip was created without content. */
     noteUuids: string[];
     /** Name of the track the clip was placed on. */
     trackName: string;
@@ -1244,7 +1236,7 @@ export interface ClipCreateResult {
 
 /** Arguments for `clip delete`. */
 export interface ClipDeleteParams {
-    /** UUIDs of the clips to delete, with or without curly braces. Repeat the flag to name several. All-or-nothing: a UUID naming no clip fails before anything is deleted. */
+    /** UUIDs of the clips to delete, with or without curly braces. All-or-nothing: a UUID naming no clip fails before anything is deleted. */
     clipUuids: string[];
 }
 
@@ -1258,7 +1250,7 @@ export interface ClipDeleteResult {
 
 /** Arguments for `clip detach-audio`. */
 export interface ClipDetachAudioParams {
-    /** UUIDs of the video clips to detach. Repeat the flag to name several; they all share one new audio track. */
+    /** UUIDs of the video clips to detach. Repeat to name several; they all share one new audio track. */
     clipUuids: string[];
 }
 
@@ -1281,11 +1273,11 @@ export interface ClipDuplicateParams {
     /** UUID of the clip to copy, with or without curly braces. */
     clipUuid: string;
     /** What to do when the destination is occupied: `fail` (default), `cover`, or `relocate` (video only). */
-    onOccupied?: string | null;
-    /** Where to place the copy. Defaults to immediately after the source, which is where duplicating in the arrangement puts it. */
-    pos?: number | null;
+    onOccupied?: string;
+    /** Where to place the copy, in ticks. Defaults to immediately after the source, which is where duplicating in the arrangement puts it. */
+    pos?: number;
     /** Destination track index (0-based). Defaults to the source's own track. The track must hold the clip's type. */
-    trackIndex?: number | null;
+    trackIndex?: number;
 }
 
 /** Success payload of `clip duplicate`. */
@@ -1296,22 +1288,20 @@ export interface ClipDuplicateResult {
     clipType: string;
     /** UUID of the new copy, with braces. */
     clipUuid: string;
-    /** Geometry of the copy, always in ticks. */
+    /** A clip's geometry in the *wire* vocabulary a write speaks, always in ticks. A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set. */
     geometry: {
-        /** Visible region start on the global timeline. */
-        clipBegin: number;
-        /** Duration of the visible (clipped) region. */
-        clipDur: number;
-        /** Visible region end on the global timeline. */
-        clipEnd: number;
-        /** Start of the visible (clipped) region, pattern-local. */
-        clipPos: number;
-        /** Full pattern duration, including trimmed-away regions. */
+        /** Offset into the source the visible region starts at — what a write's `clipIn` sets. */
+        clipIn: number;
+        /** Visible region duration — what a write's `dur` sets. */
         dur: number;
-        /** Pattern end on the global timeline (pos + dur). */
+        /** Visible region end on the global timeline (pos + dur). Reported, never accepted: a caller wanting an end names `pos` and `dur`, and reads this back to check itself. */
         end: number;
-        /** Pattern start on the global timeline. */
+        /** Visible region start on the global timeline — what a write's `pos` sets. */
         pos: number;
+        /** Duration of the full editable (source) region. */
+        sourceDur: number;
+        /** Start of the full editable (source) region on the global timeline. Reported for completeness; a write never addresses it directly, because a move slides the source underneath so the visible region lands where asked. */
+        sourcePos: number;
     };
     /** UUID of the clip that was copied. */
     sourceClipUuid: string;
@@ -1321,27 +1311,29 @@ export interface ClipDuplicateResult {
 
 /** Arguments for `clip get`. */
 export interface ClipGetParams {
-    /** Clip index within the track (0-based, chronological order). */
-    clipIndex: number;
-    /** Time unit for returned geometry values. One of `default`, `tick`, or `second`. Defaults to `default` (pattern's native unit). */
-    preferredTimeUnit?: string | null;
-    /** Track index (0-based). */
-    trackIndex: number;
+    /** Clip index within the track (0-based, chronological order). Pair with `trackIndex`. */
+    clipIndex?: number;
+    /** Stable clip UUID, with braces, as `clip list` reports it. The only form that reaches a clip in the pinned Video or Marker band. */
+    clipUuid?: string;
+    /** Time unit for returned geometry values: `default`, `tick`, or `second`. Defaults to `default` (the pattern's native unit). */
+    preferredTimeUnit?: string;
+    /** Track index (0-based) in the arrangement. Pair with `clipIndex`. */
+    trackIndex?: number;
 }
 
 /** Success payload of `clip get`. */
 export interface ClipGetResult {
     /** Display name (auto-generated when no raw name is set). */
     clipName: string;
-    /** Clip type: `sing`, `instrument`, `genericMidi`, `audio`, or `chord`. */
+    /** Clip type: `sing`, `instrument`, `genericMidi`, `audio`, `chord`, `video`, or `marker` — the same vocabulary `clip list` reports. */
     clipType: string;
     /** Stable clip UUID, with braces. */
     clipUuid: string;
     /** Resolved hex color, upper-case with leading '#'. */
     color: string;
-    /** Whether the clip is enabled (audible). */
+    /** Whether the clip is enabled. The clip's own switch: a disabled clip is skipped at playback and export, and an enabled one still goes silent under a track mute or another track's solo. */
     enabled: boolean;
-    /** Clip geometry in the unit reported by usedTimeUnit: integer ticks or fractional seconds. */
+    /** A clip's geometry in the *entity* vocabulary, as `clip get` reports it, in whichever unit `usedTimeUnit` names. `pos`/`dur`/`end` are the whole editable region — for a media clip, its source — and the visible region is the four `clip*` fields. A write reports [`ClipWriteGeometry`] instead, which names the visible region a write's own arguments address. */
     geometry: {
         /** Visible region start on the global timeline. */
         clipBegin: number;
@@ -1362,16 +1354,16 @@ export interface ClipGetResult {
     isColorLinkToTrack: boolean;
     /** User-supplied name; empty string when the display name is auto-generated. */
     rawName: string;
-    /** Time unit of the geometry values: 'tick', 'second', 'tick (not native)', or 'second (not native)'. */
+    /** Time unit of the geometry values: `tick`, `second`, `tick (not native)`, or `second (not native)`. */
     usedTimeUnit: string;
 }
 
 /** Arguments for `clip list`. */
 export interface ClipListParams {
-    /** Track index (0-based) in the arrangement. Users see tracks starting from 1. */
-    trackIndex?: number | null;
-    /** Track UUID in braces format, e.g. `\{12345678-abcd-...\}`. Required to address a track in the pinned Video or Marker band, which `--track-index` cannot name. `track list --type video --type marker` reports those uuids. */
-    trackUuid?: string | null;
+    /** Track index (0-based) in the arrangement. */
+    trackIndex?: number;
+    /** Track UUID in braces format. Required to address a track in the pinned Video or Marker band, which `trackIndex` cannot name. */
+    trackUuid?: string;
 }
 
 /** Success payload of `clip list`. */
@@ -1390,8 +1382,10 @@ export interface ClipListResult {
         clipName: string;
         /** Clip type: `sing`, `instrument`, `genericMidi`, `audio`, `chord`, `video`, or `marker`. */
         clipType: string;
-        /** Stable clip UUID, with braces. Use with `clip move-edges`. */
+        /** Stable clip UUID, with braces. Every id-taking clip write takes it — `clip move`, `clip resize`, `clip delete`. */
         clipUuid: string;
+        /** Whether the clip is enabled. A disabled clip is skipped at playback and export; an enabled one still goes silent under a track mute or another track's solo, so this is the clip's own switch, not final audibility. Reported per row so a caller learns which clips are live from the same call that enumerates them, rather than one `clip get` per clip. That matters for the question this answers most often: whether any MIDI-like track holds an enabled clip, which decides whether a tempo sync would de-align content that owns the current grid. Mute is a different question and does not appear here — muted content still owns the grid. */
+        enabled: boolean;
         /** Visible note count. Present only for note-based clips (Sing/Instrument/GenericMidi); absent for Audio and Chord. */
         noteCount?: number;
     }[];
@@ -1402,27 +1396,27 @@ export interface ClipLyricsParams {
     /** Clip index within the track (0-based). Clip must be of type Sing; other types return an error. */
     clipIndex: number;
     /** Start of the time-range filter in ticks. Defaults to `clipBegin`. */
-    rangeBegin?: number | null;
+    rangeBegin?: number;
     /** End of the time-range filter in ticks. Defaults to `clipEnd`. */
-    rangeEnd?: number | null;
-    /** Coordinate system for `rangeBegin`/`rangeEnd`. `project` (default) = global timeline; `clip-local` = coordinates from the clip's own start. */
-    rangeScope?: string | null;
+    rangeEnd?: number;
+    /** Coordinate system for `rangeBegin`/`rangeEnd`: `project` (default) = global timeline; `clip-local` = coordinates from the clip's own start. */
+    rangeScope?: string;
     /** Track index (0-based). */
     trackIndex: number;
 }
 
 /** Success payload of `clip lyrics`. */
 export interface ClipLyricsResult {
-    /** Actual tick range used for filtering. Present only when rangeBegin and/or rangeEnd was supplied. */
+    /** The actual tick range used for filtering `clip note-content` / `clip lyrics`. Present only when `rangeBegin` and/or `rangeEnd` was supplied. */
     filteredRange?: {
-        /** Filter range start, in ticks, in the coordinate system named by scope. */
+        /** Filter range start, in ticks, in the coordinate system named by `scope`. */
         begin: number;
-        /** Filter range end (exclusive), in ticks, in the coordinate system named by scope. */
+        /** Filter range end (exclusive), in ticks, in the coordinate system named by `scope`. */
         end: number;
-        /** Coordinate system of begin/end: `project` or `clip-local`. */
+        /** Coordinate system of `begin`/`end`: `project` or `clip-local`. */
         scope: string;
     };
-    /** Content fingerprint of the whole clip's note content (ADR 0088 §5) -- lyrics are note content, read at sentence granularity. Carry it back as `--if-match` on a `note` write or `clip replace-content` to fail STALE_WRITE instead of overwriting edits made since this read. Always covers the full clip, even when the read was range-filtered. */
+    /** Content fingerprint of the whole clip's note content (ADR 0088 §5) — lyrics are note content, read at sentence granularity. Carry it back as the `fingerprint` argument on a `note` write or `clip replace-content` to fail STALE_WRITE instead of overwriting edits made since this read. Always covers the full clip, even when the read was range-filtered. */
     fingerprint: Fingerprint;
     /** Number of sentences returned. */
     sentenceCount: number;
@@ -1430,9 +1424,9 @@ export interface ClipLyricsResult {
     sentences: {
         /** Merged lyric text for the sentence. */
         lyric: string;
-        /** Sentence start in clip-local ticks, regardless of rangeScope. */
+        /** Sentence start in clip-local ticks, regardless of `rangeScope`. */
         sentenceBegin: number;
-        /** Sentence end in clip-local ticks, regardless of rangeScope. */
+        /** Sentence end in clip-local ticks, regardless of `rangeScope`. */
         sentenceEnd: number;
     }[];
 }
@@ -1441,14 +1435,16 @@ export interface ClipLyricsResult {
 export interface ClipMoveParams {
     /** UUID of the target clip, with or without curly braces. */
     clipUuid: string;
-    /** Shift the clip earlier by this much. Refused when it would start the clip before the project start. */
-    moveEarlier?: number | null;
-    /** Shift the clip later by this much. A note value (`1/4`), beats (`2b`), whole measures (`1bar`), or ticks (`480t`). */
-    moveLater?: number | null;
-    /** What to do when the destination is already occupied: `fail` (default), `cover` (trim the clips in the way, as a drag does; not for video), or `relocate` (stack on a new track above; video only). */
-    onOccupied?: string | null;
-    /** Absolute destination for the clip's start. Ticks (`3840t`), clock time (`1.5s`, `1:23.5`), or musical position (`4.1.0`). See `help time-values`. Mutually exclusive with `--move-later` / `--move-earlier`. */
-    pos?: number | null;
+    /** Shift the clip earlier by this many ticks. Refused when it would start the clip before the project start. */
+    moveEarlier?: number;
+    /** Shift the clip later by this many ticks. No seconds twin: the relative moves are this surface's own addition, so there is no earlier contract to restore, and an absolute `posSec` already reaches every destination. */
+    moveLater?: number;
+    /** What to do when the destination is already occupied: `fail` (default), `cover` (trim the clips in the way; not for video), or `relocate` (stack on a new track above; video only). */
+    onOccupied?: string;
+    /** Absolute destination for the clip's start, in ticks. Mutually exclusive with `moveLater` / `moveEarlier`. */
+    pos?: number;
+    /** Absolute destination for the clip's start, in seconds. OPTIONAL, and when present it WINS over `pos` — including at 0, which is a position like any other. Mutually exclusive with `moveLater` / `moveEarlier`. The pair the retired `moveVideoClip` carried, restored: converting between the units needs the tempo curve, and the CLI's time-value grammar does not stand in for it — that compiles `1.5s` to ticks client-side, so a caller on the wire is left with a `convert time-to-tick` round trip. */
+    posSec?: number;
 }
 
 /** Success payload of `clip move`. */
@@ -1459,23 +1455,28 @@ export interface ClipMoveResult {
     clipType: string;
     /** UUID of the clip, with braces. */
     clipUuid: string;
-    /** Clip geometry after the write, always in ticks. */
+    /** A clip's geometry in the *wire* vocabulary a write speaks, always in ticks. A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set. */
     geometry: {
-        /** Visible region start on the global timeline. */
-        clipBegin: number;
-        /** Duration of the visible (clipped) region. */
-        clipDur: number;
-        /** Visible region end on the global timeline. */
-        clipEnd: number;
-        /** Start of the visible (clipped) region, pattern-local. */
-        clipPos: number;
-        /** Full pattern duration, including trimmed-away regions. */
+        /** Offset into the source the visible region starts at — what a write's `clipIn` sets. */
+        clipIn: number;
+        /** Visible region duration — what a write's `dur` sets. */
         dur: number;
-        /** Pattern end on the global timeline (pos + dur). */
+        /** Visible region end on the global timeline (pos + dur). Reported, never accepted: a caller wanting an end names `pos` and `dur`, and reads this back to check itself. */
         end: number;
-        /** Pattern start on the global timeline. */
+        /** Visible region start on the global timeline — what a write's `pos` sets. */
         pos: number;
+        /** Duration of the full editable (source) region. */
+        sourceDur: number;
+        /** Start of the full editable (source) region on the global timeline. Reported for completeness; a write never addresses it directly, because a move slides the source underneath so the visible region lands where asked. */
+        sourcePos: number;
     };
+    /** Absent when the write did exactly what was asked, which is the ordinary case. Declared on the result rather than merged into an envelope beside it, because a result the declared type does not describe is the type ADR 0121 §3 calls one that lies. */
+    warnings?: {
+        /** SCREAMING_SNAKE_CASE identifier: `CLIP_CLAMPED_TO_SOURCE` when the requested duration ran past the end of a media clip's source and was clamped to what remained, `CHORD_CLIP_NOW_LOOPING` when a chord clip grew past its content so the content repeats. */
+        code: string;
+        /** Human-readable detail composed at the warning site. */
+        hint?: string;
+    }[];
 }
 
 /** Arguments for `clip note-content`. */
@@ -1483,43 +1484,43 @@ export interface ClipNoteContentParams {
     /** Clip index within the track (0-based). Clip must be Sing, Instrument, or GenericMidi; Audio/Chord clips return an error. */
     clipIndex: number;
     /** Start of the time-range filter in ticks. Defaults to `clipBegin` (the start of the clip's visible region). */
-    rangeBegin?: number | null;
+    rangeBegin?: number;
     /** End of the time-range filter in ticks. Defaults to `clipEnd`. */
-    rangeEnd?: number | null;
-    /** Coordinate system for `rangeBegin`/`rangeEnd`. `project` (default) = global timeline; `clip-local` = coordinates from the clip's own start. */
-    rangeScope?: string | null;
+    rangeEnd?: number;
+    /** Coordinate system for `rangeBegin`/`rangeEnd`: `project` (default) = global timeline; `clip-local` = coordinates from the clip's own start. */
+    rangeScope?: string;
     /** Track index (0-based). */
     trackIndex: number;
 }
 
 /** Success payload of `clip note-content`. */
 export interface ClipNoteContentResult {
-    /** Actual tick range used for filtering. Present only when rangeBegin and/or rangeEnd was supplied. */
+    /** The actual tick range used for filtering `clip note-content` / `clip lyrics`. Present only when `rangeBegin` and/or `rangeEnd` was supplied. */
     filteredRange?: {
-        /** Filter range start, in ticks, in the coordinate system named by scope. */
+        /** Filter range start, in ticks, in the coordinate system named by `scope`. */
         begin: number;
-        /** Filter range end (exclusive), in ticks, in the coordinate system named by scope. */
+        /** Filter range end (exclusive), in ticks, in the coordinate system named by `scope`. */
         end: number;
-        /** Coordinate system of begin/end: `project` or `clip-local`. */
+        /** Coordinate system of `begin`/`end`: `project` or `clip-local`. */
         scope: string;
     };
-    /** Content fingerprint of the whole clip's note content (ADR 0088 §5). Carry it back as `--if-match` on `clip replace-content` or any `note` write to fail STALE_WRITE instead of overwriting edits made since this read. Always covers the full clip, even when the read was range-filtered. */
+    /** Content fingerprint of the whole clip's note content (ADR 0088 §5). Carry it back as the `fingerprint` argument on `clip replace-content` or any `note` write to fail STALE_WRITE instead of overwriting edits made since this read. Always covers the full clip, even when the read was range-filtered. */
     fingerprint: Fingerprint;
     /** Number of notes returned. */
     noteCount: number;
     /** Notes overlapping the filter range, in pattern order. */
     notes: {
-        /** Articulation name, empty string for Smart (auto). Instrument clips only. */
+        /** Instrument notes only: the note's articulation. */
         articulation?: string;
         /** Note duration in ticks. */
         dur: number;
         /** Note end in clip-local ticks (pos + dur). */
         endPos: number;
-        /** Head consonant lengths in seconds (may be empty). Sing clips only. */
+        /** Sing notes only: leading consonant lengths in seconds. */
         headConsonants?: number[];
-        /** Full language name. Sing clips only. */
+        /** Sing notes only: the note's language, spelled in full English. */
         language?: string;
-        /** Lyric text. Sing clips only. */
+        /** Sing notes only: the note's lyric. `-` marks a tenuto continuing the previous syllable. */
         lyric?: string;
         /** Stable note UUID, with braces. */
         noteUuid: string;
@@ -1527,9 +1528,9 @@ export interface ClipNoteContentResult {
         pitch: number;
         /** Note start in clip-local ticks. */
         pos: number;
-        /** Space-separated phonemes. Sing clips only. */
+        /** Sing notes only: the phonemes the engine derived from the lyric. */
         syllable?: string;
-        /** Tail consonant lengths in seconds (may be empty). Sing clips only. */
+        /** Sing notes only: trailing consonant lengths in seconds. */
         tailConsonants?: number[];
     }[];
 }
@@ -1550,18 +1551,18 @@ export interface ClipReattachAudioResult {
 
 /** Arguments for `clip replace-content`. */
 export interface ClipReplaceContentParams {
-    /** UUID of the target clip. Accepted with or without curly braces. The clip must be a note clip (Sing, Instrument, or GenericMidi). */
+    /** UUID of the target clip. The clip must be a note clip (Sing, Instrument, or GenericMidi). */
     clipUuid: string;
-    /** The clip's new notes, as a JSON array in clip-local ticks. An empty array (`[]`) clears the clip. */
+    /** The clip's new notes, in clip-local ticks. An empty array clears the clip. */
     notes: {
         /** Articulation name for Instrument clips. Defaults to the track's default articulation. */
-        articulation?: string | null;
+        articulation?: string;
         /** Note duration in ticks. Must be positive. */
         dur: number;
         /** Per-note language override for Sing clips: `CHN`, `JPN`, `ENG`, `SPA`, or `KOR`. Defaults to the track's default language. */
-        language?: string | null;
-        /** Lyric text. Required for Sing clips; `-` marks a tenuto that extends the previous syllable (see `help note-exclusivity`). Ignored for Instrument and GenericMidi clips. */
-        lyric?: string | null;
+        language?: string;
+        /** Lyric text. Required for Sing clips; `-` marks a tenuto that extends the previous syllable. Ignored for Instrument and GenericMidi clips. */
+        lyric?: string;
         /** MIDI pitch, 0-127. */
         pitch: number;
         /** Note start in clip-local ticks. */
@@ -1585,16 +1586,22 @@ export interface ClipReplaceContentResult {
 
 /** Arguments for `clip resize`. */
 export interface ClipResizeParams {
-    /** How far into the source the clip starts showing. Trims the front without moving the clip. For an audio or video clip this is the offset into the media file; for a note clip, into its authored content. */
-    clipIn?: number | null;
+    /** How far into the source the clip starts showing, in ticks. Trims the front without moving the clip. `clipInSec` is the right axis for this quantity and this is the tolerated one (ADR 0069 §1): the source-media axis is not on the tempo grid, so a tick head trim only means anything once measured against the tempo where the clip sits — which is what the handler does to it. */
+    clipIn?: number;
+    /** The head trim in SECONDS — the source-media axis's own unit, and the only one `setVideoClipGeometry` offered for it (ADR 0069 §1). OPTIONAL, and when present it WINS over `clipIn`. */
+    clipInSec?: number;
     /** UUID of the target clip, with or without curly braces. */
     clipUuid: string;
-    /** New length for the clip. A note value (`1/4`), beats (`2b`), measures (`2bar`, anchored at the clip's start), or ticks (`1920t`). */
-    dur?: number | null;
+    /** New length for the clip, in ticks. */
+    dur?: number;
+    /** New length for the clip, in seconds, measured forward from wherever this call leaves the clip's start. OPTIONAL, and when present it WINS over `dur`. A non-positive value is refused, as its tick twin is. */
+    durSec?: number;
     /** What to do when the result would overlap another clip: `fail` (default), `cover`, or `relocate` (video only). */
-    onOccupied?: string | null;
-    /** New start for the clip. Ticks (`3840t`), clock time (`1.5s`), or musical position (`4.1.0`). See `help time-values`. */
-    pos?: number | null;
+    onOccupied?: string;
+    /** New start for the clip, in ticks. */
+    pos?: number;
+    /** New start for the clip, in seconds. OPTIONAL, and when present it WINS over `pos` — including at 0, which is a position like any other. */
+    posSec?: number;
 }
 
 /** Success payload of `clip resize`. */
@@ -1605,23 +1612,28 @@ export interface ClipResizeResult {
     clipType: string;
     /** UUID of the clip, with braces. */
     clipUuid: string;
-    /** Clip geometry after the write, always in ticks. */
+    /** A clip's geometry in the *wire* vocabulary a write speaks, always in ticks. A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set. */
     geometry: {
-        /** Visible region start on the global timeline. */
-        clipBegin: number;
-        /** Duration of the visible (clipped) region. */
-        clipDur: number;
-        /** Visible region end on the global timeline. */
-        clipEnd: number;
-        /** Start of the visible (clipped) region, pattern-local. */
-        clipPos: number;
-        /** Full pattern duration, including trimmed-away regions. */
+        /** Offset into the source the visible region starts at — what a write's `clipIn` sets. */
+        clipIn: number;
+        /** Visible region duration — what a write's `dur` sets. */
         dur: number;
-        /** Pattern end on the global timeline (pos + dur). */
+        /** Visible region end on the global timeline (pos + dur). Reported, never accepted: a caller wanting an end names `pos` and `dur`, and reads this back to check itself. */
         end: number;
-        /** Pattern start on the global timeline. */
+        /** Visible region start on the global timeline — what a write's `pos` sets. */
         pos: number;
+        /** Duration of the full editable (source) region. */
+        sourceDur: number;
+        /** Start of the full editable (source) region on the global timeline. Reported for completeness; a write never addresses it directly, because a move slides the source underneath so the visible region lands where asked. */
+        sourcePos: number;
     };
+    /** Absent when the write did exactly what was asked, which is the ordinary case. Declared on the result rather than merged into an envelope beside it, because a result the declared type does not describe is the type ADR 0121 §3 calls one that lies. */
+    warnings?: {
+        /** SCREAMING_SNAKE_CASE identifier: `CLIP_CLAMPED_TO_SOURCE` when the requested duration ran past the end of a media clip's source and was clamped to what remained, `CHORD_CLIP_NOW_LOOPING` when a chord clip grew past its content so the content repeats. */
+        code: string;
+        /** Human-readable detail composed at the warning site. */
+        hint?: string;
+    }[];
 }
 
 /** Arguments for `clip set`. */
@@ -1629,11 +1641,11 @@ export interface ClipSetParams {
     /** UUID of the target clip, with or without curly braces. */
     clipUuid: string;
     /** New color as `#RRGGBB` or a named color. Setting a color stops the clip following its track. */
-    color?: string | null;
-    /** Make the clip follow its track's color (`true`) or carry its own (`false`). Passing `true` together with `--color` is contradictory and is refused. */
-    colorLinkToTrack?: boolean | null;
+    color?: string;
+    /** Make the clip follow its track's color (`true`) or carry its own (`false`). Passing `true` together with `color` is contradictory and is refused. */
+    colorLinkToTrack?: boolean;
     /** New name. Pass an empty string to clear it and fall back to the auto-generated name. */
-    name?: string | null;
+    name?: string;
 }
 
 /** Success payload of `clip set`. */
@@ -1646,22 +1658,20 @@ export interface ClipSetResult {
     clipUuid: string;
     /** Effective color as upper-case `#RRGGBB`. */
     color: string;
-    /** Clip geometry, always in ticks. */
+    /** A clip's geometry in the *wire* vocabulary a write speaks, always in ticks. A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set. */
     geometry?: {
-        /** Visible region start on the global timeline. */
-        clipBegin: number;
-        /** Duration of the visible (clipped) region. */
-        clipDur: number;
-        /** Visible region end on the global timeline. */
-        clipEnd: number;
-        /** Start of the visible (clipped) region, pattern-local. */
-        clipPos: number;
-        /** Full pattern duration, including trimmed-away regions. */
+        /** Offset into the source the visible region starts at — what a write's `clipIn` sets. */
+        clipIn: number;
+        /** Visible region duration — what a write's `dur` sets. */
         dur: number;
-        /** Pattern end on the global timeline (pos + dur). */
+        /** Visible region end on the global timeline (pos + dur). Reported, never accepted: a caller wanting an end names `pos` and `dur`, and reads this back to check itself. */
         end: number;
-        /** Pattern start on the global timeline. */
+        /** Visible region start on the global timeline — what a write's `pos` sets. */
         pos: number;
+        /** Duration of the full editable (source) region. */
+        sourceDur: number;
+        /** Start of the full editable (source) region on the global timeline. Reported for completeness; a write never addresses it directly, because a move slides the source underneath so the visible region lands where asked. */
+        sourcePos: number;
     };
     /** True when the clip follows its track's color instead of carrying its own. */
     isColorLinkToTrack: boolean;
@@ -1671,7 +1681,7 @@ export interface ClipSetResult {
 
 /** Arguments for `clip set-enabled`. */
 export interface ClipSetEnabledParams {
-    /** UUIDs of the target clips. Repeat the flag to name several. */
+    /** UUIDs of the target clips. Repeat to name several. */
     clipUuids: string[];
     /** `true` to enable, `false` to disable. A disabled clip stays in place but does not play. */
     enabled: boolean;
@@ -1692,18 +1702,18 @@ export interface ClipSetEnabledResult {
 
 /** Arguments for `clip set-fades`. */
 export interface ClipSetFadesParams {
-    /** UUID of the target clip (single-clip form). Repeat the flag exactly twice for the crossfade form. */
+    /** UUID of the target clip (single-clip form). Repeat exactly twice for the crossfade form. */
     clipUuids: string[];
-    /** Crossfade length, for the two-clip form. Clock time (`1.5s`, `500ms`) or ticks (`240t`); `0s` removes it. */
-    crossfade?: number | null;
-    /** Fade-in length. Clock time (`1.5s`, `500ms`) or ticks (`240t`); `0s` removes the fade. Single-clip form only. */
-    fadeIn?: number | null;
-    /** Fade-in curve shape as `x,y`, each in [-0.5, 0.5]. `0,0` is linear. */
-    fadeInShape?: number[] | null;
-    /** Fade-out length. Clock time (`1.5s`, `500ms`) or ticks (`240t`); `0s` removes the fade. Single-clip form only. */
-    fadeOut?: number | null;
-    /** Fade-out curve shape as `x,y`, each in [-0.5, 0.5]. `0,0` is linear. */
-    fadeOutShape?: number[] | null;
+    /** Crossfade length in seconds, for the two-clip form; `0` removes it. */
+    crossfade?: number;
+    /** Fade-in length in seconds; `0` removes the fade. Single-clip form only. */
+    fadeIn?: number;
+    /** Fade-in curve shape as `[x, y]`, each in [-0.5, 0.5]. `[0, 0]` is linear. */
+    fadeInShape?: number[];
+    /** Fade-out length in seconds; `0` removes the fade. Single-clip form only. */
+    fadeOut?: number;
+    /** Fade-out curve shape as `[x, y]`, each in [-0.5, 0.5]. `[0, 0]` is linear. */
+    fadeOutShape?: number[];
 }
 
 /** Success payload of `clip set-fades`. */
@@ -1740,7 +1750,7 @@ export interface ClipSetGainResult {
 
 /** Arguments for `clip set-muted`. */
 export interface ClipSetMutedParams {
-    /** UUIDs of the target clips. Video clips only. Repeat the flag to name several. */
+    /** UUIDs of the target clips. Video clips only. */
     clipUuids: string[];
     /** `true` to mute the embedded audio, `false` to unmute it. */
     muted: boolean;
@@ -1763,7 +1773,7 @@ export interface ClipSetMutedResult {
 export interface ClipSplitParams {
     /** UUID of the clip to split, with or without curly braces. */
     clipUuid: string;
-    /** Where to cut, on the global timeline. Must fall strictly inside the clip and leave both halves at least one grid cell long. */
+    /** Where to cut, on the global timeline, in ticks. Must fall strictly inside the clip and leave both halves at least one grid cell long. */
     pos: number;
 }
 
@@ -1771,7 +1781,7 @@ export interface ClipSplitParams {
 export interface ClipSplitResult {
     /** The two halves, head first. The head keeps the original UUID. */
     clipUuids: string[];
-    /** The earlier half, which reuses the original clip. */
+    /** The identity+geometry row every plain geometry write echoes back, always in ticks. */
     head: {
         /** Display name of the clip. */
         clipName: string;
@@ -1779,25 +1789,23 @@ export interface ClipSplitResult {
         clipType: string;
         /** UUID of the clip, with braces. */
         clipUuid: string;
-        /** Clip geometry after the write, always in ticks. */
+        /** A clip's geometry in the *wire* vocabulary a write speaks, always in ticks. A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set. */
         geometry: {
-            /** Visible region start on the global timeline. */
-            clipBegin: number;
-            /** Duration of the visible (clipped) region. */
-            clipDur: number;
-            /** Visible region end on the global timeline. */
-            clipEnd: number;
-            /** Start of the visible (clipped) region, pattern-local. */
-            clipPos: number;
-            /** Full pattern duration, including trimmed-away regions. */
+            /** Offset into the source the visible region starts at — what a write's `clipIn` sets. */
+            clipIn: number;
+            /** Visible region duration — what a write's `dur` sets. */
             dur: number;
-            /** Pattern end on the global timeline (pos + dur). */
+            /** Visible region end on the global timeline (pos + dur). Reported, never accepted: a caller wanting an end names `pos` and `dur`, and reads this back to check itself. */
             end: number;
-            /** Pattern start on the global timeline. */
+            /** Visible region start on the global timeline — what a write's `pos` sets. */
             pos: number;
+            /** Duration of the full editable (source) region. */
+            sourceDur: number;
+            /** Start of the full editable (source) region on the global timeline. Reported for completeness; a write never addresses it directly, because a move slides the source underneath so the visible region lands where asked. */
+            sourcePos: number;
         };
     };
-    /** The later half, a new clip over the same source. */
+    /** The identity+geometry row every plain geometry write echoes back, always in ticks. */
     tail: {
         /** Display name of the clip. */
         clipName: string;
@@ -1805,22 +1813,20 @@ export interface ClipSplitResult {
         clipType: string;
         /** UUID of the clip, with braces. */
         clipUuid: string;
-        /** Clip geometry after the write, always in ticks. */
+        /** A clip's geometry in the *wire* vocabulary a write speaks, always in ticks. A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set. */
         geometry: {
-            /** Visible region start on the global timeline. */
-            clipBegin: number;
-            /** Duration of the visible (clipped) region. */
-            clipDur: number;
-            /** Visible region end on the global timeline. */
-            clipEnd: number;
-            /** Start of the visible (clipped) region, pattern-local. */
-            clipPos: number;
-            /** Full pattern duration, including trimmed-away regions. */
+            /** Offset into the source the visible region starts at — what a write's `clipIn` sets. */
+            clipIn: number;
+            /** Visible region duration — what a write's `dur` sets. */
             dur: number;
-            /** Pattern end on the global timeline (pos + dur). */
+            /** Visible region end on the global timeline (pos + dur). Reported, never accepted: a caller wanting an end names `pos` and `dur`, and reads this back to check itself. */
             end: number;
-            /** Pattern start on the global timeline. */
+            /** Visible region start on the global timeline — what a write's `pos` sets. */
             pos: number;
+            /** Duration of the full editable (source) region. */
+            sourceDur: number;
+            /** Start of the full editable (source) region on the global timeline. Reported for completeness; a write never addresses it directly, because a move slides the source underneath so the visible region lands where asked. */
+            sourcePos: number;
         };
     };
 }
@@ -1874,7 +1880,7 @@ export interface ClipOperations {
      *
      * Requires the `clip.read` capability.
      */
-    get(params: ClipGetParams, options?: CallOptions): Promise<ClipGetResult>;
+    get(params?: ClipGetParams, options?: CallOptions): Promise<ClipGetResult>;
 
     /**
      * List all clips on a content track with basic metadata.
@@ -1971,9 +1977,9 @@ export interface ClipOperations {
      * A clip was added, removed, moved, trimmed, renamed, muted, or recoloured.
      * `changes` carries the affected clip uuids. A peer re-fetches with `clip list`,
      * which needs a track to address, so a uuid here names the clip and the peer
-     * reads the track it was told about on the `tracks` channel.
+     * reads the track it was told about on `tracks.changed`.
      *
-     * Listen for changes on the `clips` channel. The event is a hint to re-read, not the new state.
+     * Listen for `clips.changed`. The event is a hint to re-read, not the new state.
      *
      * Requires the `clip.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
      */
@@ -2008,13 +2014,13 @@ export interface ConvertGlobalToEditorResult {
 
 /** Arguments for `convert measure-to-tick`. */
 export interface ConvertMeasureToTickParams {
-    /** The same bar counted from 0, as the project stores it and as `tick-to-measure` reports it. This is the spelling the wire takes. `acestudio-cli` and MCP also accept `bar` counting from 1, folding it to this before the call; pass one or the other, never both. */
+    /** The same bar counted from 0, as the project stores it and as `tick-to-measure` reports it. */
     barPos: number;
-    /** The same beat counted from 0, as `tick-to-measure` reports it. This is the spelling the wire takes; `beat` counting from 1 is accepted by `acestudio-cli` and MCP. Pass one or the other, never both. */
-    beatPos?: number | null;
+    /** The same beat counted from 0, as `tick-to-measure` reports it. */
+    beatPos?: number;
     /** When true, use beat-level precision; a beat is then required. */
     considerBeatMode: boolean;
-    /** Tick offset within the bar (beat mode off) or within the beat (beat mode on). Must be \>= 0. */
+    /** Tick offset within the bar (beat mode off) or within the beat (beat mode on). Must be non-negative — the handler refuses a negative value. */
     tickOffset: number;
 }
 
@@ -2026,17 +2032,17 @@ export interface ConvertMeasureToTickResult {
 
 /** Arguments for `convert tick-to-measure`. */
 export interface ConvertTickToMeasureParams {
-    /** When true, return bar + beat + tickOffset; when false, return bar + tickOffset only. */
+    /** When true, answer bar + beat + tickOffset; when false, answer bar + tickOffset only. */
     considerBeatMode: boolean;
-    /** Project tick position to convert (must be \>= 0). */
+    /** Project tick position to convert. Must be non-negative — the handler refuses a negative value. */
     tick: number;
 }
 
 /** Success payload of `convert tick-to-measure`. */
 export interface ConvertTickToMeasureResult {
-    /** Bar/measure counted from 0, as the project stores it. Feed it straight back to `measure-to-tick --bar-pos` or `timesig set-at --bar-pos`. Reported as `bar` counting from 1 instead under `--bars human`. */
+    /** Bar/measure counted from 0, as the project stores it. Feed it straight back to `measure-to-tick`'s `barPos` or to `timesig set-at`'s `barPos`. */
     barPos: number;
-    /** Beat within the bar counted from 0. Present only when considerBeatMode is true. Reported as `beat` counting from 1 instead under `--bars human`. */
+    /** Beat within the bar counted from 0. Present only when `considerBeatMode` was true. */
     beatPos?: number;
     /** Tick offset within the bar (bar mode) or within the beat (beat mode). */
     tickOffset: number;
@@ -2044,26 +2050,34 @@ export interface ConvertTickToMeasureResult {
 
 /** Arguments for `convert tick-to-time`. */
 export interface ConvertTickToTimeParams {
-    /** Project tick position to convert (must be \>= 0). */
-    tick: number;
+    /** Project tick position to convert. Must be non-negative — the handler refuses a negative value. */
+    tick?: number;
+    /** Project tick positions to convert. Each must be non-negative. An empty array is a batch of nothing and answers an empty `times`, rather than being refused as a missing argument. */
+    ticks?: number[];
 }
 
 /** Success payload of `convert tick-to-time`. */
 export interface ConvertTickToTimeResult {
-    /** Corresponding position in seconds, accounting for tempo automation. */
-    time: number;
+    /** Corresponding position in seconds, accounting for tempo automation. Present exactly when `tick` was given. */
+    time?: number;
+    /** One position in seconds per input, in input order, accounting for tempo automation. Present exactly when `ticks` was given. */
+    times?: number[];
 }
 
 /** Arguments for `convert time-to-tick`. */
 export interface ConvertTimeToTickParams {
-    /** Time in seconds to convert (must be \>= 0.0). */
-    time: number;
+    /** Time in seconds to convert. Must be non-negative — the handler refuses a negative value. */
+    time?: number;
+    /** Times in seconds to convert. Each must be non-negative. An empty array answers an empty `ticks`. */
+    times?: number[];
 }
 
 /** Success payload of `convert time-to-tick`. */
 export interface ConvertTimeToTickResult {
-    /** Corresponding project tick position, accounting for tempo automation. */
-    tick: number;
+    /** Corresponding project tick position, accounting for tempo automation. Present exactly when `time` was given. */
+    tick?: number;
+    /** One project tick per input, in input order. Present exactly when `times` was given. */
+    ticks?: number[];
 }
 
 /** The `convert` operations, mirroring the canonical operation tree 1:1. */
@@ -2101,14 +2115,14 @@ export interface ConvertOperations {
      *
      * Ungated: a pure function, callable without any capability.
      */
-    tickToTime(params: ConvertTickToTimeParams, options?: CallOptions): Promise<ConvertTickToTimeResult>;
+    tickToTime(params?: ConvertTickToTimeParams, options?: CallOptions): Promise<ConvertTickToTimeResult>;
 
     /**
      * Convert a time position (seconds) to project ticks, accounting for tempo automation.
      *
      * Ungated: a pure function, callable without any capability.
      */
-    timeToTick(params: ConvertTimeToTickParams, options?: CallOptions): Promise<ConvertTimeToTickResult>;
+    timeToTick(params?: ConvertTimeToTickParams, options?: CallOptions): Promise<ConvertTimeToTickResult>;
 }
 
 // --- device ----------------------------------------------------------------
@@ -2117,25 +2131,25 @@ export interface ConvertOperations {
 export interface DeviceCurrentResult {
     /** Active audio device type/backend (e.g. CoreAudio, ASIO, Windows Audio). */
     deviceType: string;
-    /** Selected input device and its channels. */
+    /** Selected input device and its channels, as `device current` reports it. */
     input: {
         /** Input channel names the device exposes. */
         availableChannels: string[];
         /** Name of the selected input device. */
         deviceName: string;
     };
-    /** Selected output device and its channel-pair state. */
+    /** Selected output device and its channel-pair state, as `device current` reports it. */
     output: {
         /** Stereo channel pair names the device exposes. */
         availableChannelPairs: string[];
-        /** Name of the active channel pair. Omitted when currentChannelPairIndex is out of range. */
+        /** Name of the active channel pair. Absent when `currentChannelPairIndex` is out of range. */
         currentChannelPair?: string;
-        /** 0-based index of the active channel pair within availableChannelPairs; may be out of range if none is active. */
+        /** 0-based index of the active channel pair within `availableChannelPairs`; may be out of range if none is active. */
         currentChannelPairIndex: number;
         /** Name of the selected output device. */
         deviceName: string;
     };
-    /** Current device properties. */
+    /** Current device properties, as `device current` reports them. */
     properties: {
         /** Current buffer size in samples. */
         bufferSize: number;
@@ -2154,11 +2168,11 @@ export interface DeviceListResult {
     availableSampleRates: number[];
     /** The currently selected audio backend. */
     currentDeviceType: string;
-    /** Available input devices under the current device type. */
+    /** One direction's device catalog, as `device list` reports it: every device name the current backend exposes plus which one is selected. */
     inputDevices: {
-        /** Name of the selected input device. */
+        /** Name of the selected device in this direction. */
         currentDevice: string;
-        /** All input device names; may be empty. */
+        /** All device names in this direction; may be empty. */
         devices: string[];
     };
     /** MIDI input device descriptors; empty when no devices are detected. */
@@ -2168,11 +2182,11 @@ export interface DeviceListResult {
         /** Device display name as reported by the OS. */
         deviceName: string;
     }[];
-    /** Available output devices under the current device type. */
+    /** One direction's device catalog, as `device list` reports it: every device name the current backend exposes plus which one is selected. */
     outputDevices: {
-        /** Name of the selected output device. */
+        /** Name of the selected device in this direction. */
         currentDevice: string;
-        /** All output device names; may be empty. */
+        /** All device names in this direction; may be empty. */
         devices: string[];
     };
 }
@@ -2180,11 +2194,11 @@ export interface DeviceListResult {
 /** Arguments for `device set-audio`. */
 export interface DeviceSetAudioParams {
     /** Audio backend to use, from `availableDeviceTypes` in `device list` (e.g. `CoreAudio`, `ASIO`, `Windows Audio`). */
-    deviceType?: string | null;
+    deviceType?: string;
     /** Input device name, from `inputDevices.devices` in `device list`. Recording needs one of these. */
-    inputDevice?: string | null;
+    inputDevice?: string;
     /** Output device name, from `outputDevices.devices` in `device list`. */
-    outputDevice?: string | null;
+    outputDevice?: string;
 }
 
 /** Success payload of `device set-audio`. */
@@ -2257,7 +2271,7 @@ export interface EditorStatusResult {
     defaultLanguage?: string;
     /** Clip type of the active editor: Sing, Instrument, GenericMidi, Audio, or Chord. Present only when a clip is loaded. */
     editorType?: string;
-    /** Whether a pattern editor has valid content loaded. When false, the clip-context fields are absent. */
+    /** Whether a pattern editor has valid content loaded. When false, every clip-context field below is absent. */
     isAvailable: boolean;
     /** Whether the editor window is currently shown. */
     isVisible: boolean;
@@ -2312,14 +2326,14 @@ export interface EditorOperations {
 
 /** Arguments for `ensemble add`. */
 export interface EnsembleAddParams {
-    /** Where to insert the new member. Defaults to the end. `0` makes the new instrument the leader and pushes the rest down. */
-    at?: number | null;
-    /** **Required.** Which instrument to add, by display name or ref — the same thing `sound-source load --source` accepts. */
+    /** Where to insert the new member. Omit for the end. `0` makes the new instrument the leader and pushes the rest down. */
+    at?: number;
+    /** Which instrument to add, by display name or ref — the same thing `sound-source load --source` accepts. */
     source: string;
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** Success payload of `ensemble add`. */
@@ -2341,9 +2355,9 @@ export interface EnsembleAddResult {
 /** Arguments for `ensemble disable`. */
 export interface EnsembleDisableParams {
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** Success payload of `ensemble disable`. */
@@ -2361,9 +2375,9 @@ export interface EnsembleDisableResult {
 /** Arguments for `ensemble enable`. */
 export interface EnsembleEnableParams {
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** Success payload of `ensemble enable`. */
@@ -2381,9 +2395,9 @@ export interface EnsembleEnableResult {
 /** Arguments for `ensemble get`. */
 export interface EnsembleGetParams {
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** Success payload of `ensemble get`. */
@@ -2423,12 +2437,12 @@ export interface EnsembleGetResult {
 
 /** Arguments for `ensemble remove`. */
 export interface EnsembleRemoveParams {
-    /** *Required.** Which member to remove. `0` is the leader and is refused. */
+    /** Which member to remove. `0` is the leader and is refused. */
     member: number;
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** Success payload of `ensemble remove`. */
@@ -2449,14 +2463,14 @@ export interface EnsembleRemoveResult {
 
 /** Arguments for `ensemble reorder`. */
 export interface EnsembleReorderParams {
-    /** *Required.** Which member to move. */
+    /** Which member to move. */
     member: number;
-    /** *Required.** Where to move it. `0` promotes it to leader. */
+    /** Where to move it. `0` promotes it to leader. */
     to: number;
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** Success payload of `ensemble reorder`. */
@@ -2477,20 +2491,20 @@ export interface EnsembleReorderResult {
 
 /** Arguments for `ensemble set`. */
 export interface EnsembleSetParams {
-    /** Member gain in dB. Requires `--member`. */
-    gain?: number | null;
+    /** Member gain in dB. Requires `member`. */
+    gain?: number;
     /** Which member to configure. `0` is the leader. Omit to configure the ensemble as a whole instead. */
-    member?: number | null;
-    /** Whether to mute this member. Requires `--member`. */
-    mute?: boolean | null;
+    member?: number;
+    /** Whether to mute this member. Requires `member`. */
+    mute?: boolean;
     /** Timing offset between members, in milliseconds. Ensemble-level. */
-    offset?: number | null;
+    offset?: number;
     /** Stereo spread across the members, 0 to 1. Ensemble-level. */
-    spread?: number | null;
+    spread?: number;
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** The `ensemble` operations, mirroring the canonical operation tree 1:1. */
@@ -2549,65 +2563,59 @@ export interface EnsembleOperations {
 
 /** Arguments for `export audio`. */
 export interface ExportAudioParams {
-    /** Bit depth: 16 (default), 24 or 32. **WAV only** -- an MP3's resolution is its bit rate, so passing this with `--format mp3` is an error. */
-    bitDepth?: number | null;
+    /** Bit depth: 16 (default), 24 or 32. **WAV only** — an MP3's resolution is its bit rate, so passing this with `format: "mp3"` is an error. */
+    bitDepth?: number;
     /** Bit rate in kbps: 128, 192 (default), 256 or 320. **MP3 only**. */
-    bitRate?: number | null;
+    bitRate?: number;
     /** Channel count: 1 (mono) or 2 (stereo, default). */
-    channels?: number | null;
-    /** Container to write. Omit to take it from `--path`'s extension. */
+    channels?: number;
+    /** The container an `export audio` call writes. Omitted, it is taken from `path`'s extension. */
     format?: 'wav' | 'mp3';
-    /** Where the rendered range starts. Ticks (`3840t`), clock time (`1.5s`), or a musical position (`4.1.0`). Omit to start at the top of the project. */
-    from?: number | null;
+    /** Where the rendered range starts, in project ticks. Omit for the top of the project. */
+    from?: number;
     /** Where to write. For the per-track scopes this is the template the per-track names are built from: each track's name is appended to the base name, in the same directory, keeping the extension. */
     path: string;
     /** Sample rate in Hz: 32000, 44100 (default) or 48000. */
-    sampleRate?: number | null;
-    /** What to render: `master` (default) bounces the master bus to one file; `selected-tracks` and `all-tracks` mirror the Export dialog's other two choices, one file per track; `tracks` renders exactly the tracks named by `--track-uuid`. */
+    sampleRate?: number;
+    /** What an `export audio` call renders. Omitted on the way in it falls back to `master`, the Export dialog's own default; the launch result reports the value it resolved to, so a caller can always see which one ran. */
     scope?: 'master' | 'selected-tracks' | 'all-tracks' | 'tracks';
-    /** Where the rendered range ends (exclusive). Omit to render to the end of the project's content -- which is what the dialog's "Total" range means. */
-    to?: number | null;
-    /**
-     * Which tracks to render. Repeatable, and **`--scope tracks` only**: the other scopes either have no per-track choice to make (`master`, `all-tracks`) or take it from the arrangement selection (`selected-tracks`). Passing it elsewhere is an error rather than a no-op, since silently ignoring a track list would let a caller believe they had narrowed the render.
-     *
-     * This is the scriptable counterpart to `selected-tracks`: naming ids gives the same files on every run, where a selection gives whatever the user last clicked (ADR 0087).
-     *
-     * `Option` so the schema, and the SDK bindings generated from it, say optional -- a bare `Vec` is a required field, which would oblige every `master` caller to send an empty array for an argument that scope refuses. Contrast `export vocal-sample`'s `clipUuids`, a bare `Vec` because that command has no meaning without ids.
-     */
-    trackUuids?: string[] | null;
-    /** Bypass every external FX plugin for the render -- the dialog's "Export without effects". Off by default; the render carries the mix as you hear it. */
-    withoutEffects?: boolean | null;
+    /** Where the rendered range ends (exclusive), in project ticks. Omit for the end of the project's content. */
+    to?: number;
+    /** Which tracks to render. **`scope: "tracks"` only**: the other scopes either have no per-track choice to make ("master", "all-tracks") or take it from the arrangement selection ("selected-tracks"). Passing it elsewhere is an error rather than a no-op. */
+    trackUuids?: string[];
+    /** Bypass every external FX plugin for the render — the dialog's "Export without effects". Off by default; the render carries the mix as heard. */
+    withoutEffects?: boolean;
 }
 
 /** Success payload of `export audio`. */
 export interface ExportAudioResult {
-    /** Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending. */
+    /** Whether `job cancel` will be honored for this job. */
     cancellable?: boolean;
-    /** The job class, as `job get` reports it: 'export-audio' or 'export-video'. */
+    /** The job class, as `job get` reports it: always "export-audio". */
     jobClass?: string;
-    /** The launched job's id. Pass it to `job get` / `job wait` / `job cancel`. Present on every successful launch -- the render has NOT finished when this returns. */
+    /** The launched job's id. Pass it to `job get` / `job wait` / `job cancel`. */
     jobId: string;
-    /** Every file the render will write, resolved at launch. One entry for 'master'; one per exported track for the per-track scopes, already de-duplicated the way the Export dialog de-duplicates colliding track names. These files do not exist yet -- wait on the job before reading them. */
+    /** Every file the render will write, resolved at launch. One entry for "master"; one per exported track for the per-track scopes. These files do not exist yet — wait on the job before reading them. */
     paths: string[];
-    /** The scope that was launched: 'master', 'selected-tracks', 'all-tracks' or 'tracks'. */
-    scope?: string;
-    /** How many tracks the render covers. Per-track scopes only; absent for 'master'. */
+    /** What an `export audio` call renders. Omitted on the way in it falls back to `master`, the Export dialog's own default; the launch result reports the value it resolved to, so a caller can always see which one ran. */
+    scope?: 'master' | 'selected-tracks' | 'all-tracks' | 'tracks';
+    /** How many tracks the render covers. Per-track scopes only; absent for "master". */
     trackCount?: number;
 }
 
 /** Arguments for `export fcpxml`. */
 export interface ExportFcpxmlParams {
-    /** Where to write. The extension picks the format: `.fcpxml` or `.aaf`. Any other extension is rejected -- there is no default to fall back to that would not silently write the wrong thing. */
+    /** Where to write. The extension picks the format: `.fcpxml` or `.aaf`. Any other extension is rejected — there is no default to fall back to that would not silently write the wrong thing. */
     path: string;
 }
 
 /** Success payload of `export fcpxml`. */
 export interface ExportFcpxmlResult {
-    /** The format actually written, after resolving --format or the path's extension. */
+    /** The format actually written, after resolving `format` (midi only) or the path's extension. */
     format?: string;
-    /** Every file written, in the order written. Usually one; `export midi --split-tracks` writes one per exported track, each with the track's name appended to the base name. */
+    /** Every file written, in the order written. Usually one. */
     paths: string[];
-    /** How many tracks contributed to the export. The tracks that reached the file, not every track that was considered -- `export midi` counts the ones carrying notes the format can represent, `export fcpxml` the ones carrying timeline content. */
+    /** How many tracks contributed to the export — the tracks that reached the file, not every track that was considered. */
     trackCount?: number;
 }
 
@@ -2615,13 +2623,13 @@ export interface ExportFcpxmlResult {
 export interface ExportLrcParams {
     /** Where to write the `.lrc` file. */
     path: string;
-    /** Which Sing track's lyrics to write. Required; a non-Sing track is rejected, since only a Sing track carries lyrics. */
+    /** Which Sing track's lyrics to write. A non-Sing track is rejected, since only a Sing track carries lyrics. */
     trackUuid: string;
 }
 
 /** Success payload of `export lrc`. */
 export interface ExportLrcResult {
-    /** How many timed lyric lines were written. Zero means the track had no lyrics in range -- the file is still written, and still valid LRC. */
+    /** How many timed lyric lines were written. Zero means the track had no lyrics in range — the file is still written, and still valid LRC. */
     lineCount?: number;
     /** The written file, as a one-element list so the shape matches the other synchronous export verbs. */
     paths: string[];
@@ -2631,35 +2639,31 @@ export interface ExportLrcResult {
 
 /** Arguments for `export midi`. */
 export interface ExportMidiParams {
-    /** Which format to write. Omit to take it from `--path`'s extension. */
+    /** The note-data format `export midi` writes. Omitted, it is taken from `path`'s extension (`.mid`/`.midi` → midi, `.ufdata` → ufdata). The two are not interchangeable: UfData carries a Sing track's lyrics and syllables and exports Sing tracks only, while MIDI carries neither and exports the instrument, generic-MIDI and chord tracks UfData skips. */
     format?: 'midi' | 'ufdata';
-    /** Where the exported range starts. Omit for the top of the project. */
-    from?: number | null;
-    /** Where to write. With `--split-tracks` this is the template: each track's name is appended to the base name. */
+    /** Where the exported range starts, in project ticks. Omit for the top of the project. */
+    from?: number;
+    /** Where to write. With `splitTracks` this is the template: each track's name is appended to the base name. */
     path: string;
     /** Write one file per track instead of one file holding every track. Off by default. */
-    splitTracks?: boolean | null;
-    /** Where the exported range ends (exclusive). Omit for the end of the project's content. */
-    to?: number | null;
-    /**
-     * Which tracks to export. Repeatable. Omit for every track that carries notes the chosen format can represent.
-     *
-     * `Option` so the schema says optional, matching "omit for every track" -- a bare `Vec` generates a required field.
-     */
-    trackUuids?: string[] | null;
+    splitTracks?: boolean;
+    /** Where the exported range ends (exclusive), in project ticks. Omit for the end of the project's content. */
+    to?: number;
+    /** Which tracks to export. Omit for every track that carries notes the chosen format can represent. */
+    trackUuids?: string[];
     /** Carry each note's lyric into the file. **UfData only.** */
-    withLyrics?: boolean | null;
+    withLyrics?: boolean;
     /** Carry each note's syllable breakdown into the file. **UfData only.** */
-    withSyllables?: boolean | null;
+    withSyllables?: boolean;
 }
 
 /** Success payload of `export midi`. */
 export interface ExportMidiResult {
-    /** The format actually written, after resolving --format or the path's extension. */
+    /** The format actually written, after resolving `format` (midi only) or the path's extension. */
     format?: string;
-    /** Every file written, in the order written. Usually one; `export midi --split-tracks` writes one per exported track, each with the track's name appended to the base name. */
+    /** Every file written, in the order written. Usually one. */
     paths: string[];
-    /** How many tracks contributed to the export. The tracks that reached the file, not every track that was considered -- `export midi` counts the ones carrying notes the format can represent, `export fcpxml` the ones carrying timeline content. */
+    /** How many tracks contributed to the export — the tracks that reached the file, not every track that was considered. */
     trackCount?: number;
 }
 
@@ -2678,42 +2682,42 @@ export interface ExportSongTemplateResult {
 /** Arguments for `export video`. */
 export interface ExportVideoParams {
     /** Video bit rate in kbps. Omit for the encoder's default for the resolved geometry. */
-    bitRate?: number | null;
+    bitRate?: number;
     /** Frame rate. Omit for the composition canvas's frame rate. */
-    fps?: number | null;
-    /** Where the rendered range starts. Omit for the top of the project. */
-    from?: number | null;
+    fps?: number;
+    /** Where the rendered range starts, in project ticks. Omit for the top of the project. */
+    from?: number;
     /** Frame height in pixels. Omit for the composition canvas's height. */
-    height?: number | null;
+    height?: number;
     /** Where to write the rendered video. */
     path: string;
-    /** Where the rendered range ends (exclusive). Omit for the end of the project's content. */
-    to?: number | null;
+    /** Where the rendered range ends (exclusive), in project ticks. Omit for the end of the project's content. */
+    to?: number;
     /** Frame width in pixels. Omit for the composition canvas's width. */
-    width?: number | null;
+    width?: number;
 }
 
 /** Success payload of `export video`. */
 export interface ExportVideoResult {
-    /** Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending. */
+    /** Whether `job cancel` will be honored for this job. */
     cancellable?: boolean;
     /** Frame rate the render will produce. */
     fps?: number;
     /** Frame height the render will produce. */
     height?: number;
-    /** The job class, as `job get` reports it: 'export-audio' or 'export-video'. */
+    /** The job class, as `job get` reports it: always "export-video". */
     jobClass?: string;
-    /** The launched job's id. Pass it to `job get` / `job wait` / `job cancel`. Present on every successful launch -- the render has NOT finished when this returns. */
+    /** The launched job's id. Pass it to `job get` / `job wait` / `job cancel`. */
     jobId: string;
     /** Where the rendered video will land. The file does not exist yet. */
     path: string;
-    /** Frame width the render will produce, after the composition canvas and any --width/--height override are resolved. */
+    /** Frame width the render will produce, after the composition canvas and any override are resolved. */
     width?: number;
 }
 
 /** Arguments for `export vocal-sample`. */
 export interface ExportVocalSampleParams {
-    /** Which clips to write. Repeatable; at least one is required. Clips from several tracks are kept grouped by track in the file. */
+    /** Which clips to write. At least one is required. Clips from several tracks are kept grouped by track in the file. */
     clipUuids: string[];
     /** Where to write the `.clips` file. */
     path: string;
@@ -2789,311 +2793,289 @@ export interface ExportOperations {
 
 /** Arguments for `generative add-layer`. */
 export interface GenerativeAddLayerParams {
-    /** Where the generated clip starts. Ticks (`3840t`), clock time (`1.5s`), or a musical position (`4.1.0`). */
+    /** Where the generated clip starts, in ticks. */
     from: number;
-    /** Which instrument to add ("nylon guitar", "upright bass"). **`--sound-type custom` only** -- naming an instrument is what that type is for, and every other type already names one. */
-    instrument?: string | null;
-    /** Lyrics for a sung layer. **`song-track`, `vocals` and `backing-vocals` only** -- the three types that sing. Passing it elsewhere is an error rather than a silent no-op. */
-    lyrics?: string | null;
-    /** Style notes for the layer, on top of what the arrangement already implies. Accepted by every `--sound-type`. */
-    prompt?: string | null;
-    /** What kind of layer to add. Default `instrumental`. See [`LayerType`] for the full list and which content arguments each accepts. */
+    /** Which instrument to add ("nylon guitar", "upright bass"). **`soundType` "custom" only**. */
+    instrument?: string;
+    /** Lyrics for a sung layer. **"song-track", "vocals" and "backing-vocals" only**. */
+    lyrics?: string;
+    /** Style notes for the layer, on top of what the arrangement already implies. Accepted by every `soundType`. */
+    prompt?: string;
+    /** What an Add-a-Layer call generates — the panel's own fifteen choices. Which of the three content parameters each accepts is fixed per type and mirrors `AddALayerTypeHelper::toConfig`, which is what greys the panel's fields in and out: - `prompt` (styles): every type. - `lyrics`: `song-track`, `vocals`, `backing-vocals` — the three that sing. - `instrument`: `custom` alone, which is what makes it custom. Passing one to a type that does not take it is an error rather than a silent drop, because the layer that came back would not be the layer that was asked for. */
     soundType?: 'instrumental' | 'song-track' | 'drums' | 'bass' | 'guitar' | 'keyboard' | 'percussion' | 'strings' | 'synth' | 'fx' | 'brass' | 'woodwinds' | 'vocals' | 'backing-vocals' | 'custom';
-    /** Where the generated clip ends (exclusive). This is what fixes the generation's length. */
+    /** Where the generated clip ends (exclusive), in ticks. */
     to: number;
-    /** The Audio track the generated clip lands on, by id. Required: the panel takes it from the arrangement selection, which is not something a script can rely on (ADR 0087). Its content in the range is moved aside the same way the panel's own launch moves it, as one undo entry. */
+    /** The Audio track the generated clip lands on, by id. */
     trackUuid: string;
 }
 
 /** Success payload of `generative add-layer`. */
 export interface GenerativeAddLayerResult {
-    /** Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending -- the server-side kits (song, enhance) have no in-flight cancel. */
+    /** Whether `job cancel` will be honored for this job. */
     cancellable: boolean;
-    /** How this class delivers results: 'staged' means they land in the session history for audition and reach the project only through `job place`; 'direct' means they auto-place as one attributed undo entry. See `help streaming-results`. */
+    /** How this class delivers results. Always "direct" here: the result auto-places as one attributed undo entry. */
     delivery: string;
     /** Tick position the placed clip will start at. */
     from?: number;
-    /** The job class, as `job get` reports it and `job list` can be filtered on: 'song-generate', 'music-enhance', 'text2sample', 'seed-audio', 'sound-effects', 'add-a-layer', 'stem-split', 'voice-changer' or 'vocal2midi'. */
+    /** The job class: "text2sample", "seed-audio", "sound-effects", "add-a-layer" or "vocal2midi". */
     jobClass: string;
-    /** The launched job's id. Pass it to `job get` / `job wait` / `job results`. Present on every successful launch -- nothing has been generated when this returns. */
+    /** The launched job's id. */
     jobId: string;
     /** Tick position the placed clip will end at (exclusive). */
     to?: number;
-    /** The track the result will be placed on, resolved at launch. For a command that creates its own target track, this is the created track's id -- it exists already, empty, and the clip lands in it when the job settles. */
+    /** The track the result will be placed on, resolved at launch. For a command that creates its own target track, this is the created track's id — it exists already, empty, and the clip lands in it when the job settles. */
     trackId: string;
 }
 
 /** Arguments for `generative enhance`. */
 export interface GenerativeEnhanceParams {
-    /** An audio clip already in the project to enhance, by id as `clip list` reports it. Its audio is uploaded as-is -- this does not render the project, so what the clip carries is what gets analyzed. */
-    clipUuid?: string | null;
-    /** How strongly `--prompt` overrides what the source suggests, 0.0 to 1.0. Default 0.0, the panel's own default: follow the source. */
-    influence?: number | null;
+    /** An audio clip already in the project to enhance, by id as `clip list` reports it. Its audio is uploaded as-is — this does not render the project. */
+    clipUuid?: string;
+    /** How strongly `prompt` overrides what the source suggests, 0.0 to 1.0. Default 0.0: follow the source. */
+    influence?: number;
     /** Lyrics for the new take. Omit to keep the lyrics the analysis transcribed out of the source audio. */
-    lyrics?: string | null;
-    /** Audio file to enhance. Exactly one of `--path` / `--clip-uuid` is required. */
-    path?: string | null;
+    lyrics?: string;
+    /** Audio file to enhance. Exactly one of `path` / `clipUuid` is required. */
+    path?: string;
     /** Style to produce ("acoustic, brushed drums, intimate"). Omit to keep the style tags the analysis inferred from the source. */
-    prompt?: string | null;
+    prompt?: string;
     /** Title for the generated take. Omit for the derived one, as in `generative song`. */
-    title?: string | null;
+    title?: string;
 }
 
 /** Success payload of `generative enhance`. */
 export interface GenerativeEnhanceResult {
-    /** Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending -- the server-side kits (song, enhance) have no in-flight cancel. */
+    /** Whether `job cancel` will be honored. Always false for these two: the server-side kits have no in-flight cancel. */
     cancellable: boolean;
-    /** How this class delivers results: 'staged' means they land in the session history for audition and reach the project only through `job place`; 'direct' means they auto-place as one attributed undo entry. See `help streaming-results`. */
+    /** How this class delivers results. Always "staged" here: results land in the session history for audition and reach the project only through `job place`. */
     delivery: string;
-    /** The job class, as `job get` reports it and `job list` can be filtered on: 'song-generate', 'music-enhance', 'text2sample', 'seed-audio', 'sound-effects', 'add-a-layer', 'stem-split', 'voice-changer' or 'vocal2midi'. */
+    /** The job class, as `job get` reports it and `job list` filters on: "song-generate" or "music-enhance". */
     jobClass: string;
-    /** The launched job's id. Pass it to `job get` / `job wait` / `job results`. Present on every successful launch -- nothing has been generated when this returns. */
+    /** The launched job's id. Present on every successful launch — nothing has been generated when this returns. */
     jobId: string;
-    /** True when this class's results can enter the `streaming` state -- playable while still growing, and placeable before they settle. Both staged kits are streaming-capable. */
+    /** True when results of this class can enter the `streaming` state — playable while still growing, and placeable before they settle. Both staged kits are streaming-capable. */
     streamingCapable?: boolean;
 }
 
 /** Arguments for `generative seed-audio`. */
 export interface GenerativeSeedAudioParams {
-    /** Where the generated clip starts. Ticks (`3840t`), clock time (`1.5s`), or a musical position (`4.1.0`). */
+    /** Where the generated clip starts, in ticks. */
     from: number;
     /** What to generate. Required. */
     prompt: string;
-    /** A local audio file to reference. Repeatable. */
-    referenceAudio?: string[] | null;
-    /** A local image whose mood the generation should follow -- the panel's reference-image slot. */
-    referenceImage?: string | null;
-    /** Where the generated clip ends (exclusive). This is what fixes the generation's length. */
+    /** Local audio files to reference. */
+    referenceAudio?: string[];
+    /** A local image whose mood the generation should follow. */
+    referenceImage?: string;
+    /** Where the generated clip ends (exclusive), in ticks. */
     to: number;
-    /** The Audio track the generated clip lands on, by id. Required: the panel takes it from the arrangement selection, which is not something a script can rely on (ADR 0087). Its content in the range is moved aside the same way the panel's own launch moves it, as one undo entry. */
+    /** The Audio track the generated clip lands on, by id. */
     trackUuid: string;
 }
 
 /** Success payload of `generative seed-audio`. */
 export interface GenerativeSeedAudioResult {
-    /** Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending -- the server-side kits (song, enhance) have no in-flight cancel. */
+    /** Whether `job cancel` will be honored for this job. */
     cancellable: boolean;
-    /** How this class delivers results: 'staged' means they land in the session history for audition and reach the project only through `job place`; 'direct' means they auto-place as one attributed undo entry. See `help streaming-results`. */
+    /** How this class delivers results. Always "direct" here: the result auto-places as one attributed undo entry. */
     delivery: string;
     /** Tick position the placed clip will start at. */
     from?: number;
-    /** The job class, as `job get` reports it and `job list` can be filtered on: 'song-generate', 'music-enhance', 'text2sample', 'seed-audio', 'sound-effects', 'add-a-layer', 'stem-split', 'voice-changer' or 'vocal2midi'. */
+    /** The job class: "text2sample", "seed-audio", "sound-effects", "add-a-layer" or "vocal2midi". */
     jobClass: string;
-    /** The launched job's id. Pass it to `job get` / `job wait` / `job results`. Present on every successful launch -- nothing has been generated when this returns. */
+    /** The launched job's id. */
     jobId: string;
     /** Tick position the placed clip will end at (exclusive). */
     to?: number;
-    /** The track the result will be placed on, resolved at launch. For a command that creates its own target track, this is the created track's id -- it exists already, empty, and the clip lands in it when the job settles. */
+    /** The track the result will be placed on, resolved at launch. For a command that creates its own target track, this is the created track's id — it exists already, empty, and the clip lands in it when the job settles. */
     trackId: string;
 }
 
 /** Arguments for `generative song`. */
 export interface GenerativeSongParams {
-    /** Generate without vocals. **Idea mode only** -- in lyrics mode there are lyrics to sing, so an instrumental would contradict the request, and passing it there is an error rather than a silent no-op. */
-    instrumental?: boolean | null;
-    /** Lyrics to sing. Passing this selects the panel's "From Lyrics" mode. Either this or `--prompt` is required -- with neither there is nothing to generate from. */
-    lyrics?: string | null;
-    /** What to generate. Without `--lyrics` this is the whole brief ("a slow piano ballad about leaving home"); with it, this is the style the lyrics should be sung in ("dream pop, female vocal"). */
-    prompt?: string | null;
-    /** Title for the generated song. **Lyrics mode only.** Omit to take the panel's derived title (the opening of the lyrics, or the style prefixed with "(Instrumental)"). */
-    title?: string | null;
+    /** Generate without vocals. **Idea mode only** — lyrics mode has lyrics to sing, so an instrumental would contradict the request. */
+    instrumental?: boolean;
+    /** Lyrics to sing. Passing this selects lyrics mode. */
+    lyrics?: string;
+    /** What to generate. Idea mode without `lyrics`; the style with it. */
+    prompt?: string;
+    /** Title for the generated song. **Lyrics mode only** — idea mode derives its own title. Omit for the derived title (the opening of the lyrics, or the style prefixed with "(Instrumental)"). */
+    title?: string;
 }
 
 /** Success payload of `generative song`. */
 export interface GenerativeSongResult {
-    /** Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending -- the server-side kits (song, enhance) have no in-flight cancel. */
+    /** Whether `job cancel` will be honored. Always false for these two: the server-side kits have no in-flight cancel. */
     cancellable: boolean;
-    /** How this class delivers results: 'staged' means they land in the session history for audition and reach the project only through `job place`; 'direct' means they auto-place as one attributed undo entry. See `help streaming-results`. */
+    /** How this class delivers results. Always "staged" here: results land in the session history for audition and reach the project only through `job place`. */
     delivery: string;
-    /** The job class, as `job get` reports it and `job list` can be filtered on: 'song-generate', 'music-enhance', 'text2sample', 'seed-audio', 'sound-effects', 'add-a-layer', 'stem-split', 'voice-changer' or 'vocal2midi'. */
+    /** The job class, as `job get` reports it and `job list` filters on: "song-generate" or "music-enhance". */
     jobClass: string;
-    /** The launched job's id. Pass it to `job get` / `job wait` / `job results`. Present on every successful launch -- nothing has been generated when this returns. */
+    /** The launched job's id. Present on every successful launch — nothing has been generated when this returns. */
     jobId: string;
-    /** True when this class's results can enter the `streaming` state -- playable while still growing, and placeable before they settle. Both staged kits are streaming-capable. */
+    /** True when results of this class can enter the `streaming` state — playable while still growing, and placeable before they settle. Both staged kits are streaming-capable. */
     streamingCapable?: boolean;
 }
 
 /** Arguments for `generative sound-effects`. */
 export interface GenerativeSoundEffectsParams {
-    /** Where the generated clip starts. Ticks (`3840t`), clock time (`1.5s`), or a musical position (`4.1.0`). */
+    /** Where the generated clip starts, in ticks. */
     from: number;
-    /** How strictly to follow the prompt: `low`, `mid` (default) or `high`. */
+    /** How much the prompt overrides what the source material suggests. The Sound Effects panel offers exactly these three steps rather than a continuous slider, and the contract keeps the panel's vocabulary instead of inventing a number the UI cannot express. */
     influence?: 'low' | 'mid' | 'high';
-    /**
-     * Generate a seamlessly loopable effect. Off by default.
-     *
-     * The clap id is `loopable` because `loop` is a Rust keyword, with the user-facing long name pinned back to `--loop` so the flag reads the way the panel's checkbox does; the wire key is `loop` to match.
-     */
-    loop?: boolean | null;
+    /** Generate a seamlessly loopable effect. Off by default. */
+    loop?: boolean;
     /** The effect to generate ("distant thunder", "door creak"). Required. */
     prompt: string;
-    /** Where the generated clip ends (exclusive). This is what fixes the generation's length. */
+    /** Where the generated clip ends (exclusive), in ticks. */
     to: number;
-    /** The Audio track the generated clip lands on, by id. Required: the panel takes it from the arrangement selection, which is not something a script can rely on (ADR 0087). Its content in the range is moved aside the same way the panel's own launch moves it, as one undo entry. */
+    /** The Audio track the generated clip lands on, by id. */
     trackUuid: string;
 }
 
 /** Success payload of `generative sound-effects`. */
 export interface GenerativeSoundEffectsResult {
-    /** Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending -- the server-side kits (song, enhance) have no in-flight cancel. */
+    /** Whether `job cancel` will be honored for this job. */
     cancellable: boolean;
-    /** How this class delivers results: 'staged' means they land in the session history for audition and reach the project only through `job place`; 'direct' means they auto-place as one attributed undo entry. See `help streaming-results`. */
+    /** How this class delivers results. Always "direct" here: the result auto-places as one attributed undo entry. */
     delivery: string;
     /** Tick position the placed clip will start at. */
     from?: number;
-    /** The job class, as `job get` reports it and `job list` can be filtered on: 'song-generate', 'music-enhance', 'text2sample', 'seed-audio', 'sound-effects', 'add-a-layer', 'stem-split', 'voice-changer' or 'vocal2midi'. */
+    /** The job class: "text2sample", "seed-audio", "sound-effects", "add-a-layer" or "vocal2midi". */
     jobClass: string;
-    /** The launched job's id. Pass it to `job get` / `job wait` / `job results`. Present on every successful launch -- nothing has been generated when this returns. */
+    /** The launched job's id. */
     jobId: string;
     /** Tick position the placed clip will end at (exclusive). */
     to?: number;
-    /** The track the result will be placed on, resolved at launch. For a command that creates its own target track, this is the created track's id -- it exists already, empty, and the clip lands in it when the job settles. */
+    /** The track the result will be placed on, resolved at launch. For a command that creates its own target track, this is the created track's id — it exists already, empty, and the clip lands in it when the job settles. */
     trackId: string;
 }
 
 /** Arguments for `generative stem-split`. */
 export interface GenerativeStemSplitParams {
-    /**
-     * The audio clip to split, by id. Its stem tracks are inserted below its source track, the way the panel inserts them.
-     *
-     * One clip per launch, because one launch returns one job id and the producer opens a job **per clip** (`AiPluginTaskStemSplitterScheduler` schedules an attempt each). Splitting several clips is several launches -- which also lets each one be waited on and cancelled independently.
-     */
+    /** The audio clip to split, by id. Its stem tracks are inserted below its source track. */
     clipUuid: string;
-    /** Which stems to produce: `basic` (default), `professional`, `advanced` or `customized`. The first two are free; the last two bill different SKUs, so this is never inferred. */
+    /** Which stem set a split produces — the Stem Splitter panel's four choices. `basic` and `professional` are free; `advanced` and `customized` bill their own SKUs. That is why the mode is a parameter and never inferred: a caller choosing between them is choosing what to spend. */
     mode?: 'basic' | 'professional' | 'advanced' | 'customized';
-    /** Which sound to isolate, in words ("just the horns"). **`--mode customized` only**, and required there -- that mode has no fixed stem set, so without a prompt there is nothing to separate. */
-    prompt?: string | null;
-    /**
-     * Strip reverb from the separated vocal. Off by default.
-     *
-     * **`basic` and `professional` only.** The two fine-grained modes do not support it (`StemSplitterModeNS::isRemoveReverbSupported`), so passing it there is an error rather than a flag that is quietly dropped.
-     */
-    removeReverb?: boolean | null;
+    /** Which sound to isolate, in words ("just the horns"). **`mode` "customized" only**, and required there. */
+    prompt?: string;
+    /** Strip reverb from the separated vocal. Off by default. **"basic" and "professional" only** — the two fine-grained modes do not support it. */
+    removeReverb?: boolean;
 }
 
 /** Success payload of `generative stem-split`. */
 export interface GenerativeStemSplitResult {
-    /** Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending -- the server-side kits (song, enhance) have no in-flight cancel. */
     cancellable: boolean;
     /** The source clip being split. */
     clipUuid: string;
-    /** How this class delivers results: 'staged' means they land in the session history for audition and reach the project only through `job place`; 'direct' means they auto-place as one attributed undo entry. See `help streaming-results`. */
+    /** Always "direct". */
     delivery: string;
-    /** The job class, as `job get` reports it and `job list` can be filtered on: 'song-generate', 'music-enhance', 'text2sample', 'seed-audio', 'sound-effects', 'add-a-layer', 'stem-split', 'voice-changer' or 'vocal2midi'. */
+    /** Always "stem-split". */
     jobClass: string;
-    /** The launched job's id. Pass it to `job get` / `job wait` / `job results`. Present on every successful launch -- nothing has been generated when this returns. */
     jobId: string;
-    /** The split that was launched: 'basic', 'professional', 'advanced' or 'customized'. */
-    mode?: string;
+    /** Which stem set a split produces — the Stem Splitter panel's four choices. `basic` and `professional` are free; `advanced` and `customized` bill their own SKUs. That is why the mode is a parameter and never inferred: a caller choosing between them is choosing what to spend. */
+    mode?: 'basic' | 'professional' | 'advanced' | 'customized';
     /** The tracks created to receive the stems, in stem order, inserted below the source clip's track. They exist already and are empty; each stem lands in its own track as the job settles. */
     trackIds: string[];
 }
 
 /** Arguments for `generative text2sample`. */
 export interface GenerativeText2sampleParams {
-    /** Where the generated clip starts. Ticks (`3840t`), clock time (`1.5s`), or a musical position (`4.1.0`). */
+    /** Where the generated clip starts, in ticks. */
     from: number;
     /** What to generate ("warm analog pad, slow attack"). Required. */
     prompt: string;
     /** A local audio file whose character the generation should follow. */
-    referenceAudio?: string | null;
-    /** A sound category to steer the model, from the panel's Sounds picker ("Pad", "Pluck"). One hint, not a list — the producer carries a single `soundHint` string (`AiPluginTaskText2SampleAttempt::setSoundHint`). */
-    soundHint?: string | null;
-    /** Where the generated clip ends (exclusive). This is what fixes the generation's length. */
+    referenceAudio?: string;
+    /** A sound category to steer the model, from the panel's Sounds picker ("Pad", "Pluck"). One hint, not a list. */
+    soundHint?: string;
+    /** Where the generated clip ends (exclusive), in ticks. This is what fixes the generation's length. */
     to: number;
-    /** The Audio track the generated clip lands on, by id. Required: the panel takes it from the arrangement selection, which is not something a script can rely on (ADR 0087). Its content in the range is moved aside the same way the panel's own launch moves it, as one undo entry. */
+    /** The Audio track the generated clip lands on, by id. Its content in the range is moved aside as one undo entry. */
     trackUuid: string;
 }
 
 /** Success payload of `generative text2sample`. */
 export interface GenerativeText2sampleResult {
-    /** Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending -- the server-side kits (song, enhance) have no in-flight cancel. */
+    /** Whether `job cancel` will be honored for this job. */
     cancellable: boolean;
-    /** How this class delivers results: 'staged' means they land in the session history for audition and reach the project only through `job place`; 'direct' means they auto-place as one attributed undo entry. See `help streaming-results`. */
+    /** How this class delivers results. Always "direct" here: the result auto-places as one attributed undo entry. */
     delivery: string;
     /** Tick position the placed clip will start at. */
     from?: number;
-    /** The job class, as `job get` reports it and `job list` can be filtered on: 'song-generate', 'music-enhance', 'text2sample', 'seed-audio', 'sound-effects', 'add-a-layer', 'stem-split', 'voice-changer' or 'vocal2midi'. */
+    /** The job class: "text2sample", "seed-audio", "sound-effects", "add-a-layer" or "vocal2midi". */
     jobClass: string;
-    /** The launched job's id. Pass it to `job get` / `job wait` / `job results`. Present on every successful launch -- nothing has been generated when this returns. */
+    /** The launched job's id. */
     jobId: string;
     /** Tick position the placed clip will end at (exclusive). */
     to?: number;
-    /** The track the result will be placed on, resolved at launch. For a command that creates its own target track, this is the created track's id -- it exists already, empty, and the clip lands in it when the job settles. */
+    /** The track the result will be placed on, resolved at launch. For a command that creates its own target track, this is the created track's id — it exists already, empty, and the clip lands in it when the job settles. */
     trackId: string;
 }
 
 /** Arguments for `generative vocal2midi`. */
 export interface GenerativeVocal2midiParams {
-    /** Carry the source's pitch curve onto the transcribed notes, not just their pitches. On by default, matching the dialog's checkbox. */
-    applyPitch?: boolean | null;
+    /** Carry the source's pitch curve onto the transcribed notes, not just their pitches. On by default. */
+    applyPitch?: boolean;
     /** The audio clip to transcribe, by id. Required. */
     clipUuid: string;
-    /** Which language the vocal is in. **Required** -- the service offers no "detect it" option, and the dialog's own initial value is whatever was picked last, which is not a default a script may inherit. Use `notes-only` for a melody with no words to transcribe. */
+    /** Which language the vocal transcription assumes, matching `Vocal2Midi::Vocal2MidiOption` one for one. There is deliberately **no `auto`**: the service has no such option. The dialog's initial value is whatever the user chose last, which is exactly the kind of "depends on what happened before" default a remote call must not inherit (ADR 0087), so `language` is required rather than defaulted. `notes-only` is the service's `Note` option: transcribe pitches and rhythm and attach no lyrics at all. It is the right answer for a non-vocal melody, and the only value that does not need a language guessed. */
     language: 'chinese' | 'english' | 'japanese' | 'spanish' | 'korean' | 'french' | 'italian' | 'portuguese' | 'notes-only';
     /** The Sing track the transcribed notes land on. Omit to insert a new Sing track directly below the source clip's track, as the UI does. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** Success payload of `generative vocal2midi`. */
 export interface GenerativeVocal2midiResult {
-    /** Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending -- the server-side kits (song, enhance) have no in-flight cancel. */
+    /** Whether `job cancel` will be honored for this job. */
     cancellable: boolean;
-    /** How this class delivers results: 'staged' means they land in the session history for audition and reach the project only through `job place`; 'direct' means they auto-place as one attributed undo entry. See `help streaming-results`. */
+    /** How this class delivers results. Always "direct" here: the result auto-places as one attributed undo entry. */
     delivery: string;
     /** Tick position the placed clip will start at. */
     from?: number;
-    /** The job class, as `job get` reports it and `job list` can be filtered on: 'song-generate', 'music-enhance', 'text2sample', 'seed-audio', 'sound-effects', 'add-a-layer', 'stem-split', 'voice-changer' or 'vocal2midi'. */
+    /** The job class: "text2sample", "seed-audio", "sound-effects", "add-a-layer" or "vocal2midi". */
     jobClass: string;
-    /** The launched job's id. Pass it to `job get` / `job wait` / `job results`. Present on every successful launch -- nothing has been generated when this returns. */
+    /** The launched job's id. */
     jobId: string;
     /** Tick position the placed clip will end at (exclusive). */
     to?: number;
-    /** The track the result will be placed on, resolved at launch. For a command that creates its own target track, this is the created track's id -- it exists already, empty, and the clip lands in it when the job settles. */
+    /** The track the result will be placed on, resolved at launch. For a command that creates its own target track, this is the created track's id — it exists already, empty, and the clip lands in it when the job settles. */
     trackId: string;
 }
 
 /** Arguments for `generative voice-change`. */
 export interface GenerativeVoiceChangeParams {
-    /** Snap the converted pitch to a key, e.g. `C` or `F#`. Passing this enables scale correction, which is off unless asked for; omit it and `--correct-to-scale` has nothing to apply to. */
-    correctToKey?: string | null;
-    /** Which scale in that key, e.g. `Major` (the default) or `Minor`. `--correct-to-key` only. */
-    correctToScale?: string | null;
-    /** Where the converted range starts. */
+    /** Snap the converted pitch to a key, e.g. "C" or "F#". Passing this enables scale correction, which is off unless asked for. */
+    correctToKey?: string;
+    /** Which scale in that key, e.g. "Major" (the default) or "Minor". **`correctToKey` only**. */
+    correctToScale?: string;
+    /** Where the converted range starts, in ticks. */
     from: number;
-    /**
-     * A Voice Changer model to re-sing in, by its numeric id. Repeatable; at least one is required. Each model's output lands on a new track of its own.
-     *
-     * These are **Voice Changer models**, a catalog of their own -- not the singing voices `voice list` reports, which is why the argument is not spelled `--voice-id`. The ids come from the Voice Changer panel's model list; no CLI verb enumerates them yet.
-     *
-     * Several models per launch is the point of the feature: the caller is asking to audition choices. It is also the cheap shape -- the source range is rendered **once** and that one render feeds every model, so four voices cost one render rather than four. The launch is therefore one job carrying one result per model, each settling on its own (ADR 0084).
-     */
+    /** Voice Changer models to re-sing in, by numeric id. At least one is required; each model's output lands on a new track of its own. These are Voice Changer models, not the singing voices `voice list` reports. */
     modelIds: number[];
-    /** How hard to pull the converted pitch onto pitch centers, 0 to 100. Default 20 -- a strength, not an on/off switch, and 0 is the way to turn it off. */
-    pitchCorrection?: number | null;
+    /** How hard to pull the converted pitch onto pitch centers, 0 to 100. Default 20 — a strength, not a switch; 0 turns it off. */
+    pitchCorrection?: number;
     /** How much random variation to allow between takes, 0 to 100. Default 0. */
-    randomOffset?: number | null;
-    /** Strip the accompaniment out of the source before converting. Off by default; useful when the range carries a full mix rather than an isolated vocal. */
-    removeInstrument?: boolean | null;
+    randomOffset?: number;
+    /** Strip the accompaniment out of the source before converting. Off by default. */
+    removeInstrument?: boolean;
     /** Strip reverb out of the source before converting. Off by default. */
-    removeReverb?: boolean | null;
-    /** Transpose the converted take, -24 to 24 semitones. Default 0. Applies to every requested model -- a per-model transposition is a panel affordance that would need a different argument shape, and is not exposed. */
-    semitones?: number | null;
-    /** Where the converted range ends (exclusive). */
+    removeReverb?: boolean;
+    /** Transpose the converted take, -24 to 24 semitones. Default 0. Applies to every requested model. */
+    semitones?: number;
+    /** Where the converted range ends (exclusive), in ticks. */
     to: number;
-    /** A track whose audio feeds the conversion, by id. Repeatable; at least one is required. Several tracks are summed into the one take that gets re-sung, matching what the panel does with a multi-track selection. */
+    /** Tracks whose audio feeds the conversion, by id. At least one is required; several are summed into the one take that gets re-sung. */
     trackUuids: string[];
 }
 
 /** Success payload of `generative voice-change`. */
 export interface GenerativeVoiceChangeResult {
-    /** Whether `job cancel` will be honored for this job. False means a cancel returns JOB_NOT_CANCELLABLE rather than pretending -- the server-side kits (song, enhance) have no in-flight cancel. */
     cancellable: boolean;
-    /** How this class delivers results: 'staged' means they land in the session history for audition and reach the project only through `job place`; 'direct' means they auto-place as one attributed undo entry. See `help streaming-results`. */
+    /** Always "direct". */
     delivery: string;
-    /** The job class, as `job get` reports it and `job list` can be filtered on: 'song-generate', 'music-enhance', 'text2sample', 'seed-audio', 'sound-effects', 'add-a-layer', 'stem-split', 'voice-changer' or 'vocal2midi'. */
+    /** Always "voice-changer". */
     jobClass: string;
-    /** The launched job's id. Pass it to `job get` / `job wait` / `job results`. Present on every successful launch -- nothing has been generated when this returns. */
     jobId: string;
     /** The Voice Changer models being generated, in the order given. One job result per model, each settling on its own. */
     modelIds: number[];
@@ -3185,8 +3167,8 @@ export interface GenerativeOperations {
 
 /** Arguments for `history list`. */
 export interface HistoryListParams {
-    /** Return only the newest N entries, at least 1. Omit for the whole stack, which has no size cap and grows for as long as the project stays open. */
-    limit?: number | null;
+    /** Return only the newest N entries, at least 1. Omitted lists the whole stack, which has no size cap and grows for as long as the project stays open. A non-positive value is refused rather than clamped: the floor is part of the contract, and clamping would answer a question the caller did not ask. */
+    limit?: number;
 }
 
 /** Success payload of `history list`. */
@@ -3199,13 +3181,13 @@ export interface HistoryListResult {
     count: number;
     /** Stack entries newest first (descending index). Truncated to `limit` when one was given; `count` always reports the full stack. */
     entries: {
-        /** The peer that authored the entry, or empty when the user authored it in Studio directly. */
+        /** The peer that authored the entry, or empty for a user edit. */
         actor: string;
         /** True when the entry is currently applied to the project (undoable); false when it sits on the redo branch. */
         applied: boolean;
         /** The entry's 0-based position on the stack, oldest = 0. */
         index: number;
-        /** The entry's user-readable name, as shown in Studio's Undo menu. Localized to the app language. */
+        /** The entry's user-readable name. */
         name: string;
     }[];
     /** How many entries are applied; entries at index and above are the redo branch. */
@@ -3220,7 +3202,7 @@ export interface HistoryRedoResult {
     canUndo: boolean;
     /** Total entries on the stack afterwards. Unchanged by undo/redo, which never push. */
     count: number;
-    /** The entry this call moved over: undone by `history undo`, re-applied by `history redo`. */
+    /** One stack entry, as every verb here reports it. */
     entry: {
         /** The peer that authored the entry, or empty when the user authored it in Studio directly. */
         actor: string;
@@ -3239,7 +3221,7 @@ export interface HistoryUndoResult {
     canUndo: boolean;
     /** Total entries on the stack afterwards. Unchanged by undo/redo, which never push. */
     count: number;
-    /** The entry this call moved over: undone by `history undo`, re-applied by `history redo`. */
+    /** One stack entry, as every verb here reports it. */
     entry: {
         /** The peer that authored the entry, or empty when the user authored it in Studio directly. */
         actor: string;
@@ -3278,58 +3260,70 @@ export interface HistoryOperations {
 
 /** Arguments for `import file`. */
 export interface ImportFileParams {
-    /** Offset into the **source media** where the visible region starts — the head trim. Omit to start at the beginning of the file. */
-    clipIn?: number | null;
-    /** How much of the source to show. Omit for the file's own length (its remaining length, when `--clip-in` trims the head). */
-    dur?: number | null;
+    /** Offset into the source media where the visible region starts — the head trim, in ticks. Omit to start at the beginning of the file. **Media kinds only.** Ticks are the wrong axis for this quantity and `clipInSec` is the right one: the source-media axis is not on the tempo grid (ADR 0069 §1), so a tick head trim only means anything once it is measured against the tempo where the clip lands. Kept because it shipped, and it still resolves that way. */
+    clipIn?: number;
+    /** The head trim in SECONDS — the source-media axis's own unit (ADR 0069 §1). OPTIONAL, and when present it WINS over `clipIn`. **Media kinds only.** */
+    clipInSec?: number;
+    /** How much of the source to show, in ticks. Omit — or pass 0 — for the file's own length (its remaining length, when `clipIn` trims the head). On a media import, 0 and absent mean the same thing, which is the spelling the retired `addVideoClip` documented for both its duration arguments; a NEGATIVE value is the malformed one and is refused. */
+    dur?: number;
+    /** How much of the source to show, in seconds. OPTIONAL. A value ABOVE zero wins over `dur`; 0 keeps its "natural length" spelling and so falls through to `dur`, exactly as the retired `addVideoClip` resolved its own pair. A NEGATIVE value is refused. **Media kinds only.** */
+    durSec?: number;
     /** Place a video clip with its embedded audio silenced (the detached flag, ADR 0069). **Video only** — for every other clip type the corresponding dimension is enabled/disabled, so passing this on an audio import is an error rather than a no-op. */
-    muted?: boolean | null;
-    /** What to do when the target span is already occupied: `fail` (default), `cover` to trim the clips in the way (not video), or `relocate` to stack the clip on a new video track above (video only). */
-    onOccupied?: string | null;
+    muted?: boolean;
+    /** What to do when the target span is already occupied: `fail`, `cover` to trim the clips in the way (not video), or `relocate` to stack the clip on a new video track above (video only). **Media kinds only.** Defaults to `relocate` for video and `fail` for everything else. Placing new material wants room made, and for video the room is a track above (ADR 0069 §4, ADR 0105); an audio import has no such stacking rule, so it says so rather than guessing. On video, `fail` also declines to create the region's first track, so it is the way to say "place this only if there is already somewhere to put it". */
+    onOccupied?: string;
     /** Path to the file to import. The extension decides what kind of clip it becomes; an unsupported extension is rejected with the list of supported ones. */
     path: string;
-    /** Where the clip starts on the global timeline. Ticks (`3840t`), clock time (`1.5s`), or a musical position (`4.1.0`). Omit for tick 0. */
-    pos?: number | null;
+    /** Where the clip starts on the global timeline, in project ticks. Omit for tick 0, or name the same point in seconds with `posSec`. */
+    pos?: number;
+    /** Where the clip starts on the global timeline, in seconds. OPTIONAL, and when present it WINS over `pos` — including at 0, which is a position like any other. Both units are carried because a video peer thinks in seconds while the timeline is native in ticks, and converting between them needs the tempo curve. The CLI's time-value grammar (`1.5s`) is not this: it compiles to ticks client-side, so it leaves an SDK caller with a `convert time-to-tick` round trip on a placement path. **Media kinds only.** */
+    posSec?: number;
     /** Split polyphonic content into separate monophonic voices, one track each. **MIDI and MusicXML only** — the desktop app asks this in a dialog; here it is an argument, defaulting to off (one track per source track). */
-    splitPolyphonic?: boolean | null;
-    /** Target track index (0-based). Omit to auto-route: audio goes onto a new track after the existing content, video onto the project's video track (created if there is none). An `Empty` slot is converted in place. */
-    trackIndex?: number | null;
-    /** Adopt the source file's tempo map, replacing the project's over the imported range. **Project kinds only**, and off by default: rewriting someone's tempo is not a side effect of "import these notes". */
-    withTempo?: boolean | null;
-    /** Adopt the source file's time signatures. **Project kinds only**, off by default, same reasoning as `--with-tempo`. */
-    withTimeSignatures?: boolean | null;
+    splitPolyphonic?: boolean;
+    /** Target video track, by id. **Video only** — refused on any other kind, the same way `trackIndex` is refused on video. Omit to land on the region's head track — local index 0, which is the topmost layer and the one the monitor shows. Naming a track picks where the clip is *aimed*, not where it necessarily lands: if that track has no room at `pos`, `onOccupied: relocate` stacks the clip on a fresh track directly above the one named, so inserted footage is visible rather than hidden behind what was already there (ADR 0105). Check `createdTrack` and `trackUuid` to see where it went. */
+    trackId?: string;
+    /** Target track index (0-based) in the arrangement. **Not video** — the video region has its own local index space (ADR 0104), so an arrangement index cannot name a layer in it; pass `trackId` instead and this is refused rather than ignored. Omit to auto-route onto a new track after the existing content. An `Empty` slot is converted in place. */
+    trackIndex?: number;
+    /** Adopt the source file's tempo map, replacing the project's over the imported range. **Foreign-project kinds only**, and off by default: rewriting someone's tempo is not a side effect of "import these notes". */
+    withTempo?: boolean;
+    /** Adopt the source file's time signatures. **Foreign-project kinds only**, off by default, same reasoning as `withTempo`. */
+    withTimeSignatures?: boolean;
 }
 
 /** Success payload of `import file`. */
 export interface ImportFileResult {
-    /** Project kinds only: how many clips were placed and are addressable in `clips`. */
+    /** Foreign-project kinds only: how many clips were placed and are addressable in `clips`. */
     clipCount?: number;
     /** Media kinds only: display name of the placed clip. */
     clipName?: string;
-    /** Media kinds only: clip type the extension resolved to, 'audio' or 'video' (a still image becomes a Video clip). */
+    /** Media kinds only: clip type the extension resolved to, `audio` or `video` (a still image becomes a Video clip). */
     clipType?: string;
-    /** Media kinds only: id of the placed clip -- the handle every later clip write takes. */
+    /** Media kinds only: id of the placed clip — the handle every later clip write takes. */
     clipUuid?: string;
-    /** Project kinds only: one row per placed clip, each with clipUuid / clipType / clipName / geometry. A MIDI file with four tracks yields four rows. */
+    /** Foreign-project kinds only: one row per placed clip, each an open map — this surface declares no fixed key set for an entry. A MIDI file with four tracks yields four rows. */
     clips?: Record<string, unknown>[];
-    /** Media kinds only: the placed clip's geometry, in ticks -- the same shape `clip get` reports, so `end` can be read rather than computed. */
+    /** Media kinds only: whether this call created the track the clip landed on, rather than placing it on one that already existed. Two ways it becomes true: the region had no track to place on, or the target span was occupied and the clip was bumped to a fresh track above it. Neither is predictable from the arguments. */
+    createdTrack?: boolean;
+    /** Media kinds only: the placed clip's geometry, in ticks — the same shape `clip get` reports. An open map here: this surface declares no fixed key set for it. */
     geometry?: Record<string, unknown>;
-    /** Audio clips only: 'not_loaded', 'loaded_success' or 'loaded_failed'. Usually 'not_loaded' -- decoding continues after this command returns. Poll `clip audio-content` and compare its fingerprint to see it settle. */
+    /** Audio clips only: `not_loaded`, `loaded_success` or `loaded_failed`. Usually `not_loaded` — decoding continues after this call returns. Poll `clip audio-content` and compare its fingerprint to see it settle. */
     loadingState?: string;
-    /** Media kinds only: the source's own length in ticks, before any --clip-in / --dur window was applied. Compare with geometry to see how much of the file is showing. */
+    /** Media kinds only: the source's own length in ticks, before any `clipIn` / `dur` window was applied, measured at the position the clip landed on — the same axis `dur` is on, so a caller can size a window from it. Compare with `geometry` to see how much of the file is showing. */
     naturalDur?: number;
-    /** Project kinds only: 'midi', 'musicxml' or 'ufdata'. Its presence is what distinguishes the two output shapes. */
+    /** Foreign-project kinds only: `midi`, `musicxml` or `ufdata`. Its presence is what distinguishes the two output shapes. */
     sourceFormat?: string;
     /** The path that was imported, echoed back unchanged. The only field both shapes carry. */
     sourcePath: string;
-    /** Project kinds only: whether the source's tempo map was applied to the project (echoes --with-tempo, default false). */
+    /** Foreign-project kinds only: whether the source's tempo map was applied to the project (echoes `withTempo`, default false). */
     tempoImported?: boolean;
-    /** Project kinds only: whether the source's time signatures were applied (echoes --with-time-signatures, default false). */
+    /** Foreign-project kinds only: whether the source's time signatures were applied (echoes `withTimeSignatures`, default false). */
     timeSignaturesImported?: boolean;
-    /** Project kinds only: how many tracks the source file held. Larger than clipCount only if a placed clip could not be identified afterwards. */
+    /** Foreign-project kinds only: how many tracks the source file held. Larger than `clipCount` only if a placed clip could not be identified afterwards. */
     trackCount?: number;
     /** Media kinds only: name of the track the clip landed on, which may be one this command created. */
     trackName?: string;
+    /** Media kinds only: id of the track the clip landed on — the handle a later track write takes. Not derivable from `trackName`, which is a display string and not unique. */
+    trackUuid?: string;
 }
 
 /** The `import` operations, mirroring the canonical operation tree 1:1. */
@@ -3347,18 +3341,18 @@ export interface ImportOperations {
 /** Arguments for `instrument disable`. */
 export interface InstrumentDisableParams {
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** Success payload of `instrument disable`. */
 export interface InstrumentDisableResult {
     /** Whether the instrument is processing. A disabled instrument stays mounted with its state intact. */
     enabled: boolean;
-    /** Which format is mounted. */
-    format?: 'vst3' | 'vst2' | 'au';
-    /** Which MIDI channel it listens on: '1' through '16'. Never 'all' — a mounted instrument addresses exactly one channel. */
+    /** Which format is mounted: `vst3`, `vst2`, or `au`. Absent when the scan reported none. */
+    format?: string;
+    /** Which MIDI channel it listens on: `1` through `16`. Never `all` — a mounted instrument addresses exactly one channel. */
     midiChannel: string;
     /** Display name of the mounted plugin. */
     name: string;
@@ -3366,25 +3360,25 @@ export interface InstrumentDisableResult {
     trackIndex: number;
     /** UUID of that track. */
     trackUuid: string;
-    /** Plugin vendor. */
+    /** Plugin vendor. Absent when the scan reported none. */
     vendor?: string;
 }
 
 /** Arguments for `instrument enable`. */
 export interface InstrumentEnableParams {
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** Success payload of `instrument enable`. */
 export interface InstrumentEnableResult {
     /** Whether the instrument is processing. A disabled instrument stays mounted with its state intact. */
     enabled: boolean;
-    /** Which format is mounted. */
-    format?: 'vst3' | 'vst2' | 'au';
-    /** Which MIDI channel it listens on: '1' through '16'. Never 'all' — a mounted instrument addresses exactly one channel. */
+    /** Which format is mounted: `vst3`, `vst2`, or `au`. Absent when the scan reported none. */
+    format?: string;
+    /** Which MIDI channel it listens on: `1` through `16`. Never `all` — a mounted instrument addresses exactly one channel. */
     midiChannel: string;
     /** Display name of the mounted plugin. */
     name: string;
@@ -3392,33 +3386,27 @@ export interface InstrumentEnableResult {
     trackIndex: number;
     /** UUID of that track. */
     trackUuid: string;
-    /** Plugin vendor. */
+    /** Plugin vendor. Absent when the scan reported none. */
     vendor?: string;
 }
 
 /** Arguments for `instrument set`. */
 export interface InstrumentSetParams {
-    /**
-     * **Required.** Which MIDI channel the instrument listens on: `1` through `16`.
-     *
-     * Channels are numbered the way every MIDI device numbers them. The wire used to carry two different numberings for the same concept, one of them 0-based; the translation now lives in the handler where it belongs.
-     *
-     * `all` is deliberately not accepted. A mounted instrument listens on one channel, and the slot has no every-channel state — so asking for it is an error rather than a value quietly stored as 1. The track's *input* (`track set-input --midi-channel`) does accept `all`.
-     */
+    /** Which MIDI channel the instrument should listen on: `1` through `16`. Channels are numbered the way every MIDI device numbers them. `all` is deliberately not accepted: a mounted instrument listens on one channel and the slot has no every-channel state, so asking for it is an error rather than a value quietly stored as 1. The track's *input* (`track set-input --midi-channel`) does accept `all`. */
     midiChannel: string;
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** Success payload of `instrument set`. */
 export interface InstrumentSetResult {
     /** Whether the instrument is processing. A disabled instrument stays mounted with its state intact. */
     enabled: boolean;
-    /** Which format is mounted. */
-    format?: 'vst3' | 'vst2' | 'au';
-    /** Which MIDI channel it listens on: '1' through '16'. Never 'all' — a mounted instrument addresses exactly one channel. */
+    /** Which format is mounted: `vst3`, `vst2`, or `au`. Absent when the scan reported none. */
+    format?: string;
+    /** Which MIDI channel it listens on: `1` through `16`. Never `all` — a mounted instrument addresses exactly one channel. */
     midiChannel: string;
     /** Display name of the mounted plugin. */
     name: string;
@@ -3426,7 +3414,7 @@ export interface InstrumentSetResult {
     trackIndex: number;
     /** UUID of that track. */
     trackUuid: string;
-    /** Plugin vendor. */
+    /** Plugin vendor. Absent when the scan reported none. */
     vendor?: string;
 }
 
@@ -3478,7 +3466,7 @@ export interface JobGetParams {
 export interface JobGetResult {
     /** Whether jobs of this class can be cancelled; `job cancel` returns JOB_NOT_CANCELLABLE otherwise. */
     cancelable: boolean;
-    /** direct = results auto-place into the project; staged = results land in session history for `job place`. */
+    /** Where a job's results land when they settle. `direct` = they auto-place into the project as one undo step, so nothing further is asked of the caller. `staged` = they land in the session's job history for audition, and reach the project only through `job place` (or leave it through `job discard-result`). A class declares this once, so every job of one class delivers the same way. */
     delivery: 'direct' | 'staged';
     /** Whether the producer reports a real numeric progress fraction. */
     hasProgress: boolean;
@@ -3486,18 +3474,21 @@ export interface JobGetResult {
     id: string;
     /** The producing function's class id, e.g. "stem-split". */
     jobClass: string;
-    /** Who launched the job. */
+    /** Who launched a job. Every launcher's jobs are visible to any `job.read` caller, Studio's own UI included, so a co-composer sees who started what: `ui` is a user working in Studio, `cli` the command line, `extension` a workflow extension, `agent` an AI agent driving the surface. `job list`'s `mine` narrows the listing to `cli`. */
     launcher: 'ui' | 'cli' | 'extension' | 'agent';
     /** Free-form launcher attribution (peer/session name); may be empty. */
     launcherLabel: string;
-    /** Normalized job lifecycle; succeeded/failed/cancelled are terminal. */
+    /** A job's normalized lifecycle — the same five states whatever the producer is. `queued` is accepted but not started, `running` is in flight, and `succeeded`, `failed` and `cancelled` are terminal: a job in one of those never transitions again. A job reaches `cancelled` only through an explicit `job cancel` or the producer cancelling itself, never through a peer disconnecting. */
     lifecycle: 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
     /** Progress fraction 0..1; present only for classes that declare progress. */
     progress?: number;
     /** The job's 0..N result children, each settling on its own. */
     results: {
+        /** Stable result id. */
         id: string;
-        /** Result state; `streaming` = playable and growing in real time (ADR 0084). */
+        /** What the job produced, for a class whose product IS data rather than project content — a beat analysis, a detected key, a measured loudness. A job that answers a question answers it here; there is no second verb to fetch it with. The key set is the producing class's, not this contract's, so it is an open map: `tempo analyze-context-audio` answers the beat grid under `analysisId` / `tempoMap` / `beats` / `downbeats` / `timeSignatures`, and another class answers whatever its own product is. Read it against the `jobClass` that produced it. Present exactly when the producer attached something. Absent therefore means "no answer here" — the class does not answer with data at all, or this particular result has yet to produce one — and NOT that an analysis came back empty. A run that genuinely found nothing still answers under its own keys (a beat analysis of silence reports empty `beats` and `downbeats` arrays), so an empty answer is a populated object, never a missing field. A class whose product is project content (`delivery: staged`) carries no payload: `job place` is how its product reaches the caller. */
+        payload?: Record<string, unknown>;
+        /** How far one result child has settled. `pending` is opened but not yet producing anything; `streaming` is playable and growing in real time, which only a `streamingCapable` class ever reaches (ADR 0084); `settled` is the finished product; `failed` means this child will never produce one. `settled` and `failed` are terminal. `job place` accepts a `streaming` or a `settled` result and refuses the other two. */
         state: 'pending' | 'streaming' | 'settled' | 'failed';
     }[];
     /** Whether results of this class may enter the `streaming` state. */
@@ -3507,9 +3498,9 @@ export interface JobGetResult {
 /** Arguments for `job list`. */
 export interface JobListParams {
     /** Show only jobs whose launcher is the CLI, not UI / extension / agent. */
-    mine: boolean;
+    mine?: boolean;
     /** Show only jobs that are still running (not yet terminal). */
-    running: boolean;
+    running?: boolean;
 }
 
 /** Success payload of `job list`. */
@@ -3518,7 +3509,7 @@ export interface JobListResult {
     jobs: {
         /** Whether jobs of this class can be cancelled; `job cancel` returns JOB_NOT_CANCELLABLE otherwise. */
         cancelable: boolean;
-        /** direct = results auto-place into the project; staged = results land in session history for `job place`. */
+        /** Where a job's results land when they settle. `direct` = they auto-place into the project as one undo step, so nothing further is asked of the caller. `staged` = they land in the session's job history for audition, and reach the project only through `job place` (or leave it through `job discard-result`). A class declares this once, so every job of one class delivers the same way. */
         delivery: 'direct' | 'staged';
         /** Whether the producer reports a real numeric progress fraction. */
         hasProgress: boolean;
@@ -3526,18 +3517,21 @@ export interface JobListResult {
         id: string;
         /** The producing function's class id, e.g. "stem-split". */
         jobClass: string;
-        /** Who launched the job. */
+        /** Who launched a job. Every launcher's jobs are visible to any `job.read` caller, Studio's own UI included, so a co-composer sees who started what: `ui` is a user working in Studio, `cli` the command line, `extension` a workflow extension, `agent` an AI agent driving the surface. `job list`'s `mine` narrows the listing to `cli`. */
         launcher: 'ui' | 'cli' | 'extension' | 'agent';
         /** Free-form launcher attribution (peer/session name); may be empty. */
         launcherLabel: string;
-        /** Normalized job lifecycle; succeeded/failed/cancelled are terminal. */
+        /** A job's normalized lifecycle — the same five states whatever the producer is. `queued` is accepted but not started, `running` is in flight, and `succeeded`, `failed` and `cancelled` are terminal: a job in one of those never transitions again. A job reaches `cancelled` only through an explicit `job cancel` or the producer cancelling itself, never through a peer disconnecting. */
         lifecycle: 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
         /** Progress fraction 0..1; present only for classes that declare progress. */
         progress?: number;
         /** The job's 0..N result children, each settling on its own. */
         results: {
+            /** Stable result id. */
             id: string;
-            /** Result state; `streaming` = playable and growing in real time (ADR 0084). */
+            /** What the job produced, for a class whose product IS data rather than project content — a beat analysis, a detected key, a measured loudness. A job that answers a question answers it here; there is no second verb to fetch it with. The key set is the producing class's, not this contract's, so it is an open map: `tempo analyze-context-audio` answers the beat grid under `analysisId` / `tempoMap` / `beats` / `downbeats` / `timeSignatures`, and another class answers whatever its own product is. Read it against the `jobClass` that produced it. Present exactly when the producer attached something. Absent therefore means "no answer here" — the class does not answer with data at all, or this particular result has yet to produce one — and NOT that an analysis came back empty. A run that genuinely found nothing still answers under its own keys (a beat analysis of silence reports empty `beats` and `downbeats` arrays), so an empty answer is a populated object, never a missing field. A class whose product is project content (`delivery: staged`) carries no payload: `job place` is how its product reaches the caller. */
+            payload?: Record<string, unknown>;
+            /** How far one result child has settled. `pending` is opened but not yet producing anything; `streaming` is playable and growing in real time, which only a `streamingCapable` class ever reaches (ADR 0084); `settled` is the finished product; `failed` means this child will never produce one. `settled` and `failed` are terminal. `job place` accepts a `streaming` or a `settled` result and refuses the other two. */
             state: 'pending' | 'streaming' | 'settled' | 'failed';
         }[];
         /** Whether results of this class may enter the `streaming` state. */
@@ -3547,8 +3541,8 @@ export interface JobListResult {
 
 /** Arguments for `job place`. */
 export interface JobPlaceParams {
-    /** Position to place at. Ticks (`3840t`), clock time (`1.5s`, `1:23.5`), or musical position (`4.1.0`). Defaults to the project start when omitted. See `help time-values`. */
-    at?: number | null;
+    /** Position to place at, in ticks. Omitted places at the project start. */
+    at?: number;
     /** The staged result id to place (from `job results`). */
     resultId: string;
     /** Target track id to place the result onto. */
@@ -3573,25 +3567,28 @@ export interface JobResultsParams {
 export interface JobResultsResult {
     /** The job's result children. */
     results: {
+        /** Stable result id. */
         id: string;
-        /** Result state; `streaming` = playable and growing in real time (ADR 0084). */
+        /** What the job produced, for a class whose product IS data rather than project content — a beat analysis, a detected key, a measured loudness. A job that answers a question answers it here; there is no second verb to fetch it with. The key set is the producing class's, not this contract's, so it is an open map: `tempo analyze-context-audio` answers the beat grid under `analysisId` / `tempoMap` / `beats` / `downbeats` / `timeSignatures`, and another class answers whatever its own product is. Read it against the `jobClass` that produced it. Present exactly when the producer attached something. Absent therefore means "no answer here" — the class does not answer with data at all, or this particular result has yet to produce one — and NOT that an analysis came back empty. A run that genuinely found nothing still answers under its own keys (a beat analysis of silence reports empty `beats` and `downbeats` arrays), so an empty answer is a populated object, never a missing field. A class whose product is project content (`delivery: staged`) carries no payload: `job place` is how its product reaches the caller. */
+        payload?: Record<string, unknown>;
+        /** How far one result child has settled. `pending` is opened but not yet producing anything; `streaming` is playable and growing in real time, which only a `streamingCapable` class ever reaches (ADR 0084); `settled` is the finished product; `failed` means this child will never produce one. `settled` and `failed` are terminal. `job place` accepts a `streaming` or a `settled` result and refuses the other two. */
         state: 'pending' | 'streaming' | 'settled' | 'failed';
     }[];
 }
 
 /** Arguments for `job wait`. */
 export interface JobWaitParams {
-    /** Return as soon as the first job finishes, instead of waiting for all. */
-    any: boolean;
+    /** Return as soon as the first job finishes, instead of waiting for all. Absent waits for all of them. */
+    any?: boolean;
     /** One or more job ids to wait on. */
     ids: string[];
-    /** Maximum time to wait, e.g. `30s`, `500ms`, `5m`, `1h`. On expiry the CLI exits with code 4 and never cancels the job. Omit to wait indefinitely. */
-    timeoutMs?: number | null;
+    /** Maximum time to wait, in milliseconds. On the CLI this bounds the whole client-side wait (exit code 4 on expiry, the job left untouched); an MCP peer reads it as the server-side long-poll cap (ADR 0092 §5). Omitted waits indefinitely. */
+    timeoutMs?: number;
 }
 
 /** Success payload of `job wait`. */
 export interface JobWaitResult {
-    /** Whether the wait condition is satisfied. The CLI keeps polling while false. */
+    /** Whether the wait condition (all ids, or with `any` set, any one id) is met. The CLI keeps polling while false. */
     done: boolean;
     /** Ids of the waited-on jobs that have reached a terminal lifecycle. */
     finished: string[];
@@ -3599,7 +3596,7 @@ export interface JobWaitResult {
     jobs: {
         /** Whether jobs of this class can be cancelled; `job cancel` returns JOB_NOT_CANCELLABLE otherwise. */
         cancelable: boolean;
-        /** direct = results auto-place into the project; staged = results land in session history for `job place`. */
+        /** Where a job's results land when they settle. `direct` = they auto-place into the project as one undo step, so nothing further is asked of the caller. `staged` = they land in the session's job history for audition, and reach the project only through `job place` (or leave it through `job discard-result`). A class declares this once, so every job of one class delivers the same way. */
         delivery: 'direct' | 'staged';
         /** Whether the producer reports a real numeric progress fraction. */
         hasProgress: boolean;
@@ -3607,18 +3604,21 @@ export interface JobWaitResult {
         id: string;
         /** The producing function's class id, e.g. "stem-split". */
         jobClass: string;
-        /** Who launched the job. */
+        /** Who launched a job. Every launcher's jobs are visible to any `job.read` caller, Studio's own UI included, so a co-composer sees who started what: `ui` is a user working in Studio, `cli` the command line, `extension` a workflow extension, `agent` an AI agent driving the surface. `job list`'s `mine` narrows the listing to `cli`. */
         launcher: 'ui' | 'cli' | 'extension' | 'agent';
         /** Free-form launcher attribution (peer/session name); may be empty. */
         launcherLabel: string;
-        /** Normalized job lifecycle; succeeded/failed/cancelled are terminal. */
+        /** A job's normalized lifecycle — the same five states whatever the producer is. `queued` is accepted but not started, `running` is in flight, and `succeeded`, `failed` and `cancelled` are terminal: a job in one of those never transitions again. A job reaches `cancelled` only through an explicit `job cancel` or the producer cancelling itself, never through a peer disconnecting. */
         lifecycle: 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
         /** Progress fraction 0..1; present only for classes that declare progress. */
         progress?: number;
         /** The job's 0..N result children, each settling on its own. */
         results: {
+            /** Stable result id. */
             id: string;
-            /** Result state; `streaming` = playable and growing in real time (ADR 0084). */
+            /** What the job produced, for a class whose product IS data rather than project content — a beat analysis, a detected key, a measured loudness. A job that answers a question answers it here; there is no second verb to fetch it with. The key set is the producing class's, not this contract's, so it is an open map: `tempo analyze-context-audio` answers the beat grid under `analysisId` / `tempoMap` / `beats` / `downbeats` / `timeSignatures`, and another class answers whatever its own product is. Read it against the `jobClass` that produced it. Present exactly when the producer attached something. Absent therefore means "no answer here" — the class does not answer with data at all, or this particular result has yet to produce one — and NOT that an analysis came back empty. A run that genuinely found nothing still answers under its own keys (a beat analysis of silence reports empty `beats` and `downbeats` arrays), so an empty answer is a populated object, never a missing field. A class whose product is project content (`delivery: staged`) carries no payload: `job place` is how its product reaches the caller. */
+            payload?: Record<string, unknown>;
+            /** How far one result child has settled. `pending` is opened but not yet producing anything; `streaming` is playable and growing in real time, which only a `streamingCapable` class ever reaches (ADR 0084); `settled` is the finished product; `failed` means this child will never produce one. `settled` and `failed` are terminal. `job place` accepts a `streaming` or a `settled` result and refuses the other two. */
             state: 'pending' | 'streaming' | 'settled' | 'failed';
         }[];
         /** Whether results of this class may enter the `streaming` state. */
@@ -3654,7 +3654,7 @@ export interface JobOperations {
      *
      * Requires the `job.read` capability.
      */
-    list(params: JobListParams, options?: CallOptions): Promise<JobListResult>;
+    list(params?: JobListParams, options?: CallOptions): Promise<JobListResult>;
 
     /**
      * Place a staged result onto a track as one undo entry.
@@ -3681,7 +3681,7 @@ export interface JobOperations {
      * The job ledger (ADR 0084): a job's lifecycle or result transition. `changes`
      * carries the affected job ids.
      *
-     * Listen for changes on the `jobs` channel. The event is a hint to re-read, not the new state.
+     * Listen for `jobs.changed`. The event is a hint to re-read, not the new state.
      *
      * Requires the `job.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
      */
@@ -3692,24 +3692,18 @@ export interface JobOperations {
 
 /** Arguments for `note add`. */
 export interface NoteAddParams {
-    /** UUID of the target clip. Accepted with or without curly braces. The clip must be a note clip (Sing, Instrument, or GenericMidi). */
+    /** UUID of the target clip. The clip must be a note clip (Sing, Instrument, or GenericMidi). */
     clipUuid: string;
-    /**
-     * Notes to add, as a JSON array. Each note takes `pos` and `dur` in clip-local ticks plus `pitch`; Sing notes also take `lyric` and optional `language`, Instrument notes optional `articulation`.
-     *
-     * Bulk is the primitive, not a convenience: on a Sing clip the whole batch is resolved against the monophonic rule at once (`help note-exclusivity`).
-     *
-     * Example: `--notes '[\{"pos":0,"dur":480,"pitch":60,"lyric":"la"\}]'`
-     */
+    /** Notes to add. Bulk is the primitive, not a convenience: on a Sing clip the whole batch is resolved against the monophonic rule at once (see `help note-exclusivity`). Must be non-empty. */
     notes: {
         /** Articulation name for Instrument clips. Defaults to the track's default articulation. */
-        articulation?: string | null;
+        articulation?: string;
         /** Note duration in ticks. Must be positive. */
         dur: number;
         /** Per-note language override for Sing clips: `CHN`, `JPN`, `ENG`, `SPA`, or `KOR`. Defaults to the track's default language. */
-        language?: string | null;
+        language?: string;
         /** Lyric text. Required for Sing clips; `-` marks a tenuto that extends the previous syllable (see `help note-exclusivity`). Ignored for Instrument and GenericMidi clips. */
-        lyric?: string | null;
+        lyric?: string;
         /** MIDI pitch, 0-127. */
         pitch: number;
         /** Note start in clip-local ticks. */
@@ -3725,7 +3719,7 @@ export interface NoteAddResult {
     clipType: string;
     /** UUID of the clip the notes were added to, with braces. */
     clipUuid: string;
-    /** Total notes in the clip after the add. Nothing existing is disturbed, so this is always the previous count plus `addedCount`; a Sing add that would overlap is refused with `NOTE_OVERLAP` instead (see `help note-exclusivity`). */
+    /** Total notes in the clip after the add. Nothing existing is disturbed, so this is always the previous count plus `addedCount`; a Sing add that would overlap is refused instead (see `help note-exclusivity`). */
     noteCount: number;
     /** UUIDs of the notes that were added, in the order they were given. Address them with the other `note` commands. */
     noteUuids: string[];
@@ -3733,7 +3727,7 @@ export interface NoteAddResult {
 
 /** Arguments for `note delete`. */
 export interface NoteDeleteParams {
-    /** UUIDs of the notes to delete, from `clip note-content`. Repeat the flag or pass several values after one flag. All must be in the same clip. */
+    /** UUIDs of the notes to delete, from `clip note-content`. All must be in the same clip. */
     noteUuids: string[];
 }
 
@@ -3763,7 +3757,7 @@ export interface NoteGetResult {
     dur: number;
     /** Note end in clip-local ticks (pos + dur). */
     endPos: number;
-    /** Content fingerprint of the whole clip's note content (ADR 0088 §5). Carry it back as `--if-match` on any `note` write or `clip replace-content` to fail STALE_WRITE instead of overwriting edits made since this read. */
+    /** Content fingerprint of the whole clip's note content (ADR 0088 §5). Carry it forward as the reserved `fingerprint` argument on any `note` write, or on `clip replace-content`, to fail STALE_WRITE instead of overwriting edits made since this read. */
     fingerprint: Fingerprint;
     /** Sing notes only: leading consonant lengths in seconds. */
     headConsonants?: number[];
@@ -3785,20 +3779,20 @@ export interface NoteGetResult {
 
 /** Arguments for `note move`. */
 export interface NoteMoveParams {
-    /** Shift every note this much earlier. Same length forms as `--later`. The move is rejected if it would push any note before tick 0. */
-    moveEarlier?: number | null;
-    /** Shift every note this much later. A length: ticks (`480t`), a note value (`1/4`), beats (`2b`), or measures (`1bar`). The grammar has no sign, so "earlier" is its own flag. */
-    moveLater?: number | null;
-    /** UUIDs of the notes to move, from `clip note-content`. Repeat the flag or pass several values after one flag. */
+    /** Shift every note this much earlier, in ticks. The move is refused if it would push any note before tick 0. */
+    moveEarlier?: number;
+    /** Shift every note this much later, in ticks. Mutually exclusive with `moveEarlier`. */
+    moveLater?: number;
+    /** UUIDs of the notes to move, from `clip note-content`. */
     noteUuids: string[];
-    /** New MIDI pitch (0-127) of the anchor note; the rest transpose by the same interval. */
-    pitch?: number | null;
+    /** New MIDI pitch (0-127) of the anchor note; the rest transpose by the same interval. Mutually exclusive with `pitchDelta`. */
+    pitch?: number;
     /** Transpose every note by this many semitones. Negative moves down. */
-    pitchDelta?: number | null;
-    /** New position of the anchor note. Ticks (`960t`), clock time (`1.5s`), or a musical position (`4.1.0`). Ticks are clip-local unless `--to-scope project` says otherwise; musical and clock forms are always project-framed. See `help time-values`. */
-    pos?: number | null;
-    /** Coordinate system `--to` is expressed in. Defaults to `clip-local` — a note only exists inside a clip, and it is the frame `clip note-content` reports note positions in, so a value read from there goes straight back. Pass `project` for the global timeline; musical and clock forms imply it, since they have no clip-local meaning. */
-    posScope?: string | null;
+    pitchDelta?: number;
+    /** New position of the anchor note, in ticks. Mutually exclusive with `moveLater` / `moveEarlier`. */
+    pos?: number;
+    /** Coordinate system `pos` is expressed in: `"clip-local"` (default) or `"project"`. Ignored unless `pos` is given. */
+    posScope?: string;
 }
 
 /** Success payload of `note move`. */
@@ -3824,9 +3818,9 @@ export interface NoteMoveResult {
 
 /** Arguments for `note resize`. */
 export interface NoteResizeParams {
-    /** New duration for every named note. Ticks (`480t`), a note value (`1/4`, `1/8.`), beats (`2b`), or measures (`1bar`). Must be positive. See `help time-values`. */
+    /** New duration for every named note, in ticks. Must be positive. */
     dur: number;
-    /** UUIDs of the notes to resize, from `clip note-content`. Repeat the flag or pass several values after one flag. */
+    /** UUIDs of the notes to resize, from `clip note-content`. */
     noteUuids: string[];
 }
 
@@ -3895,16 +3889,12 @@ export interface NoteSetArticulationResult {
 /** Arguments for `note set-lyric`. */
 export interface NoteSetLyricParams {
     /** Language for every named note: `CHN`, `JPN`, `ENG`, `SPA`, or `KOR`. Omit to leave each note's language untouched. */
-    language?: string | null;
-    /** One lyric applied to every named note. Use `-` for a tenuto that extends the previous syllable. Mutually exclusive with `--lyrics`. */
-    lyric?: string | null;
-    /**
-     * One lyric per note, as a JSON array of strings positionally matching `--note-uuid`. Length must match exactly.
-     *
-     * Example: `--lyrics '["ha","ppy"]'`
-     */
-    lyrics?: string[] | null;
-    /** UUIDs of the Sing notes to edit, from `clip note-content`. Repeat the flag or pass several values after one flag. */
+    language?: string;
+    /** One lyric applied to every named note. Use `-` for a tenuto that extends the previous syllable. Mutually exclusive with `lyrics`. */
+    lyric?: string;
+    /** One lyric per note, positionally matching `noteUuids`. Length must match exactly. Mutually exclusive with `lyric`. */
+    lyrics?: string[];
+    /** UUIDs of the Sing notes to edit, from `clip note-content`. */
     noteUuids: string[];
 }
 
@@ -3927,7 +3917,7 @@ export interface NoteSetLyricResult {
 export interface NoteSplitParams {
     /** UUID of the note to split. Exactly one. */
     noteUuids: string[];
-    /** Where to cut, in clip-local ticks. Must fall strictly inside the note and leave both halves at least one grid cell long. */
+    /** Where to cut, in clip-local ticks. Must fall strictly inside the note and leave both halves at least the minimum note length long. */
     pos: number;
 }
 
@@ -3937,6 +3927,7 @@ export interface NoteSplitResult {
     clipType: string;
     /** UUID of the clip holding the note. */
     clipUuid: string;
+    /** One note's full row: the geometry every note carries, plus the fields its clip type adds. Shared by `note split` (`head`/`tail`) and `note set-articulation` (`notes`) — `note get` answers the same fields flattened at its own top level rather than nested under one, so it is not declared against this type. */
     head: {
         /** Instrument notes only: the note's articulation. */
         articulation?: string;
@@ -3963,6 +3954,7 @@ export interface NoteSplitResult {
     };
     /** The two halves, head first. The head keeps the original UUID. */
     noteUuids: string[];
+    /** One note's full row: the geometry every note carries, plus the fields its clip type adds. Shared by `note split` (`head`/`tail`) and `note set-articulation` (`notes`) — `note get` answers the same fields flattened at its own top level rather than nested under one, so it is not declared against this type. */
     tail: {
         /** Instrument notes only: the note's articulation. */
         articulation?: string;
@@ -4053,22 +4045,17 @@ export interface NoteOperations {
 /** Arguments for `project collect-save`. */
 export interface ProjectCollectSaveParams {
     /** Destination .acep path. Omit to collect into the current project and save in place (which needs a project that has been saved before). */
-    path?: string | null;
+    path?: string;
 }
 
 /** Success payload of `project collect-save`. */
 export interface ProjectCollectSaveResult {
-    /** `copied` = external media was pulled into the bundle; `noNeed` = every referenced file already lived inside it. */
+    /** What the collect step of `project collect-save` had to do before the save. */
     collected: 'copied' | 'noNeed';
-    /** True for a just-created project that has never been saved. */
     isNewProject: boolean;
-    /** True while the project lives in the temporary workspace rather than a saved bundle. */
     isTempProject: boolean;
-    /** Project filename without extension. Empty for a temporary or never-saved project. */
     projectName: string;
-    /** Absolute path of the project file. Empty for a temporary project. */
     projectPath: string;
-    /** Where the project was actually written. A save wraps the requested path in a project folder, so this is the file to reopen -- not necessarily the path that was asked for. */
     savedPath: string;
 }
 
@@ -4076,13 +4063,9 @@ export interface ProjectCollectSaveResult {
 export interface ProjectDirtyResult {
     /** True when the project has changes not yet written to disk. */
     dirty: boolean;
-    /** True for a just-created project that has never been saved. */
     isNewProject: boolean;
-    /** True while the project lives in the temporary workspace rather than a saved bundle. */
     isTempProject: boolean;
-    /** Project filename without extension. Empty for a temporary or never-saved project. */
     projectName: string;
-    /** Absolute path of the project file. Empty for a temporary project. */
     projectPath: string;
 }
 
@@ -4102,8 +4085,8 @@ export interface ProjectInfoResult {
 export interface ProjectNewParams {
     /** Proceed even if the current project has unsaved changes, discarding them. Without this, a dirty project fails `UNSAVED_CHANGES`. */
     discardChanges?: boolean;
-    /** Start from a song template archive (.acet) instead of an empty project. */
-    template?: string | null;
+    /** Start from a song template archive (.acet) instead of an empty project. `template` is a C++ keyword, so the member is spelled `templatePath`; `\@wire` keeps the JSON key the CLI/SDK already use. */
+    template?: string;
 }
 
 /** Success payload of `project new`. */
@@ -4146,7 +4129,7 @@ export interface ProjectRecentResult {
     projects: {
         /** Whether the file is still on disk. A recent entry outlives the file it names. */
         exists: boolean;
-        /** When the project was last opened, ISO 8601. Empty if the record carries no timestamp. */
+        /** When the project was last opened, ISO 8601. Empty if the record never got a timestamp written. */
         lastRead: string;
         /** Absolute path of the project file. */
         path: string;
@@ -4157,15 +4140,11 @@ export interface ProjectRecentResult {
 
 /** Success payload of `project save`. */
 export interface ProjectSaveResult {
-    /** True for a just-created project that has never been saved. */
     isNewProject: boolean;
-    /** True while the project lives in the temporary workspace rather than a saved bundle. */
     isTempProject: boolean;
-    /** Project filename without extension. Empty for a temporary or never-saved project. */
     projectName: string;
-    /** Absolute path of the project file. Empty for a temporary project. */
     projectPath: string;
-    /** Where the project was actually written. A save wraps the requested path in a project folder, so this is the file to reopen -- not necessarily the path that was asked for. */
+    /** Where the project was actually written. A save wraps the requested path in a project folder, so this is the file to reopen — not necessarily the path that was asked for. */
     savedPath: string;
 }
 
@@ -4177,15 +4156,11 @@ export interface ProjectSaveAsParams {
 
 /** Success payload of `project save-as`. */
 export interface ProjectSaveAsResult {
-    /** True for a just-created project that has never been saved. */
     isNewProject: boolean;
-    /** True while the project lives in the temporary workspace rather than a saved bundle. */
     isTempProject: boolean;
-    /** Project filename without extension. Empty for a temporary or never-saved project. */
     projectName: string;
-    /** Absolute path of the project file. Empty for a temporary project. */
     projectPath: string;
-    /** Where the project was actually written. A save wraps the requested path in a project folder, so this is the file to reopen -- not necessarily the path that was asked for. */
+    /** Where the project was actually written. A save wraps the requested path in a project folder, so this is the file to reopen — not necessarily the path that was asked for. */
     savedPath: string;
 }
 
@@ -4272,7 +4247,7 @@ export interface ProjectOperations {
      * folder relocated within the same session (Save-As / temp promotion, never a
      * project switch — ADR 0026/0027). A peer re-fetches with `project info`.
      *
-     * Listen for changes on the `project` channel. The event is a hint to re-read, not the new state.
+     * Listen for `project.changed`. The event is a hint to re-read, not the new state.
      *
      * Requires the `project.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
      */
@@ -4352,136 +4327,141 @@ export interface SelectionGetParams {
 
 /** Success payload of `selection get`. */
 export interface SelectionGetResult {
-    /** Clip type of the active editor: Sing, Instrument, GenericMidi, Audio, or Chord (editor scope). */
+    /** Clip type of the active editor: Sing, Instrument, GenericMidi, Audio, or Chord. */
     editorType?: string;
-    /** Whether anything is selected (editor scope). Always false for the audio editor. */
+    /** Whether anything is selected. Always false for the audio editor. */
     hasSelection?: boolean;
-    /** Selected time range on the timeline (arrangement scope). */
+    /** A `\{begin, end\}` range: ticks for the arrangement's horizontal (time) and vertical (track index) selection, local ticks for the editor's note selection range. */
     horizontalSelection?: {
-        /** Inclusive start of the selected time range, in project ticks. */
+        /** Inclusive start of the range. */
         begin: number;
-        /** Exclusive end of the selected time range, in project ticks. */
+        /** Exclusive end of the range. */
         end: number;
     };
-    /** True when the selection is a zero-width vertical line (caret) rather than an area (arrangement scope). */
+    /** The selected time range in seconds, beside the tick range that names the same span. Its own type rather than two more fields on [`SelectionRange`], which is shared with the vertical selection — whose `begin`/`end` are TRACK INDICES. Seconds there would be a possibility that does not exist, which is the same reason `clip resize` echoes its own row type rather than reusing a plain one. Reported because a caller that lays the selection over video thinks in seconds while the timeline is ticks, and converting between them needs the tempo curve. `convert tick-to-time` is not that route: it takes an `i32` tick, and a selection range is `i64`, so far enough along the timeline there is no conversion to make. */
+    horizontalSelectionSec?: {
+        /** Inclusive start of the range, in seconds. */
+        beginSec: number;
+        /** Exclusive end of the range, in seconds. */
+        endSec: number;
+    };
+    /** True when the selection is a zero-width vertical line (caret) rather than an area. */
     isLineSelection?: boolean;
-    /** Selected notes (editor scope). Present only for note editors with a selection. */
+    /** Selected notes. Present only for note editors with a selection. */
     notes?: {
         /** Note duration in ticks. */
         dur: number;
         /** Note end in local ticks (pos + dur). */
         endPos: number;
-        /** Stable note UUID (with braces); use with `selection set --scope editor`. */
+        /** Stable note UUID (with braces); use with `selection set` (editor scope, UUID form). */
         noteUuid: string;
         /** MIDI pitch (0-127). */
         pitch: number;
         /** Note start in local ticks. */
         pos: number;
     }[];
-    /** Number of selected track ids (arrangement scope; may exceed selectedTracks length if a selected slot has no track). */
+    /** Number of selected track ids (may exceed selectedTracks' length if a selected slot has no track). */
     selectedTrackCount?: number;
-    /** Discrete set of selected tracks, in selection order (arrangement scope). Distinct from verticalSelection's contiguous index range. */
+    /** Discrete set of selected tracks. Distinct from verticalSelection's contiguous index range. */
     selectedTracks?: {
         /** 0-based track index. */
         trackIndex: number;
         /** Track UUID in braces format. */
         trackUuid: string;
     }[];
-    /** Number of selected notes (editor scope); 0 or 1 for the chord editor. */
+    /** Number of selected notes; 0 or 1 for the chord editor. */
     selectionCount?: number;
-    /** Selected track index range (arrangement scope). */
+    /** A `\{begin, end\}` range: ticks for the arrangement's horizontal (time) and vertical (track index) selection, local ticks for the editor's note selection range. */
     verticalSelection?: {
-        /** Inclusive start of the selected track index range (0-based; negative for special tracks). */
+        /** Inclusive start of the range. */
         begin: number;
-        /** Exclusive end of the selected track index range (0-based; negative for special tracks). */
+        /** Exclusive end of the range. */
         end: number;
     };
 }
 
 /** Arguments for `selection set`. */
 export interface SelectionSetParams {
-    /** [arrangement] Time range to select, as `\{"begin": \<ticks\>, "end": \<ticks\>\}`. */
+    /** A `\{begin, end\}` range: ticks for the arrangement's horizontal (time) and vertical (track index) selection, local ticks for the editor's note selection range. */
     horizontalSelection?: {
-        /** Inclusive start of the range (ticks for horizontal; track index for vertical; can be negative for special tracks). */
+        /** Inclusive start of the range. */
         begin: number;
-        /** Exclusive end of the range (ticks for horizontal; track index for vertical; can be negative for special tracks). */
+        /** Exclusive end of the range. */
         end: number;
-    } | null;
+    };
     /** [editor, UUID form] Selection mode: `replace` or `modify`. */
-    mode?: string | null;
-    /** [editor, UUID modify form] Notes to deselect, as a JSON array of `\{uuid\}` objects. Ignored in replace mode. */
+    mode?: string;
+    /** [editor, UUID modify form] Notes to deselect. Ignored in replace mode. */
     notesToDeselect?: {
-        /** Note UUID. */
         uuid: string;
-    }[] | null;
-    /** [editor, UUID form] Notes to select, as a JSON array of `\{uuid\}` objects. */
+    }[];
+    /** [editor, UUID form] Notes to select. */
     notesToSelect?: {
-        /** Note UUID. */
         uuid: string;
-    }[] | null;
-    /** [editor] Inclusive start of the selection range, editor-local. Ticks (`480t`) or a position resolved into the clip frame. See `help time-values`. */
-    rangeBegin?: number | null;
-    /** [editor] Exclusive end of the selection range, editor-local. Must be greater than `--range-begin`. See `help time-values`. */
-    rangeEnd?: number | null;
+    }[];
+    /** [editor] Inclusive start of the selection range, editor-local ticks. */
+    rangeBegin?: number;
+    /** [editor] Exclusive end of the selection range, editor-local ticks. Must be greater than `rangeBegin`. */
+    rangeEnd?: number;
     /** Selection scope: `arrangement` (timeline, default) or `editor`. */
     scope: string;
     /** [editor, range form] If true, select all notes/chords overlapping the range; if false (default) set only the visual range for parameter editing. */
-    selectNotes?: boolean | null;
-    /**
-     * [arrangement] Discrete set of tracks to select, as a JSON array of identifier objects; each must have at least `trackIndex` or `trackUuid`. An empty array clears the track selection. Passing this selects that set instead of an area range.
-     *
-     * Example: `[\{"trackIndex": 0\}, \{"trackUuid": "\{abc-...\}"\}]`
-     */
-    tracks?: ({
-        trackIndex: number;
-    } | {
-        trackUuid: string;
-    })[] | null;
-    /** [arrangement] Track index range to select, as `\{"begin": \<idx\>, "end": \<idx\>\}` (0-based; negative addresses special tracks). */
+    selectNotes?: boolean;
+    /** [arrangement] Discrete set of tracks to select; each entry must have at least `trackIndex` or `trackUuid`. An empty array clears the track selection. Passing this selects that set instead of an area range. */
+    tracks?: {
+        /** Addressed by position: 0-based index. */
+        trackIndex?: number;
+        /** Addressed by identity: the braced track UUID (`\{abc-...\}`). */
+        trackUuid?: string;
+    }[];
+    /** A `\{begin, end\}` range: ticks for the arrangement's horizontal (time) and vertical (track index) selection, local ticks for the editor's note selection range. */
     verticalSelection?: {
-        /** Inclusive start of the range (ticks for horizontal; track index for vertical; can be negative for special tracks). */
+        /** Inclusive start of the range. */
         begin: number;
-        /** Exclusive end of the range (ticks for horizontal; track index for vertical; can be negative for special tracks). */
+        /** Exclusive end of the range. */
         end: number;
-    } | null;
+    };
 }
 
 /** Success payload of `selection set`. */
 export interface SelectionSetResult {
-    /** Clip type of the active editor (editor scope). */
+    /** Clip type of the active editor. */
     editorType?: string;
+    /** A `\{begin, end\}` range: ticks for the arrangement's horizontal (time) and vertical (track index) selection, local ticks for the editor's note selection range. */
     horizontalSelection?: {
-        /** Inclusive start of the applied time range, in project ticks. */
+        /** Inclusive start of the range. */
         begin: number;
-        /** Exclusive end of the applied time range, in project ticks. */
+        /** Exclusive end of the range. */
         end: number;
     };
-    /** Number of notes/chords selected (editor scope, range mode). */
+    /** Number of notes/chords selected (range form). */
     itemsSelected?: number;
-    /** Notes deselected by this call (editor scope, UUID modify mode). */
+    /** Notes deselected by this call (UUID modify form). */
     notesDeselected?: number;
-    /** UUIDs that did not match any note (editor scope, UUID mode). */
+    /** UUIDs that did not match any note (UUID form). */
     notesNotFound?: number;
-    /** Notes newly selected by this call (editor scope, UUID mode). */
+    /** Notes newly selected by this call (UUID form). */
     notesSelected?: number;
-    /** Inclusive selection start applied, in local ticks (editor scope). */
+    /** Inclusive selection start applied, in local ticks (range form). */
     rangeBegin?: number;
-    /** Exclusive selection end applied, in local ticks (editor scope). */
+    /** Exclusive selection end applied, in local ticks (range form). */
     rangeEnd?: number;
-    /** Total notes selected after the operation (editor scope, UUID mode). */
+    /** Total notes selected after the operation (UUID form). */
     selectionCount?: number;
+    /** A `\{begin, end\}` range: ticks for the arrangement's horizontal (time) and vertical (track index) selection, local ticks for the editor's note selection range. */
     selectionRange?: {
-        /** Inclusive selection start in local ticks (editor scope, UUID mode). */
+        /** Inclusive start of the range. */
         begin: number;
-        /** Exclusive selection end in local ticks (editor scope, UUID mode). */
+        /** Exclusive end of the range. */
         end: number;
     };
-    /** True on success (editor scope). */
+    /** True on success. */
     success?: boolean;
+    /** A `\{begin, end\}` range: ticks for the arrangement's horizontal (time) and vertical (track index) selection, local ticks for the editor's note selection range. */
     verticalSelection?: {
-        /** Inclusive start of the applied track index range (0-based; negative for special tracks). */
+        /** Inclusive start of the range. */
         begin: number;
-        /** Exclusive end of the applied track index range (0-based; negative for special tracks). */
+        /** Exclusive end of the range. */
         end: number;
     };
 }
@@ -4506,7 +4486,7 @@ export interface SelectionOperations {
      * The arrangement selection moved: the selected tracks, the time range, or both.
      * `changes` carries `tracks` and `range`. A peer re-fetches with `selection get`.
      *
-     * Listen for changes on the `selection` channel. The event is a hint to re-read, not the new state.
+     * Listen for `selection.changed`. The event is a hint to re-read, not the new state.
      *
      * Requires the `selection.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
      */
@@ -4518,9 +4498,9 @@ export interface SelectionOperations {
 /** Arguments for `sound-source get`. */
 export interface SoundSourceGetParams {
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** Success payload of `sound-source get`. */
@@ -4531,9 +4511,9 @@ export interface SoundSourceGetResult {
     ensembleEnabled?: boolean;
     /** Whether the track carries a sound source at all. A MIDI track with an external instrument mounted reports true. */
     hasSource: boolean;
-    /** Which MIDI channel the external instrument listens on: '1' through '16', or 'all'. External instruments only. */
+    /** Which MIDI channel the external instrument listens on: `1` through `16`, or `all`. External instruments only. */
     midiChannel?: string;
-    /** The vocal synth model this source sings through. Voices and choirs only. */
+    /** The vocal synth model a mounted voice or choir sings through, as `sound-source get` reports it. */
     model?: {
         /** Model id. */
         id?: number;
@@ -4544,37 +4524,37 @@ export interface SoundSourceGetResult {
         /** True when the model carries no Style axis, so a blend on it has Timbre only. */
         timbreOnly?: boolean;
     };
-    /** The mounted source. Absent when `hasSource` is false. */
+    /** The sound source mounted on a track, as `sound-source get` reports it. Same shape as `SoundSourceRow`, but every field is independently absent — unlike a listing row, a mounted source's `ref` can be unresolvable (a plain voice with no library id) and its `tags` are not read back at all. */
     soundSource?: {
-        /** Category name, e.g. 'Piano'. AI instruments only. */
+        /** Category name. AI instruments only. */
         category?: string;
         /** Numeric category id. AI instruments only. */
         categoryId?: number;
-        /** Every format this plugin was scanned in. One plugin in three formats is one row, not three. External instruments only. */
-        formats?: ('vst3' | 'vst2' | 'au')[];
-        /** Which model generations recommend a model for this voice: 'v1', 'v2', or both. Generation is a per-voice curation published by the backend, not a property of a model, so it is reported per row and only on pre-made voices. */
+        /** Every format this plugin was scanned in. External instruments only. */
+        formats?: string[];
+        /** Which model generations recommend a model for this voice. */
         generations?: ('v1' | 'v2')[];
-        /** The raw group discriminator behind `origin`: empty for pre-made, '#' for cloned, '\@' for community, the blended-voice library id for a blend. Reported for continuity with the project file; prefer `ref`. */
+        /** The raw group discriminator behind `origin`. */
         group?: string;
-        /** Numeric library id. Ids repeat across origins, so this alone does not identify a source; `ref` does. */
+        /** Numeric library id. */
         id?: number;
-        /** Whether a community voice is already in your library. Community voices only; an uncollected voice must be collected before it will load. */
+        /** Whether a community voice is already in your library. */
         isCollected?: boolean;
-        /** What this source is. */
+        /** What a sound source is — the roster every `kind` takes, whether it filters a listing or reports what a row turned out to be. A track carries exactly one kind at a time, and loading a source of another kind converts the track to suit it. */
         kind?: 'voice' | 'choir' | 'instrument' | 'ensemble' | 'external-instrument';
         /** How many members the source has. Choirs and ensembles only. */
         memberCount?: number;
         /** Id of the vocal synth model this source defaults to. Voices only. */
         modelId?: number;
-        /** Name of that model, as the track panel's Vocal Synth Model control shows it. Voices only. */
+        /** Name of that model. Voices only. */
         modelName?: string;
-        /** Display name, as the Voice Library shows it. */
+        /** Display name. */
         name?: string;
         /** Full English name of the language this source sings natively. Voices and choirs only. */
         nativeLanguage?: string;
-        /** Which library it comes from. Absent for external instruments, which come from the plugin scan rather than the account's library. */
+        /** Where a sound source comes from: the Voice Library's tabs, which is how a user thinks about it, and the project file's `group` discriminator spelled in words. An external instrument has none — it comes from the plugin scan, not from the account's library. */
         origin?: 'premade' | 'cloned' | 'community' | 'blended';
-        /** Precise handle for this source, accepted by `--source` anywhere a name is. One of `singer:\<id\>` (pre-made), `singer:#\<id\>` (cloned), `singer:\@\<id\>` (community), `singer:\<library\>/\<id\>` (blend), `choir:\<group\>/\<id\>`, `instrument:\<id\>`, `ensemble:\<group\>/\<id\>`, or `plugin:\<format\>:\<typeId\>` (external instrument). */
+        /** Precise handle for this source. Absent when the mounted source has no library id to resolve one from. */
         ref?: string;
         /** How many voice seeds the recipe holds. Blended voices only. */
         seedCount?: number;
@@ -4582,16 +4562,16 @@ export interface SoundSourceGetResult {
         supportedLanguages?: string[];
         /** Tag names attached to the source. */
         tags?: string[];
-        /** Plugin vendor. External instruments only; this is what disambiguates two vendors shipping a plugin of the same name. */
+        /** Plugin vendor. External instruments only. */
         vendor?: string;
-        /** Plugin version string as the plugin reports it. External instruments only. */
+        /** Plugin version string. External instruments only. */
         version?: string;
     };
-    /** Runtime state of the mounted source. 'ready' for a library source; for an external instrument, 'mounted' when it is loaded and enabled, 'disabled' when mounted but bypassed, and 'missing' when the project names a plugin this machine cannot find. 'missing' is distinct from an empty slot: the project still carries the reference and it will come back if the plugin is installed. */
+    /** Runtime state of the sound source mounted on a track. Exactly one applies. `ready` is the only state a library source (voice, choir, AI instrument, ensemble) reports; the other three are external-instrument states. `missing` — the project names a plugin this machine cannot find — is distinct from an empty slot: the project still carries the reference and it will come back if the plugin is installed. */
     state?: 'ready' | 'mounted' | 'disabled' | 'missing';
     /** 0-based index of the track read. */
     trackIndex: number;
-    /** Track type: 'Sing', 'Instrument', 'GenericMidi', 'Audio', or 'Empty'. */
+    /** Track type: `Sing`, `Instrument`, `GenericMidi`, `Audio`, or `Empty`. */
     trackType: string;
     /** UUID of that track, in braces format. */
     trackUuid: string;
@@ -4600,23 +4580,23 @@ export interface SoundSourceGetResult {
 /** Arguments for `sound-source list`. */
 export interface SoundSourceListParams {
     /** Filter AI instruments by category name, such as `Piano`. */
-    category?: string | null;
+    category?: string;
     /** Filter by name substring, case-insensitive. */
-    keyword?: string | null;
-    /** Only list sources of this kind. Repeatable, so `--kind voice --kind choir` gives you both. Omit for everything. */
-    kind?: ('voice' | 'choir' | 'instrument' | 'ensemble' | 'external-instrument')[] | null;
+    keyword?: string;
+    /** Only list sources of these kinds. Omit for everything. */
+    kind?: ('voice' | 'choir' | 'instrument' | 'ensemble' | 'external-instrument')[];
     /** Filter by language, as a full English name such as `Japanese`. Applies to voices and choirs; other kinds have no language. */
-    language?: string | null;
+    language?: string;
     /** Only list voices that work with this vocal synth model. Takes either a model name (`Verse24`) or a generation (`v1`, `v2`), and a generation selects the voices that generation recommends a model for. */
-    model?: string | null;
-    /** Only list sources from this library. Repeatable. Omit for everything. */
-    origin?: ('premade' | 'cloned' | 'community' | 'blended')[] | null;
+    model?: string;
+    /** Only list sources from these libraries. Omit for everything. */
+    origin?: ('premade' | 'cloned' | 'community' | 'blended')[];
     /** Show each source's `ref` in the human listing. Refs are always present in the JSON payload; this is for reading them without first provoking an ambiguity error. */
-    showRefs?: boolean | null;
+    showRefs?: boolean;
     /** Filter by tag name, case-insensitive, matching any of the given tags. */
-    tags?: string[] | null;
+    tags?: string[];
     /** Filter external instruments by plugin vendor. */
-    vendor?: string | null;
+    vendor?: string;
 }
 
 /** Success payload of `sound-source list`. */
@@ -4625,13 +4605,13 @@ export interface SoundSourceListResult {
     count: number;
     /** Every source matching the filters, across every kind. Never truncated and never deduplicated by name: two sources can legitimately share one. */
     soundSources: {
-        /** Category name, e.g. 'Piano'. AI instruments only. */
+        /** Category name, e.g. `Piano`. AI instruments only. */
         category?: string;
         /** Numeric category id. AI instruments only. */
         categoryId?: number;
-        /** Every format this plugin was scanned in. One plugin in three formats is one row, not three. External instruments only. */
-        formats?: ('vst3' | 'vst2' | 'au')[];
-        /** Which model generations recommend a model for this voice: 'v1', 'v2', or both. Generation is a per-voice curation published by the backend, not a property of a model, so it is reported per row and only on pre-made voices. */
+        /** Every format this plugin was scanned in (`vst3`, `vst2`, `au`). One plugin in three formats is one row, not three. External instruments only. */
+        formats?: string[];
+        /** Which model generations recommend a model for this voice. Reported per row and only on pre-made voices. */
         generations?: ('v1' | 'v2')[];
         /** The raw group discriminator behind `origin`: empty for pre-made, '#' for cloned, '\@' for community, the blended-voice library id for a blend. Reported for continuity with the project file; prefer `ref`. */
         group?: string;
@@ -4639,7 +4619,7 @@ export interface SoundSourceListResult {
         id?: number;
         /** Whether a community voice is already in your library. Community voices only; an uncollected voice must be collected before it will load. */
         isCollected?: boolean;
-        /** What this source is. */
+        /** What a sound source is — the roster every `kind` takes, whether it filters a listing or reports what a row turned out to be. A track carries exactly one kind at a time, and loading a source of another kind converts the track to suit it. */
         kind: 'voice' | 'choir' | 'instrument' | 'ensemble' | 'external-instrument';
         /** How many members the source has. Choirs and ensembles only. */
         memberCount?: number;
@@ -4651,9 +4631,9 @@ export interface SoundSourceListResult {
         name: string;
         /** Full English name of the language this source sings natively. Voices and choirs only. */
         nativeLanguage?: string;
-        /** Which library it comes from. Absent for external instruments, which come from the plugin scan rather than the account's library. */
+        /** Where a sound source comes from: the Voice Library's tabs, which is how a user thinks about it, and the project file's `group` discriminator spelled in words. An external instrument has none — it comes from the plugin scan, not from the account's library. */
         origin?: 'premade' | 'cloned' | 'community' | 'blended';
-        /** Precise handle for this source, accepted by `--source` anywhere a name is. One of `singer:\<id\>` (pre-made), `singer:#\<id\>` (cloned), `singer:\@\<id\>` (community), `singer:\<library\>/\<id\>` (blend), `choir:\<group\>/\<id\>`, `instrument:\<id\>`, `ensemble:\<group\>/\<id\>`, or `plugin:\<format\>:\<typeId\>` (external instrument). */
+        /** Precise handle for this source, accepted by `source` anywhere a name is. One of `singer:\<id\>` (pre-made), `singer:#\<id\>` (cloned), `singer:\@\<id\>` (community), `singer:\<library\>/\<id\>` (blend), `choir:\<group\>/\<id\>`, `instrument:\<id\>`, `ensemble:\<group\>/\<id\>`, or `plugin:\<format\>:\<typeId\>` (external instrument). */
         ref: string;
         /** How many voice seeds the recipe holds. Blended voices only. */
         seedCount?: number;
@@ -4670,29 +4650,25 @@ export interface SoundSourceListResult {
 
 /** Arguments for `sound-source load`. */
 export interface SoundSourceLoadParams {
-    /** Which plugin format to mount for an external instrument. Defaults to `vst3`, and the format that was actually mounted is always reported. A format you asked for and the plugin does not offer is an error rather than a silent substitution. */
+    /** Plugin format for an external instrument. One plugin commonly ships in several; the format picks which build gets mounted. */
     format?: 'vst3' | 'vst2' | 'au';
     /** Which vocal synth model to sing through, by model name or by generation (`v1`, `v2`). Omit to take what the app would have picked. */
-    model?: string | null;
-    /**
-     * **Required.** Which sound source to load, by display name or by `ref`.
-     *
-     * A name that matches exactly one source loads it. A name that matches several is an error listing the candidates with their refs, and passing one of those refs back resolves it. A ref is always accepted directly, so a script never has to trigger the error to learn the syntax.
-     */
+    model?: string;
+    /** **Required.** Which sound source to load, by display name or by `ref`. A name that matches exactly one source loads it. A name that matches several is an error listing the candidates with their refs, and passing one of those refs back resolves it. A ref is always accepted directly, so a script never has to trigger the error to learn the syntax. */
     source: string;
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. */
-    trackUuid?: string | null;
+    trackUuid?: string;
     /** Narrow an ambiguous external-instrument name by plugin vendor. Two vendors shipping a plugin of the same name is ordinary; this is the first thing to reach for before falling back to a ref. */
-    vendor?: string | null;
+    vendor?: string;
 }
 
 /** Success payload of `sound-source load`. */
 export interface SoundSourceLoadResult {
-    /** Which plugin format was mounted. Always reported for an external instrument, including when it was defaulted rather than requested, so a caller knows what it actually got. */
-    format?: 'vst3' | 'vst2' | 'au';
-    /** What kind of source landed. */
+    /** Which plugin format was mounted (`vst3`, `vst2`, `au`). Always reported for an external instrument, including when it was defaulted rather than requested, so a caller knows what it actually got. */
+    format?: string;
+    /** What a sound source is — the roster every `kind` takes, whether it filters a listing or reports what a row turned out to be. A track carries exactly one kind at a time, and loading a source of another kind converts the track to suit it. */
     kind: 'voice' | 'choir' | 'instrument' | 'ensemble' | 'external-instrument';
     /** Full English name of the track's default note language. Emitted only when the load created the track's language, which happens when a MIDI or Empty track becomes a Sing track. */
     language?: string;
@@ -4700,11 +4676,11 @@ export interface SoundSourceLoadResult {
     modelName?: string;
     /** Display name of that source. */
     name: string;
-    /** Ref of the source that landed, resolved from `--source`. */
+    /** Ref of the source that landed, resolved from `source`. */
     ref: string;
     /** 0-based index of the track loaded onto. */
     trackIndex: number;
-    /** What the track ended up as. Loading a voice onto a MIDI track converts it to 'Sing'. */
+    /** What the track ended up as. Loading a voice onto a MIDI track converts it to `Sing`. */
     trackType: string;
     /** UUID of that track. */
     trackUuid: string;
@@ -4715,17 +4691,13 @@ export interface SoundSourceLoadResult {
 /** Arguments for `sound-source set`. */
 export interface SoundSourceSetParams {
     /** Which member to retarget on a choir or ensemble track. `0` is the leader. Omit to set the model for the whole source, which on a single-voice track is the only thing there is to set. */
-    member?: number | null;
-    /**
-     * **Required.** Which vocal synth model to sing through, by model name (`Verse24`) or by generation (`v1`, `v2`). A generation picks that generation's recommended model for this voice.
-     *
-     * A name that names no model is an error; nothing is substituted, so a typo surfaces here rather than as a track that quietly sings through something else.
-     */
+    member?: number;
+    /** **Required.** Which vocal synth model to sing through, by model name (`Verse24`) or by generation (`v1`, `v2`). A generation picks that generation's recommended model for this voice. A name that names no model is an error; nothing is substituted, so a typo surfaces here rather than as a track that quietly sings through something else. */
     model: string;
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** Success payload of `sound-source set`. */
@@ -4744,8 +4716,8 @@ export interface SoundSourceSetResult {
 
 /** Arguments for `sound-source tags`. */
 export interface SoundSourceTagsParams {
-    /** Only return the filter vocabulary that applies to this kind. Repeatable. Omit for everything. */
-    kind?: ('voice' | 'choir' | 'instrument' | 'ensemble' | 'external-instrument')[] | null;
+    /** Only return the filter vocabulary that applies to these kinds. Omit for everything. */
+    kind?: ('voice' | 'choir' | 'instrument' | 'ensemble' | 'external-instrument')[];
 }
 
 /** Success payload of `sound-source tags`. */
@@ -4754,14 +4726,14 @@ export interface SoundSourceTagsResult {
     categories?: {
         /** Numeric category id. */
         id: number;
-        /** Category name, e.g. 'Piano'. */
+        /** Category name, e.g. `Piano`. */
         name: string;
     }[];
     /** Every language the installed voices can sing. */
     languages?: {
-        /** Short code, e.g. 'zh'. */
+        /** Short code, e.g. `zh`. */
         code: string;
-        /** Full English name, e.g. 'Chinese'. */
+        /** Full English name, e.g. `Chinese`. */
         name: string;
     }[];
     /** Tag names in use across the installed sources. */
@@ -4773,14 +4745,14 @@ export interface SoundSourceTagsResult {
 /** Arguments for `sound-source unload`. */
 export interface SoundSourceUnloadParams {
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** Success payload of `sound-source unload`. */
 export interface SoundSourceUnloadResult {
-    /** What the track is now. A Sing or Instrument track becomes 'GenericMidi'; a MIDI track that merely had its external instrument unmounted stays 'GenericMidi'. */
+    /** What the track is now. A Sing or Instrument track becomes `GenericMidi`; a MIDI track that merely had its external instrument unmounted stays `GenericMidi`. */
     newType: string;
     /** 0-based index of the track. */
     trackIndex: number;
@@ -4845,11 +4817,11 @@ export interface TempoAnalyzeParams {
 
 /** Success payload of `tempo analyze`. */
 export interface TempoAnalyzeResult {
-    /** The id the finished analysis will be filed under -- known up front, so a caller can line up its `tempo apply-beat-analysis` before the job settles. Valid only once the job reaches `succeeded`; a failed or cancelled run files nothing and `tempo apply-beat-analysis` answers NOT_FOUND. */
+    /** The id the finished analysis will be filed under — known up front, so a caller can line up its `tempo apply-beat-analysis` before the job settles. Valid only once the job reaches `succeeded`; a failed or cancelled run files nothing and `tempo apply-beat-analysis` answers NOT_FOUND. */
     analysisId: string;
-    /** The job class, for a consumer keying off the producing function. Always `tempo-analyze`. */
+    /** The job class `tempo analyze` files its work under, for a consumer keying off the producing function rather than off the individual job. `tempo analyze` launches exactly one kind of job, so the roster holds one value. */
     jobClassId: 'tempo-analyze';
-    /** The launched job's id, returned before any analysis runs . Observe it with `job get` / `job wait`, stop it with `job cancel`. */
+    /** The launched job's id, returned before any analysis runs. Observe it with `job get` / `job wait`, stop it with `job cancel`. */
     jobId: string;
 }
 
@@ -4857,8 +4829,8 @@ export interface TempoAnalyzeResult {
 export interface TempoApplyBeatAnalysisParams {
     /** The analysis to apply, as reported by `tempo analyze`. Consumed on success: a second apply of the same id fails NOT_FOUND, because the content shift the first one made invalidated what the analysis described. */
     analysisId: string;
-    /** Where the analyzed audio starts, in project time. Omit to use the analyzed clip's own current position, which is what you want unless the clip moved since. Seconds (`1.5s`), clock time (`1:23.5`), or a tick / musical position converted to seconds. See `help time-values`. */
-    anchor?: number | null;
+    /** Where the analyzed audio starts, in project seconds. Omit to use the analyzed clip's own current position, which is what you want unless the clip moved since. */
+    anchor?: number;
 }
 
 /** Success payload of `tempo apply-beat-analysis`. */
@@ -4875,7 +4847,7 @@ export interface TempoApplyBeatAnalysisResult {
 
 /** Success payload of `tempo get`. */
 export interface TempoGetResult {
-    /** Number of entries in points (convenience field). */
+    /** Number of entries in `points` (convenience field). */
     pointCount: number;
     /** All tempo automation points, in ascending pos order. */
     points: {
@@ -4890,17 +4862,17 @@ export interface TempoGetResult {
 
 /** Success payload of `tempo points`. */
 export interface TempoPointsResult {
-    /** Content fingerprint of the whole tempo point list. Carry it back as `--if-match` on `tempo set-point`, `tempo remove-point` or `tempo set` to fail STALE_WRITE instead of overwriting edits made since this read. */
+    /** Content fingerprint of the whole tempo point list. Carry it back as the reserved `fingerprint` argument on `tempo set-point`, `tempo remove-point` or `tempo set` to fail STALE_WRITE instead of overwriting edits made since this read. */
     fingerprint: Fingerprint;
-    /** Which unit the stored positions are authoritative in. Always `tick` for the tempo curve. */
+    /** The unit a `tempo points` position is authoritative in. Always `tick`: a tempo point is addressed by the tick it sits on, and the `posSec` reported beside it is derived from the very curve these points define. */
     nativeUnit: 'tick';
-    /** Number of entries in points (convenience field). */
+    /** Number of entries in `points` (convenience field). */
     pointCount: number;
-    /** All tempo points, in ascending pos order. Dual-unit: `pos` is authoritative, `posSec` is that position read back through the very curve these points define. */
+    /** All tempo points, in ascending pos order. */
     points: {
         /** Curve control toward the next point; 0.0 = linear. */
         bend: number;
-        /** Point position, in project ticks. The native unit -- what `set-point` and `remove-point` address. */
+        /** Point position, in project ticks. The native unit — what `set-point` and `remove-point` address. */
         pos: number;
         /** The same position in seconds, under the current tempo curve. Derived, so editing one point moves the seconds of every point after it. */
         posSec: number;
@@ -4911,7 +4883,7 @@ export interface TempoPointsResult {
 
 /** Arguments for `tempo remove-point`. */
 export interface TempoRemovePointParams {
-    /** The point to remove. Ticks (`3840t`), clock time (`1.5s`), or musical position (`4.1.0`). No point there is a NOT_FOUND. See `help time-values`. */
+    /** The point to remove, in project ticks. No point there is a NOT_FOUND. */
     pos: number;
 }
 
@@ -4919,7 +4891,7 @@ export interface TempoRemovePointParams {
 export interface TempoRemovePointResult {
     /** Number of points in the table after the write. */
     pointCount: number;
-    /** The position acted on, in project ticks -- resolved, so a caller that passed a musical or clock form learns which tick it hit. */
+    /** The position acted on, in project ticks — resolved, so a caller that passed a musical or clock form learns which tick it hit. */
     pos: number;
     /** Whether a point already existed at `pos`. True for a `set-point` that overwrote one and for every successful `remove-point`; false for a `set-point` that inserted a new point. */
     replaced: boolean;
@@ -4927,10 +4899,9 @@ export interface TempoRemovePointResult {
 
 /** Arguments for `tempo set`. */
 export interface TempoSetParams {
-    /** JSON array of tempo points, e.g. `[\{"pos":0,"value":120\}]`. Each point: `pos` (ticks \>= 0), `value` (BPM 1-1000), `bend` (optional, default 0.0). Points must be sorted by `pos` ascending with no duplicates. */
     points: {
         /** Curve bend, -1.0 to 1.0. Defaults to 0.0 (a straight segment). */
-        bend?: number | null;
+        bend?: number;
         /** Position in ticks. Must be \>= 0. */
         pos: number;
         /** Tempo in BPM, 1-1000. */
@@ -4940,10 +4911,10 @@ export interface TempoSetParams {
 
 /** Arguments for `tempo set-display-range`. */
 export interface TempoSetDisplayRangeParams {
-    /** Upper bound of the editor's BPM axis. Must be \> `--min`. Omit to keep the current upper bound. */
-    maxBpm?: number | null;
-    /** Lower bound of the editor's BPM axis. Must be \< `--max`. Omit to keep the current lower bound. */
-    minBpm?: number | null;
+    /** Upper bound of the editor's BPM axis. Must be \> `minBpm`. Omit to keep the current upper bound. */
+    maxBpm?: number;
+    /** Lower bound of the editor's BPM axis. Must be \< `maxBpm`. Omit to keep the current lower bound. */
+    minBpm?: number;
 }
 
 /** Success payload of `tempo set-display-range`. */
@@ -4957,10 +4928,10 @@ export interface TempoSetDisplayRangeResult {
 /** Arguments for `tempo set-point`. */
 export interface TempoSetPointParams {
     /** Curve bend toward the next point, -1.0 to 1.0. 0.0 is a straight segment. Omit to keep an existing point's bend, or 0.0 for a new one. */
-    bend?: number | null;
+    bend?: number;
     /** Tempo at this point, in BPM. 1-1000. Required. */
     bpm: number;
-    /** Where the point goes. Ticks (`3840t`), clock time (`1.5s`), or musical position (`4.1.0`). Must be \>= 0. A point already at this position is replaced. See `help time-values`. */
+    /** Where the point goes, in project ticks. Must be \>= 0. A point already at this position is replaced. */
     pos: number;
 }
 
@@ -4968,7 +4939,7 @@ export interface TempoSetPointParams {
 export interface TempoSetPointResult {
     /** Number of points in the table after the write. */
     pointCount: number;
-    /** The position acted on, in project ticks -- resolved, so a caller that passed a musical or clock form learns which tick it hit. */
+    /** The position acted on, in project ticks — resolved, so a caller that passed a musical or clock form learns which tick it hit. */
     pos: number;
     /** Whether a point already existed at `pos`. True for a `set-point` that overwrote one and for every successful `remove-point`; false for a `set-point` that inserted a new point. */
     replaced: boolean;
@@ -5037,7 +5008,7 @@ export interface TempoOperations {
      * curve replaced by a beat-analysis apply. A peer re-fetches with `tempo get`
      * for the single-tempo view or `tempo points` for the curve.
      *
-     * Listen for changes on the `tempo` channel. The event is a hint to re-read, not the new state.
+     * Listen for `tempo.changed`. The event is a hint to re-read, not the new state.
      *
      * Requires the `tempo.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
      */
@@ -5048,7 +5019,7 @@ export interface TempoOperations {
 
 /** Success payload of `timesig get`. */
 export interface TimesigGetResult {
-    /** Number of entries in signatures (convenience field). */
+    /** Number of entries in `signatures` (convenience field). */
     signatureCount: number;
     /** All time-signature entries, in ascending barPos order. */
     signatures: {
@@ -5063,15 +5034,15 @@ export interface TimesigGetResult {
 
 /** Success payload of `timesig list`. */
 export interface TimesigListResult {
-    /** Content fingerprint of the whole time-signature list. Carry it back as `--if-match` on `timesig set-at`, `timesig remove-at` or `timesig set` to fail STALE_WRITE instead of overwriting edits made since this read. */
+    /** Content fingerprint of the whole time-signature list. Carry it back as the reserved `fingerprint` argument on `timesig set-at`, `timesig remove-at` or `timesig set` to fail STALE_WRITE instead of overwriting edits made since this read. */
     fingerprint: Fingerprint;
-    /** Which unit the stored positions are authoritative in. Always `bar` for the time-signature list. */
+    /** The unit a `timesig list` position is authoritative in. Always `bar`: a signature entry is addressed by the bar it takes effect from, and the `tick` and `sec` reported beside it are derived from the current grid. */
     nativeUnit: 'bar';
-    /** Number of entries in signatures (convenience field). */
+    /** Number of entries in `signatures` (convenience field). */
     signatureCount: number;
-    /** All time-signature entries, in ascending barPos order. Dual-unit: `barPos` is authoritative, `tick` and `sec` are where that bar falls under the current meter and tempo. */
+    /** All time-signature entries, in ascending barPos order. */
     signatures: {
-        /** The bar this signature takes effect from, counted from 0 as the project stores it. The native unit, and what `set-at --bar-pos` takes verbatim. Reported as `bar` counting from 1 instead under `--bars human`. */
+        /** The bar this signature takes effect from, counted from 0 as the project stores it. The native unit, and what `set-at` takes verbatim. */
         barPos: number;
         /** Beat unit; one of 2, 4, 8, 16, 32. */
         denominator: number;
@@ -5086,13 +5057,13 @@ export interface TimesigListResult {
 
 /** Arguments for `timesig remove-at`. */
 export interface TimesigRemoveAtParams {
-    /** The same bar counted from 0, as the project stores it and as `convert` reports it. This is the spelling the wire takes. `acestudio-cli` and MCP also accept `bar` counting from 1; pass one or the other, never both. */
+    /** The same bar counted from 0, as the project stores it and as `timesig list` reports it. */
     barPos: number;
 }
 
 /** Success payload of `timesig remove-at`. */
 export interface TimesigRemoveAtResult {
-    /** The bar acted on, counted from 0 — the same value whichever spelling the call used to address it. Reported as `bar` counting from 1 instead under `--bars human`. */
+    /** The bar acted on, counted from 0 — the same value whichever spelling the call used to address it. */
     barPos: number;
     /** Whether an entry already existed at `barPos`. True for a `set-at` that overwrote one and for every successful `remove-at`; false for a `set-at` that inserted a new entry. */
     replaced: boolean;
@@ -5102,30 +5073,29 @@ export interface TimesigRemoveAtResult {
 
 /** Arguments for `timesig set`. */
 export interface TimesigSetParams {
-    /** JSON array of time-signature entries, e.g. `[\{"barPos":0,"numerator":4,"denominator":4\}]`. Each entry: the bar as `barPos` (\>= 0, counting from 0), `numerator` (1-32), `denominator` (2, 4, 8, 16, or 32). `acestudio-cli` and MCP also accept `bar` counting from 1 in place of `barPos`, folding it before the call; pass one or the other, never both. Entries must be sorted by ascending bar with no duplicates. */
     signatures: {
-        /** The same bar counted from 0, as the project stores it. Give this or `bar`, never both. */
+        /** The same bar counted from 0, as the project stores it and as `timesig list` reports it. */
         barPos: number;
-        /** Beat unit: 2, 4, 8, 16, or 32. */
+        /** Beat unit; one of 2, 4, 8, 16, 32. */
         denominator: number;
-        /** Beats per bar, 1-32. */
+        /** Beats per bar (1-32). */
         numerator: number;
     }[];
 }
 
 /** Arguments for `timesig set-at`. */
 export interface TimesigSetAtParams {
-    /** The same bar counted from 0, as the project stores it and as `convert` reports it. This is the spelling the wire takes. `acestudio-cli` and MCP also accept `bar` counting from 1, folding it to this before the call; pass one or the other, never both. */
+    /** The same bar counted from 0, as the project stores it and as `timesig list` reports it. */
     barPos: number;
-    /** Beat unit: 2, 4, 8, 16, or 32. Required. */
+    /** Beat unit; one of 2, 4, 8, 16, 32. */
     denominator: number;
-    /** Beats per bar, 1-32. Required. */
+    /** Beats per bar (1-32). */
     numerator: number;
 }
 
 /** Success payload of `timesig set-at`. */
 export interface TimesigSetAtResult {
-    /** The bar acted on, counted from 0 — the same value whichever spelling the call used to address it. Reported as `bar` counting from 1 instead under `--bars human`. */
+    /** The bar acted on, counted from 0 — the same value whichever spelling the call used to address it. */
     barPos: number;
     /** Whether an entry already existed at `barPos`. True for a `set-at` that overwrote one and for every successful `remove-at`; false for a `set-at` that inserted a new entry. */
     replaced: boolean;
@@ -5175,37 +5145,23 @@ export interface TimesigOperations {
 
 /** Arguments for `track create`. */
 export interface TrackCreateParams {
-    /**
-     * 0-based position to insert at. Omit to append after the last content track.
-     *
-     * Counts in the index space the new track's region uses: the arrangement for `sing`/`instrument`/`genericMidi`/`audio`, and the pinned Video or Marker band for `video`/`marker` (ADR 0104), whose indices are local to that band.
-     */
-    index?: number | null;
+    /** 0-based position to insert at, in the index space the new track's region uses. Omit to append after the last content track. */
+    index?: number;
     /** Optional display name. Omit to take the type's default name. */
-    name?: string | null;
-    /**
-     * Create the track with this sound source already on it, by display name or ref — the same thing `sound-source load --source` accepts.
-     *
-     * The track type follows from the source, so `--type` is not needed alongside it. This is the only path that reports the track's resolved note language, because it is the only point at which a Sing track's language is decided.
-     */
-    source?: string | null;
-    /**
-     * Track type to create: `sing`, `instrument`, `genericMidi`, `audio`, `video`, or `marker` — the same spellings `trackType` is reported in, matched case-insensitively.
-     *
-     * `chord` is not creatable: a project has exactly one chord track, always. Neither is `empty` — an empty slot is what the arrangement pads itself with, not something you ask for.
-     *
-     * Optional when `--source` is given, which implies the type.
-     */
-    type?: string | null;
+    name?: string;
+    /** Create the track with this sound source already on it, by display name or ref — the same thing `sound-source load`'s `source` accepts. The track type follows from the source, so `type` is not needed alongside it. */
+    source?: string;
+    /** Track type to create: `sing`, `instrument`, `genericMidi`, `audio`, `video`, or `marker` — the same spellings `trackType` is reported in, matched case-insensitively. Optional when `source` is given, which implies the type. */
+    type?: string;
 }
 
 /** Success payload of `track create`. */
 export interface TrackCreateResult {
-    /** Full English name of the track's default note language. Present only when `track create --source` built a Sing track, which is the one moment a track's language is decided; changing it afterwards is `track set-language`. */
+    /** Full English name of the track's default note language. Present only when `track create`'s `source` built a Sing track — the one moment a track's language is decided. */
     language?: string;
     /** Which index space `trackIndex` counts in: 'arrangement' (the main track list), 'video', or 'marker'. */
     region: string;
-    /** The sound source the track was created with. Present only when `track create --source` put one there. */
+    /** The sound source the track was created with. Present only when `track create`'s `source` put one there. */
     soundSourceName?: string;
     /** 0-based resting position, in the index space of `region`. */
     trackIndex: number;
@@ -5217,21 +5173,35 @@ export interface TrackCreateResult {
     trackUuid: string;
 }
 
+/** Arguments for `track delete`. */
+export interface TrackDeleteParams {
+    /** Delete a track that still holds clips. Absent or false refuses a non-empty track with `TRACK_NOT_EMPTY`, so a caller can ask for the safe form; true deletes the track and its content as one undo step. Ignored when deleting the selection, which has always taken the content with it. */
+    removeContents?: boolean;
+    /** Track UUIDs to delete, in braces format. Repeatable. Names tracks in the pinned video and marker bands (ADR 0104). An arrangement track is refused here and deleted through the selection instead: removing one has to re-seat the user's selected index, which is the selection path's job and not a peer's to reproduce. Omitted deletes the current selection. */
+    trackUuids?: string[];
+}
+
+/** Success payload of `track delete`. */
+export interface TrackDeleteResult {
+    /** UUIDs of the tracks actually deleted, in braces format. */
+    deleted: string[];
+}
+
 /** Arguments for `track duplicate`. */
 export interface TrackDuplicateParams {
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. Required to address a track in the pinned Video or Marker band. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** Success payload of `track duplicate`. */
 export interface TrackDuplicateResult {
-    /** Full English name of the track's default note language. Present only when `track create --source` built a Sing track, which is the one moment a track's language is decided; changing it afterwards is `track set-language`. */
+    /** Full English name of the track's default note language. Present only when `track create`'s `source` built a Sing track — the one moment a track's language is decided. */
     language?: string;
     /** Which index space `trackIndex` counts in: 'arrangement' (the main track list), 'video', or 'marker'. */
     region: string;
-    /** The sound source the track was created with. Present only when `track create --source` put one there. */
+    /** The sound source the track was created with. Present only when `track create`'s `source` put one there. */
     soundSourceName?: string;
     /** 0-based resting position, in the index space of `region`. */
     trackIndex: number;
@@ -5257,7 +5227,7 @@ export interface TrackGetResult {
     defaultArticulation?: string;
     /** Default lyric language. Sing tracks only. */
     defaultLanguage?: string;
-    /** Mixer settings. */
+    /** Mixer settings, as `track get` reports them. */
     mixer: {
         /** Volume gain: 0.0 and above; 1.0 = unity. */
         gain: number;
@@ -5270,31 +5240,31 @@ export interface TrackGetResult {
     };
     /** Name the user explicitly set; empty string when using the default fallback. */
     rawName: string;
-    /** Record-input configuration. */
+    /** Record-input configuration, as `track get` reports it. */
     recordInput: {
         /** Audio input channel: -1 = off, 0+ = specific channel. Audio tracks only. */
         inputChannelIndex?: number;
         /** Whether input monitoring is enabled. */
         listen: boolean;
-        /** MIDI input source. Note tracks only. */
+        /** MIDI input source, as `track get` reports it. Note tracks only. */
         midiInput?: {
-            /** Custom MIDI channel: -1 = all, 0-15 = specific. Present only when sourceType is custom. */
+            /** Custom MIDI channel: -1 = all, 0-15 = specific. Present only when `sourceType` is custom. */
             channel?: number;
-            /** Custom MIDI device name. Present only when sourceType is custom. */
+            /** Custom MIDI device name. Present only when `sourceType` is custom. */
             deviceName?: string;
-            /** One of: none, all, computerKeyboard, custom. */
-            sourceType: string;
+            /** Where a note track's MIDI takes its input from. `custom` is the only value that carries a device: it means one named device, reported in the sibling `deviceName`. `all` listens to every connected device at once and `none` listens to nothing, so neither names one. `keyboard` is the computer keyboard playing notes, not a MIDI device at all. The values are the same vocabulary `track set-input`'s `midiDevice` takes, so a value read here can be handed straight back to a write. */
+            sourceType: 'none' | 'all' | 'keyboard' | 'custom';
         };
         /** Whether the track is record-armed. */
         record: boolean;
-        /** MIDI record mode: monophonic or polyphonic. Sing tracks only. */
-        recordMode?: string;
+        /** How a chord played onto a Sing track is captured. Exactly one applies at a time: `monophonic` trims the overlaps into one vocal part, `polyphonic` splits the chord into separate parts. */
+        recordMode?: 'monophonic' | 'polyphonic';
     };
-    /** Sound-source detail. Note tracks only (omitted for Audio); shape varies with track type and choir/ensemble mode. */
+    /** Sound-source detail for a track, as `track get` reports it. Note tracks only (omitted for Audio); shape varies with track type and choir/ensemble mode. */
     soundSourceInfo?: {
         /** Instrument category name. Instrument (non-ensemble) mode only. */
         category?: string;
-        /** Whether the track carries a sound source. A GenericMidi track with an external instrument mounted reports true: the slot is a sound source in every sense that matters, and reporting it empty made a mounted plugin indistinguishable from no plugin at all. Other keys are absent when this is false. `sound-source get` reports the same thing in more detail. */
+        /** Whether the track carries a sound source. A GenericMidi track with an external instrument mounted reports true: the slot is a sound source in every sense that matters, and reporting it empty made a mounted plugin indistinguishable from no plugin at all. Other fields are absent when this is false. `sound-source get` reports the same thing in more detail. */
         hasSource?: boolean;
         /** True when the singer is a voice blend rather than a vanilla singer. Singer mode only. */
         isVoiceBlend?: boolean;
@@ -5315,7 +5285,7 @@ export interface TrackGetResult {
             /** Languages the member singer supports. Choir members only. */
             supportedLanguages?: string[];
         }[];
-        /** Group-level settings. Choir/ensemble modes only. */
+        /** Group-level settings for a choir/ensemble track, as `track get` reports it. */
         metadata?: {
             /** Number of members in the group. */
             memberCount?: number;
@@ -5341,8 +5311,8 @@ export interface TrackGetResult {
 
 /** Arguments for `track list`. */
 export interface TrackListParams {
-    /** Track kinds to list, in the spellings `track create --type` takes. Repeatable. Omit for the arrangement's content tracks, which is what this answered before the pinned bands were reachable. */
-    type?: string[] | null;
+    /** Track kinds to list, in the spellings `track create`'s `type` takes. Repeatable. Omit for the arrangement's content tracks, which is what this answered before the pinned Video/Marker bands were reachable. */
+    type?: string[];
 }
 
 /** Success payload of `track list`. */
@@ -5353,6 +5323,10 @@ export interface TrackListResult {
     tracks: {
         /** Number of clips (patterns) on the track. */
         clipCount: number;
+        /** Whether this marker track is system-owned and so protected from user delete and rename. **Marker tracks only** — omitted for every other type, which cannot be protected at all, rather than reported false. */
+        isProtected?: boolean;
+        /** Which system role a protected marker track fills: `sections` or `lyrics`. Stable and locale-independent, unlike `trackName`, which is the localized display string derived from it. Reported because it is the idempotency key `track ensure-system` is addressed by: without it, the only way to learn which marker track holds which role is to call `track ensure-system` again and read back the id, turning an observation into a write-shaped probe. **Protected marker tracks only** — omitted for an ordinary one, which fills no role. */
+        protectedRole?: string;
         /** Which index space `trackIndex` counts in: 'arrangement' (the main track list), 'video', or 'marker'. */
         region: string;
         /** Sound-source name for Sing and Instrument tracks; 'N-member choir'/'N-member ensemble' in choir/ensemble mode; empty for GenericMidi, which carries an external instrument instead. Omitted for the types that can have none: Audio, Video and Marker. */
@@ -5378,21 +5352,21 @@ export interface TrackRenameParams {
 
 /** Arguments for `track reorder`. */
 export interface TrackReorderParams {
-    /** 0-based position to move to, in the same region the track already lives in. A track cannot leave its region: the pinned Video and Marker bands hold only their own type (ADR 0104), so a cross-region move is refused rather than silently clamped. */
+    /** 0-based position to move to, in the same region the track already lives in. A track cannot leave its region: the pinned Video and Marker bands hold only their own type (ADR 0104). */
     toIndex: number;
-    /** 0-based index in the arrangement (users see tracks numbered from 1). */
-    trackIndex?: number | null;
-    /** Track UUID in braces format, e.g. `\{12345678-abcd-...\}`. Required to address a track in the pinned Video or Marker band, which `--track-index` cannot name. */
-    trackUuid?: string | null;
+    /** 0-based index in the arrangement. */
+    trackIndex?: number;
+    /** Track UUID in braces format, e.g. `\{12345678-abcd-...\}`. Required to address a track in the pinned Video or Marker band, which `trackIndex` cannot name. */
+    trackUuid?: string;
 }
 
 /** Success payload of `track reorder`. */
 export interface TrackReorderResult {
-    /** Full English name of the track's default note language. Present only when `track create --source` built a Sing track, which is the one moment a track's language is decided; changing it afterwards is `track set-language`. */
+    /** Full English name of the track's default note language. Present only when `track create`'s `source` built a Sing track — the one moment a track's language is decided. */
     language?: string;
     /** Which index space `trackIndex` counts in: 'arrangement' (the main track list), 'video', or 'marker'. */
     region: string;
-    /** The sound source the track was created with. Present only when `track create --source` put one there. */
+    /** The sound source the track was created with. Present only when `track create`'s `source` put one there. */
     soundSourceName?: string;
     /** 0-based resting position, in the index space of `region`. */
     trackIndex: number;
@@ -5406,54 +5380,34 @@ export interface TrackReorderResult {
 
 /** Arguments for `track set`. */
 export interface TrackSetParams {
-    /** Palette color hex string, e.g. `#EC4F44`. Must be one of the values returned by `color-palette`. Also affects the default color for new clips on this track. */
-    color?: string | null;
-    /** Volume gain level: 0.0 and above; 1.0 = unity; above 1.0 = boost. */
-    gain?: number | null;
-    /**
-     * Whether the track monitors its live input.
-     *
-     * This was `track set-monitor`, a verb of its own for one boolean. It behaves differently from its neighbours under undo — it lands no entry — but that is ours to handle, not a reason to make the caller learn a second verb for a switch that sits beside mute and solo in the mixer.
-     */
-    monitor?: boolean | null;
-    /** Mute the track (true) or unmute (false). When muted the track is silenced but still renders. */
-    mute?: boolean | null;
-    /** Stereo pan position: -1.0 (full left) to 1.0 (full right); 0.0 = center. */
-    pan?: number | null;
-    /** Solo the track (true) or unsolo (false). When any track is soloed, all non-soloed tracks are effectively muted. */
-    solo?: boolean | null;
-    /** 0-based track index. Addresses the arrangement only — the master bus has no index, so `--track-uuid master` is how you reach it. */
-    trackIndex?: number | null;
-    /**
-     * Track UUID in braces format, e.g. `\{12345678-abcd-...\}`, or the well-known id `master` for the project's master bus.
-     *
-     * The master is a track like any other here — it has no domain of its own (ledger §2.11). It carries only a gain, so `--gain` is the one property it accepts; the rest are refused rather than silently dropped.
-     */
-    trackUuid?: string | null;
+    /** Palette color hex string, e.g. `#EC4F44`. Must be one of the values `color-palette` returns. Also affects the default color for new clips on this track. The master bus has no color. */
+    color?: string;
+    /** Volume gain level: 0.0 and above; 1.0 = unity; above 1.0 = boost. The only property the master bus accepts. */
+    gain?: number;
+    /** Whether the track monitors its live input. The master bus has no monitor switch, and this field lands no undo entry. */
+    monitor?: boolean;
+    /** Mute the track (true) or unmute (false). When muted the track is silenced but still renders. The master bus has no mute. */
+    mute?: boolean;
+    /** Stereo pan position: -1.0 (full left) to 1.0 (full right); 0.0 = center. The master bus has no pan. */
+    pan?: number;
+    /** Solo the track (true) or unsolo (false). When any track is soloed, all non-soloed tracks are effectively muted. The master bus has no solo. */
+    solo?: boolean;
+    /** 0-based track index. Addresses the arrangement only — the master bus has no index, so `trackUuid: "master"` is how you reach it. */
+    trackIndex?: number;
+    /** Track UUID in braces format, e.g. `\{12345678-abcd-...\}`, or the well-known id `master` for the project's master bus. */
+    trackUuid?: string;
 }
 
 /** Arguments for `track set-input`. */
 export interface TrackSetInputParams {
-    /** Which audio input to record from, by device channel name, or `none` to record from nothing. Audio tracks only; `device list` reports the available channels. */
-    inputChannel?: string | null;
-    /**
-     * Which MIDI channel to listen on: `1` through `16`, or `all`.
-     *
-     * Numbered the way every MIDI device is numbered. The wire used to carry `-1 = all, 0-15` here and `1-16` for an instrument's output: one concept, two numberings, one of them contradicting the hardware. The translation now lives in the handler.
-     */
-    midiChannel?: string | null;
-    /**
-     * Which MIDI input to record from: a device name, or one of `all` (every device), `none`, or `keyboard` (the computer keyboard).
-     *
-     * Naming a device is enough — there is no separate source-type flag to set, because naming a device is what choosing a custom source means.
-     */
-    midiDevice?: string | null;
-    /**
-     * How to capture a chord played onto a Sing track: `monophonic` trims the overlaps into one vocal part, `polyphonic` splits it into separate parts. Sing tracks only.
-     *
-     * This lives on the input verb because the app puts both entries in the same mixer-strip MIDI input menu.
-     */
-    recordMode?: string | null;
+    /** Which audio input to record from, by device channel name, or `none` to record from nothing. Audio tracks only. */
+    inputChannel?: string;
+    /** Which MIDI channel to listen on: `1` through `16`, or `all`. Note tracks only. */
+    midiChannel?: string;
+    /** Which MIDI input to record from: a device name, or one of `all` (every device), `none`, or `keyboard` (the computer keyboard). Naming a device is enough — there is no separate source-type field. */
+    midiDevice?: string;
+    /** How to capture a chord played onto a Sing track: `monophonic` trims the overlaps into one vocal part, `polyphonic` splits it into separate parts. Sing tracks only. */
+    recordMode?: string;
     /** 0-based track index. */
     trackIndex: number;
 }
@@ -5462,16 +5416,16 @@ export interface TrackSetInputParams {
 export interface TrackSetInputResult {
     /** Which audio input the track now records from, named as the device names it. Audio tracks only; absent when the track records from nothing. */
     inputChannelName?: string;
-    /** Which MIDI input the track now records from. Note tracks only. */
+    /** Which MIDI input the track now records from, as `track set-input` reports it. */
     midiInput?: {
         /** Which channel it listens on: '1' through '16', or 'all'. */
         channel?: string;
-        /** The device name, when `sourceType` is 'custom'. */
+        /** The device name, when `sourceType` is custom. */
         deviceName?: string;
-        /** Where MIDI comes from. */
+        /** Where a note track's MIDI takes its input from. `custom` is the only value that carries a device: it means one named device, reported in the sibling `deviceName`. `all` listens to every connected device at once and `none` listens to nothing, so neither names one. `keyboard` is the computer keyboard playing notes, not a MIDI device at all. The values are the same vocabulary `track set-input`'s `midiDevice` takes, so a value read here can be handed straight back to a write. */
         sourceType?: 'none' | 'all' | 'keyboard' | 'custom';
     };
-    /** How chords played onto a Sing track are captured. Sing tracks only. */
+    /** How a chord played onto a Sing track is captured. Exactly one applies at a time: `monophonic` trims the overlaps into one vocal part, `polyphonic` splits the chord into separate parts. */
     recordMode?: 'monophonic' | 'polyphonic';
     /** 0-based index of the track. */
     trackIndex: number;
@@ -5482,9 +5436,9 @@ export interface TrackSetLanguageParams {
     /** Default lyric language for notes added later, as a full English name (e.g. `Chinese`). `track get` reports the current value as `defaultLanguage`, and the singer's `supportedLanguages` is the set to choose from. Existing notes keep the language they were written with. */
     language: string;
     /** 0-based index in the arrangement. */
-    trackIndex?: number | null;
+    trackIndex?: number;
     /** Track UUID in braces format. */
-    trackUuid?: string | null;
+    trackUuid?: string;
 }
 
 /** The `track` operations, mirroring the canonical operation tree 1:1, and the subscription that reports when the subject changes. */
@@ -5497,11 +5451,11 @@ export interface TrackOperations {
     create(params?: TrackCreateParams, options?: MutatingCallOptions): Promise<TrackCreateResult>;
 
     /**
-     * Delete all currently selected tracks and their content.
+     * Delete tracks by uuid, or the current selection when none are named.
      *
      * Requires the `track.write` capability.
      */
-    delete(options?: MutatingCallOptions): Promise<void>;
+    delete(params?: TrackDeleteParams, options?: MutatingCallOptions): Promise<TrackDeleteResult>;
 
     /**
      * Duplicate a track with its clips and FX chain, next to the original.
@@ -5564,7 +5518,7 @@ export interface TrackOperations {
      * change — in the arrangement or in either pinned band (ADR 0104). `changes`
      * carries the affected track uuids. A peer re-fetches with `track list`.
      *
-     * Listen for changes on the `tracks` channel. The event is a hint to re-read, not the new state.
+     * Listen for `tracks.changed`. The event is a hint to re-read, not the new state.
      *
      * Requires the `track.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
      */
@@ -5579,7 +5533,7 @@ export interface TransportLoopResult {
     active: boolean;
     /** Exclusive upper bound, in project ticks. */
     endTick: number;
-    /** Content fingerprint of the loop region; carry into a later `transport set-loop` to fail loudly (STALE_WRITE) if the region changed in between. */
+    /** Content fingerprint of the loop region (ADR 0088 §5); carry it into a later `transport set-loop` to fail loudly (STALE_WRITE) if the region changed in between. */
     fingerprint: Fingerprint;
     /** Whether a loop region has been configured at all. */
     isValid: boolean;
@@ -5589,31 +5543,31 @@ export interface TransportLoopResult {
 
 /** Arguments for `transport metronome`. */
 export interface TransportMetronomeParams {
-    /** Desired metronome state: `on` or `off`. */
+    /** Desired metronome state: true = on, false = off. */
     on: boolean;
 }
 
 /** Arguments for `transport seek`. */
 export interface TransportSeekParams {
-    /** Time position. Seconds (`1.5s`, `250ms`), clock time (`1:23.5`), or a tick/musical position converted to seconds (`3840t`, `4.1.0`). Must be non-negative. Required. See `help time-values`. */
+    /** Time position in seconds from the start of the project. Must be non-negative. */
     time: number;
 }
 
 /** Arguments for `transport set-loop`. */
 export interface TransportSetLoopParams {
-    /** Whether the loop region is engaged. Pass `--active` to enable, `--no-active` to disable. Omit to leave the flag untouched. */
-    active?: boolean | null;
-    /** Loop region end (exclusive). Ticks (`3840t`), clock time (`1.5s`), or musical position (`4.1.0`). See `help time-values`. */
-    endTick?: number | null;
-    /** Loop region start. Ticks (`3840t`), clock time (`1.5s`), or musical position (`4.1.0`). Must be \< `end-tick`. See `help time-values`. */
-    startTick?: number | null;
+    /** Whether the loop region is engaged. Omit to leave the flag untouched. */
+    active?: boolean;
+    /** Exclusive upper bound, in project ticks. Must be greater than `startTick`. */
+    endTick?: number;
+    /** Inclusive lower bound, in project ticks. Must be non-negative and less than `endTick`. */
+    startTick?: number;
 }
 
 /** Success payload of `transport state`. */
 export interface TransportStateResult {
     /** Current playback head position in seconds from the start of the project. */
     position: number;
-    /** Transport state: 'stopped', 'playing', or 'playing but interrupted' (play intention active but audio paused pending synthesis). */
+    /** Transport state: `stopped`, `playing`, or `playing but interrupted` (play intention active but audio paused pending synthesis). */
     status: string;
 }
 
@@ -5678,11 +5632,11 @@ export interface TransportOperations {
     /**
      * Transport moved: play, stop, a user seek, or the loop region. `changes`
      * carries `playing`, `position`, `loop`. Transitions only — the continuous
-     * playback position is deliberately not a channel, because a re-fetch per frame
-     * is what the coalescing cannot save; a throttled position feed is its own
+     * playback position is deliberately not a subject here, because a re-fetch per
+     * frame is what the coalescing cannot save; a throttled position feed is its own
      * mechanism. A peer re-fetches with `transport state`.
      *
-     * Listen for changes on the `transport` channel. The event is a hint to re-read, not the new state.
+     * Listen for `transport.changed`. The event is a hint to re-read, not the new state.
      *
      * Requires the `transport.state` capability — an ungranted subscription is refused at this call, not silently never delivered.
      */
@@ -5693,30 +5647,30 @@ export interface TransportOperations {
 
 /** Success payload of `ui get`. */
 export interface UiGetResult {
-    /** Dockable panels, keyed by the selector `ui show-panel` takes. */
+    /** Dockable panels — the roster `ui show-panel` / `ui hide-panel` take a member of. */
     panels: {
-        /** The track-config / FX panel for the selected track. */
+        /** One chrome citizen's reportable state. The visible/animating split matters: these transitions are animated and the open flag flips at the *start* of the animation, so `visible: true, animating: true` means "opening", not "open". */
         fx: {
             /** Whether it is mid-transition (opening or closing). */
             animating: boolean;
             /** Whether the citizen is currently on screen. */
             visible: boolean;
         };
-        /** The mixer panel: track volume, pan, mute, solo, and effect controls. */
+        /** One chrome citizen's reportable state. The visible/animating split matters: these transitions are animated and the open flag flips at the *start* of the animation, so `visible: true, animating: true` means "opening", not "open". */
         mixer: {
             /** Whether it is mid-transition (opening or closing). */
             animating: boolean;
             /** Whether the citizen is currently on screen. */
             visible: boolean;
         };
-        /** The MV creator panel. Shares one slot with `v2m` - see `sharedPanelSlot`. */
+        /** One chrome citizen's reportable state. The visible/animating split matters: these transitions are animated and the open flag flips at the *start* of the animation, so `visible: true, animating: true` means "opening", not "open". */
         mv: {
             /** Whether it is mid-transition (opening or closing). */
             animating: boolean;
             /** Whether the citizen is currently on screen. */
             visible: boolean;
         };
-        /** The video-composer (V2M) panel. Shares one slot with `mv` - see `sharedPanelSlot`. */
+        /** One chrome citizen's reportable state. The visible/animating split matters: these transitions are animated and the open flag flips at the *start* of the animation, so `visible: true, animating: true` means "opening", not "open". */
         v2m: {
             /** Whether it is mid-transition (opening or closing). */
             animating: boolean;
@@ -5726,21 +5680,21 @@ export interface UiGetResult {
     };
     /** The one slot `mv` and `v2m` take turns holding: showing one closes the other. */
     sharedPanelSlot: {
-        /** Whether the slot is on screen. `panels.\<selected\>.visible` is this flag; the other member is always hidden. */
+        /** Whether the slot is on screen. `panels.\<selected\>.visible` mirrors this flag; the other member of the pair is always hidden. */
         open: boolean;
-        /** Which of the two currently holds the slot. Survives the slot closing, so it is also which one a bare re-open would show. */
-        selected: 'mv' | 'v2m';
+        /** Which of `mv` / `v2m` currently holds the slot. Survives the slot closing, so it is also which one a bare re-open would show. */
+        selected: string;
     };
-    /** Arrangement-view special-track rows, keyed by the selector `ui show-special-track` takes. */
+    /** Arrangement-view special-track rows — the roster `ui show-special-track` / `ui hide-special-track` take a member of. */
     specialTracks: {
-        /** The chord progression row. */
+        /** One chrome citizen's reportable state. The visible/animating split matters: these transitions are animated and the open flag flips at the *start* of the animation, so `visible: true, animating: true` means "opening", not "open". */
         chord: {
             /** Whether it is mid-transition (opening or closing). */
             animating: boolean;
             /** Whether the citizen is currently on screen. */
             visible: boolean;
         };
-        /** The combined tempo and time-signature rows (they toggle together). */
+        /** One chrome citizen's reportable state. The visible/animating split matters: these transitions are animated and the open flag flips at the *start* of the animation, so `visible: true, animating: true` means "opening", not "open". */
         tempo_and_timesig: {
             /** Whether it is mid-transition (opening or closing). */
             animating: boolean;
@@ -5748,9 +5702,9 @@ export interface UiGetResult {
             visible: boolean;
         };
     };
-    /** Tool windows, keyed by the selector `ui show-window` takes. */
+    /** Tool windows — the roster `ui show-window` / `ui hide-window` take a member of. */
     windows: {
-        /** The floating video-monitor window. */
+        /** One chrome citizen's reportable state. The visible/animating split matters: these transitions are animated and the open flag flips at the *start* of the animation, so `visible: true, animating: true` means "opening", not "open". */
         'video-monitor': {
             /** Whether it is mid-transition (opening or closing). */
             animating: boolean;
@@ -5762,37 +5716,37 @@ export interface UiGetResult {
 
 /** Arguments for `ui hide-panel`. */
 export interface UiHidePanelParams {
-    /** Which dockable panel: `mixer`, `fx`, `mv`, or `v2m`. */
+    /** The dockable panels `ui show-panel` / `ui hide-panel` take one of. */
     panel: 'mixer' | 'fx' | 'mv' | 'v2m';
 }
 
 /** Arguments for `ui hide-special-track`. */
 export interface UiHideSpecialTrackParams {
-    /** Which arrangement-view row: `chord` or `tempo_and_timesig`. */
+    /** The arrangement-view rows `ui show-special-track` / `ui hide-special-track` take one of. */
     specialTrack: 'chord' | 'tempo_and_timesig';
 }
 
 /** Arguments for `ui hide-window`. */
 export interface UiHideWindowParams {
-    /** Which tool window: `video-monitor`. */
+    /** The tool windows `ui show-window` / `ui hide-window` take one of. */
     window: 'video-monitor';
 }
 
 /** Arguments for `ui show-panel`. */
 export interface UiShowPanelParams {
-    /** Which dockable panel: `mixer`, `fx`, `mv`, or `v2m`. */
+    /** The dockable panels `ui show-panel` / `ui hide-panel` take one of. */
     panel: 'mixer' | 'fx' | 'mv' | 'v2m';
 }
 
 /** Arguments for `ui show-special-track`. */
 export interface UiShowSpecialTrackParams {
-    /** Which arrangement-view row: `chord` or `tempo_and_timesig`. */
+    /** The arrangement-view rows `ui show-special-track` / `ui hide-special-track` take one of. */
     specialTrack: 'chord' | 'tempo_and_timesig';
 }
 
 /** Arguments for `ui show-window`. */
 export interface UiShowWindowParams {
-    /** Which tool window: `video-monitor`. */
+    /** The tool windows `ui show-window` / `ui hide-window` take one of. */
     window: 'video-monitor';
 }
 
@@ -5848,14 +5802,13 @@ export interface UiOperations {
     showWindow(params: UiShowWindowParams, options?: MutatingCallOptions): Promise<void>;
 
     /**
-     * Studio chrome: a panel, tool window, or arrangement-view row
-     * was shown or hidden. `changes` carries the affected citizens as their paths
-     * in the `ui get` payload — `panels.mixer`, `specialTracks.chord`,
-     * `windows.video-monitor` — plus `sharedPanelSlot.selected` when MV and V2M
-     * swap the slot without either becoming visible. A peer re-fetches with
-     * `ui get`.
+     * Studio chrome: a panel, tool window, or arrangement-view row was shown or
+     * hidden. `changes` carries the affected citizens as their paths in the `ui get`
+     * payload — `panels.mixer`, `specialTracks.chord`, `windows.video-monitor` —
+     * plus `sharedPanelSlot.selected` when MV and V2M swap the slot without either
+     * becoming visible. A peer re-fetches with `ui get`.
      *
-     * Listen for changes on the `ui` channel. The event is a hint to re-read, not the new state.
+     * Listen for `ui.changed`. The event is a hint to re-read, not the new state.
      *
      * Requires the `ui.state` capability — an ungranted subscription is refused at this call, not silently never delivered.
      */
@@ -5866,9 +5819,9 @@ export interface UiOperations {
 
 /** Arguments for `vocalparam layers`. */
 export interface VocalparamLayersParams {
-    /** Report only this category instead of the whole matrix. One of `pitch`, `energy`, `tension`, `air`, `falsetto`, `formant`. */
+    /** Which vocal characteristic a curve controls. Spellings follow the vocal-control UI's own face names: `pitch` is the melodic line as a delta in semitones, `energy` the loudness/effort curve, `tension` the vocal strain, `air` the breathiness, `falsetto` the head-voice mix, and `formant` the gender channel. Two of the UI's faces are deliberately absent, because neither is a curve: its "Breath" face places breath *marks* (the `breath` group) and its "Pronounce" face edits phoneme timing (the `lyric` group). Every category is addressable, but not every category exists on every clip: which ones do depends on the singer's engine generation, and `vocalparam layers` reports that as an availability matrix rather than by omitting a row. */
     category?: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
-    /** Clip id, as reported by `clip list` (braced form, e.g. `\{6f1c...\}`). */
+    /** Clip id, as reported by `clip list` (braced form). */
     clipUuid: string;
 }
 
@@ -5876,26 +5829,26 @@ export interface VocalparamLayersParams {
 export interface VocalparamLayersResult {
     /** One row per parameter category, in canonical order. A category this generation does not support is present with an empty `layers` list, so the matrix stays a full grid rather than a set a consumer has to diff. */
     categories: {
-        /** False when the category cannot be read or written on this clip; `layers` is then empty and `unavailableReason` says why. Either the engine generation has no such parameter, or this surface does not carry it yet. */
+        /** False when the category cannot be read or written on this clip — either the engine generation has no such parameter, or this surface does not carry it yet. `layers` is then empty and `unavailableReason` says why. */
         available: boolean;
-        /** Parameter category. */
+        /** Which vocal characteristic a curve controls. Spellings follow the vocal-control UI's own face names: `pitch` is the melodic line as a delta in semitones, `energy` the loudness/effort curve, `tension` the vocal strain, `air` the breathiness, `falsetto` the head-voice mix, and `formant` the gender channel. Two of the UI's faces are deliberately absent, because neither is a curve: its "Breath" face places breath *marks* (the `breath` group) and its "Pronounce" face edits phoneme timing (the `lyric` group). Every category is addressable, but not every category exists on every clip: which ones do depends on the singer's engine generation, and `vocalparam layers` reports that as an availability matrix rather than by omitting a row. */
         category: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
         /** The layers this (generation x category) has, merge order first. `effective` is not listed here: it exists for every available category and is what `vocalparam read` returns beside the layers. */
         layers: {
-            /** `read-write` for a layer a write may target, `read-only` otherwise. The effective curve is always read-only. */
+            /** Whether a layer can be written, on this clip's engine generation. The two are exclusive: `read-write` names a layer `vocalparam write` may target, `read-only` one it always refuses. The merged `effective` curve is `read-only` on every generation. */
             access: 'read-only' | 'read-write';
-            /** Layer name. */
+            /** One layer of a parameter's curve stack, including the merged result. A vocal parameter is not one curve: it is a stack the engine merges. `baseline` is what the engine produced unprompted (the model's analyzed curve, or the generation's synthesized default) and is read-only, because it shifts with every re-render. `user` and `direct` are drawn overrides that win wherever they carry a value and are undrawn elsewhere. `envelope` is a multiplier over what lies under it. `effective` is the merged curve the synth actually consumes: engine-computed, always readable, never writable — never reconstruct it from the layers. Which of these a given (generation x category) has is a host fact, not a property of this roster: `vocalparam layers` reports the matrix, and `effective` exists for every available category. */
             layer: 'baseline' | 'user' | 'envelope' | 'direct' | 'effective';
             /** What the layer contributes to the merge: `analyzed-pristine` (the model's unconditioned production), `synthesized-default` (the engine's own curve), `override` (drawn values that win where present), `multiplier` (scales what is under it), or `merged` (the effective curve). */
             role: string;
             /** True when the layer carries values only where drawn, with gaps elsewhere (a gap is `null` under `encoding: json`, a NaN bit pattern under `base64`). */
             sparse: boolean;
         }[];
-        /** Which value space the numbers live in. `model` is SingingMamba's [0,1] model scale; `envelope` is Verse24's multiplier space; `semitones` is pitch delta. Never conflate them (ADR 0073 §3). */
+        /** Which value space the numbers live in: `model` is SingingMamba's [0,1] model scale, `envelope` is Verse24's multiplier space, `semitones` is pitch delta. Never conflate them (ADR 0073 §3). */
         scale?: string;
-        /** Present only when `available` is false: why the category cannot be used here, in one sentence. Read this rather than inferring a cause from the generation. */
+        /** Present only when `available` is false: why the category cannot be used here, in one sentence. */
         unavailableReason?: string;
-        /** Inclusive bounds of a legal value in this category's scale. */
+        /** Inclusive bounds of a legal value in a category's scale. */
         valueRange?: {
             max?: number;
             min?: number;
@@ -5911,64 +5864,66 @@ export interface VocalparamLayersResult {
 
 /** Arguments for `vocalparam read`. */
 export interface VocalparamReadParams {
-    /** Parameter category to read: `pitch`, `energy`, `tension`, `air`, `falsetto`, or `formant`. See `vocalparam layers` for what this clip's singer generation supports. */
+    /** Which vocal characteristic a curve controls. Spellings follow the vocal-control UI's own face names: `pitch` is the melodic line as a delta in semitones, `energy` the loudness/effort curve, `tension` the vocal strain, `air` the breathiness, `falsetto` the head-voice mix, and `formant` the gender channel. Two of the UI's faces are deliberately absent, because neither is a curve: its "Breath" face places breath *marks* (the `breath` group) and its "Pronounce" face edits phoneme timing (the `lyric` group). Every category is addressable, but not every category exists on every clip: which ones do depends on the singer's engine generation, and `vocalparam layers` reports that as an availability matrix rather than by omitting a row. */
     category: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
-    /** Clip id, as reported by `clip list` (braced form, e.g. `\{6f1c...\}`). */
+    /** Clip id, as reported by `clip list` (braced form). */
     clipUuid: string;
-    /** Return only this layer instead of every layer. `effective` is accepted here (unlike on a write) and returns the merged curve alone. */
+    /** Wire encoding of a point payload. `json` is the default: points travel as a plain array of numbers with `null` at a gap, which costs nothing to read with `jq` and keeps a curve inspectable without tooling. `base64` travels as the self-describing little-endian envelope (see `PointsEnvelope`), a gap a NaN bit pattern — bit-exact and compact, which is what a long curve wants. */
+    encoding?: 'json' | 'base64';
+    /** One layer of a parameter's curve stack, including the merged result. A vocal parameter is not one curve: it is a stack the engine merges. `baseline` is what the engine produced unprompted (the model's analyzed curve, or the generation's synthesized default) and is read-only, because it shifts with every re-render. `user` and `direct` are drawn overrides that win wherever they carry a value and are undrawn elsewhere. `envelope` is a multiplier over what lies under it. `effective` is the merged curve the synth actually consumes: engine-computed, always readable, never writable — never reconstruct it from the layers. Which of these a given (generation x category) has is a host fact, not a property of this roster: `vocalparam layers` reports the matrix, and `effective` exists for every available category. */
     layer?: 'baseline' | 'user' | 'envelope' | 'direct' | 'effective';
     /** First clip-local tick to read. Defaults to the clip's visible start. */
-    rangeBegin?: number | null;
+    rangeBegin?: number;
     /** Clip-local tick to read up to, exclusive. Defaults to the clip's visible end. */
-    rangeEnd?: number | null;
+    rangeEnd?: number;
 }
 
 /** Success payload of `vocalparam read`. */
 export interface VocalparamReadResult {
-    /** The category read. */
+    /** Which vocal characteristic a curve controls. Spellings follow the vocal-control UI's own face names: `pitch` is the melodic line as a delta in semitones, `energy` the loudness/effort curve, `tension` the vocal strain, `air` the breathiness, `falsetto` the head-voice mix, and `formant` the gender channel. Two of the UI's faces are deliberately absent, because neither is a curve: its "Breath" face places breath *marks* (the `breath` group) and its "Pronounce" face edits phoneme timing (the `lyric` group). Every category is addressable, but not every category exists on every clip: which ones do depends on the singer's engine generation, and `vocalparam layers` reports that as an availability matrix rather than by omitting a row. */
     category: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
     /** The clip read from. */
     clipUuid: string;
     /** Elements per layer: one per clip-local tick, so the last covers tick `posBegin + count - 1`. */
     count: number;
-    /** The merged final curve the synth consumes. Engine-computed and always read-only; never reconstruct it from the layers. */
+    /** One layer as `vocalparam read` returns it: its declaration plus the points themselves. */
     effective: {
-        /** `read-write` for a layer a write may target, `read-only` otherwise. The effective curve is always read-only. */
+        /** Whether a layer can be written, on this clip's engine generation. The two are exclusive: `read-write` names a layer `vocalparam write` may target, `read-only` one it always refuses. The merged `effective` curve is `read-only` on every generation. */
         access: 'read-only' | 'read-write';
-        /** For a sparse layer, the clip-local tick ranges that carry drawn values. Absent on a dense layer. Reading this is cheaper than scanning the points for gaps. */
+        /** For a sparse layer, the clip-local tick ranges that carry drawn values. Absent on a dense layer. Reading this is cheaper than scanning `points` for gaps. */
         drawnRanges?: {
             begin: number;
             end: number;
         }[];
-        /** Layer name. */
+        /** One layer of a parameter's curve stack, including the merged result. A vocal parameter is not one curve: it is a stack the engine merges. `baseline` is what the engine produced unprompted (the model's analyzed curve, or the generation's synthesized default) and is read-only, because it shifts with every re-render. `user` and `direct` are drawn overrides that win wherever they carry a value and are undrawn elsewhere. `envelope` is a multiplier over what lies under it. `effective` is the merged curve the synth actually consumes: engine-computed, always readable, never writable — never reconstruct it from the layers. Which of these a given (generation x category) has is a host fact, not a property of this roster: `vocalparam layers` reports the matrix, and `effective` exists for every available category. */
         layer: 'baseline' | 'user' | 'envelope' | 'direct' | 'effective';
-        /** The layer's values, one per clip-local tick from `posBegin`. Under `encoding: json` (the default) this field is instead a plain array of numbers, `null` at a gap. */
-        points: TypedArrayFor<'f64le'>;
-        /** What the layer contributes to the merge: `analyzed-pristine` (the model's unconditioned production), `synthesized-default` (the engine's own curve), `override` (drawn values that win where present), `multiplier` (scales what is under it), or `merged` (the effective curve). */
+        /** The layer's values, one per clip-local tick from `posBegin`. Shaped by the sibling `encoding` argument: under `json` (the default) a plain array of numbers, `null` at a gap; under `base64` a `PointsEnvelope`, a gap a NaN bit pattern. No IDL type spans both shapes, so this field is declared `json` — see `PointsEnvelope`'s doc comment. */
+        points: unknown;
+        /** See `LayerDeclaration.role`. */
         role: string;
-        /** True when the layer carries values only where drawn, with gaps elsewhere (a gap is `null` under `encoding: json`, a NaN bit pattern under `base64`). */
+        /** See `LayerDeclaration.sparse`. */
         sparse: boolean;
     };
     /** The clip's singer engine generation. */
     engineGeneration: string;
-    /** Content token for this category's writable layers (ADR 0088 §5). Carry it into `vocalparam write --if-match` to fail STALE_WRITE rather than overwrite an edit that landed in between. */
+    /** Content token for this category's writable layers (ADR 0088 §5). Carry it into `vocalparam write`'s reserved `fingerprint` argument to fail STALE_WRITE rather than overwrite an edit that landed in between. */
     fingerprint: Fingerprint;
     /** Every layer this (generation x category) has, merge order first. */
     layers: {
-        /** `read-write` for a layer a write may target, `read-only` otherwise. The effective curve is always read-only. */
+        /** Whether a layer can be written, on this clip's engine generation. The two are exclusive: `read-write` names a layer `vocalparam write` may target, `read-only` one it always refuses. The merged `effective` curve is `read-only` on every generation. */
         access: 'read-only' | 'read-write';
-        /** For a sparse layer, the clip-local tick ranges that carry drawn values. Absent on a dense layer. Reading this is cheaper than scanning the points for gaps. */
+        /** For a sparse layer, the clip-local tick ranges that carry drawn values. Absent on a dense layer. Reading this is cheaper than scanning `points` for gaps. */
         drawnRanges?: {
             begin: number;
             end: number;
         }[];
-        /** Layer name. */
+        /** One layer of a parameter's curve stack, including the merged result. A vocal parameter is not one curve: it is a stack the engine merges. `baseline` is what the engine produced unprompted (the model's analyzed curve, or the generation's synthesized default) and is read-only, because it shifts with every re-render. `user` and `direct` are drawn overrides that win wherever they carry a value and are undrawn elsewhere. `envelope` is a multiplier over what lies under it. `effective` is the merged curve the synth actually consumes: engine-computed, always readable, never writable — never reconstruct it from the layers. Which of these a given (generation x category) has is a host fact, not a property of this roster: `vocalparam layers` reports the matrix, and `effective` exists for every available category. */
         layer: 'baseline' | 'user' | 'envelope' | 'direct' | 'effective';
-        /** The layer's values, one per clip-local tick from `posBegin`. Under `encoding: json` (the default) this field is instead a plain array of numbers, `null` at a gap. */
-        points: TypedArrayFor<'f64le'>;
-        /** What the layer contributes to the merge: `analyzed-pristine` (the model's unconditioned production), `synthesized-default` (the engine's own curve), `override` (drawn values that win where present), `multiplier` (scales what is under it), or `merged` (the effective curve). */
+        /** The layer's values, one per clip-local tick from `posBegin`. Shaped by the sibling `encoding` argument: under `json` (the default) a plain array of numbers, `null` at a gap; under `base64` a `PointsEnvelope`, a gap a NaN bit pattern. No IDL type spans both shapes, so this field is declared `json` — see `PointsEnvelope`'s doc comment. */
+        points: unknown;
+        /** See `LayerDeclaration.role`. */
         role: string;
-        /** True when the layer carries values only where drawn, with gaps elsewhere (a gap is `null` under `encoding: json`, a NaN bit pattern under `base64`). */
+        /** See `LayerDeclaration.sparse`. */
         sparse: boolean;
     }[];
     /** Clip-local tick of element 0. Shared by every layer and by the effective curve, and the value a write restates. */
@@ -5980,7 +5935,7 @@ export interface VocalparamReadResult {
         begin: number;
         end: number;
     }[];
-    /** Inclusive bounds of a legal value in this scale. */
+    /** Inclusive bounds of a legal value in a category's scale. */
     valueRange?: {
         max?: number;
         min?: number;
@@ -5989,25 +5944,23 @@ export interface VocalparamReadResult {
 
 /** Arguments for `vocalparam write`. */
 export interface VocalparamWriteParams {
-    /** Parameter category to write: `pitch`, `energy`, `tension`, `air`, `falsetto`, or `formant`. */
+    /** Which vocal characteristic a curve controls. Spellings follow the vocal-control UI's own face names: `pitch` is the melodic line as a delta in semitones, `energy` the loudness/effort curve, `tension` the vocal strain, `air` the breathiness, `falsetto` the head-voice mix, and `formant` the gender channel. Two of the UI's faces are deliberately absent, because neither is a curve: its "Breath" face places breath *marks* (the `breath` group) and its "Pronounce" face edits phoneme timing (the `lyric` group). Every category is addressable, but not every category exists on every clip: which ones do depends on the singer's engine generation, and `vocalparam layers` reports that as an availability matrix rather than by omitting a row. */
     category: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
-    /** Clip id, as reported by `clip list` (braced form, e.g. `\{6f1c...\}`). */
+    /** Clip id, as reported by `clip list` (braced form). */
     clipUuid: string;
-    /** The writable layer to replace — required, and never `effective`: the merge is engine-owned (ADR 0085). `vocalparam layers` marks which layers this clip's generation lets you write. */
+    /** Wire encoding of a point payload. `json` is the default: points travel as a plain array of numbers with `null` at a gap, which costs nothing to read with `jq` and keeps a curve inspectable without tooling. `base64` travels as the self-describing little-endian envelope (see `PointsEnvelope`), a gap a NaN bit pattern — bit-exact and compact, which is what a long curve wants. */
+    encoding?: 'json' | 'base64';
+    /** A layer `vocalparam write` may target: `ParamLayerName` minus `effective`. `effective` is the merged curve and is never writable (ADR 0085) — the merge rule is engine-owned, and a consumer that could write the merged result would be reimplementing it. Sharing one layer roster with the read side would make a write's schema advertise a value the host always refuses, which is a type that lies about what the operation accepts; so the write side declares its own roster and the value is refused at decode rather than by a handler branch. The roster is still not the availability: `vocalparam layers` marks which of these this clip's generation actually lets you write. */
     layer: 'baseline' | 'user' | 'envelope' | 'direct';
-    /**
-     * The replacement values, one per clip-local tick from `--pos-begin`.
-     *
-     * A JSON array of numbers (`null` clears a tick back to undrawn), or the base64 envelope `\{"dtype":"f64le","count":N,"data":"..."\}` with `--encoding base64`. Read it from a file with `\@curve.json` or from a pipe with `\@-` — a curve does not belong on a command line.
-     */
-    points: TypedArrayFor<Dtype>;
-    /** Clip-local tick the written span starts at — element 0 of `--points` lands here. Pass back the `posBegin` from the read you transformed. */
+    /** The replacement values, one per clip-local tick from `posBegin`. Same dual shape as `ParamLayer.points`, chosen by the sibling `encoding` argument: a plain array under `json` (`null` clears a tick to undrawn), or a `PointsEnvelope` under `base64` — whose declared `count` must match its decoded byte length, or the write is rejected. */
+    points: unknown;
+    /** Clip-local tick the written span starts at — element 0 of `points` lands here. Pass back the `posBegin` from the read you transformed. */
     posBegin: number;
 }
 
 /** Success payload of `vocalparam write`. */
 export interface VocalparamWriteResult {
-    /** The category written. */
+    /** Which vocal characteristic a curve controls. Spellings follow the vocal-control UI's own face names: `pitch` is the melodic line as a delta in semitones, `energy` the loudness/effort curve, `tension` the vocal strain, `air` the breathiness, `falsetto` the head-voice mix, and `formant` the gender channel. Two of the UI's faces are deliberately absent, because neither is a curve: its "Breath" face places breath *marks* (the `breath` group) and its "Pronounce" face edits phoneme timing (the `lyric` group). Every category is addressable, but not every category exists on every clip: which ones do depends on the singer's engine generation, and `vocalparam layers` reports that as an availability matrix rather than by omitting a row. */
     category: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
     /** How many of those values were gaps (`null` / NaN) and so returned the tick to undrawn rather than setting a value. */
     clearedCount?: number;
@@ -6017,7 +5970,7 @@ export interface VocalparamWriteResult {
     count: number;
     /** The category's content token *after* the write — what to carry into the next guarded write without re-reading. */
     fingerprint: Fingerprint;
-    /** The layer written. Never `effective`. */
+    /** A layer `vocalparam write` may target: `ParamLayerName` minus `effective`. `effective` is the merged curve and is never writable (ADR 0085) — the merge rule is engine-owned, and a consumer that could write the merged result would be reimplementing it. Sharing one layer roster with the read side would make a write's schema advertise a value the host always refuses, which is a type that lies about what the operation accepts; so the write side declares its own roster and the value is refused at decode rather than by a handler branch. The roster is still not the availability: `vocalparam layers` marks which of these this clip's generation actually lets you write. */
     layer: 'baseline' | 'user' | 'envelope' | 'direct';
     /** Clip-local tick the written span starts at. */
     posBegin: number;
@@ -6070,22 +6023,22 @@ export interface VoiceCollectResult {
 /** Arguments for `voice community`. */
 export interface VoiceCommunityParams {
     /** Only return voices you have already collected. */
-    isMyCollection?: boolean | null;
+    isMyCollection?: boolean;
     /** Filter by name substring, case-insensitive. */
-    keyword?: string | null;
+    keyword?: string;
     /** Filter by language, as a full English name such as `Japanese`. */
-    language?: string | null;
+    language?: string;
     /** Which page to fetch, 0-based. Each page holds up to 30 voices. Defaults to the first page. */
-    page?: number | null;
+    page?: number;
     /** Filter by tag name, case-insensitive, matching any of the given tags. */
-    tags?: string[] | null;
+    tags?: string[];
 }
 
 /** Success payload of `voice community`. */
 export interface VoiceCommunityResult {
     /** How many voices this page returned. */
     count?: number;
-    /** Set to 'Timeout' when the catalog fetch timed out; retry the command. Absent on normal success. */
+    /** Set to `Timeout` when the catalog fetch timed out; retry the command. Absent on normal success. */
     error?: string;
     /** The requested page, echoed back. 0-based. */
     page: number;
@@ -6118,16 +6071,12 @@ export interface VoiceCommunityResult {
 
 /** Arguments for `voice seeds`. */
 export interface VoiceSeedsParams {
-    /**
-     * Include seeds from community voices you have collected.
-     *
-     * The app's "+" popup leaves these out, but that is a listing choice rather than a capability rule: starting from a community voice and blending onto it reaches the same state, so the surface allows them and says so.
-     */
-    community?: boolean | null;
+    /** Include seeds from community voices you have collected. The app's "+" popup leaves these out, but that is a listing choice rather than a capability rule: starting from a community voice and blending onto it reaches the same state, so the surface allows them and says so. */
+    community?: boolean;
     /** Filter by name substring, case-insensitive. */
-    keyword?: string | null;
+    keyword?: string;
     /** Only list seeds a blend on this model can use, by model name or generation. Omit to list every seed you own. */
-    model?: string | null;
+    model?: string;
 }
 
 /** Success payload of `voice seeds`. */
@@ -6142,8 +6091,8 @@ export interface VoiceSeedsResult {
         labels?: string[];
         /** Display name. */
         name: string;
-        /** Which library the seed comes from. */
-        origin?: 'premade' | 'cloned' | 'community';
+        /** Which library the seed comes from: `premade`, `cloned`, or `community`. */
+        origin?: string;
         /** Ref for this seed, accepted by `blend add --seed`. */
         ref: string;
     }[];
@@ -6152,7 +6101,7 @@ export interface VoiceSeedsResult {
 /** Arguments for `voice synth-models`. */
 export interface VoiceSynthModelsParams {
     /** Only list models that can sing this language, as a full English name. */
-    language?: string | null;
+    language?: string;
 }
 
 /** Success payload of `voice synth-models`. */
@@ -6369,7 +6318,7 @@ export const OPERATIONS = [
     { path: 'timesig set', domain: 'timesig', method: 'set', capability: 'timesig.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
     { path: 'timesig set-at', domain: 'timesig', method: 'setAt', capability: 'timesig.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
     { path: 'track create', domain: 'track', method: 'create', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'track delete', domain: 'track', method: 'delete', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'track delete', domain: 'track', method: 'delete', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'track duplicate', domain: 'track', method: 'duplicate', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'track get', domain: 'track', method: 'get', capability: 'track.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'track list', domain: 'track', method: 'list', capability: 'track.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
@@ -6394,25 +6343,25 @@ export const OPERATIONS = [
     { path: 'ui show-special-track', domain: 'ui', method: 'showSpecialTrack', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'ui show-window', domain: 'ui', method: 'showWindow', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'vocalparam layers', domain: 'vocalparam', method: 'layers', capability: 'vocalparam.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'vocalparam read', domain: 'vocalparam', method: 'read', capability: 'vocalparam.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true, bulkEncoding: 'base64' },
-    { path: 'vocalparam write', domain: 'vocalparam', method: 'write', capability: 'vocalparam.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true, bulkEncoding: 'base64' },
+    { path: 'vocalparam read', domain: 'vocalparam', method: 'read', capability: 'vocalparam.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'vocalparam write', domain: 'vocalparam', method: 'write', capability: 'vocalparam.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
     { path: 'voice collect', domain: 'voice', method: 'collect', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'voice community', domain: 'voice', method: 'community', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'voice seeds', domain: 'voice', method: 'seeds', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
     { path: 'voice synth-models', domain: 'voice', method: 'synthModels', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
 ] as const satisfies readonly OperationDescriptor[];
 
-/** Every observable channel in this artifact, sorted by channel. The runtime builds one subscription per row and guards it with the row's capability; a channel absent from this table is not observable from this artifact at all. */
+/** Every observable channel in this artifact, sorted by notification. The runtime binds one handler per row and guards the subscribe with the row's capability; a channel absent from this table is not observable from this artifact at all. */
 export const NOTIFICATION_CHANNELS = [
-    { channel: 'canvas', domain: 'canvas', method: 'onChanged', capability: 'canvas.read' },
-    { channel: 'clips', domain: 'clip', method: 'onChanged', capability: 'clip.read' },
-    { channel: 'jobs', domain: 'job', method: 'onChanged', capability: 'job.read' },
-    { channel: 'project', domain: 'project', method: 'onChanged', capability: 'project.read' },
-    { channel: 'selection', domain: 'selection', method: 'onChanged', capability: 'selection.read' },
-    { channel: 'tempo', domain: 'tempo', method: 'onChanged', capability: 'tempo.read' },
-    { channel: 'tracks', domain: 'track', method: 'onChanged', capability: 'track.read' },
-    { channel: 'transport', domain: 'transport', method: 'onChanged', capability: 'transport.state' },
-    { channel: 'ui', domain: 'ui', method: 'onChanged', capability: 'ui.state' },
+    { notification: 'canvas.changed', domain: 'canvas', method: 'onChanged', capability: 'canvas.read' },
+    { notification: 'clips.changed', domain: 'clip', method: 'onChanged', capability: 'clip.read' },
+    { notification: 'jobs.changed', domain: 'job', method: 'onChanged', capability: 'job.read' },
+    { notification: 'project.changed', domain: 'project', method: 'onChanged', capability: 'project.read' },
+    { notification: 'selection.changed', domain: 'selection', method: 'onChanged', capability: 'selection.read' },
+    { notification: 'tempo.changed', domain: 'tempo', method: 'onChanged', capability: 'tempo.read' },
+    { notification: 'tracks.changed', domain: 'track', method: 'onChanged', capability: 'track.read' },
+    { notification: 'transport.changed', domain: 'transport', method: 'onChanged', capability: 'transport.state' },
+    { notification: 'ui.changed', domain: 'ui', method: 'onChanged', capability: 'ui.state' },
 ] as const satisfies readonly ChannelDescriptor[];
 
 /** The token each operation requires, for the pre-wire guard: a call the session's grant cannot reach fails locally with the identical typed `CAPABILITY_DENIED` the host would have returned. Ungated operations are absent — they need no token. */
@@ -6594,16 +6543,7 @@ export const DRAFT_PROFILES = [
 export const FIELD_CAPABILITIES = {} as const satisfies Readonly<Record<string, Readonly<Record<string, CapabilityToken>>>>;
 
 /** Where the bulk fields sit in each operation's arguments object, for the encode/decode pass that swaps typed arrays for the base64 envelope. */
-export const BULK_PARAM_FIELDS = {
-    'vocalparam write': [
-        { field: 'points', dtype: null },
-    ],
-} as const satisfies Readonly<Record<string, readonly BulkFieldDescriptor[]>>;
+export const BULK_PARAM_FIELDS = {} as const satisfies Readonly<Record<string, readonly BulkFieldDescriptor[]>>;
 
 /** Where the bulk fields sit in each operation's result object, for the encode/decode pass that swaps typed arrays for the base64 envelope. */
-export const BULK_RESULT_FIELDS = {
-    'vocalparam read': [
-        { field: 'effective.points', dtype: 'f64le' },
-        { field: 'layers[].points', dtype: 'f64le' },
-    ],
-} as const satisfies Readonly<Record<string, readonly BulkFieldDescriptor[]>>;
+export const BULK_RESULT_FIELDS = {} as const satisfies Readonly<Record<string, readonly BulkFieldDescriptor[]>>;

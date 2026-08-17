@@ -17,7 +17,7 @@ The analysis to apply, as reported by `tempo analyze`. Consumed on success: a se
 ### anchor?
 
 ```ts
-optional anchor?: number | null;
+optional anchor?: number;
 ```
 
-Where the analyzed audio starts, in project time. Omit to use the analyzed clip's own current position, which is what you want unless the clip moved since. Seconds (`1.5s`), clock time (`1:23.5`), or a tick / musical position converted to seconds. See `help time-values`.
+Where the analyzed audio starts, in project seconds. Omit to use the analyzed clip's own current position, which is what you want unless the clip moved since.

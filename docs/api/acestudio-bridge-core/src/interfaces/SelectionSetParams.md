@@ -7,53 +7,36 @@ Arguments for `selection set`.
 ### horizontalSelection?
 
 ```ts
-optional horizontalSelection?: 
-  | {
+optional horizontalSelection?: {
   begin: number;
   end: number;
-}
-  | null;
+};
 ```
 
-[arrangement] Time range to select, as `\{"begin": \<ticks\>, "end": \<ticks\>\}`.
+A `\{begin, end\}` range: ticks for the arrangement's horizontal (time) and vertical (track index) selection, local ticks for the editor's note selection range.
 
-#### Union Members
-
-##### Type Literal
-
-```ts
-{
-  begin: number;
-  end: number;
-}
-```
-
-##### begin
+#### begin
 
 ```ts
 begin: number;
 ```
 
-Inclusive start of the range (ticks for horizontal; track index for vertical; can be negative for special tracks).
+Inclusive start of the range.
 
-##### end
+#### end
 
 ```ts
 end: number;
 ```
 
-Exclusive end of the range (ticks for horizontal; track index for vertical; can be negative for special tracks).
-
-***
-
-`null`
+Exclusive end of the range.
 
 ***
 
 ### mode?
 
 ```ts
-optional mode?: string | null;
+optional mode?: string;
 ```
 
 [editor, UUID form] Selection mode: `replace` or `modify`.
@@ -63,48 +46,56 @@ optional mode?: string | null;
 ### notesToDeselect?
 
 ```ts
-optional notesToDeselect?: 
-  | {
+optional notesToDeselect?: {
   uuid: string;
-}[]
-  | null;
+}[];
 ```
 
-[editor, UUID modify form] Notes to deselect, as a JSON array of `\{uuid\}` objects. Ignored in replace mode.
+[editor, UUID modify form] Notes to deselect. Ignored in replace mode.
+
+#### uuid
+
+```ts
+uuid: string;
+```
 
 ***
 
 ### notesToSelect?
 
 ```ts
-optional notesToSelect?: 
-  | {
+optional notesToSelect?: {
   uuid: string;
-}[]
-  | null;
+}[];
 ```
 
-[editor, UUID form] Notes to select, as a JSON array of `\{uuid\}` objects.
+[editor, UUID form] Notes to select.
+
+#### uuid
+
+```ts
+uuid: string;
+```
 
 ***
 
 ### rangeBegin?
 
 ```ts
-optional rangeBegin?: number | null;
+optional rangeBegin?: number;
 ```
 
-[editor] Inclusive start of the selection range, editor-local. Ticks (`480t`) or a position resolved into the clip frame. See `help time-values`.
+[editor] Inclusive start of the selection range, editor-local ticks.
 
 ***
 
 ### rangeEnd?
 
 ```ts
-optional rangeEnd?: number | null;
+optional rangeEnd?: number;
 ```
 
-[editor] Exclusive end of the selection range, editor-local. Must be greater than `--range-begin`. See `help time-values`.
+[editor] Exclusive end of the selection range, editor-local ticks. Must be greater than `rangeBegin`.
 
 ***
 
@@ -121,7 +112,7 @@ Selection scope: `arrangement` (timeline, default) or `editor`.
 ### selectNotes?
 
 ```ts
-optional selectNotes?: boolean | null;
+optional selectNotes?: boolean;
 ```
 
 [editor, range form] If true, select all notes/chords overlapping the range; if false (default) set only the visual range for parameter editing.
@@ -131,63 +122,55 @@ optional selectNotes?: boolean | null;
 ### tracks?
 
 ```ts
-optional tracks?: 
-  | (
-  | {
-  trackIndex: number;
-}
-  | {
-  trackUuid: string;
-})[]
-  | null;
+optional tracks?: {
+  trackIndex?: number;
+  trackUuid?: string;
+}[];
 ```
 
-[arrangement] Discrete set of tracks to select, as a JSON array of identifier objects; each must have at least `trackIndex` or `trackUuid`. An empty array clears the track selection. Passing this selects that set instead of an area range.
+[arrangement] Discrete set of tracks to select; each entry must have at least `trackIndex` or `trackUuid`. An empty array clears the track selection. Passing this selects that set instead of an area range.
 
-Example: `[\{"trackIndex": 0\}, \{"trackUuid": "\{abc-...\}"\}]`
+#### trackIndex?
+
+```ts
+optional trackIndex?: number;
+```
+
+Addressed by position: 0-based index.
+
+#### trackUuid?
+
+```ts
+optional trackUuid?: string;
+```
+
+Addressed by identity: the braced track UUID (`\{abc-...\}`).
 
 ***
 
 ### verticalSelection?
 
 ```ts
-optional verticalSelection?: 
-  | {
+optional verticalSelection?: {
   begin: number;
   end: number;
-}
-  | null;
+};
 ```
 
-[arrangement] Track index range to select, as `\{"begin": \<idx\>, "end": \<idx\>\}` (0-based; negative addresses special tracks).
+A `\{begin, end\}` range: ticks for the arrangement's horizontal (time) and vertical (track index) selection, local ticks for the editor's note selection range.
 
-#### Union Members
-
-##### Type Literal
-
-```ts
-{
-  begin: number;
-  end: number;
-}
-```
-
-##### begin
+#### begin
 
 ```ts
 begin: number;
 ```
 
-Inclusive start of the range (ticks for horizontal; track index for vertical; can be negative for special tracks).
+Inclusive start of the range.
 
-##### end
+#### end
 
 ```ts
 end: number;
 ```
 
-Exclusive end of the range (ticks for horizontal; track index for vertical; can be negative for special tracks).
-
-***
-
-`null`
+Exclusive end of the range.

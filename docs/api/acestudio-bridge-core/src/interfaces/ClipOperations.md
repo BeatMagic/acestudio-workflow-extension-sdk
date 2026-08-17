@@ -163,7 +163,7 @@ Requires the `clip.write` capability.
 ### get()
 
 ```ts
-get(params, options?): Promise<ClipGetResult>;
+get(params?, options?): Promise<ClipGetResult>;
 ```
 
 Get full metadata for one clip (geometry, color, enabled state).
@@ -172,7 +172,7 @@ Requires the `clip.read` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`ClipGetParams`](ClipGetParams.md)
 
@@ -299,9 +299,9 @@ onChanged(listener): Unsubscribe;
 A clip was added, removed, moved, trimmed, renamed, muted, or recoloured.
 `changes` carries the affected clip uuids. A peer re-fetches with `clip list`,
 which needs a track to address, so a uuid here names the clip and the peer
-reads the track it was told about on the `tracks` channel.
+reads the track it was told about on `tracks.changed`.
 
-Listen for changes on the `clips` channel. The event is a hint to re-read, not the new state.
+Listen for `clips.changed`. The event is a hint to re-read, not the new state.
 
 Requires the `clip.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
 

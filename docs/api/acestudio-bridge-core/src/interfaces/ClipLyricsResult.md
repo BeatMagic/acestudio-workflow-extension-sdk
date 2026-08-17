@@ -14,7 +14,7 @@ optional filteredRange?: {
 };
 ```
 
-Actual tick range used for filtering. Present only when rangeBegin and/or rangeEnd was supplied.
+The actual tick range used for filtering `clip note-content` / `clip lyrics`. Present only when `rangeBegin` and/or `rangeEnd` was supplied.
 
 #### begin
 
@@ -22,7 +22,7 @@ Actual tick range used for filtering. Present only when rangeBegin and/or rangeE
 begin: number;
 ```
 
-Filter range start, in ticks, in the coordinate system named by scope.
+Filter range start, in ticks, in the coordinate system named by `scope`.
 
 #### end
 
@@ -30,7 +30,7 @@ Filter range start, in ticks, in the coordinate system named by scope.
 end: number;
 ```
 
-Filter range end (exclusive), in ticks, in the coordinate system named by scope.
+Filter range end (exclusive), in ticks, in the coordinate system named by `scope`.
 
 #### scope
 
@@ -38,7 +38,7 @@ Filter range end (exclusive), in ticks, in the coordinate system named by scope.
 scope: string;
 ```
 
-Coordinate system of begin/end: `project` or `clip-local`.
+Coordinate system of `begin`/`end`: `project` or `clip-local`.
 
 ***
 
@@ -48,7 +48,7 @@ Coordinate system of begin/end: `project` or `clip-local`.
 fingerprint: Fingerprint;
 ```
 
-Content fingerprint of the whole clip's note content (ADR 0088 §5) -- lyrics are note content, read at sentence granularity. Carry it back as `--if-match` on a `note` write or `clip replace-content` to fail STALE_WRITE instead of overwriting edits made since this read. Always covers the full clip, even when the read was range-filtered.
+Content fingerprint of the whole clip's note content (ADR 0088 §5) — lyrics are note content, read at sentence granularity. Carry it back as the `fingerprint` argument on a `note` write or `clip replace-content` to fail STALE_WRITE instead of overwriting edits made since this read. Always covers the full clip, even when the read was range-filtered.
 
 ***
 
@@ -88,7 +88,7 @@ Merged lyric text for the sentence.
 sentenceBegin: number;
 ```
 
-Sentence start in clip-local ticks, regardless of rangeScope.
+Sentence start in clip-local ticks, regardless of `rangeScope`.
 
 #### sentenceEnd
 
@@ -96,4 +96,4 @@ Sentence start in clip-local ticks, regardless of rangeScope.
 sentenceEnd: number;
 ```
 
-Sentence end in clip-local ticks, regardless of rangeScope.
+Sentence end in clip-local ticks, regardless of `rangeScope`.

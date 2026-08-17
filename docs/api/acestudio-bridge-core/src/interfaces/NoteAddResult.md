@@ -40,7 +40,7 @@ UUID of the clip the notes were added to, with braces.
 noteCount: number;
 ```
 
-Total notes in the clip after the add. Nothing existing is disturbed, so this is always the previous count plus `addedCount`; a Sing add that would overlap is refused with `NOTE_OVERLAP` instead (see `help note-exclusivity`).
+Total notes in the clip after the add. Nothing existing is disturbed, so this is always the previous count plus `addedCount`; a Sing add that would overlap is refused instead (see `help note-exclusivity`).
 
 ***
 

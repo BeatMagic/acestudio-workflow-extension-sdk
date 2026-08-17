@@ -7,40 +7,40 @@ Arguments for `caret set`.
 ### forceSeek?
 
 ```ts
-optional forceSeek?: boolean | null;
+optional forceSeek?: boolean;
 ```
 
-Force playback to seek to the new position even if the transport is currently playing. Defaults to `false`.
+Force playback to seek to the new position even while the transport is playing. Omitted means it does not.
 
 ***
 
 ### is\_global\_tick?
 
 ```ts
-optional is_global_tick?: boolean | null;
+optional is_global_tick?: boolean;
 ```
 
-Whether `tick` is in global (project-level) coordinates. When `false`, `tick` is treated as a local tick inside the open editor clip. Defaults to `true`.
+Whether `tick` is in global (project-level) coordinates. False treats it as a tick local to the open editor clip. Omitted means global.
 
 ***
 
 ### scope?
 
 ```ts
-optional scope?: string | null;
+optional scope?: string;
 ```
 
-Scope to target: `"arrangement"` / `"global"` or `"editor"`. Defaults to whichever view currently has focus.
+Scope to target: `"arrangement"` / `"global"`, or `"editor"`. Omitted targets whichever view currently has focus.
 
 ***
 
 ### set\_to\_line\_selection?
 
 ```ts
-optional set_to_line_selection?: boolean | null;
+optional set_to_line_selection?: boolean;
 ```
 
-Whether to snap the selection to line selection after moving. Defaults to `true`.
+Whether to snap the selection to line selection after moving. Omitted means it does.
 
 ***
 
@@ -50,14 +50,14 @@ Whether to snap the selection to line selection after moving. Defaults to `true`
 tick: number;
 ```
 
-Target position. Ticks (`3840t`), clock time (`1.5s`, `1:23.5`), or musical position (`4.1.0`). Must be non-negative. Required. See `help time-values`.
+Target position in ticks. Must be non-negative.
 
 ***
 
 ### trackIndex?
 
 ```ts
-optional trackIndex?: number | null;
+optional trackIndex?: number;
 ```
 
-Track index (0-based). When omitted, the current track is kept. Users see tracks starting from 1, so user "track 2" = `--track-index 1`.
+Track index (0-based). Omitted keeps the current track.

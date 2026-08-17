@@ -7,10 +7,10 @@ Arguments for `ensemble add`.
 ### at?
 
 ```ts
-optional at?: number | null;
+optional at?: number;
 ```
 
-Where to insert the new member. Defaults to the end. `0` makes the new instrument the leader and pushes the rest down.
+Where to insert the new member. Omit for the end. `0` makes the new instrument the leader and pushes the rest down.
 
 ***
 
@@ -20,14 +20,14 @@ Where to insert the new member. Defaults to the end. `0` makes the new instrumen
 source: string;
 ```
 
-**Required.** Which instrument to add, by display name or ref — the same thing `sound-source load --source` accepts.
+Which instrument to add, by display name or ref — the same thing `sound-source load --source` accepts.
 
 ***
 
 ### trackIndex?
 
 ```ts
-optional trackIndex?: number | null;
+optional trackIndex?: number;
 ```
 
 0-based index in the arrangement.
@@ -37,7 +37,7 @@ optional trackIndex?: number | null;
 ### trackUuid?
 
 ```ts
-optional trackUuid?: string | null;
+optional trackUuid?: string;
 ```
 
 Track UUID in braces format.

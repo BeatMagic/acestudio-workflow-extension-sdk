@@ -7,17 +7,17 @@ Arguments for `clip list`.
 ### trackIndex?
 
 ```ts
-optional trackIndex?: number | null;
+optional trackIndex?: number;
 ```
 
-Track index (0-based) in the arrangement. Users see tracks starting from 1.
+Track index (0-based) in the arrangement.
 
 ***
 
 ### trackUuid?
 
 ```ts
-optional trackUuid?: string | null;
+optional trackUuid?: string;
 ```
 
-Track UUID in braces format, e.g. `\{12345678-abcd-...\}`. Required to address a track in the pinned Video or Marker band, which `--track-index` cannot name. `track list --type video --type marker` reports those uuids.
+Track UUID in braces format. Required to address a track in the pinned Video or Marker band, which `trackIndex` cannot name.

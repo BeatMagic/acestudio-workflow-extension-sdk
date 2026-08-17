@@ -10,4 +10,4 @@ Arguments for `ui show-window`.
 window: "video-monitor";
 ```
 
-Which tool window: `video-monitor`.
+The tool windows `ui show-window` / `ui hide-window` take one of.

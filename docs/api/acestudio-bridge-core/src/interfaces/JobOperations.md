@@ -85,7 +85,7 @@ Requires the `job.read` capability.
 ### list()
 
 ```ts
-list(params, options?): Promise<JobListResult>;
+list(params?, options?): Promise<JobListResult>;
 ```
 
 List the project session's jobs with launcher attribution.
@@ -94,7 +94,7 @@ Requires the `job.read` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`JobListParams`](JobListParams.md)
 
@@ -117,7 +117,7 @@ onChanged(listener): Unsubscribe;
 The job ledger (ADR 0084): a job's lifecycle or result transition. `changes`
 carries the affected job ids.
 
-Listen for changes on the `jobs` channel. The event is a hint to re-read, not the new state.
+Listen for `jobs.changed`. The event is a hint to re-read, not the new state.
 
 Requires the `job.read` capability — an ungranted subscription is refused at this call, not silently never delivered.
 

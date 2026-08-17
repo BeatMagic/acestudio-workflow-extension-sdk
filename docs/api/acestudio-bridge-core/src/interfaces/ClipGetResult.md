@@ -20,7 +20,7 @@ Display name (auto-generated when no raw name is set).
 clipType: string;
 ```
 
-Clip type: `sing`, `instrument`, `genericMidi`, `audio`, or `chord`.
+Clip type: `sing`, `instrument`, `genericMidi`, `audio`, `chord`, `video`, or `marker` — the same vocabulary `clip list` reports.
 
 ***
 
@@ -50,7 +50,7 @@ Resolved hex color, upper-case with leading '#'.
 enabled: boolean;
 ```
 
-Whether the clip is enabled (audible).
+Whether the clip is enabled. The clip's own switch: a disabled clip is skipped at playback and export, and an enabled one still goes silent under a track mute or another track's solo.
 
 ***
 
@@ -68,7 +68,7 @@ geometry: {
 };
 ```
 
-Clip geometry in the unit reported by usedTimeUnit: integer ticks or fractional seconds.
+A clip's geometry in the *entity* vocabulary, as `clip get` reports it, in whichever unit `usedTimeUnit` names. `pos`/`dur`/`end` are the whole editable region — for a media clip, its source — and the visible region is the four `clip*` fields. A write reports [`ClipWriteGeometry`] instead, which names the visible region a write's own arguments address.
 
 #### clipBegin
 
@@ -154,4 +154,4 @@ User-supplied name; empty string when the display name is auto-generated.
 usedTimeUnit: string;
 ```
 
-Time unit of the geometry values: 'tick', 'second', 'tick (not native)', or 'second (not native)'.
+Time unit of the geometry values: `tick`, `second`, `tick (not native)`, or `second (not native)`.

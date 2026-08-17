@@ -110,14 +110,13 @@ Requires the `ui.control` capability.
 onChanged(listener): Unsubscribe;
 ```
 
-Studio chrome: a panel, tool window, or arrangement-view row
-was shown or hidden. `changes` carries the affected citizens as their paths
-in the `ui get` payload — `panels.mixer`, `specialTracks.chord`,
-`windows.video-monitor` — plus `sharedPanelSlot.selected` when MV and V2M
-swap the slot without either becoming visible. A peer re-fetches with
-`ui get`.
+Studio chrome: a panel, tool window, or arrangement-view row was shown or
+hidden. `changes` carries the affected citizens as their paths in the `ui get`
+payload — `panels.mixer`, `specialTracks.chord`, `windows.video-monitor` —
+plus `sharedPanelSlot.selected` when MV and V2M swap the slot without either
+becoming visible. A peer re-fetches with `ui get`.
 
-Listen for changes on the `ui` channel. The event is a hint to re-read, not the new state.
+Listen for `ui.changed`. The event is a hint to re-read, not the new state.
 
 Requires the `ui.state` capability — an ungranted subscription is refused at this call, not silently never delivered.
 

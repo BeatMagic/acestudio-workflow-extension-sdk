@@ -10,7 +10,7 @@ Success payload of `vocalparam read`.
 category: "pitch" | "energy" | "tension" | "air" | "falsetto" | "formant";
 ```
 
-The category read.
+Which vocal characteristic a curve controls. Spellings follow the vocal-control UI's own face names: `pitch` is the melodic line as a delta in semitones, `energy` the loudness/effort curve, `tension` the vocal strain, `air` the breathiness, `falsetto` the head-voice mix, and `formant` the gender channel. Two of the UI's faces are deliberately absent, because neither is a curve: its "Breath" face places breath *marks* (the `breath` group) and its "Pronounce" face edits phoneme timing (the `lyric` group). Every category is addressable, but not every category exists on every clip: which ones do depends on the singer's engine generation, and `vocalparam layers` reports that as an availability matrix rather than by omitting a row.
 
 ***
 
@@ -44,13 +44,13 @@ effective: {
      end: number;
   }[];
   layer: "direct" | "baseline" | "user" | "envelope" | "effective";
-  points: Float64Array<ArrayBufferLike>;
+  points: unknown;
   role: string;
   sparse: boolean;
 };
 ```
 
-The merged final curve the synth consumes. Engine-computed and always read-only; never reconstruct it from the layers.
+One layer as `vocalparam read` returns it: its declaration plus the points themselves.
 
 #### access
 
@@ -58,7 +58,7 @@ The merged final curve the synth consumes. Engine-computed and always read-only;
 access: "read-only" | "read-write";
 ```
 
-`read-write` for a layer a write may target, `read-only` otherwise. The effective curve is always read-only.
+Whether a layer can be written, on this clip's engine generation. The two are exclusive: `read-write` names a layer `vocalparam write` may target, `read-only` one it always refuses. The merged `effective` curve is `read-only` on every generation.
 
 #### drawnRanges?
 
@@ -69,7 +69,7 @@ optional drawnRanges?: {
 }[];
 ```
 
-For a sparse layer, the clip-local tick ranges that carry drawn values. Absent on a dense layer. Reading this is cheaper than scanning the points for gaps.
+For a sparse layer, the clip-local tick ranges that carry drawn values. Absent on a dense layer. Reading this is cheaper than scanning `points` for gaps.
 
 #### layer
 
@@ -77,15 +77,15 @@ For a sparse layer, the clip-local tick ranges that carry drawn values. Absent o
 layer: "direct" | "baseline" | "user" | "envelope" | "effective";
 ```
 
-Layer name.
+One layer of a parameter's curve stack, including the merged result. A vocal parameter is not one curve: it is a stack the engine merges. `baseline` is what the engine produced unprompted (the model's analyzed curve, or the generation's synthesized default) and is read-only, because it shifts with every re-render. `user` and `direct` are drawn overrides that win wherever they carry a value and are undrawn elsewhere. `envelope` is a multiplier over what lies under it. `effective` is the merged curve the synth actually consumes: engine-computed, always readable, never writable — never reconstruct it from the layers. Which of these a given (generation x category) has is a host fact, not a property of this roster: `vocalparam layers` reports the matrix, and `effective` exists for every available category.
 
 #### points
 
 ```ts
-points: Float64Array<ArrayBufferLike>;
+points: unknown;
 ```
 
-The layer's values, one per clip-local tick from `posBegin`. Under `encoding: json` (the default) this field is instead a plain array of numbers, `null` at a gap.
+The layer's values, one per clip-local tick from `posBegin`. Shaped by the sibling `encoding` argument: under `json` (the default) a plain array of numbers, `null` at a gap; under `base64` a `PointsEnvelope`, a gap a NaN bit pattern. No IDL type spans both shapes, so this field is declared `json` — see `PointsEnvelope`'s doc comment.
 
 #### role
 
@@ -93,7 +93,7 @@ The layer's values, one per clip-local tick from `posBegin`. Under `encoding: js
 role: string;
 ```
 
-What the layer contributes to the merge: `analyzed-pristine` (the model's unconditioned production), `synthesized-default` (the engine's own curve), `override` (drawn values that win where present), `multiplier` (scales what is under it), or `merged` (the effective curve).
+See `LayerDeclaration.role`.
 
 #### sparse
 
@@ -101,7 +101,7 @@ What the layer contributes to the merge: `analyzed-pristine` (the model's uncond
 sparse: boolean;
 ```
 
-True when the layer carries values only where drawn, with gaps elsewhere (a gap is `null` under `encoding: json`, a NaN bit pattern under `base64`).
+See `LayerDeclaration.sparse`.
 
 ***
 
@@ -121,7 +121,7 @@ The clip's singer engine generation.
 fingerprint: Fingerprint;
 ```
 
-Content token for this category's writable layers (ADR 0088 §5). Carry it into `vocalparam write --if-match` to fail STALE_WRITE rather than overwrite an edit that landed in between.
+Content token for this category's writable layers (ADR 0088 §5). Carry it into `vocalparam write`'s reserved `fingerprint` argument to fail STALE_WRITE rather than overwrite an edit that landed in between.
 
 ***
 
@@ -135,7 +135,7 @@ layers: {
      end: number;
   }[];
   layer: "direct" | "baseline" | "user" | "envelope" | "effective";
-  points: Float64Array<ArrayBufferLike>;
+  points: unknown;
   role: string;
   sparse: boolean;
 }[];
@@ -149,7 +149,7 @@ Every layer this (generation x category) has, merge order first.
 access: "read-only" | "read-write";
 ```
 
-`read-write` for a layer a write may target, `read-only` otherwise. The effective curve is always read-only.
+Whether a layer can be written, on this clip's engine generation. The two are exclusive: `read-write` names a layer `vocalparam write` may target, `read-only` one it always refuses. The merged `effective` curve is `read-only` on every generation.
 
 #### drawnRanges?
 
@@ -160,7 +160,7 @@ optional drawnRanges?: {
 }[];
 ```
 
-For a sparse layer, the clip-local tick ranges that carry drawn values. Absent on a dense layer. Reading this is cheaper than scanning the points for gaps.
+For a sparse layer, the clip-local tick ranges that carry drawn values. Absent on a dense layer. Reading this is cheaper than scanning `points` for gaps.
 
 #### layer
 
@@ -168,15 +168,15 @@ For a sparse layer, the clip-local tick ranges that carry drawn values. Absent o
 layer: "direct" | "baseline" | "user" | "envelope" | "effective";
 ```
 
-Layer name.
+One layer of a parameter's curve stack, including the merged result. A vocal parameter is not one curve: it is a stack the engine merges. `baseline` is what the engine produced unprompted (the model's analyzed curve, or the generation's synthesized default) and is read-only, because it shifts with every re-render. `user` and `direct` are drawn overrides that win wherever they carry a value and are undrawn elsewhere. `envelope` is a multiplier over what lies under it. `effective` is the merged curve the synth actually consumes: engine-computed, always readable, never writable — never reconstruct it from the layers. Which of these a given (generation x category) has is a host fact, not a property of this roster: `vocalparam layers` reports the matrix, and `effective` exists for every available category.
 
 #### points
 
 ```ts
-points: Float64Array<ArrayBufferLike>;
+points: unknown;
 ```
 
-The layer's values, one per clip-local tick from `posBegin`. Under `encoding: json` (the default) this field is instead a plain array of numbers, `null` at a gap.
+The layer's values, one per clip-local tick from `posBegin`. Shaped by the sibling `encoding` argument: under `json` (the default) a plain array of numbers, `null` at a gap; under `base64` a `PointsEnvelope`, a gap a NaN bit pattern. No IDL type spans both shapes, so this field is declared `json` — see `PointsEnvelope`'s doc comment.
 
 #### role
 
@@ -184,7 +184,7 @@ The layer's values, one per clip-local tick from `posBegin`. Under `encoding: js
 role: string;
 ```
 
-What the layer contributes to the merge: `analyzed-pristine` (the model's unconditioned production), `synthesized-default` (the engine's own curve), `override` (drawn values that win where present), `multiplier` (scales what is under it), or `merged` (the effective curve).
+See `LayerDeclaration.role`.
 
 #### sparse
 
@@ -192,7 +192,7 @@ What the layer contributes to the merge: `analyzed-pristine` (the model's uncond
 sparse: boolean;
 ```
 
-True when the layer carries values only where drawn, with gaps elsewhere (a gap is `null` under `encoding: json`, a NaN bit pattern under `base64`).
+See `LayerDeclaration.sparse`.
 
 ***
 
@@ -250,7 +250,7 @@ optional valueRange?: {
 };
 ```
 
-Inclusive bounds of a legal value in this scale.
+Inclusive bounds of a legal value in a category's scale.
 
 #### max?
 

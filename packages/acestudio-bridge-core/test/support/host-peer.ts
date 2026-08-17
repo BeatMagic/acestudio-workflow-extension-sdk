@@ -23,7 +23,7 @@ import {
   NOTIFICATION_CHANNELS,
   PROTOCOL_VERSION,
   REQUIRED_TOKENS,
-  type ChangedParams,
+  type ChangeEvent,
   type HandshakeParams,
   type HandshakeResult,
   type InvokeParams,
@@ -46,7 +46,6 @@ export const HOST_METHODS = {
   prepareMove: "session.prepareMove",
   projectRelocated: "session.projectRelocated",
   shutdown: "session.shutdown",
-  changed: "state.changed",
 } as const;
 
 /** The operation-invocation verb, the one wire name every operation rides. */
@@ -170,12 +169,18 @@ export class ScriptedHostPeer {
    * withheld it" apart from "the SDK dropped it".
    */
   notifyChange(channel: string, changes: readonly string[] = [], revision = ++this.revision): boolean {
-    const token = NOTIFICATION_CHANNELS.find((row) => row.channel === channel)?.capability;
-    if (token === undefined || !this.grantedTokens.has(token)) {
+    // Named either way: a test says `jobs` because that is what the subject is
+    // called, and the wire spells it `jobs.changed`.
+    const row = NOTIFICATION_CHANNELS.find(
+      (entry) => entry.notification === channel || entry.notification === `${channel}.changed`,
+    );
+    if (row === undefined || !this.grantedTokens.has(row.capability)) {
       return false;
     }
-    const params: ChangedParams = { channel, revision, changes: [...changes] };
-    this.send({ jsonrpc: "2.0", method: HOST_METHODS.changed, params });
+    // The channel IS the method now — a channel is its own declared notification,
+    // so the host routes by name instead of stamping one onto a shared envelope.
+    const params: ChangeEvent = { revision, changes: [...changes] };
+    this.send({ jsonrpc: "2.0", method: row.notification, params });
     return true;
   }
 
@@ -186,8 +191,8 @@ export class ScriptedHostPeer {
    * anything other than the channel name would hand it to the wrong listener.
    */
   notifyUnknownChannel(channel: string, revision = ++this.revision): void {
-    const params: ChangedParams = { channel, revision, changes: [] };
-    this.send({ jsonrpc: "2.0", method: HOST_METHODS.changed, params });
+    const params: ChangeEvent = { revision, changes: [] };
+    this.send({ jsonrpc: "2.0", method: `${channel}.changed`, params });
   }
 
   /** Call a method on the connected peer. */

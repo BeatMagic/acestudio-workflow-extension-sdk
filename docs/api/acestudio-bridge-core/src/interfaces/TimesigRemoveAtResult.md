@@ -10,7 +10,7 @@ Success payload of `timesig remove-at`.
 barPos: number;
 ```
 
-The bar acted on, counted from 0 — the same value whichever spelling the call used to address it. Reported as `bar` counting from 1 instead under `--bars human`.
+The bar acted on, counted from 0 — the same value whichever spelling the call used to address it.
 
 ***
 

@@ -10,4 +10,4 @@ Arguments for `blend delete`.
 blend: string;
 ```
 
-*Required.** Which blend to delete, by display name or ref.
+**Required.** Which blend to delete, by display name or ref.

@@ -7,20 +7,20 @@ Arguments for `generative voice-change`.
 ### correctToKey?
 
 ```ts
-optional correctToKey?: string | null;
+optional correctToKey?: string;
 ```
 
-Snap the converted pitch to a key, e.g. `C` or `F#`. Passing this enables scale correction, which is off unless asked for; omit it and `--correct-to-scale` has nothing to apply to.
+Snap the converted pitch to a key, e.g. "C" or "F#". Passing this enables scale correction, which is off unless asked for.
 
 ***
 
 ### correctToScale?
 
 ```ts
-optional correctToScale?: string | null;
+optional correctToScale?: string;
 ```
 
-Which scale in that key, e.g. `Major` (the default) or `Minor`. `--correct-to-key` only.
+Which scale in that key, e.g. "Major" (the default) or "Minor". **`correctToKey` only**.
 
 ***
 
@@ -30,7 +30,7 @@ Which scale in that key, e.g. `Major` (the default) or `Minor`. `--correct-to-ke
 from: number;
 ```
 
-Where the converted range starts.
+Where the converted range starts, in ticks.
 
 ***
 
@@ -40,28 +40,24 @@ Where the converted range starts.
 modelIds: number[];
 ```
 
-A Voice Changer model to re-sing in, by its numeric id. Repeatable; at least one is required. Each model's output lands on a new track of its own.
-
-These are **Voice Changer models**, a catalog of their own -- not the singing voices `voice list` reports, which is why the argument is not spelled `--voice-id`. The ids come from the Voice Changer panel's model list; no CLI verb enumerates them yet.
-
-Several models per launch is the point of the feature: the caller is asking to audition choices. It is also the cheap shape -- the source range is rendered **once** and that one render feeds every model, so four voices cost one render rather than four. The launch is therefore one job carrying one result per model, each settling on its own (ADR 0084).
+Voice Changer models to re-sing in, by numeric id. At least one is required; each model's output lands on a new track of its own. These are Voice Changer models, not the singing voices `voice list` reports.
 
 ***
 
 ### pitchCorrection?
 
 ```ts
-optional pitchCorrection?: number | null;
+optional pitchCorrection?: number;
 ```
 
-How hard to pull the converted pitch onto pitch centers, 0 to 100. Default 20 -- a strength, not an on/off switch, and 0 is the way to turn it off.
+How hard to pull the converted pitch onto pitch centers, 0 to 100. Default 20 — a strength, not a switch; 0 turns it off.
 
 ***
 
 ### randomOffset?
 
 ```ts
-optional randomOffset?: number | null;
+optional randomOffset?: number;
 ```
 
 How much random variation to allow between takes, 0 to 100. Default 0.
@@ -71,17 +67,17 @@ How much random variation to allow between takes, 0 to 100. Default 0.
 ### removeInstrument?
 
 ```ts
-optional removeInstrument?: boolean | null;
+optional removeInstrument?: boolean;
 ```
 
-Strip the accompaniment out of the source before converting. Off by default; useful when the range carries a full mix rather than an isolated vocal.
+Strip the accompaniment out of the source before converting. Off by default.
 
 ***
 
 ### removeReverb?
 
 ```ts
-optional removeReverb?: boolean | null;
+optional removeReverb?: boolean;
 ```
 
 Strip reverb out of the source before converting. Off by default.
@@ -91,10 +87,10 @@ Strip reverb out of the source before converting. Off by default.
 ### semitones?
 
 ```ts
-optional semitones?: number | null;
+optional semitones?: number;
 ```
 
-Transpose the converted take, -24 to 24 semitones. Default 0. Applies to every requested model -- a per-model transposition is a panel affordance that would need a different argument shape, and is not exposed.
+Transpose the converted take, -24 to 24 semitones. Default 0. Applies to every requested model.
 
 ***
 
@@ -104,7 +100,7 @@ Transpose the converted take, -24 to 24 semitones. Default 0. Applies to every r
 to: number;
 ```
 
-Where the converted range ends (exclusive).
+Where the converted range ends (exclusive), in ticks.
 
 ***
 
@@ -114,4 +110,4 @@ Where the converted range ends (exclusive).
 trackUuids: string[];
 ```
 
-A track whose audio feeds the conversion, by id. Repeatable; at least one is required. Several tracks are summed into the one take that gets re-sung, matching what the panel does with a multi-track selection.
+Tracks whose audio feeds the conversion, by id. At least one is required; several are summed into the one take that gets re-sung.

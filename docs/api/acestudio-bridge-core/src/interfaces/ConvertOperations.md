@@ -111,7 +111,7 @@ Ungated: a pure function, callable without any capability.
 ### tickToTime()
 
 ```ts
-tickToTime(params, options?): Promise<ConvertTickToTimeResult>;
+tickToTime(params?, options?): Promise<ConvertTickToTimeResult>;
 ```
 
 Convert a tick position to seconds, accounting for tempo automation.
@@ -120,7 +120,7 @@ Ungated: a pure function, callable without any capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`ConvertTickToTimeParams`](ConvertTickToTimeParams.md)
 
@@ -137,7 +137,7 @@ Ungated: a pure function, callable without any capability.
 ### timeToTick()
 
 ```ts
-timeToTick(params, options?): Promise<ConvertTimeToTickResult>;
+timeToTick(params?, options?): Promise<ConvertTimeToTickResult>;
 ```
 
 Convert a time position (seconds) to project ticks, accounting for tempo automation.
@@ -146,7 +146,7 @@ Ungated: a pure function, callable without any capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`ConvertTimeToTickParams`](ConvertTimeToTickParams.md)
 

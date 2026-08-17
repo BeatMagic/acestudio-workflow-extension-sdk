@@ -20,7 +20,7 @@ How many voices this page returned.
 optional error?: string;
 ```
 
-Set to 'Timeout' when the catalog fetch timed out; retry the command. Absent on normal success.
+Set to `Timeout` when the catalog fetch timed out; retry the command. Absent on normal success.
 
 ***
 

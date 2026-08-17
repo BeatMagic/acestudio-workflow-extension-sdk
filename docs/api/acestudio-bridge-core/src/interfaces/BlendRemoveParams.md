@@ -10,7 +10,7 @@ Arguments for `blend remove`.
 blend: string;
 ```
 
-*Required.** Which blend, by display name or ref.
+**Required.** Which blend, by display name or ref.
 
 ***
 
@@ -20,4 +20,4 @@ blend: string;
 member: number;
 ```
 
-*Required.** Which seed to remove, by 0-based position in the recipe.
+**Required.** Which seed to remove, by 0-based position in the recipe.

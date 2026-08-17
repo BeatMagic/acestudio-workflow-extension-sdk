@@ -4,20 +4,20 @@ Arguments for `job list`.
 
 ## Properties
 
-### mine
+### mine?
 
 ```ts
-mine: boolean;
+optional mine?: boolean;
 ```
 
 Show only jobs whose launcher is the CLI, not UI / extension / agent.
 
 ***
 
-### running
+### running?
 
 ```ts
-running: boolean;
+optional running?: boolean;
 ```
 
 Show only jobs that are still running (not yet terminal).

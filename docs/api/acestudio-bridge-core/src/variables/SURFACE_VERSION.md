@@ -1,7 +1,7 @@
 # Variable: SURFACE\_VERSION
 
 ```ts
-const SURFACE_VERSION: "6.1" = '6.1';
+const SURFACE_VERSION: "7.0" = '7.0';
 ```
 
 The contract surface version these bindings were generated from (`major.minor`). The handshake compares it against the host's: a major mismatch is a typed error at connect, minor drift is fine under the tolerant-reader rule.

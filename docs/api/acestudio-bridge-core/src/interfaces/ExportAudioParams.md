@@ -7,17 +7,17 @@ Arguments for `export audio`.
 ### bitDepth?
 
 ```ts
-optional bitDepth?: number | null;
+optional bitDepth?: number;
 ```
 
-Bit depth: 16 (default), 24 or 32. **WAV only** -- an MP3's resolution is its bit rate, so passing this with `--format mp3` is an error.
+Bit depth: 16 (default), 24 or 32. **WAV only** — an MP3's resolution is its bit rate, so passing this with `format: "mp3"` is an error.
 
 ***
 
 ### bitRate?
 
 ```ts
-optional bitRate?: number | null;
+optional bitRate?: number;
 ```
 
 Bit rate in kbps: 128, 192 (default), 256 or 320. **MP3 only**.
@@ -27,7 +27,7 @@ Bit rate in kbps: 128, 192 (default), 256 or 320. **MP3 only**.
 ### channels?
 
 ```ts
-optional channels?: number | null;
+optional channels?: number;
 ```
 
 Channel count: 1 (mono) or 2 (stereo, default).
@@ -40,17 +40,17 @@ Channel count: 1 (mono) or 2 (stereo, default).
 optional format?: "wav" | "mp3";
 ```
 
-Container to write. Omit to take it from `--path`'s extension.
+The container an `export audio` call writes. Omitted, it is taken from `path`'s extension.
 
 ***
 
 ### from?
 
 ```ts
-optional from?: number | null;
+optional from?: number;
 ```
 
-Where the rendered range starts. Ticks (`3840t`), clock time (`1.5s`), or a musical position (`4.1.0`). Omit to start at the top of the project.
+Where the rendered range starts, in project ticks. Omit for the top of the project.
 
 ***
 
@@ -67,7 +67,7 @@ Where to write. For the per-track scopes this is the template the per-track name
 ### sampleRate?
 
 ```ts
-optional sampleRate?: number | null;
+optional sampleRate?: number;
 ```
 
 Sample rate in Hz: 32000, 44100 (default) or 48000.
@@ -80,38 +80,34 @@ Sample rate in Hz: 32000, 44100 (default) or 48000.
 optional scope?: "master" | "selected-tracks" | "all-tracks" | "tracks";
 ```
 
-What to render: `master` (default) bounces the master bus to one file; `selected-tracks` and `all-tracks` mirror the Export dialog's other two choices, one file per track; `tracks` renders exactly the tracks named by `--track-uuid`.
+What an `export audio` call renders. Omitted on the way in it falls back to `master`, the Export dialog's own default; the launch result reports the value it resolved to, so a caller can always see which one ran.
 
 ***
 
 ### to?
 
 ```ts
-optional to?: number | null;
+optional to?: number;
 ```
 
-Where the rendered range ends (exclusive). Omit to render to the end of the project's content -- which is what the dialog's "Total" range means.
+Where the rendered range ends (exclusive), in project ticks. Omit for the end of the project's content.
 
 ***
 
 ### trackUuids?
 
 ```ts
-optional trackUuids?: string[] | null;
+optional trackUuids?: string[];
 ```
 
-Which tracks to render. Repeatable, and **`--scope tracks` only**: the other scopes either have no per-track choice to make (`master`, `all-tracks`) or take it from the arrangement selection (`selected-tracks`). Passing it elsewhere is an error rather than a no-op, since silently ignoring a track list would let a caller believe they had narrowed the render.
-
-This is the scriptable counterpart to `selected-tracks`: naming ids gives the same files on every run, where a selection gives whatever the user last clicked (ADR 0087).
-
-`Option` so the schema, and the SDK bindings generated from it, say optional -- a bare `Vec` is a required field, which would oblige every `master` caller to send an empty array for an argument that scope refuses. Contrast `export vocal-sample`'s `clipUuids`, a bare `Vec` because that command has no meaning without ids.
+Which tracks to render. **`scope: "tracks"` only**: the other scopes either have no per-track choice to make ("master", "all-tracks") or take it from the arrangement selection ("selected-tracks"). Passing it elsewhere is an error rather than a no-op.
 
 ***
 
 ### withoutEffects?
 
 ```ts
-optional withoutEffects?: boolean | null;
+optional withoutEffects?: boolean;
 ```
 
-Bypass every external FX plugin for the render -- the dialog's "Export without effects". Off by default; the render carries the mix as you hear it.
+Bypass every external FX plugin for the render — the dialog's "Export without effects". Off by default; the render carries the mix as heard.

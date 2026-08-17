@@ -40,7 +40,7 @@ Whether the track carries a sound source at all. A MIDI track with an external i
 optional midiChannel?: string;
 ```
 
-Which MIDI channel the external instrument listens on: '1' through '16', or 'all'. External instruments only.
+Which MIDI channel the external instrument listens on: `1` through `16`, or `all`. External instruments only.
 
 ***
 
@@ -55,7 +55,7 @@ optional model?: {
 };
 ```
 
-The vocal synth model this source sings through. Voices and choirs only.
+The vocal synth model a mounted voice or choir sings through, as `sound-source get` reports it.
 
 #### id?
 
@@ -97,7 +97,7 @@ True when the model carries no Style axis, so a blend on it has Timbre only.
 optional soundSource?: {
   category?: string;
   categoryId?: number;
-  formats?: ("vst3" | "vst2" | "au")[];
+  formats?: string[];
   generations?: ("v1" | "v2")[];
   group?: string;
   id?: number;
@@ -118,7 +118,7 @@ optional soundSource?: {
 };
 ```
 
-The mounted source. Absent when `hasSource` is false.
+The sound source mounted on a track, as `sound-source get` reports it. Same shape as `SoundSourceRow`, but every field is independently absent — unlike a listing row, a mounted source's `ref` can be unresolvable (a plain voice with no library id) and its `tags` are not read back at all.
 
 #### category?
 
@@ -126,7 +126,7 @@ The mounted source. Absent when `hasSource` is false.
 optional category?: string;
 ```
 
-Category name, e.g. 'Piano'. AI instruments only.
+Category name. AI instruments only.
 
 #### categoryId?
 
@@ -139,10 +139,10 @@ Numeric category id. AI instruments only.
 #### formats?
 
 ```ts
-optional formats?: ("vst3" | "vst2" | "au")[];
+optional formats?: string[];
 ```
 
-Every format this plugin was scanned in. One plugin in three formats is one row, not three. External instruments only.
+Every format this plugin was scanned in. External instruments only.
 
 #### generations?
 
@@ -150,7 +150,7 @@ Every format this plugin was scanned in. One plugin in three formats is one row,
 optional generations?: ("v1" | "v2")[];
 ```
 
-Which model generations recommend a model for this voice: 'v1', 'v2', or both. Generation is a per-voice curation published by the backend, not a property of a model, so it is reported per row and only on pre-made voices.
+Which model generations recommend a model for this voice.
 
 #### group?
 
@@ -158,7 +158,7 @@ Which model generations recommend a model for this voice: 'v1', 'v2', or both. G
 optional group?: string;
 ```
 
-The raw group discriminator behind `origin`: empty for pre-made, '#' for cloned, '@' for community, the blended-voice library id for a blend. Reported for continuity with the project file; prefer `ref`.
+The raw group discriminator behind `origin`.
 
 #### id?
 
@@ -166,7 +166,7 @@ The raw group discriminator behind `origin`: empty for pre-made, '#' for cloned,
 optional id?: number;
 ```
 
-Numeric library id. Ids repeat across origins, so this alone does not identify a source; `ref` does.
+Numeric library id.
 
 #### isCollected?
 
@@ -174,7 +174,7 @@ Numeric library id. Ids repeat across origins, so this alone does not identify a
 optional isCollected?: boolean;
 ```
 
-Whether a community voice is already in your library. Community voices only; an uncollected voice must be collected before it will load.
+Whether a community voice is already in your library.
 
 #### kind?
 
@@ -182,7 +182,7 @@ Whether a community voice is already in your library. Community voices only; an 
 optional kind?: "voice" | "choir" | "instrument" | "ensemble" | "external-instrument";
 ```
 
-What this source is.
+What a sound source is — the roster every `kind` takes, whether it filters a listing or reports what a row turned out to be. A track carries exactly one kind at a time, and loading a source of another kind converts the track to suit it.
 
 #### memberCount?
 
@@ -206,7 +206,7 @@ Id of the vocal synth model this source defaults to. Voices only.
 optional modelName?: string;
 ```
 
-Name of that model, as the track panel's Vocal Synth Model control shows it. Voices only.
+Name of that model. Voices only.
 
 #### name?
 
@@ -214,7 +214,7 @@ Name of that model, as the track panel's Vocal Synth Model control shows it. Voi
 optional name?: string;
 ```
 
-Display name, as the Voice Library shows it.
+Display name.
 
 #### nativeLanguage?
 
@@ -230,7 +230,7 @@ Full English name of the language this source sings natively. Voices and choirs 
 optional origin?: "premade" | "cloned" | "community" | "blended";
 ```
 
-Which library it comes from. Absent for external instruments, which come from the plugin scan rather than the account's library.
+Where a sound source comes from: the Voice Library's tabs, which is how a user thinks about it, and the project file's `group` discriminator spelled in words. An external instrument has none — it comes from the plugin scan, not from the account's library.
 
 #### ref?
 
@@ -238,7 +238,7 @@ Which library it comes from. Absent for external instruments, which come from th
 optional ref?: string;
 ```
 
-Precise handle for this source, accepted by `--source` anywhere a name is. One of `singer:\<id\>` (pre-made), `singer:#\<id\>` (cloned), `singer:\@\<id\>` (community), `singer:\<library\>/\<id\>` (blend), `choir:\<group\>/\<id\>`, `instrument:\<id\>`, `ensemble:\<group\>/\<id\>`, or `plugin:\<format\>:\<typeId\>` (external instrument).
+Precise handle for this source. Absent when the mounted source has no library id to resolve one from.
 
 #### seedCount?
 
@@ -270,7 +270,7 @@ Tag names attached to the source.
 optional vendor?: string;
 ```
 
-Plugin vendor. External instruments only; this is what disambiguates two vendors shipping a plugin of the same name.
+Plugin vendor. External instruments only.
 
 #### version?
 
@@ -278,7 +278,7 @@ Plugin vendor. External instruments only; this is what disambiguates two vendors
 optional version?: string;
 ```
 
-Plugin version string as the plugin reports it. External instruments only.
+Plugin version string. External instruments only.
 
 ***
 
@@ -288,7 +288,7 @@ Plugin version string as the plugin reports it. External instruments only.
 optional state?: "ready" | "mounted" | "disabled" | "missing";
 ```
 
-Runtime state of the mounted source. 'ready' for a library source; for an external instrument, 'mounted' when it is loaded and enabled, 'disabled' when mounted but bypassed, and 'missing' when the project names a plugin this machine cannot find. 'missing' is distinct from an empty slot: the project still carries the reference and it will come back if the plugin is installed.
+Runtime state of the sound source mounted on a track. Exactly one applies. `ready` is the only state a library source (voice, choir, AI instrument, ensemble) reports; the other three are external-instrument states. `missing` — the project names a plugin this machine cannot find — is distinct from an empty slot: the project still carries the reference and it will come back if the plugin is installed.
 
 ***
 
@@ -308,7 +308,7 @@ trackIndex: number;
 trackType: string;
 ```
 
-Track type: 'Sing', 'Instrument', 'GenericMidi', 'Audio', or 'Empty'.
+Track type: `Sing`, `Instrument`, `GenericMidi`, `Audio`, or `Empty`.
 
 ***
 

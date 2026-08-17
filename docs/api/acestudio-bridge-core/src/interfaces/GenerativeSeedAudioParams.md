@@ -10,7 +10,7 @@ Arguments for `generative seed-audio`.
 from: number;
 ```
 
-Where the generated clip starts. Ticks (`3840t`), clock time (`1.5s`), or a musical position (`4.1.0`).
+Where the generated clip starts, in ticks.
 
 ***
 
@@ -27,20 +27,20 @@ What to generate. Required.
 ### referenceAudio?
 
 ```ts
-optional referenceAudio?: string[] | null;
+optional referenceAudio?: string[];
 ```
 
-A local audio file to reference. Repeatable.
+Local audio files to reference.
 
 ***
 
 ### referenceImage?
 
 ```ts
-optional referenceImage?: string | null;
+optional referenceImage?: string;
 ```
 
-A local image whose mood the generation should follow -- the panel's reference-image slot.
+A local image whose mood the generation should follow.
 
 ***
 
@@ -50,7 +50,7 @@ A local image whose mood the generation should follow -- the panel's reference-i
 to: number;
 ```
 
-Where the generated clip ends (exclusive). This is what fixes the generation's length.
+Where the generated clip ends (exclusive), in ticks.
 
 ***
 
@@ -60,4 +60,4 @@ Where the generated clip ends (exclusive). This is what fixes the generation's l
 trackUuid: string;
 ```
 
-The Audio track the generated clip lands on, by id. Required: the panel takes it from the arrangement selection, which is not something a script can rely on (ADR 0087). Its content in the range is moved aside the same way the panel's own launch moves it, as one undo entry.
+The Audio track the generated clip lands on, by id.

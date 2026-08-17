@@ -33,7 +33,7 @@ One row per parameter category, in canonical order. A category this generation d
 available: boolean;
 ```
 
-False when the category cannot be read or written on this clip; `layers` is then empty and `unavailableReason` says why. Either the engine generation has no such parameter, or this surface does not carry it yet.
+False when the category cannot be read or written on this clip — either the engine generation has no such parameter, or this surface does not carry it yet. `layers` is then empty and `unavailableReason` says why.
 
 #### category
 
@@ -41,7 +41,7 @@ False when the category cannot be read or written on this clip; `layers` is then
 category: "pitch" | "energy" | "tension" | "air" | "falsetto" | "formant";
 ```
 
-Parameter category.
+Which vocal characteristic a curve controls. Spellings follow the vocal-control UI's own face names: `pitch` is the melodic line as a delta in semitones, `energy` the loudness/effort curve, `tension` the vocal strain, `air` the breathiness, `falsetto` the head-voice mix, and `formant` the gender channel. Two of the UI's faces are deliberately absent, because neither is a curve: its "Breath" face places breath *marks* (the `breath` group) and its "Pronounce" face edits phoneme timing (the `lyric` group). Every category is addressable, but not every category exists on every clip: which ones do depends on the singer's engine generation, and `vocalparam layers` reports that as an availability matrix rather than by omitting a row.
 
 #### layers
 
@@ -62,7 +62,7 @@ The layers this (generation x category) has, merge order first. `effective` is n
 optional scale?: string;
 ```
 
-Which value space the numbers live in. `model` is SingingMamba's [0,1] model scale; `envelope` is Verse24's multiplier space; `semitones` is pitch delta. Never conflate them (ADR 0073 §3).
+Which value space the numbers live in: `model` is SingingMamba's [0,1] model scale, `envelope` is Verse24's multiplier space, `semitones` is pitch delta. Never conflate them (ADR 0073 §3).
 
 #### unavailableReason?
 
@@ -70,7 +70,7 @@ Which value space the numbers live in. `model` is SingingMamba's [0,1] model sca
 optional unavailableReason?: string;
 ```
 
-Present only when `available` is false: why the category cannot be used here, in one sentence. Read this rather than inferring a cause from the generation.
+Present only when `available` is false: why the category cannot be used here, in one sentence.
 
 #### valueRange?
 
@@ -81,7 +81,7 @@ optional valueRange?: {
 };
 ```
 
-Inclusive bounds of a legal value in this category's scale.
+Inclusive bounds of a legal value in a category's scale.
 
 ##### valueRange.max?
 

@@ -27,7 +27,7 @@ panels: {
 };
 ```
 
-Dockable panels, keyed by the selector `ui show-panel` takes.
+Dockable panels — the roster `ui show-panel` / `ui hide-panel` take a member of.
 
 #### fx
 
@@ -38,7 +38,7 @@ fx: {
 };
 ```
 
-The track-config / FX panel for the selected track.
+One chrome citizen's reportable state. The visible/animating split matters: these transitions are animated and the open flag flips at the *start* of the animation, so `visible: true, animating: true` means "opening", not "open".
 
 ##### fx.animating
 
@@ -65,7 +65,7 @@ mixer: {
 };
 ```
 
-The mixer panel: track volume, pan, mute, solo, and effect controls.
+One chrome citizen's reportable state. The visible/animating split matters: these transitions are animated and the open flag flips at the *start* of the animation, so `visible: true, animating: true` means "opening", not "open".
 
 ##### mixer.animating
 
@@ -92,7 +92,7 @@ mv: {
 };
 ```
 
-The MV creator panel. Shares one slot with `v2m` - see `sharedPanelSlot`.
+One chrome citizen's reportable state. The visible/animating split matters: these transitions are animated and the open flag flips at the *start* of the animation, so `visible: true, animating: true` means "opening", not "open".
 
 ##### mv.animating
 
@@ -119,7 +119,7 @@ v2m: {
 };
 ```
 
-The video-composer (V2M) panel. Shares one slot with `mv` - see `sharedPanelSlot`.
+One chrome citizen's reportable state. The visible/animating split matters: these transitions are animated and the open flag flips at the *start* of the animation, so `visible: true, animating: true` means "opening", not "open".
 
 ##### v2m.animating
 
@@ -144,7 +144,7 @@ Whether the citizen is currently on screen.
 ```ts
 sharedPanelSlot: {
   open: boolean;
-  selected: "mv" | "v2m";
+  selected: string;
 };
 ```
 
@@ -156,15 +156,15 @@ The one slot `mv` and `v2m` take turns holding: showing one closes the other.
 open: boolean;
 ```
 
-Whether the slot is on screen. `panels.\<selected\>.visible` is this flag; the other member is always hidden.
+Whether the slot is on screen. `panels.\<selected\>.visible` mirrors this flag; the other member of the pair is always hidden.
 
 #### selected
 
 ```ts
-selected: "mv" | "v2m";
+selected: string;
 ```
 
-Which of the two currently holds the slot. Survives the slot closing, so it is also which one a bare re-open would show.
+Which of `mv` / `v2m` currently holds the slot. Survives the slot closing, so it is also which one a bare re-open would show.
 
 ***
 
@@ -183,7 +183,7 @@ specialTracks: {
 };
 ```
 
-Arrangement-view special-track rows, keyed by the selector `ui show-special-track` takes.
+Arrangement-view special-track rows — the roster `ui show-special-track` / `ui hide-special-track` take a member of.
 
 #### chord
 
@@ -194,7 +194,7 @@ chord: {
 };
 ```
 
-The chord progression row.
+One chrome citizen's reportable state. The visible/animating split matters: these transitions are animated and the open flag flips at the *start* of the animation, so `visible: true, animating: true` means "opening", not "open".
 
 ##### chord.animating
 
@@ -221,7 +221,7 @@ tempo_and_timesig: {
 };
 ```
 
-The combined tempo and time-signature rows (they toggle together).
+One chrome citizen's reportable state. The visible/animating split matters: these transitions are animated and the open flag flips at the *start* of the animation, so `visible: true, animating: true` means "opening", not "open".
 
 ##### tempo\_and\_timesig.animating
 
@@ -252,7 +252,7 @@ windows: {
 };
 ```
 
-Tool windows, keyed by the selector `ui show-window` takes.
+Tool windows — the roster `ui show-window` / `ui hide-window` take a member of.
 
 #### video-monitor
 
@@ -263,7 +263,7 @@ video-monitor: {
 };
 ```
 
-The floating video-monitor window.
+One chrome citizen's reportable state. The visible/animating split matters: these transitions are animated and the open flag flips at the *start* of the animation, so `visible: true, animating: true` means "opening", not "open".
 
 ##### video-monitor.animating
 

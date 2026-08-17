@@ -7,7 +7,7 @@ Arguments for `blend set`.
 ### avatar?
 
 ```ts
-optional avatar?: number | null;
+optional avatar?: number;
 ```
 
 New avatar id. Blend-level.
@@ -20,14 +20,14 @@ New avatar id. Blend-level.
 blend: string;
 ```
 
-*Required.** Which blend, by display name or ref.
+**Required.** Which blend, by display name or ref.
 
 ***
 
 ### language?
 
 ```ts
-optional language?: string | null;
+optional language?: string;
 ```
 
 New native language, as a full English name. Must be one the model and seeds allow. Blend-level.
@@ -37,17 +37,17 @@ New native language, as a full English name. Must be one the model and seeds all
 ### link?
 
 ```ts
-optional link?: boolean | null;
+optional link?: boolean;
 ```
 
-Whether Style should follow Timbre for this seed. Requires `--member`.
+Whether Style should follow Timbre for this seed. Requires `member`.
 
 ***
 
 ### member?
 
 ```ts
-optional member?: number | null;
+optional member?: number;
 ```
 
 Which seed to configure, by 0-based position in the recipe. Omit to configure the blend itself instead.
@@ -57,7 +57,7 @@ Which seed to configure, by 0-based position in the recipe. Omit to configure th
 ### name?
 
 ```ts
-optional name?: string | null;
+optional name?: string;
 ```
 
 New display name. Blend-level.
@@ -67,17 +67,17 @@ New display name. Blend-level.
 ### style?
 
 ```ts
-optional style?: number | null;
+optional style?: number;
 ```
 
-This seed's Style weight, 0 to 1. Requires `--member`, and requires a model that has a Style axis: on a timbre-only model this is an error rather than a value that silently does nothing.
+This seed's Style weight, 0 to 1. Requires `member`, and requires a model that has a Style axis: on a timbre-only model this is an error rather than a value that silently does nothing.
 
 ***
 
 ### tags?
 
 ```ts
-optional tags?: string[] | null;
+optional tags?: string[];
 ```
 
 Replacement tag list. Replaces the existing tags rather than adding to them. Blend-level.
@@ -87,7 +87,7 @@ Replacement tag list. Replaces the existing tags rather than adding to them. Ble
 ### timbre?
 
 ```ts
-optional timbre?: number | null;
+optional timbre?: number;
 ```
 
-This seed's Timbre weight, 0 to 1. Requires `--member`.
+This seed's Timbre weight, 0 to 1. Requires `member`.

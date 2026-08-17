@@ -82,7 +82,7 @@ jobs:
               continue
             fi
             # A package added since the previous release has no package.json there, which leaves
-            # `was` empty and so unequal to any version — the reading a new package wants.
+            # `was` empty. Empty matches no version, so a new package is planned.
             if [ -n "$previous" ]; then
               was=$(git show "${previous}:${dir}package.json" 2>/dev/null \
                 | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version" 2>/dev/null || true)

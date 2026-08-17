@@ -23,6 +23,7 @@ import {
 // seam and the job-class table are @internal, and the generated surface declares
 // no job-class operation to drive them with.
 import { buildBindings } from "../src/bindings.js";
+import { PUBLIC_SURFACE } from "../src/generated/bindings.js";
 import { JOB_CLASS_OPERATIONS, type JobClassTable } from "../src/jobs.js";
 import { ScriptedHostPeer } from "./support/host-peer.js";
 import { ScriptedJobLedger, scriptedJob } from "./support/job-ledger.js";
@@ -331,7 +332,7 @@ describe("a job-class operation", () => {
       connection.grant,
       () => undefined,
       () => undefined,
-      { params: {}, result: {} },
+      PUBLIC_SURFACE,
       jobClasses,
     ) as { track: { rename(params: unknown, options?: unknown): Promise<unknown> } };
     return { client, host, connection };

@@ -1,18 +1,33 @@
-# Interface: BridgeConnection
+# Interface: BridgeConnection\<Bindings\>
 
 An open, granted session against a running ACE Studio.
+
+## Type Parameters
+
+### Bindings
+
+`Bindings` = [`PublicBindings`](PublicBindings.md)
 
 ## Properties
 
 ### client
 
 ```ts
-readonly client: PublicBindings;
+readonly client: Bindings;
 ```
 
 The typed operation surface: `client.track.list()`, `client.clip.create()` —
 the canonical operation tree, one method per operation. A call the grant
 cannot reach is refused here rather than on the wire.
+
+`PublicBindings` unless [ConnectOptions.surface](ConnectOptions.md#surface) carried another
+artifact, in which case name the union at the call:
+
+```ts
+const connection = await connect<PublicBindings & PrivilegedBindings>({
+  transport, authToken, surface: PRIVILEGED_SURFACE,
+});
+```
 
 ***
 

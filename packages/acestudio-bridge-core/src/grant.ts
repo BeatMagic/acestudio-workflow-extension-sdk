@@ -82,15 +82,26 @@ export interface Grant {
 /**
  * Build the immutable grant a handshake described.
  *
- * Which granted names this artifact cannot name is derived here rather than
- * passed in: it is a function of the roster and the host's answer, and a caller
- * that computed it differently would hand back a grant whose `tokens` and
+ * Which granted names the *driver's* artifact cannot name is derived here rather
+ * than passed in: it is a function of the roster and the host's answer, and a
+ * caller that computed it differently would hand back a grant whose `tokens` and
  * `provenance` disagreed.
+ *
+ * `knownTokens` is that roster, and it is a parameter because a driver carrying
+ * the privileged artifact holds exactly the tokens the public one cannot name
+ * (ADR 0094 §2). Left at its default, such a driver would read every privileged
+ * token it was granted as `unrecognized` — the field a caller consults when a
+ * denial makes no sense, saying the opposite of the truth.
  *
  * @internal
  */
-export function createGrant(sessionId: string, requested: readonly string[], granted: readonly string[]): Grant {
-  const roster: ReadonlySet<string> = new Set(CAPABILITY_TOKENS);
+export function createGrant(
+  sessionId: string,
+  requested: readonly string[],
+  granted: readonly string[],
+  knownTokens: readonly string[] = CAPABILITY_TOKENS,
+): Grant {
+  const roster: ReadonlySet<string> = new Set(knownTokens);
   const held = new Set(granted);
   const tokens = Object.freeze([...held].filter((name): name is CapabilityToken => roster.has(name)).sort());
   const provenance: GrantProvenance = Object.freeze({

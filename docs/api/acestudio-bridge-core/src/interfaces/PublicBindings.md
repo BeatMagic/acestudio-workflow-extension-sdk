@@ -1,6 +1,6 @@
 # Interface: PublicBindings
 
-Every published operation, grouped by domain. A connection's client implements this; the runtime builds it from `OPERATIONS`.
+Every published operation, grouped by domain. A connection's client implements this; the runtime builds it from `PUBLIC_SURFACE`.
 
 ## Properties
 

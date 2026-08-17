@@ -22,7 +22,8 @@ import {
 } from "@timedomain/acestudio-bridge-core";
 // Reached by path: the pass and its table seam are @internal, and the generated
 // tables have no rows to drive them with.
-import { buildBindings, invocation, type BulkTables } from "../src/bindings.js";
+import { buildBindings, invocation } from "../src/bindings.js";
+import { PUBLIC_SURFACE, type DriverSurface } from "../src/generated/bindings.js";
 import { decodeBulkFields, encodeBulkFields } from "../src/bulk.js";
 import { ScriptedHostPeer, type ScriptedHostOptions } from "./support/host-peer.js";
 
@@ -224,11 +225,11 @@ describe("the pass inside a binding", () => {
    * the empty generated ones. Real peer, real grant, real scripted host —
    * everything but the tables is the shipping stack.
    */
-  async function clientWithBulkTables(bulk: BulkTables, options: ScriptedHostOptions) {
+  async function clientWithBulkTables(bulk: DriverSurface["bulk"], options: ScriptedHostOptions) {
     const { client: clientTransport, host: hostTransport } = createTransportPair();
     const host = new ScriptedHostPeer(hostTransport, options);
     const connection = await connect({ transport: clientTransport, authToken: "token-abc" });
-    const client = buildBindings(connection.peer, connection.grant, () => {}, () => undefined, bulk) as {
+    const client = buildBindings(connection.peer, connection.grant, () => {}, () => undefined, { ...PUBLIC_SURFACE, bulk }) as {
       transport: { setLoop(params: unknown, options?: unknown): Promise<unknown> };
       track: { list(options?: unknown): Promise<unknown> };
     };

@@ -1,11 +1,17 @@
 # Function: connect()
 
 ```ts
-function connect(options): Promise<BridgeConnection>;
+function connect<Bindings>(options): Promise<BridgeConnection<Bindings>>;
 ```
 
 Open a session against a running ACE Studio: run the canonical handshake
 over `transport` and resolve once the host has granted a session.
+
+## Type Parameters
+
+### Bindings
+
+`Bindings` = [`PublicBindings`](../interfaces/PublicBindings.md)
 
 ## Parameters
 
@@ -15,7 +21,7 @@ over `transport` and resolve once the host has granted a session.
 
 ## Returns
 
-`Promise`\<[`BridgeConnection`](../interfaces/BridgeConnection.md)\>
+`Promise`\<[`BridgeConnection`](../interfaces/BridgeConnection.md)\<`Bindings`\>\>
 
 ## Throws
 

@@ -34,7 +34,6 @@ import {
   type PreconditionCallOptions,
   type Unsubscribe,
 } from "./generated/bindings.js";
-import { ChangeClient } from "./generated/Change.acerpc.js";
 import { OperationClient, type InvokeParams, type InvokeWarning } from "./generated/Operation.acerpc.js";
 import { acceptedJobId, createJobHandle, JOB_CLASS_OPERATIONS, type JobClassTable } from "./jobs.js";
 import type { BridgePeer } from "./peer.js";

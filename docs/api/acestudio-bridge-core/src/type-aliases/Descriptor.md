@@ -4,4 +4,5 @@
 type Descriptor = typeof OPERATIONS[number];
 ```
 
-One row of the generated operation table, with its literal types intact.
+One row of *this* artifact's generated operation table, with its literal types
+intact.

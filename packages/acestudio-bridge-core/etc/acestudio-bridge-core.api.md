@@ -8,7 +8,10 @@
 export type AnyBridgeErrorCode = BridgeErrorCode | SdkErrorCode;
 
 // @public
-export type AtRoot<T extends CapabilityToken> = Extract<Reachable<T>, {
+export type AtRoot<T extends CapabilityToken> = AtRootOf<Descriptor, T>;
+
+// @public
+export type AtRootOf<Rows extends OperationDescriptor, T extends string> = Extract<ReachableIn<Rows, T>, {
     domain: "";
 }>;
 
@@ -1921,7 +1924,10 @@ export interface ImportOperations {
 }
 
 // @public
-export type InDomain<T extends CapabilityToken> = Exclude<Reachable<T>, {
+export type InDomain<T extends CapabilityToken> = InDomainOf<Descriptor, T>;
+
+// @public
+export type InDomainOf<Rows extends OperationDescriptor, T extends string> = Exclude<ReachableIn<Rows, T>, {
     domain: "";
 }>;
 
@@ -4011,7 +4017,7 @@ export const PROFILES: {
 export type ProfileScopedBindings<P extends ProfileName> = ScopedBindings<ProfileTokens<P>>;
 
 // @public
-export type ProfileTokens<P extends ProfileName> = (typeof PROFILES)[P][number];
+export type ProfileTokens<P extends ProfileName> = TokensOfProfile<typeof PROFILES, P>;
 
 // @public
 export interface ProjectCollectSaveParams {
@@ -5894,7 +5900,10 @@ export interface PublicBindings {
 }
 
 // @public
-export type Reachable<T extends CapabilityToken> = Extract<Descriptor, {
+export type Reachable<T extends CapabilityToken> = ReachableIn<Descriptor, T>;
+
+// @public
+export type ReachableIn<Rows extends OperationDescriptor, T extends string> = Extract<Rows, {
     ungated: true;
 } | {
     capability: T;
@@ -6103,11 +6112,14 @@ export const REQUIRED_TOKENS: {
 };
 
 // @public
-export type ScopedBindings<T extends CapabilityToken> = {
-    readonly [D in InDomain<T>["domain"] as Camel<D>]: Camel<D> extends keyof PublicBindings ? Pick<PublicBindings[Camel<D>], Extract<InDomain<T>, {
+export type ScopedBindings<T extends CapabilityToken> = ScopedBindingsOf<Descriptor, PublicBindings, T>;
+
+// @public
+export type ScopedBindingsOf<Rows extends OperationDescriptor, B, T extends string> = {
+    readonly [D in InDomainOf<Rows, T>["domain"] as Camel<D>]: Camel<D> extends keyof B ? Pick<B[Camel<D>], Extract<InDomainOf<Rows, T>, {
         domain: D;
-    }>["method"] & keyof PublicBindings[Camel<D>]> : never;
-} & Pick<PublicBindings, AtRoot<T>["method"] & keyof PublicBindings>;
+    }>["method"] & keyof B[Camel<D>]> : never;
+} & Pick<B, AtRootOf<Rows, T>["method"] & keyof B>;
 
 // @public
 export type SdkErrorCode =
@@ -6612,6 +6624,9 @@ export interface TimesigSetParams {
         numerator: number;
     }[];
 }
+
+// @public
+export type TokensOfProfile<Profiles extends Readonly<Record<string, readonly string[]>>, P extends keyof Profiles> = Profiles[P][number];
 
 // @public
 export interface TrackCreateParams {

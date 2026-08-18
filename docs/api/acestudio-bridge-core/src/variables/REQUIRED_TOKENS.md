@@ -62,6 +62,20 @@ const REQUIRED_TOKENS: {
   export song-template: "export.invoke";
   export video: "export.invoke";
   export vocal-sample: "export.invoke";
+  fx add: "fx.write";
+  fx apply-preset: "fx.write";
+  fx get-params: "fx.read";
+  fx list: "fx.read";
+  fx list-available: "fx.read";
+  fx list-params: "fx.read";
+  fx open-editor: "ui.control";
+  fx remove: "fx.write";
+  fx reorder: "fx.write";
+  fx save-preset: "fx.write";
+  fx scan: "fx.write";
+  fx set: "fx.write";
+  fx set-param: "fx.write";
+  fx set-room: "fx.write";
   generative add-layer: "generative.add-layer";
   generative enhance: "generative.enhance";
   generative seed-audio: "generative.seed-audio";
@@ -523,6 +537,90 @@ readonly export video: "export.invoke" = 'export.invoke';
 
 ```ts
 readonly export vocal-sample: "export.invoke" = 'export.invoke';
+```
+
+### fx add
+
+```ts
+readonly fx add: "fx.write" = 'fx.write';
+```
+
+### fx apply-preset
+
+```ts
+readonly fx apply-preset: "fx.write" = 'fx.write';
+```
+
+### fx get-params
+
+```ts
+readonly fx get-params: "fx.read" = 'fx.read';
+```
+
+### fx list
+
+```ts
+readonly fx list: "fx.read" = 'fx.read';
+```
+
+### fx list-available
+
+```ts
+readonly fx list-available: "fx.read" = 'fx.read';
+```
+
+### fx list-params
+
+```ts
+readonly fx list-params: "fx.read" = 'fx.read';
+```
+
+### fx open-editor
+
+```ts
+readonly fx open-editor: "ui.control" = 'ui.control';
+```
+
+### fx remove
+
+```ts
+readonly fx remove: "fx.write" = 'fx.write';
+```
+
+### fx reorder
+
+```ts
+readonly fx reorder: "fx.write" = 'fx.write';
+```
+
+### fx save-preset
+
+```ts
+readonly fx save-preset: "fx.write" = 'fx.write';
+```
+
+### fx scan
+
+```ts
+readonly fx scan: "fx.write" = 'fx.write';
+```
+
+### fx set
+
+```ts
+readonly fx set: "fx.write" = 'fx.write';
+```
+
+### fx set-param
+
+```ts
+readonly fx set-param: "fx.write" = 'fx.write';
+```
+
+### fx set-room
+
+```ts
+readonly fx set-room: "fx.write" = 'fx.write';
 ```
 
 ### generative add-layer

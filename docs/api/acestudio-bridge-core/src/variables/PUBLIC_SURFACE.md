@@ -653,6 +653,132 @@ const PUBLIC_SURFACE: {
      takesParams: true;
      ungated: false;
    }, {
+     capability: "fx.write";
+     domain: "fx";
+     fingerprintPrecondition: false;
+     method: "add";
+     mutating: true;
+     path: "fx add";
+     takesParams: true;
+     ungated: false;
+   }, {
+     capability: "fx.write";
+     domain: "fx";
+     fingerprintPrecondition: true;
+     method: "applyPreset";
+     mutating: true;
+     path: "fx apply-preset";
+     takesParams: true;
+     ungated: false;
+   }, {
+     capability: "fx.read";
+     domain: "fx";
+     fingerprintPrecondition: false;
+     method: "getParams";
+     mutating: false;
+     path: "fx get-params";
+     takesParams: true;
+     ungated: false;
+   }, {
+     capability: "fx.read";
+     domain: "fx";
+     fingerprintPrecondition: false;
+     method: "list";
+     mutating: false;
+     path: "fx list";
+     takesParams: true;
+     ungated: false;
+   }, {
+     capability: "fx.read";
+     domain: "fx";
+     fingerprintPrecondition: false;
+     method: "listAvailable";
+     mutating: false;
+     path: "fx list-available";
+     takesParams: true;
+     ungated: false;
+   }, {
+     capability: "fx.read";
+     domain: "fx";
+     fingerprintPrecondition: false;
+     method: "listParams";
+     mutating: false;
+     path: "fx list-params";
+     takesParams: true;
+     ungated: false;
+   }, {
+     capability: "ui.control";
+     domain: "fx";
+     fingerprintPrecondition: false;
+     method: "openEditor";
+     mutating: true;
+     path: "fx open-editor";
+     takesParams: true;
+     ungated: false;
+   }, {
+     capability: "fx.write";
+     domain: "fx";
+     fingerprintPrecondition: false;
+     method: "remove";
+     mutating: true;
+     path: "fx remove";
+     takesParams: true;
+     ungated: false;
+   }, {
+     capability: "fx.write";
+     domain: "fx";
+     fingerprintPrecondition: false;
+     method: "reorder";
+     mutating: true;
+     path: "fx reorder";
+     takesParams: true;
+     ungated: false;
+   }, {
+     capability: "fx.write";
+     domain: "fx";
+     fingerprintPrecondition: false;
+     method: "savePreset";
+     mutating: true;
+     path: "fx save-preset";
+     takesParams: true;
+     ungated: false;
+   }, {
+     capability: "fx.write";
+     domain: "fx";
+     fingerprintPrecondition: false;
+     method: "scan";
+     mutating: true;
+     path: "fx scan";
+     takesParams: true;
+     ungated: false;
+   }, {
+     capability: "fx.write";
+     domain: "fx";
+     fingerprintPrecondition: false;
+     method: "set";
+     mutating: true;
+     path: "fx set";
+     takesParams: true;
+     ungated: false;
+   }, {
+     capability: "fx.write";
+     domain: "fx";
+     fingerprintPrecondition: true;
+     method: "setParam";
+     mutating: true;
+     path: "fx set-param";
+     takesParams: true;
+     ungated: false;
+   }, {
+     capability: "fx.write";
+     domain: "fx";
+     fingerprintPrecondition: false;
+     method: "setRoom";
+     mutating: true;
+     path: "fx set-room";
+     takesParams: true;
+     ungated: false;
+   }, {
      capability: "generative.add-layer";
      domain: "generative";
      entitlement: "credits(add-a-layer)";
@@ -1585,6 +1711,20 @@ const PUBLIC_SURFACE: {
      export song-template: "export.invoke";
      export video: "export.invoke";
      export vocal-sample: "export.invoke";
+     fx add: "fx.write";
+     fx apply-preset: "fx.write";
+     fx get-params: "fx.read";
+     fx list: "fx.read";
+     fx list-available: "fx.read";
+     fx list-params: "fx.read";
+     fx open-editor: "ui.control";
+     fx remove: "fx.write";
+     fx reorder: "fx.write";
+     fx save-preset: "fx.write";
+     fx scan: "fx.write";
+     fx set: "fx.write";
+     fx set-param: "fx.write";
+     fx set-room: "fx.write";
      generative add-layer: "generative.add-layer";
      generative enhance: "generative.enhance";
      generative seed-audio: "generative.seed-audio";
@@ -2370,6 +2510,132 @@ readonly operations: readonly [{
   method: "vocalSample";
   mutating: true;
   path: "export vocal-sample";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.write";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "add";
+  mutating: true;
+  path: "fx add";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.write";
+  domain: "fx";
+  fingerprintPrecondition: true;
+  method: "applyPreset";
+  mutating: true;
+  path: "fx apply-preset";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.read";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "getParams";
+  mutating: false;
+  path: "fx get-params";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.read";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "list";
+  mutating: false;
+  path: "fx list";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.read";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "listAvailable";
+  mutating: false;
+  path: "fx list-available";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.read";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "listParams";
+  mutating: false;
+  path: "fx list-params";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "ui.control";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "openEditor";
+  mutating: true;
+  path: "fx open-editor";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.write";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "remove";
+  mutating: true;
+  path: "fx remove";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.write";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "reorder";
+  mutating: true;
+  path: "fx reorder";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.write";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "savePreset";
+  mutating: true;
+  path: "fx save-preset";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.write";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "scan";
+  mutating: true;
+  path: "fx scan";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.write";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "set";
+  mutating: true;
+  path: "fx set";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.write";
+  domain: "fx";
+  fingerprintPrecondition: true;
+  method: "setParam";
+  mutating: true;
+  path: "fx set-param";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.write";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "setRoom";
+  mutating: true;
+  path: "fx set-room";
   takesParams: true;
   ungated: false;
 }, {
@@ -3310,6 +3576,20 @@ readonly requiredTokens: {
   export song-template: "export.invoke";
   export video: "export.invoke";
   export vocal-sample: "export.invoke";
+  fx add: "fx.write";
+  fx apply-preset: "fx.write";
+  fx get-params: "fx.read";
+  fx list: "fx.read";
+  fx list-available: "fx.read";
+  fx list-params: "fx.read";
+  fx open-editor: "ui.control";
+  fx remove: "fx.write";
+  fx reorder: "fx.write";
+  fx save-preset: "fx.write";
+  fx scan: "fx.write";
+  fx set: "fx.write";
+  fx set-param: "fx.write";
+  fx set-room: "fx.write";
   generative add-layer: "generative.add-layer";
   generative enhance: "generative.enhance";
   generative seed-audio: "generative.seed-audio";
@@ -3767,6 +4047,90 @@ readonly export video: "export.invoke" = 'export.invoke';
 
 ```ts
 readonly export vocal-sample: "export.invoke" = 'export.invoke';
+```
+
+#### requiredTokens.fx add
+
+```ts
+readonly fx add: "fx.write" = 'fx.write';
+```
+
+#### requiredTokens.fx apply-preset
+
+```ts
+readonly fx apply-preset: "fx.write" = 'fx.write';
+```
+
+#### requiredTokens.fx get-params
+
+```ts
+readonly fx get-params: "fx.read" = 'fx.read';
+```
+
+#### requiredTokens.fx list
+
+```ts
+readonly fx list: "fx.read" = 'fx.read';
+```
+
+#### requiredTokens.fx list-available
+
+```ts
+readonly fx list-available: "fx.read" = 'fx.read';
+```
+
+#### requiredTokens.fx list-params
+
+```ts
+readonly fx list-params: "fx.read" = 'fx.read';
+```
+
+#### requiredTokens.fx open-editor
+
+```ts
+readonly fx open-editor: "ui.control" = 'ui.control';
+```
+
+#### requiredTokens.fx remove
+
+```ts
+readonly fx remove: "fx.write" = 'fx.write';
+```
+
+#### requiredTokens.fx reorder
+
+```ts
+readonly fx reorder: "fx.write" = 'fx.write';
+```
+
+#### requiredTokens.fx save-preset
+
+```ts
+readonly fx save-preset: "fx.write" = 'fx.write';
+```
+
+#### requiredTokens.fx scan
+
+```ts
+readonly fx scan: "fx.write" = 'fx.write';
+```
+
+#### requiredTokens.fx set
+
+```ts
+readonly fx set: "fx.write" = 'fx.write';
+```
+
+#### requiredTokens.fx set-param
+
+```ts
+readonly fx set-param: "fx.write" = 'fx.write';
+```
+
+#### requiredTokens.fx set-room
+
+```ts
+readonly fx set-room: "fx.write" = 'fx.write';
 ```
 
 #### requiredTokens.generative add-layer

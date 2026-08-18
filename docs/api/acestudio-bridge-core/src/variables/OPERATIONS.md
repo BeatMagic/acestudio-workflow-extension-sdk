@@ -598,6 +598,132 @@ const OPERATIONS: readonly [{
   takesParams: true;
   ungated: false;
 }, {
+  capability: "fx.write";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "add";
+  mutating: true;
+  path: "fx add";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.write";
+  domain: "fx";
+  fingerprintPrecondition: true;
+  method: "applyPreset";
+  mutating: true;
+  path: "fx apply-preset";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.read";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "getParams";
+  mutating: false;
+  path: "fx get-params";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.read";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "list";
+  mutating: false;
+  path: "fx list";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.read";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "listAvailable";
+  mutating: false;
+  path: "fx list-available";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.read";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "listParams";
+  mutating: false;
+  path: "fx list-params";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "ui.control";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "openEditor";
+  mutating: true;
+  path: "fx open-editor";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.write";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "remove";
+  mutating: true;
+  path: "fx remove";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.write";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "reorder";
+  mutating: true;
+  path: "fx reorder";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.write";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "savePreset";
+  mutating: true;
+  path: "fx save-preset";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.write";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "scan";
+  mutating: true;
+  path: "fx scan";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.write";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "set";
+  mutating: true;
+  path: "fx set";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.write";
+  domain: "fx";
+  fingerprintPrecondition: true;
+  method: "setParam";
+  mutating: true;
+  path: "fx set-param";
+  takesParams: true;
+  ungated: false;
+}, {
+  capability: "fx.write";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "setRoom";
+  mutating: true;
+  path: "fx set-room";
+  takesParams: true;
+  ungated: false;
+}, {
   capability: "generative.add-layer";
   domain: "generative";
   entitlement: "credits(add-a-layer)";

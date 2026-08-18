@@ -30,6 +30,8 @@ Ids of the waited-on jobs that have reached a terminal lifecycle.
 jobs: {
   cancelable: boolean;
   delivery: "direct" | "staged";
+  errorCode?: string;
+  errorMessage?: string;
   hasProgress: boolean;
   id: string;
   jobClass: string;
@@ -63,6 +65,22 @@ delivery: "direct" | "staged";
 ```
 
 Where a job's results land when they settle. `direct` = they auto-place into the project as one undo step, so nothing further is asked of the caller. `staged` = they land in the session's job history for audition, and reach the project only through `job place` (or leave it through `job discard-result`). A class declares this once, so every job of one class delivers the same way.
+
+#### errorCode?
+
+```ts
+optional errorCode?: string;
+```
+
+Why a job ended without a product — a short machine-readable code from the producing class's own vocabulary, e.g. `noContextAudio` from a beat analysis with nothing to analyze. Present only on a `failed` or `cancelled` job, and only where the producer named a reason: a class may fail without one, so absence means "no reason recorded", never "no failure". `lifecycle` is what says whether the job failed — read this for WHY, not WHETHER. The codes are the producing class's, not this contract's, for the same reason a result payload's keys are (ADR 0084): the ledger carries every producer's jobs and cannot own a closed set of failure reasons for all of them. Read it against `jobClass`.
+
+#### errorMessage?
+
+```ts
+optional errorMessage?: string;
+```
+
+A human-readable sentence for the same failure — for a log or a message to the user, never for branching. Branch on `errorCode`. Present and absent independently of `errorCode`: a producer may record a message without a code, or a code without a message.
 
 #### hasProgress
 

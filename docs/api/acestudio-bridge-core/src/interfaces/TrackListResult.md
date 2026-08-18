@@ -30,7 +30,7 @@ tracks: {
 }[];
 ```
 
-The matching tracks: the arrangement in its own order, then the video band, then the marker band.
+The matching tracks: the arrangement in its own order, then the video band, then the marker band, then the chord track.
 
 #### clipCount
 
@@ -62,7 +62,7 @@ Which system role a protected marker track fills: `sections` or `lyrics`. Stable
 region: string;
 ```
 
-Which index space `trackIndex` counts in: 'arrangement' (the main track list), 'video', or 'marker'.
+Which index space `trackIndex` counts in: 'arrangement' (the main track list), 'video', 'marker', or 'chord'. 'chord' holds the one chord track at index 0. It is reported as its own region rather than as an arrangement position because the arrangement does not contain it, and an index read against the wrong space names an unrelated track.
 
 #### soundSourceName?
 
@@ -70,7 +70,7 @@ Which index space `trackIndex` counts in: 'arrangement' (the main track list), '
 optional soundSourceName?: string;
 ```
 
-Sound-source name for Sing and Instrument tracks; 'N-member choir'/'N-member ensemble' in choir/ensemble mode; empty for GenericMidi, which carries an external instrument instead. Omitted for the types that can have none: Audio, Video and Marker.
+Sound-source name for Sing and Instrument tracks; 'N-member choir'/'N-member ensemble' in choir/ensemble mode; empty for GenericMidi, which carries an external instrument instead. Omitted for the types that can have none: Audio, Video, Marker and Chord.
 
 #### trackIndex
 
@@ -94,7 +94,7 @@ Current display name.
 trackType: string;
 ```
 
-One of: Sing, Instrument, GenericMidi, Audio, Video, Marker.
+One of: Sing, Instrument, GenericMidi, Audio, Video, Marker, Chord.
 
 #### trackUuid
 

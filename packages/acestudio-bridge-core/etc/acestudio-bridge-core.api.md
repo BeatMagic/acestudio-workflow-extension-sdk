@@ -286,7 +286,7 @@ export class BridgeError<C extends AnyBridgeErrorCode = AnyBridgeErrorCode> exte
 }
 
 // @public
-export type BridgeErrorCode = 'ALREADY_RECORDING' | 'AMBIGUOUS_SOURCE' | 'ANALYSIS_UNUSABLE' | 'BAD_ARGS' | 'BRIDGE_UNREACHABLE' | 'CAPABILITY_DENIED' | 'CAPABILITY_OUT_OF_SURFACE' | 'CHAIN_NOT_GROWN' | 'CLIP_OVERLAP' | 'CLIP_RANGE' | 'COLLECT_FAILED' | 'CONFIRMATION_REQUIRED' | 'CREATE_TIMEOUT' | 'CREDIT_INSUFFICIENT' | 'EDITOR_NOT_READY' | 'EDIT_TIMEOUT' | 'EXPORT_IN_PROGRESS' | 'EXPORT_START_FAILED' | 'FILE_NOT_FOUND' | 'FINGERPRINT_SCOPE_MISMATCH' | 'FIXTURE_FAILED' | 'FLUSH_TIMEOUT' | 'FORMAT_UNAVAILABLE' | 'GESTURE_HELD' | 'HANDLER_FAILED' | 'IMPORT_FAILED' | 'INSERT_FAILED' | 'INVALID_ARG' | 'IO_ERROR' | 'JOB_NOT_CANCELLABLE' | 'MEMBERSHIP_REQUIRED' | 'MISSING_ARG' | 'NEW_FAILED' | 'NOTE_OVERLAP' | 'NOT_FOUND' | 'NOT_READY' | 'NO_FIXTURE' | 'NO_GESTURE' | 'NO_MASTER_CHAIN' | 'NO_PATTERN_EDIT_OPEN' | 'NO_PROJECT' | 'NO_PROJECT_OPEN' | 'NO_SCENE' | 'NO_STATE' | 'NO_TRACK_VIEW' | 'NO_WINDOW' | 'OPEN_FAILED' | 'PLAYBACK_START_FAILED' | 'RECORD_START_FAILED' | 'SAVE_FAILED' | 'SCENARIO_FAILED' | 'SESSION_INVALID' | 'STALE_WRITE' | 'TIMEOUT' | 'TIME_UNIT_REQUIRED' | 'TRACK_CREATE_FAILED' | 'TRACK_NOT_EMPTY' | 'TRACK_PROTECTED' | 'UNAVAILABLE' | 'UNKNOWN_CAPABILITY' | 'UNKNOWN_COMMAND' | 'UNKNOWN_SCENARIO' | 'UNSAVED_CHANGES' | 'USER_BUSY';
+export type BridgeErrorCode = 'ALREADY_RECORDING' | 'AMBIGUOUS_SOURCE' | 'ANALYSIS_UNUSABLE' | 'BAD_ARGS' | 'BRIDGE_UNREACHABLE' | 'CAPABILITY_DENIED' | 'CAPABILITY_OUT_OF_SURFACE' | 'CHAIN_NOT_GROWN' | 'CLIP_OVERLAP' | 'CLIP_RANGE' | 'COLLECT_FAILED' | 'CONFIRMATION_REQUIRED' | 'CREATE_TIMEOUT' | 'CREDIT_INSUFFICIENT' | 'EDITOR_NOT_READY' | 'EDIT_TIMEOUT' | 'EXPORT_IN_PROGRESS' | 'EXPORT_START_FAILED' | 'FILE_NOT_FOUND' | 'FINGERPRINT_SCOPE_MISMATCH' | 'FIXTURE_FAILED' | 'FLUSH_TIMEOUT' | 'FORMAT_UNAVAILABLE' | 'GESTURE_HELD' | 'HANDLER_FAILED' | 'IMPORT_FAILED' | 'INSERT_FAILED' | 'INVALID_ARG' | 'IO_ERROR' | 'JOB_NOT_CANCELLABLE' | 'MEMBERSHIP_REQUIRED' | 'MISSING_ARG' | 'NEW_FAILED' | 'NOTE_OVERLAP' | 'NOT_FOUND' | 'NOT_READY' | 'NO_FIXTURE' | 'NO_GESTURE' | 'NO_MASTER_CHAIN' | 'NO_PATTERN_EDIT_OPEN' | 'NO_PROJECT' | 'NO_PROJECT_OPEN' | 'NO_SCENE' | 'NO_STATE' | 'NO_TRACK_VIEW' | 'NO_WINDOW' | 'OPEN_FAILED' | 'PLAYBACK_START_FAILED' | 'PRESET_EXISTS' | 'RECORD_START_FAILED' | 'SAVE_FAILED' | 'SCAN_IN_PROGRESS' | 'SCENARIO_FAILED' | 'SESSION_INVALID' | 'STALE_WRITE' | 'TIMEOUT' | 'TIME_UNIT_REQUIRED' | 'TRACK_CREATE_FAILED' | 'TRACK_NOT_EMPTY' | 'TRACK_PROTECTED' | 'UNAVAILABLE' | 'UNKNOWN_CAPABILITY' | 'UNKNOWN_COMMAND' | 'UNKNOWN_SCENARIO' | 'UNSAVED_CHANGES' | 'USER_BUSY';
 
 // @public
 export interface BridgeErrorDetails {
@@ -763,6 +763,17 @@ export interface ClipGetResult {
     isColorLinkToTrack: boolean;
     rawName: string;
     usedTimeUnit: string;
+    videoMedia?: {
+        clipInSec: number;
+        hasAudio: boolean;
+        libraryAsset?: {
+            kind: string;
+            stableId: string;
+        };
+        muted: boolean;
+        sourceDurationSec: number;
+        sourcePath: string;
+    };
 }
 
 // @public
@@ -783,6 +794,17 @@ export interface ClipListResult {
         clipUuid: string;
         enabled: boolean;
         noteCount?: number;
+        videoMedia?: {
+            clipInSec: number;
+            hasAudio: boolean;
+            libraryAsset?: {
+                kind: string;
+                stableId: string;
+            };
+            muted: boolean;
+            sourceDurationSec: number;
+            sourcePath: string;
+        };
     }[];
 }
 
@@ -1606,6 +1628,371 @@ export class FrameDecoder {
 }
 
 // @public
+export interface FxAddParams {
+    at?: number;
+    preset?: string;
+    rack?: 'pre';
+    trackIndex?: number;
+    trackUuid?: string;
+    type: string;
+}
+
+// @public
+export interface FxAddResult {
+    insert: {
+        bypassed: boolean;
+        enabled: boolean;
+        format?: 'native' | 'vst3' | 'vst2' | 'au';
+        hasEditor?: boolean;
+        insertId: string;
+        missing: boolean;
+        name: string;
+        presetName?: string;
+        slot: number;
+        typeId: string;
+        vendor?: string;
+    };
+    insertCount: number;
+    rack?: 'pre';
+    trackIndex?: number;
+    trackUuid: string;
+}
+
+// @public
+export interface FxApplyPresetParams {
+    insert?: string;
+    preset?: string;
+    presetId?: number;
+    rack?: 'pre';
+    slot?: number;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface FxApplyPresetResult {
+    insertId: string;
+    presetId?: number;
+    presetName: string;
+}
+
+// @public
+export interface FxGetParamsParams {
+    filter?: string;
+    insert?: string;
+    rack?: 'pre';
+    regex?: boolean;
+    slot?: number;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface FxGetParamsResult {
+    filter?: string;
+    fingerprint: Fingerprint;
+    insertId: string;
+    name?: string;
+    paramCount: number;
+    params: {
+        automatable: boolean;
+        choices?: string[];
+        defaultValue?: number;
+        group?: string;
+        index: number;
+        kind: 'continuous' | 'stepped' | 'boolean' | 'choice';
+        max?: number;
+        min?: number;
+        name: string;
+        paramId: string;
+        stepCount?: number;
+        unit?: string;
+        value: number;
+        valueText: string;
+    }[];
+    totalParamCount: number;
+    typeId?: string;
+}
+
+// @public
+export interface FxListAvailableParams {
+    category?: string;
+    format?: 'native' | 'vst3' | 'vst2' | 'au';
+    search?: string;
+    vendor?: string;
+}
+
+// @public
+export interface FxListAvailableResult {
+    effectCount: number;
+    effects: {
+        category?: string;
+        format: 'native' | 'vst3' | 'vst2' | 'au';
+        name: string;
+        typeId: string;
+        vendor?: string;
+        version?: string;
+    }[];
+    scanning: boolean;
+    totalEffectCount: number;
+}
+
+// @public
+export interface FxListParams {
+    rack?: 'pre';
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface FxListParamsParams {
+    detail?: boolean;
+    filter?: string;
+    insert?: string;
+    rack?: 'pre';
+    regex?: boolean;
+    slot?: number;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface FxListParamsResult {
+    filter?: string;
+    insertId: string;
+    name?: string;
+    names?: string[];
+    paramCount: number;
+    params?: {
+        automatable: boolean;
+        choices?: string[];
+        group?: string;
+        index: number;
+        kind: 'continuous' | 'stepped' | 'boolean' | 'choice';
+        max?: number;
+        min?: number;
+        name: string;
+        paramId: string;
+        stepCount?: number;
+        unit?: string;
+    }[];
+    totalParamCount: number;
+    typeId?: string;
+}
+
+// @public
+export interface FxListResult {
+    insertCount: number;
+    inserts: {
+        bypassed: boolean;
+        enabled: boolean;
+        format?: 'native' | 'vst3' | 'vst2' | 'au';
+        hasEditor?: boolean;
+        insertId: string;
+        missing: boolean;
+        name: string;
+        presetName?: string;
+        slot: number;
+        typeId: string;
+        vendor?: string;
+    }[];
+    rack?: 'pre';
+    trackIndex?: number;
+    trackUuid: string;
+}
+
+// @public
+export interface FxOpenEditorParams {
+    insert?: string;
+    rack?: 'pre';
+    slot?: number;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface FxOpenEditorResult {
+    alreadyOpen: boolean;
+    insertId: string;
+    name?: string;
+}
+
+// @public
+export interface FxOperations {
+    add(params: FxAddParams, options?: MutatingCallOptions): Promise<FxAddResult>;
+    applyPreset(params?: FxApplyPresetParams, options?: PreconditionCallOptions): Promise<FxApplyPresetResult>;
+    getParams(params?: FxGetParamsParams, options?: CallOptions): Promise<FxGetParamsResult>;
+    list(params?: FxListParams, options?: CallOptions): Promise<FxListResult>;
+    listAvailable(params?: FxListAvailableParams, options?: CallOptions): Promise<FxListAvailableResult>;
+    listParams(params?: FxListParamsParams, options?: CallOptions): Promise<FxListParamsResult>;
+    openEditor(params?: FxOpenEditorParams, options?: MutatingCallOptions): Promise<FxOpenEditorResult>;
+    remove(params?: FxRemoveParams, options?: MutatingCallOptions): Promise<FxRemoveResult>;
+    reorder(params: FxReorderParams, options?: MutatingCallOptions): Promise<FxReorderResult>;
+    savePreset(params: FxSavePresetParams, options?: MutatingCallOptions): Promise<FxSavePresetResult>;
+    scan(params?: FxScanParams, options?: MutatingCallOptions): Promise<FxScanResult>;
+    set(params?: FxSetParams, options?: MutatingCallOptions): Promise<FxSetResult>;
+    setParam(params: FxSetParamParams, options?: PreconditionCallOptions): Promise<FxSetParamResult>;
+    setRoom(params?: FxSetRoomParams, options?: MutatingCallOptions): Promise<FxSetRoomResult>;
+}
+
+// @public
+export interface FxRemoveParams {
+    insert?: string;
+    rack?: 'pre';
+    slot?: number;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface FxRemoveResult {
+    insertCount: number;
+    insertId: string;
+    rack?: 'pre';
+    slot: number;
+    trackIndex?: number;
+    trackUuid: string;
+}
+
+// @public
+export interface FxReorderParams {
+    insert?: string;
+    rack?: 'pre';
+    slot?: number;
+    to: number;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface FxReorderResult {
+    insertCount: number;
+    insertId: string;
+    rack?: 'pre';
+    slot: number;
+    trackIndex?: number;
+    trackUuid: string;
+}
+
+// @public
+export interface FxSavePresetParams {
+    insert?: string;
+    name: string;
+    overwrite?: boolean;
+    rack?: 'pre';
+    slot?: number;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface FxSavePresetResult {
+    path: string;
+    presetId?: number;
+    presetName: string;
+    replaced: boolean;
+}
+
+// @public
+export interface FxScanParams {
+    full?: boolean;
+}
+
+// @public
+export interface FxScanResult {
+    full: boolean;
+    jobClass: string;
+    jobId: string;
+}
+
+// @public
+export interface FxSetParamParams {
+    insert?: string;
+    param: string;
+    rack?: 'pre';
+    slot?: number;
+    trackIndex?: number;
+    trackUuid?: string;
+    value: number;
+}
+
+// @public
+export interface FxSetParamResult {
+    insertId: string;
+    param: {
+        automatable: boolean;
+        choices?: string[];
+        defaultValue?: number;
+        group?: string;
+        index: number;
+        kind: 'continuous' | 'stepped' | 'boolean' | 'choice';
+        max?: number;
+        min?: number;
+        name: string;
+        paramId: string;
+        stepCount?: number;
+        unit?: string;
+        value: number;
+        valueText: string;
+    };
+}
+
+// @public
+export interface FxSetParams {
+    bypassed?: boolean;
+    enabled?: boolean;
+    insert?: string;
+    name?: string;
+    rack?: 'pre';
+    slot?: number;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface FxSetResult {
+    insert: {
+        bypassed: boolean;
+        enabled: boolean;
+        format?: 'native' | 'vst3' | 'vst2' | 'au';
+        hasEditor?: boolean;
+        insertId: string;
+        missing: boolean;
+        name: string;
+        presetName?: string;
+        slot: number;
+        typeId: string;
+        vendor?: string;
+    };
+    insertCount: number;
+    rack?: 'pre';
+    trackIndex?: number;
+    trackUuid: string;
+}
+
+// @public
+export interface FxSetRoomParams {
+    enabled?: boolean;
+    positionX?: number;
+    positionY?: number;
+    trackIndex?: number;
+    trackUuid?: string;
+    type?: 'studio-room' | 'choir-hall' | 'church';
+}
+
+// @public
+export interface FxSetRoomResult {
+    enabled: boolean;
+    positionX: number;
+    positionY: number;
+    roomDepth?: number;
+    roomWidth?: number;
+    trackIndex: number;
+    trackUuid: string;
+    type: 'studio-room' | 'choir-hall' | 'church';
+}
+
+// @public
 export interface GenerativeAddLayerParams {
     from: number;
     instrument?: string;
@@ -2040,6 +2427,8 @@ export interface JobGetParams {
 export interface JobGetResult {
     cancelable: boolean;
     delivery: 'direct' | 'staged';
+    errorCode?: string;
+    errorMessage?: string;
     hasProgress: boolean;
     id: string;
     jobClass: string;
@@ -2075,6 +2464,8 @@ export interface JobListResult {
     jobs: {
         cancelable: boolean;
         delivery: 'direct' | 'staged';
+        errorCode?: string;
+        errorMessage?: string;
         hasProgress: boolean;
         id: string;
         jobClass: string;
@@ -2169,6 +2560,8 @@ export interface JobWaitResult {
     jobs: {
         cancelable: boolean;
         delivery: 'direct' | 'staged';
+        errorCode?: string;
+        errorMessage?: string;
         hasProgress: boolean;
         id: string;
         jobClass: string;
@@ -3108,6 +3501,132 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
     readonly entitlement: "membership";
+}, {
+    readonly path: "fx add";
+    readonly domain: "fx";
+    readonly method: "add";
+    readonly capability: "fx.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "fx apply-preset";
+    readonly domain: "fx";
+    readonly method: "applyPreset";
+    readonly capability: "fx.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "fx get-params";
+    readonly domain: "fx";
+    readonly method: "getParams";
+    readonly capability: "fx.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "fx list";
+    readonly domain: "fx";
+    readonly method: "list";
+    readonly capability: "fx.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "fx list-available";
+    readonly domain: "fx";
+    readonly method: "listAvailable";
+    readonly capability: "fx.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "fx list-params";
+    readonly domain: "fx";
+    readonly method: "listParams";
+    readonly capability: "fx.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "fx open-editor";
+    readonly domain: "fx";
+    readonly method: "openEditor";
+    readonly capability: "ui.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "fx remove";
+    readonly domain: "fx";
+    readonly method: "remove";
+    readonly capability: "fx.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "fx reorder";
+    readonly domain: "fx";
+    readonly method: "reorder";
+    readonly capability: "fx.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "fx save-preset";
+    readonly domain: "fx";
+    readonly method: "savePreset";
+    readonly capability: "fx.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "fx scan";
+    readonly domain: "fx";
+    readonly method: "scan";
+    readonly capability: "fx.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "fx set";
+    readonly domain: "fx";
+    readonly method: "set";
+    readonly capability: "fx.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "fx set-param";
+    readonly domain: "fx";
+    readonly method: "setParam";
+    readonly capability: "fx.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "fx set-room";
+    readonly domain: "fx";
+    readonly method: "setRoom";
+    readonly capability: "fx.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
 }, {
     readonly path: "generative add-layer";
     readonly domain: "generative";
@@ -4764,6 +5283,132 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
         readonly entitlement: "membership";
     }, {
+        readonly path: "fx add";
+        readonly domain: "fx";
+        readonly method: "add";
+        readonly capability: "fx.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "fx apply-preset";
+        readonly domain: "fx";
+        readonly method: "applyPreset";
+        readonly capability: "fx.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "fx get-params";
+        readonly domain: "fx";
+        readonly method: "getParams";
+        readonly capability: "fx.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "fx list";
+        readonly domain: "fx";
+        readonly method: "list";
+        readonly capability: "fx.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "fx list-available";
+        readonly domain: "fx";
+        readonly method: "listAvailable";
+        readonly capability: "fx.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "fx list-params";
+        readonly domain: "fx";
+        readonly method: "listParams";
+        readonly capability: "fx.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "fx open-editor";
+        readonly domain: "fx";
+        readonly method: "openEditor";
+        readonly capability: "ui.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "fx remove";
+        readonly domain: "fx";
+        readonly method: "remove";
+        readonly capability: "fx.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "fx reorder";
+        readonly domain: "fx";
+        readonly method: "reorder";
+        readonly capability: "fx.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "fx save-preset";
+        readonly domain: "fx";
+        readonly method: "savePreset";
+        readonly capability: "fx.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "fx scan";
+        readonly domain: "fx";
+        readonly method: "scan";
+        readonly capability: "fx.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "fx set";
+        readonly domain: "fx";
+        readonly method: "set";
+        readonly capability: "fx.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "fx set-param";
+        readonly domain: "fx";
+        readonly method: "setParam";
+        readonly capability: "fx.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "fx set-room";
+        readonly domain: "fx";
+        readonly method: "setRoom";
+        readonly capability: "fx.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
         readonly path: "generative add-layer";
         readonly domain: "generative";
         readonly method: "addLayer";
@@ -5743,6 +6388,20 @@ export const PUBLIC_SURFACE: {
         readonly 'export song-template': "export.invoke";
         readonly 'export video': "export.invoke";
         readonly 'export vocal-sample': "export.invoke";
+        readonly 'fx add': "fx.write";
+        readonly 'fx apply-preset': "fx.write";
+        readonly 'fx get-params': "fx.read";
+        readonly 'fx list': "fx.read";
+        readonly 'fx list-available': "fx.read";
+        readonly 'fx list-params': "fx.read";
+        readonly 'fx open-editor': "ui.control";
+        readonly 'fx remove': "fx.write";
+        readonly 'fx reorder': "fx.write";
+        readonly 'fx save-preset': "fx.write";
+        readonly 'fx scan': "fx.write";
+        readonly 'fx set': "fx.write";
+        readonly 'fx set-param': "fx.write";
+        readonly 'fx set-room': "fx.write";
         readonly 'generative add-layer': "generative.add-layer";
         readonly 'generative enhance': "generative.enhance";
         readonly 'generative seed-audio': "generative.seed-audio";
@@ -5869,6 +6528,8 @@ export interface PublicBindings {
     readonly ensemble: EnsembleOperations;
     // (undocumented)
     readonly export: ExportOperations;
+    // (undocumented)
+    readonly fx: FxOperations;
     // (undocumented)
     readonly generative: GenerativeOperations;
     // (undocumented)
@@ -6019,6 +6680,20 @@ export const REQUIRED_TOKENS: {
     readonly 'export song-template': "export.invoke";
     readonly 'export video': "export.invoke";
     readonly 'export vocal-sample': "export.invoke";
+    readonly 'fx add': "fx.write";
+    readonly 'fx apply-preset': "fx.write";
+    readonly 'fx get-params': "fx.read";
+    readonly 'fx list': "fx.read";
+    readonly 'fx list-available': "fx.read";
+    readonly 'fx list-params': "fx.read";
+    readonly 'fx open-editor': "ui.control";
+    readonly 'fx remove': "fx.write";
+    readonly 'fx reorder': "fx.write";
+    readonly 'fx save-preset': "fx.write";
+    readonly 'fx scan': "fx.write";
+    readonly 'fx set': "fx.write";
+    readonly 'fx set-param': "fx.write";
+    readonly 'fx set-room': "fx.write";
     readonly 'generative add-layer': "generative.add-layer";
     readonly 'generative enhance': "generative.enhance";
     readonly 'generative seed-audio': "generative.seed-audio";
@@ -6450,7 +7125,7 @@ export interface SoundSourceUnloadResult {
 }
 
 // @public
-export const SURFACE_VERSION = "7.0";
+export const SURFACE_VERSION = "7.2";
 
 // @public
 export interface SurfaceRow {
@@ -6745,6 +7420,7 @@ export interface TrackGetResult {
 
 // @public
 export interface TrackListParams {
+    includeEmpty?: boolean;
     type?: string[];
 }
 

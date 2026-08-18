@@ -13,6 +13,39 @@ Entries from 0.3.2 down were reconstructed from git history rather than written 
 the time, so read them as a summary of each release's headline change and the PR as
 the record.
 
+## [0.4.1] — 2026-08-18
+
+Regenerated against surface **7.2**. This artifact was pinned at 7.0, so it had
+missed one whole additive surface minor as well as the newest one.
+
+### Added
+
+- **A video clip's media identity, on the clip reads.** `clip list` rows and
+  `clip get` now carry an optional `videoMedia`: the resolved `sourcePath`, the
+  `libraryAsset` handle for a Library-backed clip, `muted`, `hasAudio`, and the
+  trim as `clipInSec` / `sourceDurationSec`. Present only for a clip that has
+  media — absent for note-based, Chord and Marker clips, the way `noteCount` is
+  absent for clips that hold no notes.
+
+  `LibraryAssetRef` therefore appears in this artifact for the first time. That
+  follows from the split being per-Operation on the token's audience with no
+  per-field partition: `clip.read` is public, so everything that read answers is.
+
+- **The `fx` domain** — `list`, `list-available`, `scan`, `add`, `remove`,
+  `reorder`, `set`, `get-params`, `list-params`, `set-param`, `apply-preset`,
+  `save-preset`, `set-room`, `open-editor` — gated on the new `fx.read` and
+  `fx.write` tokens. That is surface 7.1, which never reached a published build of
+  this package; it arrives here alongside 7.2 rather than on its own.
+
+- **The `ui.control` token**, and the chord-track additions to `track list` —
+  reachable already, with descriptions that now say so.
+
+### Why this is a patch
+
+Every change is an addition. The removed lines in the generated table are the
+`SURFACE_VERSION` constant and four reworded doc comments: no row lost a field and
+no signature changed, so nothing a caller depends on moved.
+
 ## [0.4.0] — 2026-08-18
 
 A capability facade covers a domain's **subscriptions** as much as its calls.

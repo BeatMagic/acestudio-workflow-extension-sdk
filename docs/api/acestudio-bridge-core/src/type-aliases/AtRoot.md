@@ -1,10 +1,10 @@
 # Type Alias: AtRoot\<T\>
 
 ```ts
-type AtRoot<T> = AtRootOf<Descriptor, T>;
+type AtRoot<T> = AtRootOf<ArtifactRow, T>;
 ```
 
-[AtRootOf](AtRootOf.md) over this artifact's own table.
+[AtRootOf](AtRootOf.md) over this artifact's own tables.
 
 ## Type Parameters
 

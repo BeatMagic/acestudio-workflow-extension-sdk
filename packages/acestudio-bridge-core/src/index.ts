@@ -44,14 +44,17 @@ export type {
 // report cannot see what the scoped client expands to otherwise. `Camel` has to
 // stay a named type regardless, because it recurses.
 export type {
+  ArtifactRow,
   AtRoot,
   AtRootOf,
   Camel,
+  ChannelRow,
   Descriptor,
   InDomain,
   InDomainOf,
   Reachable,
   ReachableIn,
+  SurfaceRow,
 } from "./scoped.js";
 export { createTransportPair } from "./transport.js";
 export type { Transport, TransportPair } from "./transport.js";

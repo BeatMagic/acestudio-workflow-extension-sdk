@@ -1,10 +1,10 @@
 # Type Alias: InDomain\<T\>
 
 ```ts
-type InDomain<T> = InDomainOf<Descriptor, T>;
+type InDomain<T> = InDomainOf<ArtifactRow, T>;
 ```
 
-[InDomainOf](InDomainOf.md) over this artifact's own table.
+[InDomainOf](InDomainOf.md) over this artifact's own tables.
 
 ## Type Parameters
 

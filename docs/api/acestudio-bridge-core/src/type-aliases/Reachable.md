@@ -1,10 +1,10 @@
 # Type Alias: Reachable\<T\>
 
 ```ts
-type Reachable<T> = ReachableIn<Descriptor, T>;
+type Reachable<T> = ReachableIn<ArtifactRow, T>;
 ```
 
-The operations this artifact's own table admits for `T`.
+What this artifact's own tables admit for `T` — operations and channels alike.
 
 ## Type Parameters
 

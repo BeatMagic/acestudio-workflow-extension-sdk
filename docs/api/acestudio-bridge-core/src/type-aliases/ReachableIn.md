@@ -18,7 +18,7 @@ reachable by any session, including one granted nothing at all.
 
 ### Rows
 
-`Rows` *extends* [`OperationDescriptor`](../interfaces/OperationDescriptor.md)
+`Rows` *extends* [`SurfaceRow`](../interfaces/SurfaceRow.md)
 
 ### T
 

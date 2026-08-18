@@ -18,7 +18,7 @@ published, instead of quietly dropping it.
 
 ### Rows
 
-`Rows` *extends* [`OperationDescriptor`](../interfaces/OperationDescriptor.md)
+`Rows` *extends* [`SurfaceRow`](../interfaces/SurfaceRow.md)
 
 ### T
 

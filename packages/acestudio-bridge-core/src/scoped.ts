@@ -20,10 +20,10 @@
  */
 
 import {
+  NOTIFICATION_CHANNELS,
   OPERATIONS,
   PROFILES,
   type CapabilityToken,
-  type OperationDescriptor,
   type PublicBindings,
 } from "./generated/bindings.js";
 import type { ProfileName } from "./grant.js";
@@ -35,6 +35,45 @@ import type { ProfileName } from "./grant.js";
  * @public
  */
 export type Descriptor = (typeof OPERATIONS)[number];
+
+/**
+ * One row of *this* artifact's generated channel table, with its literal types
+ * intact.
+ *
+ * @public
+ */
+export type ChannelRow = (typeof NOTIFICATION_CHANNELS)[number];
+
+/**
+ * Every row of this artifact's tables: what a session can call, and what it can
+ * subscribe to.
+ *
+ * @public
+ */
+export type ArtifactRow = Descriptor | ChannelRow;
+
+/**
+ * What scoping needs from a generated row: the domain it nests under, the member it
+ * becomes, and the token that reaches it.
+ *
+ * A bound rather than a descriptor, and deliberately a small one, because both
+ * `OperationDescriptor` and `ChannelDescriptor` have to satisfy it. A profile's reach
+ * covers a domain's subscriptions as much as its calls — `canvas.changed` is gated by
+ * `canvas.read`, the same token `canvas info` needs — so a facade admitting only
+ * operations reports a granted channel as absent. Rows carrying `ungated` are still
+ * read for it; a channel declares no such field and so is never ungated, which is
+ * correct: there is no unguarded subscription.
+ *
+ * @public
+ */
+export interface SurfaceRow {
+  /** Domain group the member nests under; empty for a root-level one. */
+  readonly domain: string;
+  /** The binding member this row becomes — a verb, or a subscription. */
+  readonly method: string;
+  /** The capability a session needs to reach it. */
+  readonly capability: string;
+}
 
 /**
  * Turns `special-tracks` into `specialTracks`: the canonical tree hyphenates a
@@ -58,7 +97,7 @@ export type Camel<S extends string> = S extends `${infer Head}-${infer Tail}`
  *
  * @public
  */
-export type ReachableIn<Rows extends OperationDescriptor, T extends string> = Extract<
+export type ReachableIn<Rows extends SurfaceRow, T extends string> = Extract<
   Rows,
   { ungated: true } | { capability: T }
 >;
@@ -69,7 +108,7 @@ export type ReachableIn<Rows extends OperationDescriptor, T extends string> = Ex
  *
  * @public
  */
-export type InDomainOf<Rows extends OperationDescriptor, T extends string> = Exclude<
+export type InDomainOf<Rows extends SurfaceRow, T extends string> = Exclude<
   ReachableIn<Rows, T>,
   { domain: "" }
 >;
@@ -85,26 +124,27 @@ export type InDomainOf<Rows extends OperationDescriptor, T extends string> = Exc
  *
  * @public
  */
-export type AtRootOf<Rows extends OperationDescriptor, T extends string> = Extract<
+export type AtRootOf<Rows extends SurfaceRow, T extends string> = Extract<
   ReachableIn<Rows, T>,
   { domain: "" }
 >;
 
 /**
- * What the bindings `B` admit for the tokens `T`, given the table `Rows` that
- * describes them: each domain keeps only the methods those tokens can call, and a
- * domain no token reaches is absent entirely.
+ * What the bindings `B` admit for the tokens `T`, given the rows `Rows` that
+ * describe them: each domain keeps only the members those tokens reach, and a domain
+ * no token reaches is absent entirely.
  *
- * Takes its table and bindings as parameters rather than reading this artifact's,
- * because a profile's reach is not confined to one artifact: one profile's tokens
- * can gate operations published here and operations a first-party artifact
- * declares, and a facade able to see only one of them would report the other half
- * as ungranted. `Rows` and `B` must describe the same surface — pass a table with
- * bindings it does not build and every domain resolves to `never`.
+ * Takes its rows and bindings as parameters rather than reading this artifact's,
+ * because a profile's reach is not confined to one artifact or to one kind of row:
+ * one profile's tokens can gate operations published here, operations a first-party
+ * artifact declares, and the change channels of either. A facade able to see only
+ * some of those reports the rest as ungranted. Pass every table whose rows the
+ * profile can reach — `Rows` and `B` must describe the same surface, and a table
+ * paired with bindings it does not build leaves every domain `never`.
  *
  * @public
  */
-export type ScopedBindingsOf<Rows extends OperationDescriptor, B, T extends string> = {
+export type ScopedBindingsOf<Rows extends SurfaceRow, B, T extends string> = {
   readonly [D in InDomainOf<Rows, T>["domain"] as Camel<D>]: Camel<D> extends keyof B
     ? Pick<
         B[Camel<D>],
@@ -114,34 +154,39 @@ export type ScopedBindingsOf<Rows extends OperationDescriptor, B, T extends stri
 } & Pick<B, AtRootOf<Rows, T>["method"] & keyof B>;
 
 /**
- * The operations this artifact's own table admits for `T`.
+ * What this artifact's own tables admit for `T` — operations and channels alike.
  *
  * @public
  */
-export type Reachable<T extends CapabilityToken> = ReachableIn<Descriptor, T>;
+export type Reachable<T extends CapabilityToken> = ReachableIn<ArtifactRow, T>;
 
 /**
- * {@link InDomainOf} over this artifact's own table.
+ * {@link InDomainOf} over this artifact's own tables.
  *
  * @public
  */
-export type InDomain<T extends CapabilityToken> = InDomainOf<Descriptor, T>;
+export type InDomain<T extends CapabilityToken> = InDomainOf<ArtifactRow, T>;
 
 /**
- * {@link AtRootOf} over this artifact's own table.
+ * {@link AtRootOf} over this artifact's own tables.
  *
  * @public
  */
-export type AtRoot<T extends CapabilityToken> = AtRootOf<Descriptor, T>;
+export type AtRoot<T extends CapabilityToken> = AtRootOf<ArtifactRow, T>;
 
 /**
  * The client `T`'s reach admits over this artifact's published surface — what
  * `connection.scoped(...)` returns here.
  *
+ * Built from both tables, so a domain arrives with the subscriptions `T` reaches
+ * beside the calls it reaches. Scoping to `surface.canvas.read` and then having to
+ * leave the facade to subscribe to `canvas.changed` — a channel that very token
+ * gates — would make the facade an incomplete account of its own profile.
+ *
  * @public
  */
 export type ScopedBindings<T extends CapabilityToken> = ScopedBindingsOf<
-  Descriptor,
+  ArtifactRow,
   PublicBindings,
   T
 >;

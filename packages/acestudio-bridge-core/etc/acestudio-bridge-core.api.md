@@ -8,10 +8,13 @@
 export type AnyBridgeErrorCode = BridgeErrorCode | SdkErrorCode;
 
 // @public
-export type AtRoot<T extends CapabilityToken> = AtRootOf<Descriptor, T>;
+export type ArtifactRow = Descriptor | ChannelRow;
 
 // @public
-export type AtRootOf<Rows extends OperationDescriptor, T extends string> = Extract<ReachableIn<Rows, T>, {
+export type AtRoot<T extends CapabilityToken> = AtRootOf<ArtifactRow, T>;
+
+// @public
+export type AtRootOf<Rows extends SurfaceRow, T extends string> = Extract<ReachableIn<Rows, T>, {
     domain: "";
 }>;
 
@@ -474,6 +477,9 @@ export interface ChannelDescriptor {
     readonly method: string;
     readonly notification: string;
 }
+
+// @public
+export type ChannelRow = (typeof NOTIFICATION_CHANNELS)[number];
 
 // @public
 export interface ChoirAddParams {
@@ -1924,10 +1930,10 @@ export interface ImportOperations {
 }
 
 // @public
-export type InDomain<T extends CapabilityToken> = InDomainOf<Descriptor, T>;
+export type InDomain<T extends CapabilityToken> = InDomainOf<ArtifactRow, T>;
 
 // @public
-export type InDomainOf<Rows extends OperationDescriptor, T extends string> = Exclude<ReachableIn<Rows, T>, {
+export type InDomainOf<Rows extends SurfaceRow, T extends string> = Exclude<ReachableIn<Rows, T>, {
     domain: "";
 }>;
 
@@ -5900,10 +5906,10 @@ export interface PublicBindings {
 }
 
 // @public
-export type Reachable<T extends CapabilityToken> = ReachableIn<Descriptor, T>;
+export type Reachable<T extends CapabilityToken> = ReachableIn<ArtifactRow, T>;
 
 // @public
-export type ReachableIn<Rows extends OperationDescriptor, T extends string> = Extract<Rows, {
+export type ReachableIn<Rows extends SurfaceRow, T extends string> = Extract<Rows, {
     ungated: true;
 } | {
     capability: T;
@@ -6112,10 +6118,10 @@ export const REQUIRED_TOKENS: {
 };
 
 // @public
-export type ScopedBindings<T extends CapabilityToken> = ScopedBindingsOf<Descriptor, PublicBindings, T>;
+export type ScopedBindings<T extends CapabilityToken> = ScopedBindingsOf<ArtifactRow, PublicBindings, T>;
 
 // @public
-export type ScopedBindingsOf<Rows extends OperationDescriptor, B, T extends string> = {
+export type ScopedBindingsOf<Rows extends SurfaceRow, B, T extends string> = {
     readonly [D in InDomainOf<Rows, T>["domain"] as Camel<D>]: Camel<D> extends keyof B ? Pick<B[Camel<D>], Extract<InDomainOf<Rows, T>, {
         domain: D;
     }>["method"] & keyof B[Camel<D>]> : never;
@@ -6445,6 +6451,13 @@ export interface SoundSourceUnloadResult {
 
 // @public
 export const SURFACE_VERSION = "7.0";
+
+// @public
+export interface SurfaceRow {
+    readonly capability: string;
+    readonly domain: string;
+    readonly method: string;
+}
 
 // @public
 export interface TempoAnalyzeParams {

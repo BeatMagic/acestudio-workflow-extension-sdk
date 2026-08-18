@@ -1,6 +1,6 @@
 {
   "name": "@timedomain/acestudio-bridge-core",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "type": "module",
   "description": "Control a running ACE Studio from your own code. The layer under the workflow extension SDK.",
   "license": "MIT",
@@ -21,7 +21,7 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["LICENSE", "dist", "src"],
+  "files": ["CHANGELOG.md", "LICENSE", "dist", "src"],
   "scripts": {
     "prepack": "node ../../scripts/build.mjs"
   },

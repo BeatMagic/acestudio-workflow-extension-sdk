@@ -8,13 +8,18 @@
  * bindings are parameters now, and what needs proving is that they are honoured —
  * a fixture artifact, unrelated to the generated one, scoped by its own tokens.
  *
+ * Channels are rows like any other. The case that decides whether the filter reads
+ * a row or a domain is a channel whose token reaches none of its domain's
+ * operations: scoping to it must yield the subscription and nothing else.
+ *
  * The assertions are all type-level; the runtime one exists so a failure is a
  * failing test rather than a silent absence.
  */
 
 import { describe, expect, expectTypeOf, it } from "vitest";
 import type {
-  Descriptor,
+  ArtifactRow,
+  ChannelDescriptor,
   OperationDescriptor,
   PublicBindings,
   ScopedBindings,
@@ -79,15 +84,36 @@ const FOREIGN_OPERATIONS = [
   },
 ] as const satisfies readonly OperationDescriptor[];
 
-type ForeignRows = (typeof FOREIGN_OPERATIONS)[number];
+/**
+ * The same artifact's channels. `canvas.changed` is gated by `canvas.read`, which
+ * reaches no `canvas` operation — the fixture's whole point.
+ */
+const FOREIGN_CHANNELS = [
+  {
+    notification: "media.changed",
+    domain: "media",
+    method: "onChanged",
+    capability: "media.probe",
+  },
+  {
+    notification: "canvas.changed",
+    domain: "canvas",
+    method: "onChanged",
+    capability: "canvas.read",
+  },
+] as const satisfies readonly ChannelDescriptor[];
+
+type ForeignRows = (typeof FOREIGN_OPERATIONS)[number] | (typeof FOREIGN_CHANNELS)[number];
 
 interface ForeignBindings {
   readonly media: {
     probe(params: { src: string }): Promise<{ dur: number }>;
     cutAudio(params: { src: string }): Promise<void>;
+    onChanged(listener: () => void): () => void;
   };
   readonly canvas: {
     set(params: { width: number }): Promise<void>;
+    onChanged(listener: () => void): () => void;
   };
   readonly specialTracks: {
     list(): Promise<readonly string[]>;
@@ -110,6 +136,7 @@ describe("scoping a foreign surface", () => {
     expectTypeOf<MediaProbeOnly["media"]>().not.toHaveProperty("cutAudio");
 
     expect(FOREIGN_OPERATIONS.length).toBe(5);
+    expect(FOREIGN_CHANNELS.length).toBe(2);
   });
 
   it("drops a domain no token reaches", () => {
@@ -138,17 +165,57 @@ describe("scoping a foreign surface", () => {
     expectTypeOf<Both["media"]>().toHaveProperty("cutAudio");
     expectTypeOf<Both["media"]>().not.toHaveProperty("probe");
   });
+
+  it("admits the subscription a token reaches beside the calls it reaches", () => {
+    type MediaProbe = ScopedForeign<"media.probe">;
+
+    // `media.probe` gates both the call and the channel, so the scope holds both.
+    expectTypeOf<MediaProbe["media"]>().toHaveProperty("probe");
+    expectTypeOf<MediaProbe["media"]>().toHaveProperty("onChanged");
+  });
+
+  it("reaches a domain by its channel alone", () => {
+    // `canvas.read` gates no canvas operation. A per-domain filter would either drop
+    // the domain (losing a granted subscription) or admit `set` with it (handing over
+    // a write the scope was never granted).
+    type CanvasRead = ScopedForeign<"canvas.read">;
+
+    expectTypeOf<CanvasRead>().toHaveProperty("canvas");
+    expectTypeOf<CanvasRead["canvas"]>().toHaveProperty("onChanged");
+    expectTypeOf<CanvasRead["canvas"]>().not.toHaveProperty("set");
+  });
+
+  it("withholds the subscription from a scope that only reaches the calls", () => {
+    type CanvasWrite = ScopedForeign<"canvas.write">;
+
+    expectTypeOf<CanvasWrite["canvas"]>().toHaveProperty("set");
+    expectTypeOf<CanvasWrite["canvas"]>().not.toHaveProperty("onChanged");
+  });
 });
 
 describe("this artifact's own scoping", () => {
-  it("is the general form applied to the generated table", () => {
+  it("is the general form applied to the generated tables", () => {
     // The published `ScopedBindings` is now an alias. Pinning the equivalence is
     // what keeps a change to the general form from quietly re-shaping the client
-    // every consumer of this package already depends on.
+    // every consumer of this package already depends on. `ArtifactRow`, not
+    // `Descriptor`: the published scope covers this artifact's channels too.
     expectTypeOf<ScopedBindings<"track.read">>().toEqualTypeOf<
-      ScopedBindingsOf<Descriptor, PublicBindings, "track.read">
+      ScopedBindingsOf<ArtifactRow, PublicBindings, "track.read">
     >();
 
     expect(true).toBe(true);
+  });
+
+  it("splits transport by token, where the channel and the calls differ", () => {
+    // The generated table's own instance of the fixture's sharp case: `transport
+    // play` needs `transport.control`, while `transport.changed` needs
+    // `transport.state`. Neither token should hand over the other's member.
+    expectTypeOf<ScopedBindings<"transport.control">["transport"]>().toHaveProperty("play");
+    expectTypeOf<ScopedBindings<"transport.control">["transport"]>().not.toHaveProperty(
+      "onChanged",
+    );
+
+    expectTypeOf<ScopedBindings<"transport.state">["transport"]>().toHaveProperty("onChanged");
+    expectTypeOf<ScopedBindings<"transport.state">["transport"]>().not.toHaveProperty("play");
   });
 });

@@ -13,7 +13,7 @@ The reachable rows that nest under a domain — the ones that become
 
 ### Rows
 
-`Rows` *extends* [`OperationDescriptor`](../interfaces/OperationDescriptor.md)
+`Rows` *extends* [`SurfaceRow`](../interfaces/SurfaceRow.md)
 
 ### T
 

@@ -289,6 +289,7 @@ The connection core for programming against a running ACE Studio.
 - [SoundSourceTagsResult](interfaces/SoundSourceTagsResult.md)
 - [SoundSourceUnloadParams](interfaces/SoundSourceUnloadParams.md)
 - [SoundSourceUnloadResult](interfaces/SoundSourceUnloadResult.md)
+- [SurfaceRow](interfaces/SurfaceRow.md)
 - [TempoAnalyzeParams](interfaces/TempoAnalyzeParams.md)
 - [TempoAnalyzeResult](interfaces/TempoAnalyzeResult.md)
 - [TempoApplyBeatAnalysisParams](interfaces/TempoApplyBeatAnalysisParams.md)
@@ -365,12 +366,14 @@ The connection core for programming against a running ACE Studio.
 ## Type Aliases
 
 - [AnyBridgeErrorCode](type-aliases/AnyBridgeErrorCode.md)
+- [ArtifactRow](type-aliases/ArtifactRow.md)
 - [AtRoot](type-aliases/AtRoot.md)
 - [AtRootOf](type-aliases/AtRootOf.md)
 - [BridgeErrorCode](type-aliases/BridgeErrorCode.md)
 - [Camel](type-aliases/Camel.md)
 - [CapabilityToken](type-aliases/CapabilityToken.md)
 - [ChangeCapability](type-aliases/ChangeCapability.md)
+- [ChannelRow](type-aliases/ChannelRow.md)
 - [DebugLog](type-aliases/DebugLog.md)
 - [Descriptor](type-aliases/Descriptor.md)
 - [DetailsFor](type-aliases/DetailsFor.md)

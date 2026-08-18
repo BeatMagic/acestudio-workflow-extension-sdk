@@ -3,10 +3,10 @@
 // The public capability bindings: the operations the capability registry
 // publishes (ADR 0094 §2), plus the scaffolding every consumer shares.
 //
-// Surface version: 7.0
+// Surface version: 7.2
 
 /** The contract surface version these bindings were generated from (`major.minor`). The handshake compares it against the host's: a major mismatch is a typed error at connect, minor drift is fine under the tolerant-reader rule. */
-export const SURFACE_VERSION = '7.0';
+export const SURFACE_VERSION = '7.2';
 
 /** Every canonical error code, as a string-literal union. `BridgeError.code` narrows against it, so error handling is exhaustiveness-checked by the compiler. Codes are a contract; the message beside one is not. */
 export type BridgeErrorCode =
@@ -58,8 +58,10 @@ export type BridgeErrorCode =
   | 'NO_WINDOW'
   | 'OPEN_FAILED'
   | 'PLAYBACK_START_FAILED'
+  | 'PRESET_EXISTS'
   | 'RECORD_START_FAILED'
   | 'SAVE_FAILED'
+  | 'SCAN_IN_PROGRESS'
   | 'SCENARIO_FAILED'
   | 'SESSION_INVALID'
   | 'STALE_WRITE'
@@ -1369,6 +1371,26 @@ export interface ClipGetResult {
     rawName: string;
     /** Time unit of the geometry values: `tick`, `second`, `tick (not native)`, or `second (not native)`. */
     usedTimeUnit: string;
+    /** The media a clip points at — the half of a clip's identity its geometry does not carry: which file it shows, which Library asset it references, whether its embedded audio is silent, and how its visible region is trimmed out of the source. Reported by BOTH `clip list` (per row) and `clip get`, out of one producer, so the two reads cannot answer differently about the same clip. On the row for the reason `enabled` is: a caller mirroring the timeline needs the media of every clip it enumerates, and per-clip media would make that one `clip get` per clip. Present only for a clip that HAS media, the way `noteCount` is present only for a note-based one — today that means a Video clip (which is also how a still image is placed). An Audio clip's file and load state are `clip audio-content`'s answer and are not restated here. Every field is present whenever the struct itself is: each is read straight off the clip, which always has an answer, so there is no "carried by a newer writer only" tier inside it. */
+    videoMedia?: {
+        /** The clip's *clip in*: the offset into the SOURCE MEDIA at which the visible region starts — the head trimmed off. SECONDS ONLY, deliberately: clip in lives on the source-media axis, which is not on the tempo grid, so it has no meaningful tick representation (ADR 0069 §1) — unlike a timeline position, which is reported in whichever unit was asked for. 0 for an untrimmed clip. */
+        clipInSec: number;
+        /** Whether the clip's source carries an audio stream at all — false for a still image, and for a video with no audio track. Filled when the clip is loaded into the audio graph, so it reads false for a clip this session has never played or composited; treat a false as "no audio known yet" rather than as proof the file is silent. */
+        hasAudio: boolean;
+        /** A clip's Library asset reference (#576): the immutable handle a Library-backed clip binds. Carried wherever a clip is reported — the MV snapshot's `VideoClip` and the `clip` reads' `ClipVideoMedia` — so a consumer can recognize which clips are its own Library assets, and which asset each maps to, rather than only seeing a resolved file path. Studio resolves the active version from the active-version map, and the resolved file is reported beside this handle rather than in place of it. */
+        libraryAsset?: {
+            /** Asset kind (`video`, `image`, or `audio`). */
+            kind: string;
+            /** Immutable handle of the referenced asset — the active-version map key. */
+            stableId: string;
+        };
+        /** Whether the clip's EMBEDDED AUDIO is silenced while its video keeps playing. The same flag `clip set-muted` writes and echoes back: Studio's "detached" state, one concept with two surfaces (ADR 0069 §3). So a clip whose audio the user detached (Detach Audio) also reads muted — correct, its embedded audio IS silent. Distinct from `enabled`, which switches the whole clip: video hidden AND audio silent. */
+        muted: boolean;
+        /** The source media's own full duration in seconds — the clip's canvas length. It bounds any trim (`clipInSec` + the visible duration never exceeds it), and what is left over is the tail bleed a resize can still pull back (ADR 0069 §2). For an image clip, which has no intrinsic timeline, this mirrors the placed duration instead. */
+        sourceDurationSec: number;
+        /** Absolute path to the backing video or image file. For a Library asset reference this is the version Studio resolved from the active-version map, and it is EMPTY when the map could not resolve one (an unresolved reference — e.g. a project opened away from its Library): the clip is then unavailable rather than pathless, so an empty path is a state to handle, not a malformed result. Reported beside `libraryAsset` rather than instead of it, because it is the file a caller must open to work on the media. */
+        sourcePath: string;
+    };
 }
 
 /** Arguments for `clip list`. */
@@ -1401,6 +1423,26 @@ export interface ClipListResult {
         enabled: boolean;
         /** Visible note count. Present only for note-based clips (Sing/Instrument/GenericMidi); absent for Audio and Chord. */
         noteCount?: number;
+        /** The media a clip points at — the half of a clip's identity its geometry does not carry: which file it shows, which Library asset it references, whether its embedded audio is silent, and how its visible region is trimmed out of the source. Reported by BOTH `clip list` (per row) and `clip get`, out of one producer, so the two reads cannot answer differently about the same clip. On the row for the reason `enabled` is: a caller mirroring the timeline needs the media of every clip it enumerates, and per-clip media would make that one `clip get` per clip. Present only for a clip that HAS media, the way `noteCount` is present only for a note-based one — today that means a Video clip (which is also how a still image is placed). An Audio clip's file and load state are `clip audio-content`'s answer and are not restated here. Every field is present whenever the struct itself is: each is read straight off the clip, which always has an answer, so there is no "carried by a newer writer only" tier inside it. */
+        videoMedia?: {
+            /** The clip's *clip in*: the offset into the SOURCE MEDIA at which the visible region starts — the head trimmed off. SECONDS ONLY, deliberately: clip in lives on the source-media axis, which is not on the tempo grid, so it has no meaningful tick representation (ADR 0069 §1) — unlike a timeline position, which is reported in whichever unit was asked for. 0 for an untrimmed clip. */
+            clipInSec: number;
+            /** Whether the clip's source carries an audio stream at all — false for a still image, and for a video with no audio track. Filled when the clip is loaded into the audio graph, so it reads false for a clip this session has never played or composited; treat a false as "no audio known yet" rather than as proof the file is silent. */
+            hasAudio: boolean;
+            /** A clip's Library asset reference (#576): the immutable handle a Library-backed clip binds. Carried wherever a clip is reported — the MV snapshot's `VideoClip` and the `clip` reads' `ClipVideoMedia` — so a consumer can recognize which clips are its own Library assets, and which asset each maps to, rather than only seeing a resolved file path. Studio resolves the active version from the active-version map, and the resolved file is reported beside this handle rather than in place of it. */
+            libraryAsset?: {
+                /** Asset kind (`video`, `image`, or `audio`). */
+                kind: string;
+                /** Immutable handle of the referenced asset — the active-version map key. */
+                stableId: string;
+            };
+            /** Whether the clip's EMBEDDED AUDIO is silenced while its video keeps playing. The same flag `clip set-muted` writes and echoes back: Studio's "detached" state, one concept with two surfaces (ADR 0069 §3). So a clip whose audio the user detached (Detach Audio) also reads muted — correct, its embedded audio IS silent. Distinct from `enabled`, which switches the whole clip: video hidden AND audio silent. */
+            muted: boolean;
+            /** The source media's own full duration in seconds — the clip's canvas length. It bounds any trim (`clipInSec` + the visible duration never exceeds it), and what is left over is the tail bleed a resize can still pull back (ADR 0069 §2). For an image clip, which has no intrinsic timeline, this mirrors the placed duration instead. */
+            sourceDurationSec: number;
+            /** Absolute path to the backing video or image file. For a Library asset reference this is the version Studio resolved from the active-version map, and it is EMPTY when the map could not resolve one (an unresolved reference — e.g. a project opened away from its Library): the clip is then unavailable rather than pathless, so an empty path is a state to handle, not a malformed result. Reported beside `libraryAsset` rather than instead of it, because it is the file a caller must open to work on the media. */
+            sourcePath: string;
+        };
     }[];
 }
 
@@ -2802,6 +2844,684 @@ export interface ExportOperations {
     vocalSample(params: ExportVocalSampleParams, options?: MutatingCallOptions): Promise<ExportVocalSampleResult>;
 }
 
+// --- fx --------------------------------------------------------------------
+
+/** Arguments for `fx add`. */
+export interface FxAddParams {
+    /** 0-based slot to insert at. Omit to append at the end of the chain. */
+    at?: number;
+    /** Apply this library preset to the new insert instead of leaving it at the plugin's defaults. Matched by name against that plugin's presets. */
+    preset?: string;
+    /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
+    rack?: 'pre';
+    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    trackIndex?: number;
+    /** Track UUID in braces format, or `master` for the master bus. */
+    trackUuid?: string;
+    /** Which effect to insert, as a `typeId` from `fx list-available`. */
+    type: string;
+}
+
+/** Success payload of `fx add`. */
+export interface FxAddResult {
+    /** One insert as every chain-shaped read and write reports it. */
+    insert: {
+        /** Whether the insert is bypassed. Bypass and enable are separate switches on this surface because they are separate in the mixer. */
+        bypassed: boolean;
+        /** Whether the insert is processing. */
+        enabled: boolean;
+        /** The plugin formats an entry can be in. `native` is ACE's own built-in set; which of the others exist depends on the platform (no AU on Windows). */
+        format?: 'native' | 'vst3' | 'vst2' | 'au';
+        /** Whether this insert answers `fx open-editor` — true only for a loaded third-party plugin. */
+        hasEditor?: boolean;
+        /** Instance id addressing this entry. Session-scoped: the backend re-mints it on every re-insert, including project load. */
+        insertId: string;
+        /** True when the project names a plugin this machine cannot load. The slot is kept so it survives until the plugin is installed; its parameters cannot be read or written. */
+        missing: boolean;
+        /** The name shown for this insert: the user's rename when it has one, otherwise the plugin's own display name. */
+        name: string;
+        /** Name of the last-applied library preset, absent for none. */
+        presetName?: string;
+        /** 0-based position in the chain. */
+        slot: number;
+        /** Which effect this is, in the `fx list-available` namespace. */
+        typeId: string;
+        /** Plugin vendor. */
+        vendor?: string;
+    };
+    /** How many inserts the chain holds afterwards. */
+    insertCount: number;
+    /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
+    rack?: 'pre';
+    /** 0-based index of the addressed track; absent for the master. Carried beside `trackUuid` because the index is the only track identity the UI shows a person — the uuid is the stable handle, this is the name a caller can put in front of a user. */
+    trackIndex?: number;
+    /** UUID of the addressed track, or `master`. */
+    trackUuid: string;
+}
+
+/** Arguments for `fx apply-preset`. */
+export interface FxApplyPresetParams {
+    /** Instance id of the insert, as `fx list` reports it. */
+    insert?: string;
+    /** Preset name, matched among that plugin's presets. The stable handle: a preset id is minted per session. */
+    preset?: string;
+    /** Preset id, for a caller that already read one this session. */
+    presetId?: number;
+    /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
+    rack?: 'pre';
+    /** 0-based slot in the chain. Mutually exclusive with `insert`. */
+    slot?: number;
+    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    trackIndex?: number;
+    /** Track UUID in braces format, or `master` for the master bus. */
+    trackUuid?: string;
+}
+
+/** Success payload of `fx apply-preset`. */
+export interface FxApplyPresetResult {
+    /** Instance id of the insert the preset was applied to. */
+    insertId: string;
+    /** Session-scoped id of the applied preset. Not stable across launches — address a preset by name. */
+    presetId?: number;
+    /** Name of the applied preset. */
+    presetName: string;
+}
+
+/** Arguments for `fx get-params`. */
+export interface FxGetParamsParams {
+    /** Keep only parameters whose display name or `paramId` matches. A glob by default, matched case-insensitively against the whole string. */
+    filter?: string;
+    /** Instance id of the insert, as `fx list` reports it. */
+    insert?: string;
+    /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
+    rack?: 'pre';
+    /** Read `filter` as a regular expression instead of a glob. */
+    regex?: boolean;
+    /** 0-based slot in the chain. Mutually exclusive with `insert`. */
+    slot?: number;
+    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    trackIndex?: number;
+    /** Track UUID in braces format, or `master` for the master bus. */
+    trackUuid?: string;
+}
+
+/** Success payload of `fx get-params`. */
+export interface FxGetParamsResult {
+    /** The `filter` pattern this answer was narrowed by. */
+    filter?: string;
+    /** Content fingerprint of this insert's parameter state (ADR 0088 §5). Carry it back as the reserved `fingerprint` argument on `fx set-param` or `fx apply-preset` to fail STALE_WRITE instead of overwriting edits made since this read. Covers the insert's whole parameter state whether or not `filter` narrowed the list, because that is what the write it guards can disturb. */
+    fingerprint: Fingerprint;
+    /** Instance id of the insert that was read. */
+    insertId: string;
+    /** The name shown for that insert. */
+    name?: string;
+    /** Number of entries in `params` — after `filter`, if one was given. */
+    paramCount: number;
+    /** The parameters, in the plugin's own order — every one the plugin exposes unless `filter` narrowed them. */
+    params: {
+        /** Whether an automation lane may drive this parameter. */
+        automatable: boolean;
+        /** Option names, for a `choice` parameter. */
+        choices?: string[];
+        /** The parameter's default, normalized to 0..1. */
+        defaultValue?: number;
+        /** The plugin's own grouping for this parameter, when it declares one. */
+        group?: string;
+        /** The plugin's own parameter index. Informational — writes address the id. */
+        index: number;
+        /** What shape a parameter's range has, and so what a value means. */
+        kind: 'continuous' | 'stepped' | 'boolean' | 'choice';
+        /** High end of the range in the plugin's own units. */
+        max?: number;
+        /** Low end of the range in the plugin's own units. */
+        min?: number;
+        /** Display name of the parameter. */
+        name: string;
+        /** Stable id to pass to `fx set-param`. */
+        paramId: string;
+        /** Number of steps between the ends, for a `stepped` parameter. */
+        stepCount?: number;
+        /** The parameter's unit label (`dB`, `Hz`, `%`), when it has one. */
+        unit?: string;
+        /** Current value, normalized to 0..1 — the same scale `fx set-param` takes. */
+        value: number;
+        /** The plugin's own rendering of the current value, units included (`-12.3 dB`). Display only; never parse it back. */
+        valueText: string;
+    }[];
+    /** How many parameters the plugin exposes in total. */
+    totalParamCount: number;
+    /** Which effect it is. */
+    typeId?: string;
+}
+
+/** Arguments for `fx list`. */
+export interface FxListParams {
+    /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
+    rack?: 'pre';
+    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    trackIndex?: number;
+    /** Track UUID in braces format, or `master` for the master bus. */
+    trackUuid?: string;
+}
+
+/** Success payload of `fx list`. */
+export interface FxListResult {
+    /** Number of entries in `inserts`. */
+    insertCount: number;
+    /** The chain in signal order, slot 0 first. */
+    inserts: {
+        /** Whether the insert is bypassed. Bypass and enable are separate switches on this surface because they are separate in the mixer. */
+        bypassed: boolean;
+        /** Whether the insert is processing. */
+        enabled: boolean;
+        /** The plugin formats an entry can be in. `native` is ACE's own built-in set; which of the others exist depends on the platform (no AU on Windows). */
+        format?: 'native' | 'vst3' | 'vst2' | 'au';
+        /** Whether this insert answers `fx open-editor` — true only for a loaded third-party plugin. */
+        hasEditor?: boolean;
+        /** Instance id addressing this entry. Session-scoped: the backend re-mints it on every re-insert, including project load. */
+        insertId: string;
+        /** True when the project names a plugin this machine cannot load. The slot is kept so it survives until the plugin is installed; its parameters cannot be read or written. */
+        missing: boolean;
+        /** The name shown for this insert: the user's rename when it has one, otherwise the plugin's own display name. */
+        name: string;
+        /** Name of the last-applied library preset, absent for none. */
+        presetName?: string;
+        /** 0-based position in the chain. */
+        slot: number;
+        /** Which effect this is, in the `fx list-available` namespace. */
+        typeId: string;
+        /** Plugin vendor. */
+        vendor?: string;
+    }[];
+    /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
+    rack?: 'pre';
+    /** 0-based index of the addressed track; absent for the master. */
+    trackIndex?: number;
+    /** UUID of the addressed track, or `master`. */
+    trackUuid: string;
+}
+
+/** Arguments for `fx list-available`. */
+export interface FxListAvailableParams {
+    /** Only effects in this category, as `category` reports it. A substring, which is also what makes it work on the pipe-joined categories a VST3 may declare (`Fx|Dynamics`). */
+    category?: string;
+    /** The plugin formats an entry can be in. `native` is ACE's own built-in set; which of the others exist depends on the platform (no AU on Windows). */
+    format?: 'native' | 'vst3' | 'vst2' | 'au';
+    /** Case-insensitive substring match against the name and the vendor. */
+    search?: string;
+    /** Only effects from this vendor, as `vendor` reports it. An entry with no vendor at all matches nothing here. */
+    vendor?: string;
+}
+
+/** Success payload of `fx list-available`. */
+export interface FxListAvailableResult {
+    /** Number of entries in `effects`. */
+    effectCount: number;
+    /** Every insertable effect, native entries first, then scanned third-party plugins. */
+    effects: {
+        /** The plugin's own category string, when it declares one. */
+        category?: string;
+        /** The plugin formats an entry can be in. `native` is ACE's own built-in set; which of the others exist depends on the platform (no AU on Windows). */
+        format: 'native' | 'vst3' | 'vst2' | 'au';
+        /** Display name of the effect. */
+        name: string;
+        /** Stable identifier to pass to `fx add`. Native effects use the `ace.native.\<name\>` namespace; a third-party plugin's is its format's own identifier string. */
+        typeId: string;
+        /** Plugin vendor. `ACE Studio` for the built-in set. */
+        vendor?: string;
+        /** The plugin's own version string, when it declares one. */
+        version?: string;
+    }[];
+    /** Whether a plugin scan is running right now. When true the list is what the registry holds so far, not a final answer. */
+    scanning: boolean;
+    /** How many insertable effects there are before any filter. Equal to `effectCount` when nothing was filtered; larger when it was, so a short list cannot be mistaken for a small catalog. */
+    totalEffectCount: number;
+}
+
+/** Arguments for `fx list-params`. */
+export interface FxListParamsParams {
+    /** Answer with each parameter's shape instead of its name alone. Still no values: `fx get-params` is where those come from. */
+    detail?: boolean;
+    /** Keep only parameters whose display name or `paramId` matches. A glob by default — `*` for any run of characters, `?` for one — matched case-insensitively against the whole string, so `*gain*` is the substring form. Omitted means every parameter. */
+    filter?: string;
+    /** Instance id of the insert, as `fx list` reports it. */
+    insert?: string;
+    /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
+    rack?: 'pre';
+    /** Read `filter` as a regular expression instead of a glob. Unanchored, so `gain` matches anywhere in the name; case-insensitive like the glob. */
+    regex?: boolean;
+    /** 0-based slot in the chain. Mutually exclusive with `insert`. */
+    slot?: number;
+    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    trackIndex?: number;
+    /** Track UUID in braces format, or `master` for the master bus. */
+    trackUuid?: string;
+}
+
+/** Success payload of `fx list-params`. */
+export interface FxListParamsResult {
+    /** The `filter` pattern this answer was narrowed by. Absent when the answer is the plugin's whole parameter list. */
+    filter?: string;
+    /** Instance id of the insert that was read. */
+    insertId: string;
+    /** The name shown for that insert. */
+    name?: string;
+    /** The parameters' display names, in the plugin's own order. Present when `detail` was not asked for. Names are the plugin's and are not guaranteed unique — `detail` is what distinguishes two knobs a plugin calls the same thing. */
+    names?: string[];
+    /** Number of parameters answered with — after `filter`, if one was given. */
+    paramCount: number;
+    /** One entry per parameter carrying its shape, in the plugin's own order. Present when `detail` was asked for. */
+    params?: {
+        /** Whether an automation lane may drive this parameter. */
+        automatable: boolean;
+        /** Option names, for a `choice` parameter. */
+        choices?: string[];
+        /** The plugin's own grouping for this parameter, when it declares one. */
+        group?: string;
+        /** The plugin's own parameter index. Informational — writes address the id, which survives a plugin update. */
+        index: number;
+        /** What shape a parameter's range has, and so what a value means. */
+        kind: 'continuous' | 'stepped' | 'boolean' | 'choice';
+        /** High end of the range in the plugin's own units — the end a normalized 1 maps to. The mapping between the two is the plugin's and is often not linear, so read a value's `valueText` for what it renders as rather than interpolating between these. */
+        max?: number;
+        /** Low end of the range in the plugin's own units, as `unit` labels them — the end a normalized 0 maps to. Absent on a boolean and on a choice, which names its values instead. */
+        min?: number;
+        /** Display name of the parameter. */
+        name: string;
+        /** Stable id to pass to `fx set-param`. */
+        paramId: string;
+        /** Number of steps between the ends, for a `stepped` parameter. */
+        stepCount?: number;
+        /** The parameter's unit label (`dB`, `Hz`, `%`), when it has one. */
+        unit?: string;
+    }[];
+    /** How many parameters the plugin exposes in total. Equal to `paramCount` when nothing was filtered out; larger when a `filter` narrowed the answer. */
+    totalParamCount: number;
+    /** Which effect it is. */
+    typeId?: string;
+}
+
+/** Arguments for `fx open-editor`. */
+export interface FxOpenEditorParams {
+    /** Instance id of the insert, as `fx list` reports it. */
+    insert?: string;
+    /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
+    rack?: 'pre';
+    /** 0-based slot in the chain. Mutually exclusive with `insert`. */
+    slot?: number;
+    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    trackIndex?: number;
+    /** Track UUID in braces format, or `master` for the master bus. */
+    trackUuid?: string;
+}
+
+/** Success payload of `fx open-editor`. */
+export interface FxOpenEditorResult {
+    /** True when a window for this insert was already open and was raised rather than created. */
+    alreadyOpen: boolean;
+    /** Instance id of the insert whose editor was opened. */
+    insertId: string;
+    /** The name shown for that insert. */
+    name?: string;
+}
+
+/** Arguments for `fx remove`. */
+export interface FxRemoveParams {
+    /** Instance id of the insert, as `fx list` reports it. */
+    insert?: string;
+    /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
+    rack?: 'pre';
+    /** 0-based slot in the chain. Mutually exclusive with `insert`. */
+    slot?: number;
+    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    trackIndex?: number;
+    /** Track UUID in braces format, or `master` for the master bus. */
+    trackUuid?: string;
+}
+
+/** Success payload of `fx remove`. */
+export interface FxRemoveResult {
+    /** How many inserts the chain holds afterwards. */
+    insertCount: number;
+    /** Instance id of the insert that was removed or moved. */
+    insertId: string;
+    /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
+    rack?: 'pre';
+    /** Its slot afterwards. For a removal, the slot it left. */
+    slot: number;
+    /** 0-based index of the addressed track; absent for the master. Carried beside `trackUuid` because the index is the only track identity the UI shows a person — the uuid is the stable handle, this is the name a caller can put in front of a user. */
+    trackIndex?: number;
+    /** UUID of the addressed track, or `master`. */
+    trackUuid: string;
+}
+
+/** Arguments for `fx reorder`. */
+export interface FxReorderParams {
+    /** Instance id of the insert, as `fx list` reports it. */
+    insert?: string;
+    /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
+    rack?: 'pre';
+    /** 0-based slot in the chain. Mutually exclusive with `insert`. */
+    slot?: number;
+    /** 0-based slot to move it to, counted in the chain as it is now. */
+    to: number;
+    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    trackIndex?: number;
+    /** Track UUID in braces format, or `master` for the master bus. */
+    trackUuid?: string;
+}
+
+/** Success payload of `fx reorder`. */
+export interface FxReorderResult {
+    /** How many inserts the chain holds afterwards. */
+    insertCount: number;
+    /** Instance id of the insert that was removed or moved. */
+    insertId: string;
+    /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
+    rack?: 'pre';
+    /** Its slot afterwards. For a removal, the slot it left. */
+    slot: number;
+    /** 0-based index of the addressed track; absent for the master. Carried beside `trackUuid` because the index is the only track identity the UI shows a person — the uuid is the stable handle, this is the name a caller can put in front of a user. */
+    trackIndex?: number;
+    /** UUID of the addressed track, or `master`. */
+    trackUuid: string;
+}
+
+/** Arguments for `fx save-preset`. */
+export interface FxSavePresetParams {
+    /** Instance id of the insert, as `fx list` reports it. */
+    insert?: string;
+    /** Name to store the preset under, within that plugin's presets. */
+    name: string;
+    /** Overwrite an existing preset of that name. Without it, a name collision is refused rather than silently replacing someone's preset. */
+    overwrite?: boolean;
+    /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
+    rack?: 'pre';
+    /** 0-based slot in the chain. Mutually exclusive with `insert`. */
+    slot?: number;
+    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    trackIndex?: number;
+    /** Track UUID in braces format, or `master` for the master bus. */
+    trackUuid?: string;
+}
+
+/** Success payload of `fx save-preset`. */
+export interface FxSavePresetResult {
+    /** Absolute path of the written `.acefxpreset` file. */
+    path: string;
+    /** Session-scoped id of the stored preset. */
+    presetId?: number;
+    /** Name the preset was stored under. */
+    presetName: string;
+    /** Whether an existing preset of that name was overwritten. */
+    replaced: boolean;
+}
+
+/** Arguments for `fx scan`. */
+export interface FxScanParams {
+    /** Start over: wipe the blocklist and the scan cache, then re-scan every plugin on disk. Slower, and it gives a previously blocklisted plugin another chance to load. */
+    full?: boolean;
+}
+
+/** Success payload of `fx scan`. */
+export interface FxScanResult {
+    /** Whether this is a full rescan rather than a scan of what changed. */
+    full: boolean;
+    /** Always `plugin-scan`. */
+    jobClass: string;
+    /** Id of the launched scan job. Settle it with `job wait`, watch it with `job get`, stop it with `job cancel`. */
+    jobId: string;
+}
+
+/** Arguments for `fx set`. */
+export interface FxSetParams {
+    /** Whether the insert is bypassed. Separate from `enabled` because the mixer keeps them separate. */
+    bypassed?: boolean;
+    /** Whether the insert processes at all. A disabled insert keeps its state. */
+    enabled?: boolean;
+    /** Instance id of the insert, as `fx list` reports it. */
+    insert?: string;
+    /** Rename the insert. An empty string clears the rename, so the plugin's own display name shows again. */
+    name?: string;
+    /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
+    rack?: 'pre';
+    /** 0-based slot in the chain. Mutually exclusive with `insert`. */
+    slot?: number;
+    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    trackIndex?: number;
+    /** Track UUID in braces format, or `master` for the master bus. */
+    trackUuid?: string;
+}
+
+/** Success payload of `fx set`. */
+export interface FxSetResult {
+    /** One insert as every chain-shaped read and write reports it. */
+    insert: {
+        /** Whether the insert is bypassed. Bypass and enable are separate switches on this surface because they are separate in the mixer. */
+        bypassed: boolean;
+        /** Whether the insert is processing. */
+        enabled: boolean;
+        /** The plugin formats an entry can be in. `native` is ACE's own built-in set; which of the others exist depends on the platform (no AU on Windows). */
+        format?: 'native' | 'vst3' | 'vst2' | 'au';
+        /** Whether this insert answers `fx open-editor` — true only for a loaded third-party plugin. */
+        hasEditor?: boolean;
+        /** Instance id addressing this entry. Session-scoped: the backend re-mints it on every re-insert, including project load. */
+        insertId: string;
+        /** True when the project names a plugin this machine cannot load. The slot is kept so it survives until the plugin is installed; its parameters cannot be read or written. */
+        missing: boolean;
+        /** The name shown for this insert: the user's rename when it has one, otherwise the plugin's own display name. */
+        name: string;
+        /** Name of the last-applied library preset, absent for none. */
+        presetName?: string;
+        /** 0-based position in the chain. */
+        slot: number;
+        /** Which effect this is, in the `fx list-available` namespace. */
+        typeId: string;
+        /** Plugin vendor. */
+        vendor?: string;
+    };
+    /** How many inserts the chain holds afterwards. */
+    insertCount: number;
+    /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
+    rack?: 'pre';
+    /** 0-based index of the addressed track; absent for the master. Carried beside `trackUuid` because the index is the only track identity the UI shows a person — the uuid is the stable handle, this is the name a caller can put in front of a user. */
+    trackIndex?: number;
+    /** UUID of the addressed track, or `master`. */
+    trackUuid: string;
+}
+
+/** Arguments for `fx set-param`. */
+export interface FxSetParamParams {
+    /** Instance id of the insert, as `fx list` reports it. */
+    insert?: string;
+    /** Which parameter, as a `paramId` from `fx get-params`. */
+    param: string;
+    /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
+    rack?: 'pre';
+    /** 0-based slot in the chain. Mutually exclusive with `insert`. */
+    slot?: number;
+    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    trackIndex?: number;
+    /** Track UUID in braces format, or `master` for the master bus. */
+    trackUuid?: string;
+    /** The new value, normalized to 0..1 — the same scale `fx get-params` reports. Plugins declare their own ranges and units, so one scale is the only one every parameter shares. */
+    value: number;
+}
+
+/** Success payload of `fx set-param`. */
+export interface FxSetParamResult {
+    /** Instance id of the insert that was written. */
+    insertId: string;
+    /** One parameter with its value: what `fx get-params` answers with. The same shape as `ParameterMeta` plus what a read is for. */
+    param: {
+        /** Whether an automation lane may drive this parameter. */
+        automatable: boolean;
+        /** Option names, for a `choice` parameter. */
+        choices?: string[];
+        /** The parameter's default, normalized to 0..1. */
+        defaultValue?: number;
+        /** The plugin's own grouping for this parameter, when it declares one. */
+        group?: string;
+        /** The plugin's own parameter index. Informational — writes address the id. */
+        index: number;
+        /** What shape a parameter's range has, and so what a value means. */
+        kind: 'continuous' | 'stepped' | 'boolean' | 'choice';
+        /** High end of the range in the plugin's own units. */
+        max?: number;
+        /** Low end of the range in the plugin's own units. */
+        min?: number;
+        /** Display name of the parameter. */
+        name: string;
+        /** Stable id to pass to `fx set-param`. */
+        paramId: string;
+        /** Number of steps between the ends, for a `stepped` parameter. */
+        stepCount?: number;
+        /** The parameter's unit label (`dB`, `Hz`, `%`), when it has one. */
+        unit?: string;
+        /** Current value, normalized to 0..1 — the same scale `fx set-param` takes. */
+        value: number;
+        /** The plugin's own rendering of the current value, units included (`-12.3 dB`). Display only; never parse it back. */
+        valueText: string;
+    };
+}
+
+/** Arguments for `fx set-room`. */
+export interface FxSetRoomParams {
+    /** Turn the Room Effect on or off. */
+    enabled?: boolean;
+    /** Left/right position in metres, 0 at the centre. Must be given with `positionY`. */
+    positionX?: number;
+    /** Front/back position in metres, 0 at the centre. Must be given with `positionX`. */
+    positionY?: number;
+    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    trackIndex?: number;
+    /** Track UUID in braces format. */
+    trackUuid?: string;
+    /** Which room the Room Effect places the voice in. The spellings are this surface's own, not the plugin's display text. */
+    type?: 'studio-room' | 'choir-hall' | 'church';
+}
+
+/** Success payload of `fx set-room`. */
+export interface FxSetRoomResult {
+    /** Whether the Room Effect is on. */
+    enabled: boolean;
+    /** Left/right position in metres, 0 at the centre. */
+    positionX: number;
+    /** Front/back position in metres, 0 at the centre. */
+    positionY: number;
+    /** Depth of the current room in metres. */
+    roomDepth?: number;
+    /** Width of the current room in metres. A position is valid within plus or minus half of this. */
+    roomWidth?: number;
+    /** 0-based index of the track. */
+    trackIndex: number;
+    /** UUID of that track. */
+    trackUuid: string;
+    /** Which room the Room Effect places the voice in. The spellings are this surface's own, not the plugin's display text. */
+    type: 'studio-room' | 'choir-hall' | 'church';
+}
+
+/** The `fx` operations, mirroring the canonical operation tree 1:1. */
+export interface FxOperations {
+    /**
+     * Insert an effect into a chain, by default at the end.
+     *
+     * Requires the `fx.write` capability.
+     */
+    add(params: FxAddParams, options?: MutatingCallOptions): Promise<FxAddResult>;
+
+    /**
+     * Apply a library preset to an insert, replacing its current parameter state.
+     *
+     * Requires the `fx.write` capability.
+     */
+    applyPreset(params?: FxApplyPresetParams, options?: PreconditionCallOptions): Promise<FxApplyPresetResult>;
+
+    /**
+     * List one insert's parameters — id, range, current value and display text — with the token the reserved `fingerprint` argument carries back.
+     *
+     * Requires the `fx.read` capability.
+     */
+    getParams(params?: FxGetParamsParams, options?: CallOptions): Promise<FxGetParamsResult>;
+
+    /**
+     * List the inserts on one chain, in order, with the instance ids the other verbs address them by.
+     *
+     * Requires the `fx.read` capability.
+     */
+    list(params?: FxListParams, options?: CallOptions): Promise<FxListResult>;
+
+    /**
+     * List every effect that can be inserted: ACE's built-in set plus the third-party plugins the last scan found.
+     *
+     * Requires the `fx.read` capability.
+     */
+    listAvailable(params?: FxListAvailableParams, options?: CallOptions): Promise<FxListAvailableResult>;
+
+    /**
+     * List the names of one insert's parameters, so a caller can see what is there before reading any of it. `detail` adds each one's shape; values come from `fx get-params`.
+     *
+     * Requires the `fx.read` capability.
+     */
+    listParams(params?: FxListParamsParams, options?: CallOptions): Promise<FxListParamsResult>;
+
+    /**
+     * Open a third-party plugin's own editor window for one insert.
+     *
+     * Requires the `ui.control` capability.
+     */
+    openEditor(params?: FxOpenEditorParams, options?: MutatingCallOptions): Promise<FxOpenEditorResult>;
+
+    /**
+     * Take one insert out of a chain.
+     *
+     * Requires the `fx.write` capability.
+     */
+    remove(params?: FxRemoveParams, options?: MutatingCallOptions): Promise<FxRemoveResult>;
+
+    /**
+     * Move one insert to another slot in the same chain. The plugin keeps its instance id and its DSP state.
+     *
+     * Requires the `fx.write` capability.
+     */
+    reorder(params: FxReorderParams, options?: MutatingCallOptions): Promise<FxReorderResult>;
+
+    /**
+     * Save an insert's current parameter state to the preset library under a name. Library state, so it is not undoable.
+     *
+     * Requires the `fx.write` capability.
+     */
+    savePreset(params: FxSavePresetParams, options?: MutatingCallOptions): Promise<FxSavePresetResult>;
+
+    /**
+     * Scan the system for third-party plugins and update the app's plugin registry. Answers with a job id; settle it with `job wait`.
+     *
+     * Requires the `fx.write` capability.
+     */
+    scan(params?: FxScanParams, options?: MutatingCallOptions): Promise<FxScanResult>;
+
+    /**
+     * Set an insert's enabled state, bypass, or display name.
+     *
+     * Requires the `fx.write` capability.
+     */
+    set(params?: FxSetParams, options?: MutatingCallOptions): Promise<FxSetResult>;
+
+    /**
+     * Set one of an insert's parameters by its stable id, as a normalized 0..1 value.
+     *
+     * Requires the `fx.write` capability.
+     */
+    setParam(params: FxSetParamParams, options?: PreconditionCallOptions): Promise<FxSetParamResult>;
+
+    /**
+     * Set a Sing track's Room Effect: on or off, which room, and where the voice stands in it.
+     *
+     * Requires the `fx.write` capability.
+     */
+    setRoom(params?: FxSetRoomParams, options?: MutatingCallOptions): Promise<FxSetRoomResult>;
+}
+
 // --- generative ------------------------------------------------------------
 
 /** Arguments for `generative add-layer`. */
@@ -3481,6 +4201,10 @@ export interface JobGetResult {
     cancelable: boolean;
     /** Where a job's results land when they settle. `direct` = they auto-place into the project as one undo step, so nothing further is asked of the caller. `staged` = they land in the session's job history for audition, and reach the project only through `job place` (or leave it through `job discard-result`). A class declares this once, so every job of one class delivers the same way. */
     delivery: 'direct' | 'staged';
+    /** Why a job ended without a product — a short machine-readable code from the producing class's own vocabulary, e.g. `noContextAudio` from a beat analysis with nothing to analyze. Present only on a `failed` or `cancelled` job, and only where the producer named a reason: a class may fail without one, so absence means "no reason recorded", never "no failure". `lifecycle` is what says whether the job failed — read this for WHY, not WHETHER. The codes are the producing class's, not this contract's, for the same reason a result payload's keys are (ADR 0084): the ledger carries every producer's jobs and cannot own a closed set of failure reasons for all of them. Read it against `jobClass`. */
+    errorCode?: string;
+    /** A human-readable sentence for the same failure — for a log or a message to the user, never for branching. Branch on `errorCode`. Present and absent independently of `errorCode`: a producer may record a message without a code, or a code without a message. */
+    errorMessage?: string;
     /** Whether the producer reports a real numeric progress fraction. */
     hasProgress: boolean;
     /** Stable job id. */
@@ -3524,6 +4248,10 @@ export interface JobListResult {
         cancelable: boolean;
         /** Where a job's results land when they settle. `direct` = they auto-place into the project as one undo step, so nothing further is asked of the caller. `staged` = they land in the session's job history for audition, and reach the project only through `job place` (or leave it through `job discard-result`). A class declares this once, so every job of one class delivers the same way. */
         delivery: 'direct' | 'staged';
+        /** Why a job ended without a product — a short machine-readable code from the producing class's own vocabulary, e.g. `noContextAudio` from a beat analysis with nothing to analyze. Present only on a `failed` or `cancelled` job, and only where the producer named a reason: a class may fail without one, so absence means "no reason recorded", never "no failure". `lifecycle` is what says whether the job failed — read this for WHY, not WHETHER. The codes are the producing class's, not this contract's, for the same reason a result payload's keys are (ADR 0084): the ledger carries every producer's jobs and cannot own a closed set of failure reasons for all of them. Read it against `jobClass`. */
+        errorCode?: string;
+        /** A human-readable sentence for the same failure — for a log or a message to the user, never for branching. Branch on `errorCode`. Present and absent independently of `errorCode`: a producer may record a message without a code, or a code without a message. */
+        errorMessage?: string;
         /** Whether the producer reports a real numeric progress fraction. */
         hasProgress: boolean;
         /** Stable job id. */
@@ -3611,6 +4339,10 @@ export interface JobWaitResult {
         cancelable: boolean;
         /** Where a job's results land when they settle. `direct` = they auto-place into the project as one undo step, so nothing further is asked of the caller. `staged` = they land in the session's job history for audition, and reach the project only through `job place` (or leave it through `job discard-result`). A class declares this once, so every job of one class delivers the same way. */
         delivery: 'direct' | 'staged';
+        /** Why a job ended without a product — a short machine-readable code from the producing class's own vocabulary, e.g. `noContextAudio` from a beat analysis with nothing to analyze. Present only on a `failed` or `cancelled` job, and only where the producer named a reason: a class may fail without one, so absence means "no reason recorded", never "no failure". `lifecycle` is what says whether the job failed — read this for WHY, not WHETHER. The codes are the producing class's, not this contract's, for the same reason a result payload's keys are (ADR 0084): the ledger carries every producer's jobs and cannot own a closed set of failure reasons for all of them. Read it against `jobClass`. */
+        errorCode?: string;
+        /** A human-readable sentence for the same failure — for a log or a message to the user, never for branching. Branch on `errorCode`. Present and absent independently of `errorCode`: a producer may record a message without a code, or a code without a message. */
+        errorMessage?: string;
         /** Whether the producer reports a real numeric progress fraction. */
         hasProgress: boolean;
         /** Stable job id. */
@@ -5324,7 +6056,9 @@ export interface TrackGetResult {
 
 /** Arguments for `track list`. */
 export interface TrackListParams {
-    /** Track kinds to list, in the spellings `track create`'s `type` takes. Repeatable. Omit for the arrangement's content tracks, which is what this answered before the pinned Video/Marker bands were reachable. */
+    /** Report a track that holds no clips even when its kind is one that is listed only while it has content. Defaults to false. Only the chord track is filtered this way, and the default mirrors what the user sees: every project carries a chord track, it stays hidden in the UI until someone opens it and writes a chord into it, and a caller enumerating tracks is asking what the project HAS rather than what it structurally always has. Ordinary tracks are reported whether or not they hold clips — a Sing track someone just created is a track, and its name and sound source are most of what a caller wants from the listing. */
+    includeEmpty?: boolean;
+    /** Track kinds to list. Repeatable. Omit for the arrangement's content tracks, which is what this answers when nothing names a pinned region. The spellings are `track create`'s, plus `chord`, which names the chord track — one project fixture that `track create` therefore refuses. */
     type?: string[];
 }
 
@@ -5332,7 +6066,7 @@ export interface TrackListParams {
 export interface TrackListResult {
     /** The length of `tracks` — the arrangement's content (non-empty-slot) track count when no `type` filter narrows it. */
     contentTrackCount: number;
-    /** The matching tracks: the arrangement in its own order, then the video band, then the marker band. */
+    /** The matching tracks: the arrangement in its own order, then the video band, then the marker band, then the chord track. */
     tracks: {
         /** Number of clips (patterns) on the track. */
         clipCount: number;
@@ -5340,15 +6074,15 @@ export interface TrackListResult {
         isProtected?: boolean;
         /** Which system role a protected marker track fills: `sections` or `lyrics`. Stable and locale-independent, unlike `trackName`, which is the localized display string derived from it. Reported because it is the idempotency key `track ensure-system` is addressed by: without it, the only way to learn which marker track holds which role is to call `track ensure-system` again and read back the id, turning an observation into a write-shaped probe. **Protected marker tracks only** — omitted for an ordinary one, which fills no role. */
         protectedRole?: string;
-        /** Which index space `trackIndex` counts in: 'arrangement' (the main track list), 'video', or 'marker'. */
+        /** Which index space `trackIndex` counts in: 'arrangement' (the main track list), 'video', 'marker', or 'chord'. 'chord' holds the one chord track at index 0. It is reported as its own region rather than as an arrangement position because the arrangement does not contain it, and an index read against the wrong space names an unrelated track. */
         region: string;
-        /** Sound-source name for Sing and Instrument tracks; 'N-member choir'/'N-member ensemble' in choir/ensemble mode; empty for GenericMidi, which carries an external instrument instead. Omitted for the types that can have none: Audio, Video and Marker. */
+        /** Sound-source name for Sing and Instrument tracks; 'N-member choir'/'N-member ensemble' in choir/ensemble mode; empty for GenericMidi, which carries an external instrument instead. Omitted for the types that can have none: Audio, Video, Marker and Chord. */
         soundSourceName?: string;
         /** 0-based position, in the index space of `region`. */
         trackIndex: number;
         /** Current display name. */
         trackName: string;
-        /** One of: Sing, Instrument, GenericMidi, Audio, Video, Marker. */
+        /** One of: Sing, Instrument, GenericMidi, Audio, Video, Marker, Chord. */
         trackType: string;
         /** Track UUID in braces format. The definitive handle: it works in every region, where an index needs `region` to be read. */
         trackUuid: string;
@@ -6179,6 +6913,7 @@ export interface PublicBindings {
     readonly editor: EditorOperations;
     readonly ensemble: EnsembleOperations;
     readonly export: ExportOperations;
+    readonly fx: FxOperations;
     readonly generative: GenerativeOperations;
     readonly history: HistoryOperations;
     readonly import: ImportOperations;
@@ -6266,6 +7001,20 @@ export const OPERATIONS = [
     { path: 'export song-template', domain: 'export', method: 'songTemplate', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'membership' },
     { path: 'export video', domain: 'export', method: 'video', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'export vocal-sample', domain: 'export', method: 'vocalSample', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'membership' },
+    { path: 'fx add', domain: 'fx', method: 'add', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'fx apply-preset', domain: 'fx', method: 'applyPreset', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'fx get-params', domain: 'fx', method: 'getParams', capability: 'fx.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'fx list', domain: 'fx', method: 'list', capability: 'fx.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'fx list-available', domain: 'fx', method: 'listAvailable', capability: 'fx.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'fx list-params', domain: 'fx', method: 'listParams', capability: 'fx.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'fx open-editor', domain: 'fx', method: 'openEditor', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'fx remove', domain: 'fx', method: 'remove', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'fx reorder', domain: 'fx', method: 'reorder', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'fx save-preset', domain: 'fx', method: 'savePreset', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'fx scan', domain: 'fx', method: 'scan', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'fx set', domain: 'fx', method: 'set', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'fx set-param', domain: 'fx', method: 'setParam', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'fx set-room', domain: 'fx', method: 'setRoom', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
     { path: 'generative add-layer', domain: 'generative', method: 'addLayer', capability: 'generative.add-layer', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(add-a-layer)' },
     { path: 'generative enhance', domain: 'generative', method: 'enhance', capability: 'generative.enhance', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(music-enhancer)' },
     { path: 'generative seed-audio', domain: 'generative', method: 'seedAudio', capability: 'generative.seed-audio', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(seed-audio)' },
@@ -6439,6 +7188,20 @@ export const REQUIRED_TOKENS = {
     'export song-template': 'export.invoke',
     'export video': 'export.invoke',
     'export vocal-sample': 'export.invoke',
+    'fx add': 'fx.write',
+    'fx apply-preset': 'fx.write',
+    'fx get-params': 'fx.read',
+    'fx list': 'fx.read',
+    'fx list-available': 'fx.read',
+    'fx list-params': 'fx.read',
+    'fx open-editor': 'ui.control',
+    'fx remove': 'fx.write',
+    'fx reorder': 'fx.write',
+    'fx save-preset': 'fx.write',
+    'fx scan': 'fx.write',
+    'fx set': 'fx.write',
+    'fx set-param': 'fx.write',
+    'fx set-room': 'fx.write',
     'generative add-layer': 'generative.add-layer',
     'generative enhance': 'generative.enhance',
     'generative seed-audio': 'generative.seed-audio',

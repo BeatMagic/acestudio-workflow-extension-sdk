@@ -112,6 +112,8 @@ describe("the descriptor rows behind all of it", () => {
     expect(OPERATIONS.filter((operation) => !operation.mutating && operation.fingerprintPrecondition)).toEqual([]);
     expect(OPERATIONS.filter((operation) => operation.fingerprintPrecondition).map((operation) => operation.path)).toEqual([
       "clip replace-content",
+      "fx apply-preset",
+      "fx set-param",
       "note add",
       "note delete",
       "note move",

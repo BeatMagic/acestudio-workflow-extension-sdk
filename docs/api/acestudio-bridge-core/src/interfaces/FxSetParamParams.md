@@ -1,0 +1,73 @@
+# Interface: FxSetParamParams
+
+Arguments for `fx set-param`.
+
+## Properties
+
+### insert?
+
+```ts
+optional insert?: string;
+```
+
+Instance id of the insert, as `fx list` reports it.
+
+***
+
+### param
+
+```ts
+param: string;
+```
+
+Which parameter, as a `paramId` from `fx get-params`.
+
+***
+
+### rack?
+
+```ts
+optional rack?: "pre";
+```
+
+Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header.
+
+***
+
+### slot?
+
+```ts
+optional slot?: number;
+```
+
+0-based slot in the chain. Mutually exclusive with `insert`.
+
+***
+
+### trackIndex?
+
+```ts
+optional trackIndex?: number;
+```
+
+0-based index in the arrangement. Mutually exclusive with `trackUuid`.
+
+***
+
+### trackUuid?
+
+```ts
+optional trackUuid?: string;
+```
+
+Track UUID in braces format, or `master` for the master bus.
+
+***
+
+### value
+
+```ts
+value: number;
+```
+
+The new value, normalized to 0..1 — the same scale `fx get-params` reports. Plugins declare their own ranges and units, so one scale is the only one every parameter shares.

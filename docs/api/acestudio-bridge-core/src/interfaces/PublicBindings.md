@@ -84,6 +84,14 @@ readonly export: ExportOperations;
 
 ***
 
+### fx
+
+```ts
+readonly fx: FxOperations;
+```
+
+***
+
 ### generative
 
 ```ts

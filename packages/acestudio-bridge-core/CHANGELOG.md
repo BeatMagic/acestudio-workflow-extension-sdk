@@ -80,7 +80,7 @@ Renamed for workflow extensions (#28).
 
 First published version: repaired type declarations and the release path (#27).
 
-[0.4.0]: https://github.com/BeatMagic/acestudio-workflow-extension-sdk/compare/release-2026-08-18...HEAD
+[0.4.0]: https://github.com/BeatMagic/acestudio-workflow-extension-sdk/pull/47
 [0.3.2]: https://github.com/BeatMagic/acestudio-workflow-extension-sdk/pull/46
 [0.3.1]: https://github.com/BeatMagic/acestudio-workflow-extension-sdk/pull/43
 [0.3.0]: https://github.com/BeatMagic/acestudio-workflow-extension-sdk/pull/42

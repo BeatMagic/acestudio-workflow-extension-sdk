@@ -4,9 +4,10 @@ All notable changes to `@timedomain/acestudio-bridge-core` are recorded here. Th
 format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 **Versioning policy.** This package is pre-1.0, so the **minor** slot carries
-breaking changes and the patch slot carries everything else. `^0.4.0` will not pull
-a break; `^0.4` would. Every breaking change appears under a `Breaking` heading with
-what to change.
+breaking changes and the patch slot carries everything else. A caret on a 0.x version
+stops at the next minor — `^0.4.0` resolves `>=0.4.0 <0.5.0` — so it will not pull a
+break. A range spanning minors, such as `^0` or `0.x`, will. Every breaking change
+appears under a `Breaking` heading with what to change.
 
 Entries from 0.3.2 down were reconstructed from git history rather than written at
 the time, so read them as a summary of each release's headline change and the PR as

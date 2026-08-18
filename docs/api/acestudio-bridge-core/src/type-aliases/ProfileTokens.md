@@ -1,10 +1,10 @@
 # Type Alias: ProfileTokens\<P\>
 
 ```ts
-type ProfileTokens<P> = typeof PROFILES[P][number];
+type ProfileTokens<P> = TokensOfProfile<typeof PROFILES, P>;
 ```
 
-The tokens a published profile stands for, as a type.
+The tokens a published profile of this artifact stands for, as a type.
 
 ## Type Parameters
 

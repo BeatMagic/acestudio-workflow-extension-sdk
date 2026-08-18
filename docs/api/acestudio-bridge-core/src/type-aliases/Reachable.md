@@ -1,18 +1,10 @@
 # Type Alias: Reachable\<T\>
 
 ```ts
-type Reachable<T> = Extract<Descriptor, 
-  | {
-  ungated: true;
-}
-  | {
-  capability: T;
-}>;
+type Reachable<T> = ReachableIn<Descriptor, T>;
 ```
 
-The operations a session holding `T` can reach: everything it has the token
-for, plus every ungated operation — a registry-declared pure function is
-reachable by any session, including one granted nothing at all.
+The operations this artifact's own table admits for `T`.
 
 ## Type Parameters
 

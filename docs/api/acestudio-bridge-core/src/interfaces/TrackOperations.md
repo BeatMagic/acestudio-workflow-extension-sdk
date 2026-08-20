@@ -85,16 +85,16 @@ Requires the `track.write` capability.
 ### get()
 
 ```ts
-get(params, options?): Promise<TrackGetResult>;
+get(params?, options?): Promise<TrackGetResult>;
 ```
 
-Get comprehensive metadata for one track by index.
+Get comprehensive metadata for one track, by uuid or by index and region.
 
 Requires the `track.read` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`TrackGetParams`](TrackGetParams.md)
 
@@ -212,6 +212,32 @@ Requires the `track.write` capability.
 
 ***
 
+### resolve()
+
+```ts
+resolve(params?, options?): Promise<TrackResolveResult>;
+```
+
+Translate between a track's two identities in bulk.
+
+Requires the `track.read` capability.
+
+#### Parameters
+
+##### params?
+
+[`TrackResolveParams`](TrackResolveParams.md)
+
+##### options?
+
+[`CallOptions`](CallOptions.md)
+
+#### Returns
+
+`Promise`\<[`TrackResolveResult`](TrackResolveResult.md)\>
+
+***
+
 ### set()
 
 ```ts
@@ -241,7 +267,7 @@ Requires the `track.write` capability.
 ### setInput()
 
 ```ts
-setInput(params, options?): Promise<TrackSetInputResult>;
+setInput(params?, options?): Promise<TrackSetInputResult>;
 ```
 
 Set what a track records from: its input channel, its MIDI input, and how chords are captured.
@@ -250,7 +276,7 @@ Requires the `track.write` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`TrackSetInputParams`](TrackSetInputParams.md)
 

@@ -1370,6 +1370,15 @@ const OPERATIONS: readonly [{
   takesParams: true;
   ungated: false;
 }, {
+  capability: "track.read";
+  domain: "track";
+  fingerprintPrecondition: false;
+  method: "resolve";
+  mutating: false;
+  path: "track resolve";
+  takesParams: true;
+  ungated: false;
+}, {
   capability: "track.write";
   domain: "track";
   fingerprintPrecondition: false;

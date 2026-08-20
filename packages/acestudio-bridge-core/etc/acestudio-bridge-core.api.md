@@ -615,6 +615,7 @@ export interface ChoirSetParams {
 // @public
 export interface ClipAudioContentParams {
     clipIndex: number;
+    region?: string;
     trackIndex: number;
 }
 
@@ -642,17 +643,28 @@ export interface ClipConsolidateResult {
         consolidatedClipCount: number;
         geometry: {
             clipIn: number;
+            clipInSec: number;
             dur: number;
+            durSec: number;
             end: number;
+            endSec: number;
+            nativeUnit: 'second' | 'tick';
             pos: number;
+            posSec: number;
             sourceDur: number;
+            sourceDurSec: number;
             sourcePos: number;
+            sourcePosSec: number;
         };
+        region?: string;
+        trackIndex?: number;
         trackName: string;
         trackUuid: string;
     }[];
     rangeBegin: number;
+    rangeBeginSec: number;
     rangeEnd: number;
+    rangeEndSec: number;
     trackCount: number;
 }
 
@@ -670,6 +682,7 @@ export interface ClipCreateParams {
     }[];
     onOccupied?: string;
     pos: number;
+    region?: string;
     trackIndex?: number;
     type: string;
 }
@@ -677,13 +690,19 @@ export interface ClipCreateParams {
 // @public
 export interface ClipCreateResult {
     clipBegin: number;
+    clipBeginSec: number;
     clipEnd: number;
+    clipEndSec: number;
     clipName: string;
     clipType: string;
     clipUuid: string;
+    nativeUnit: 'second' | 'tick';
     noteCount: number;
     noteUuids: string[];
+    region?: string;
+    trackIndex?: number;
     trackName: string;
+    trackUuid: string;
 }
 
 // @public
@@ -707,6 +726,8 @@ export interface ClipDetachAudioResult {
     clipUuids: string[];
     detachedClipUuids: string[];
     detachedCount: number;
+    region?: string;
+    trackIndex?: number;
     trackName: string;
     trackUuid: string;
 }
@@ -716,6 +737,7 @@ export interface ClipDuplicateParams {
     clipUuid: string;
     onOccupied?: string;
     pos?: number;
+    region?: string;
     trackIndex?: number;
 }
 
@@ -726,14 +748,24 @@ export interface ClipDuplicateResult {
     clipUuid: string;
     geometry: {
         clipIn: number;
+        clipInSec: number;
         dur: number;
+        durSec: number;
         end: number;
+        endSec: number;
+        nativeUnit: 'second' | 'tick';
         pos: number;
+        posSec: number;
         sourceDur: number;
+        sourceDurSec: number;
         sourcePos: number;
+        sourcePosSec: number;
     };
+    region?: string;
     sourceClipUuid: string;
+    trackIndex?: number;
     trackName: string;
+    trackUuid: string;
 }
 
 // @public
@@ -741,6 +773,7 @@ export interface ClipGetParams {
     clipIndex?: number;
     clipUuid?: string;
     preferredTimeUnit?: string;
+    region?: string;
     trackIndex?: number;
 }
 
@@ -753,12 +786,27 @@ export interface ClipGetResult {
     enabled: boolean;
     geometry: {
         clipBegin: number;
+        clipBeginSec: number;
+        clipBeginTick: number;
         clipDur: number;
+        clipDurSec: number;
+        clipDurTick: number;
         clipEnd: number;
+        clipEndSec: number;
+        clipEndTick: number;
         clipPos: number;
+        clipPosSec: number;
+        clipPosTick: number;
         dur: number;
+        durSec: number;
+        durTick: number;
         end: number;
+        endSec: number;
+        endTick: number;
+        nativeUnit: 'second' | 'tick';
         pos: number;
+        posSec: number;
+        posTick: number;
     };
     isColorLinkToTrack: boolean;
     rawName: string;
@@ -778,6 +826,7 @@ export interface ClipGetResult {
 
 // @public
 export interface ClipListParams {
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -787,12 +836,15 @@ export interface ClipListResult {
     clipCount: number;
     clips: {
         clipBegin: number;
+        clipBeginSec: number;
         clipColor: string;
         clipEnd: number;
+        clipEndSec: number;
         clipName: string;
         clipType: string;
         clipUuid: string;
         enabled: boolean;
+        nativeUnit: 'second' | 'tick';
         noteCount?: number;
         videoMedia?: {
             clipInSec: number;
@@ -814,6 +866,7 @@ export interface ClipLyricsParams {
     rangeBegin?: number;
     rangeEnd?: number;
     rangeScope?: string;
+    region?: string;
     trackIndex: number;
 }
 
@@ -850,11 +903,18 @@ export interface ClipMoveResult {
     clipUuid: string;
     geometry: {
         clipIn: number;
+        clipInSec: number;
         dur: number;
+        durSec: number;
         end: number;
+        endSec: number;
+        nativeUnit: 'second' | 'tick';
         pos: number;
+        posSec: number;
         sourceDur: number;
+        sourceDurSec: number;
         sourcePos: number;
+        sourcePosSec: number;
     };
     warnings?: {
         code: string;
@@ -868,6 +928,7 @@ export interface ClipNoteContentParams {
     rangeBegin?: number;
     rangeEnd?: number;
     rangeScope?: string;
+    region?: string;
     trackIndex: number;
 }
 
@@ -972,11 +1033,18 @@ export interface ClipResizeResult {
     clipUuid: string;
     geometry: {
         clipIn: number;
+        clipInSec: number;
         dur: number;
+        durSec: number;
         end: number;
+        endSec: number;
+        nativeUnit: 'second' | 'tick';
         pos: number;
+        posSec: number;
         sourceDur: number;
+        sourceDurSec: number;
         sourcePos: number;
+        sourcePosSec: number;
     };
     warnings?: {
         code: string;
@@ -1062,11 +1130,18 @@ export interface ClipSetResult {
     color: string;
     geometry?: {
         clipIn: number;
+        clipInSec: number;
         dur: number;
+        durSec: number;
         end: number;
+        endSec: number;
+        nativeUnit: 'second' | 'tick';
         pos: number;
+        posSec: number;
         sourceDur: number;
+        sourceDurSec: number;
         sourcePos: number;
+        sourcePosSec: number;
     };
     isColorLinkToTrack: boolean;
     rawName: string;
@@ -1087,11 +1162,18 @@ export interface ClipSplitResult {
         clipUuid: string;
         geometry: {
             clipIn: number;
+            clipInSec: number;
             dur: number;
+            durSec: number;
             end: number;
+            endSec: number;
+            nativeUnit: 'second' | 'tick';
             pos: number;
+            posSec: number;
             sourceDur: number;
+            sourceDurSec: number;
             sourcePos: number;
+            sourcePosSec: number;
         };
     };
     tail: {
@@ -1100,11 +1182,18 @@ export interface ClipSplitResult {
         clipUuid: string;
         geometry: {
             clipIn: number;
+            clipInSec: number;
             dur: number;
+            durSec: number;
             end: number;
+            endSec: number;
+            nativeUnit: 'second' | 'tick';
             pos: number;
+            posSec: number;
             sourceDur: number;
+            sourceDurSec: number;
             sourcePos: number;
+            sourcePosSec: number;
         };
     };
 }
@@ -1632,6 +1721,7 @@ export interface FxAddParams {
     at?: number;
     preset?: string;
     rack?: 'pre';
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
     type: string;
@@ -1654,6 +1744,7 @@ export interface FxAddResult {
     };
     insertCount: number;
     rack?: 'pre';
+    region?: string;
     trackIndex?: number;
     trackUuid: string;
 }
@@ -1664,6 +1755,7 @@ export interface FxApplyPresetParams {
     preset?: string;
     presetId?: number;
     rack?: 'pre';
+    region?: string;
     slot?: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -1682,6 +1774,7 @@ export interface FxGetParamsParams {
     insert?: string;
     rack?: 'pre';
     regex?: boolean;
+    region?: string;
     slot?: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -1740,6 +1833,7 @@ export interface FxListAvailableResult {
 // @public
 export interface FxListParams {
     rack?: 'pre';
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -1751,6 +1845,7 @@ export interface FxListParamsParams {
     insert?: string;
     rack?: 'pre';
     regex?: boolean;
+    region?: string;
     slot?: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -1797,6 +1892,7 @@ export interface FxListResult {
         vendor?: string;
     }[];
     rack?: 'pre';
+    region?: string;
     trackIndex?: number;
     trackUuid: string;
 }
@@ -1805,6 +1901,7 @@ export interface FxListResult {
 export interface FxOpenEditorParams {
     insert?: string;
     rack?: 'pre';
+    region?: string;
     slot?: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -1839,6 +1936,7 @@ export interface FxOperations {
 export interface FxRemoveParams {
     insert?: string;
     rack?: 'pre';
+    region?: string;
     slot?: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -1849,6 +1947,7 @@ export interface FxRemoveResult {
     insertCount: number;
     insertId: string;
     rack?: 'pre';
+    region?: string;
     slot: number;
     trackIndex?: number;
     trackUuid: string;
@@ -1858,6 +1957,7 @@ export interface FxRemoveResult {
 export interface FxReorderParams {
     insert?: string;
     rack?: 'pre';
+    region?: string;
     slot?: number;
     to: number;
     trackIndex?: number;
@@ -1869,6 +1969,7 @@ export interface FxReorderResult {
     insertCount: number;
     insertId: string;
     rack?: 'pre';
+    region?: string;
     slot: number;
     trackIndex?: number;
     trackUuid: string;
@@ -1880,6 +1981,7 @@ export interface FxSavePresetParams {
     name: string;
     overwrite?: boolean;
     rack?: 'pre';
+    region?: string;
     slot?: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -1910,6 +2012,7 @@ export interface FxSetParamParams {
     insert?: string;
     param: string;
     rack?: 'pre';
+    region?: string;
     slot?: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -1944,6 +2047,7 @@ export interface FxSetParams {
     insert?: string;
     name?: string;
     rack?: 'pre';
+    region?: string;
     slot?: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -1966,6 +2070,7 @@ export interface FxSetResult {
     };
     insertCount: number;
     rack?: 'pre';
+    region?: string;
     trackIndex?: number;
     trackUuid: string;
 }
@@ -1975,6 +2080,7 @@ export interface FxSetRoomParams {
     enabled?: boolean;
     positionX?: number;
     positionY?: number;
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
     type?: 'studio-room' | 'choir-hall' | 'church';
@@ -1985,6 +2091,7 @@ export interface FxSetRoomResult {
     enabled: boolean;
     positionX: number;
     positionY: number;
+    region: string;
     roomDepth?: number;
     roomWidth?: number;
     trackIndex: number;
@@ -2284,9 +2391,10 @@ export interface ImportFileParams {
     path: string;
     pos?: number;
     posSec?: number;
+    region?: string;
     splitPolyphonic?: boolean;
-    trackId?: string;
     trackIndex?: number;
+    trackUuid?: string;
     withTempo?: boolean;
     withTimeSignatures?: boolean;
 }
@@ -2302,11 +2410,14 @@ export interface ImportFileResult {
     geometry?: Record<string, unknown>;
     loadingState?: string;
     naturalDur?: number;
+    naturalDurSec?: number;
+    region?: string;
     sourceFormat?: string;
     sourcePath: string;
     tempoImported?: boolean;
     timeSignaturesImported?: boolean;
     trackCount?: number;
+    trackIndex?: number;
     trackName?: string;
     trackUuid?: string;
 }
@@ -2497,14 +2608,18 @@ export interface JobOperations {
 // @public
 export interface JobPlaceParams {
     at?: number;
+    region?: string;
     resultId: string;
-    trackId: string;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
 export interface JobPlaceResult {
+    region?: string;
     resultId: string;
-    trackId: string;
+    trackIndex?: number;
+    trackUuid: string;
 }
 
 // @public
@@ -4271,6 +4386,15 @@ export const OPERATIONS: readonly [{
     readonly capability: "track.write";
     readonly ungated: false;
     readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "track resolve";
+    readonly domain: "track";
+    readonly method: "resolve";
+    readonly capability: "track.read";
+    readonly ungated: false;
+    readonly mutating: false;
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
@@ -6055,6 +6179,15 @@ export const PUBLIC_SURFACE: {
         readonly fingerprintPrecondition: false;
         readonly takesParams: true;
     }, {
+        readonly path: "track resolve";
+        readonly domain: "track";
+        readonly method: "resolve";
+        readonly capability: "track.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
         readonly path: "track set";
         readonly domain: "track";
         readonly method: "set";
@@ -6473,6 +6606,7 @@ export const PUBLIC_SURFACE: {
         readonly 'track list': "track.read";
         readonly 'track rename': "track.write";
         readonly 'track reorder': "track.write";
+        readonly 'track resolve': "track.read";
         readonly 'track set': "track.write";
         readonly 'track set-input': "track.write";
         readonly 'track set-language': "track.write";
@@ -6765,6 +6899,7 @@ export const REQUIRED_TOKENS: {
     readonly 'track list': "track.read";
     readonly 'track rename': "track.write";
     readonly 'track reorder': "track.write";
+    readonly 'track resolve': "track.read";
     readonly 'track set': "track.write";
     readonly 'track set-input': "track.write";
     readonly 'track set-language': "track.write";
@@ -7125,7 +7260,7 @@ export interface SoundSourceUnloadResult {
 }
 
 // @public
-export const SURFACE_VERSION = "7.2";
+export const SURFACE_VERSION = "9.0";
 
 // @public
 export interface SurfaceRow {
@@ -7348,6 +7483,7 @@ export interface TrackDeleteResult {
 
 // @public
 export interface TrackDuplicateParams {
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -7365,22 +7501,27 @@ export interface TrackDuplicateResult {
 
 // @public
 export interface TrackGetParams {
-    trackIndex: number;
+    region?: string;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
 export interface TrackGetResult {
-    color: string;
+    clipCount?: number;
+    color?: string;
     defaultArticulation?: string;
     defaultLanguage?: string;
-    mixer: {
+    isProtected?: boolean;
+    mixer?: {
         gain: number;
-        mute: boolean;
-        pan: number;
-        solo: boolean;
+        mute?: boolean;
+        pan?: number;
+        solo?: boolean;
     };
-    rawName: string;
-    recordInput: {
+    protectedRole?: string;
+    rawName?: string;
+    recordInput?: {
         inputChannelIndex?: number;
         listen: boolean;
         midiInput?: {
@@ -7391,6 +7532,7 @@ export interface TrackGetResult {
         record: boolean;
         recordMode?: 'monophonic' | 'polyphonic';
     };
+    region?: string;
     soundSourceInfo?: {
         category?: string;
         hasSource?: boolean;
@@ -7414,8 +7556,11 @@ export interface TrackGetResult {
         supportedLanguages?: string[];
         type?: string;
     };
-    trackName: string;
+    soundSourceName?: string;
+    trackIndex?: number;
+    trackName?: string;
     trackType: string;
+    trackUuid?: string;
 }
 
 // @public
@@ -7428,15 +7573,15 @@ export interface TrackListParams {
 export interface TrackListResult {
     contentTrackCount: number;
     tracks: {
-        clipCount: number;
+        clipCount?: number;
         isProtected?: boolean;
         protectedRole?: string;
         region: string;
         soundSourceName?: string;
         trackIndex: number;
-        trackName: string;
+        trackName?: string;
         trackType: string;
-        trackUuid: string;
+        trackUuid?: string;
     }[];
 }
 
@@ -7445,24 +7590,28 @@ export interface TrackOperations {
     create(params?: TrackCreateParams, options?: MutatingCallOptions): Promise<TrackCreateResult>;
     delete(params?: TrackDeleteParams, options?: MutatingCallOptions): Promise<TrackDeleteResult>;
     duplicate(params?: TrackDuplicateParams, options?: MutatingCallOptions): Promise<TrackDuplicateResult>;
-    get(params: TrackGetParams, options?: CallOptions): Promise<TrackGetResult>;
+    get(params?: TrackGetParams, options?: CallOptions): Promise<TrackGetResult>;
     list(params?: TrackListParams, options?: CallOptions): Promise<TrackListResult>;
     onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
     rename(params: TrackRenameParams, options?: MutatingCallOptions): Promise<void>;
     reorder(params: TrackReorderParams, options?: MutatingCallOptions): Promise<TrackReorderResult>;
+    resolve(params?: TrackResolveParams, options?: CallOptions): Promise<TrackResolveResult>;
     set(params?: TrackSetParams, options?: MutatingCallOptions): Promise<void>;
-    setInput(params: TrackSetInputParams, options?: MutatingCallOptions): Promise<TrackSetInputResult>;
+    setInput(params?: TrackSetInputParams, options?: MutatingCallOptions): Promise<TrackSetInputResult>;
     setLanguage(params: TrackSetLanguageParams, options?: MutatingCallOptions): Promise<void>;
 }
 
 // @public
 export interface TrackRenameParams {
     newName: string;
-    trackIndex: number;
+    region?: string;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
 export interface TrackReorderParams {
+    region?: string;
     toIndex: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -7480,12 +7629,33 @@ export interface TrackReorderResult {
 }
 
 // @public
+export interface TrackResolveParams {
+    region?: string;
+    trackIndices?: number[];
+    trackUuids?: string[];
+}
+
+// @public
+export interface TrackResolveResult {
+    tracks: {
+        found: boolean;
+        region?: string;
+        trackIndex?: number;
+        trackName?: string;
+        trackType?: string;
+        trackUuid?: string;
+    }[];
+}
+
+// @public
 export interface TrackSetInputParams {
     inputChannel?: string;
     midiChannel?: string;
     midiDevice?: string;
     recordMode?: string;
-    trackIndex: number;
+    region?: string;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -7497,12 +7667,15 @@ export interface TrackSetInputResult {
         sourceType?: 'none' | 'all' | 'keyboard' | 'custom';
     };
     recordMode?: 'monophonic' | 'polyphonic';
+    region: string;
     trackIndex: number;
+    trackUuid: string;
 }
 
 // @public
 export interface TrackSetLanguageParams {
     language: string;
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -7514,6 +7687,7 @@ export interface TrackSetParams {
     monitor?: boolean;
     mute?: boolean;
     pan?: number;
+    region?: string;
     solo?: boolean;
     trackIndex?: number;
     trackUuid?: string;

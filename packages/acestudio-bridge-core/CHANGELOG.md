@@ -13,6 +13,72 @@ Entries from 0.3.2 down were reconstructed from git history rather than written 
 the time, so read them as a summary of each release's headline change and the PR as
 the record.
 
+## [0.5.0] — 2026-08-20
+
+Regenerated against surface **9.0**, from 7.2. Four surface bumps arrive together:
+7.3 and 8.1 additive, 8.0 and 9.0 breaking. Read Breaking before upgrading — one of
+the two removals fails silently.
+
+### Breaking
+
+- **`trackId` is gone from `import file` and `job place`.** Port
+  `trackId: "<uuid>"` to `trackUuid: "<uuid>"`. It is the same value, and on
+  `import file` it now names a track of any kind rather than a video layer alone.
+  `job place` reports `trackUuid`, `trackIndex` and `region` in place of the
+  single `trackId` it used to echo back.
+
+  **Grep your callers rather than waiting for an error.** An undeclared request
+  field is dropped by the decoder, so neither removal answers for itself. A call
+  still passing `trackId` is read as naming no target at all, and the two verbs
+  part ways there: `job place` requires a target, so it fails with `INVALID_ARG`
+  for naming no track — a refusal that never mentions the field you passed.
+  `import file`'s target is optional, so it **fails silently**: the clip
+  auto-routes to the head layer and the call reports success. That is the one to
+  search for.
+
+### Added
+
+- **Both time units on every geometry the surface reports.** A clip's geometry is
+  stored in one unit — seconds for audio and video, ticks for everything else —
+  and reporting only the other one handed back a value rounded to a whole tick,
+  with no way for a consumer to recover what the clip actually held.
+
+  Every geometry now carries both. The write echoes (`clip move`, `resize`,
+  `split`, `create`, `duplicate`, `import file`, `job place`) add `posSec`,
+  `durSec`, `endSec`, `clipInSec`, `sourcePosSec` and `sourceDurSec` beside their
+  tick fields; `clip get` and `clip list` carry a `*Tick` and a `*Sec` for each
+  quantity; `clip consolidate` adds `rangeBeginSec` / `rangeEndSec`.
+
+  Each payload declares which unit is authoritative in a **`nativeUnit`** field
+  (`'second' | 'tick'`). The derived unit is for reading and display: address a
+  write in the native one, and a write that accepts both honours the native one.
+
+- **`naturalDurSec` on `import file`** — the source media's own length in seconds,
+  as the file carries it. The existing `naturalDur` is that value put through the
+  tempo curve and rounded to a tick.
+
+- **Index spaces: `region` beside `trackIndex`.** A track index counts inside one
+  region — `arrangement`, `video`, `marker` or `chord` — and an index read against
+  the wrong one names an unrelated track. The `track` and `clip` groups now take
+  `region` beside `trackIndex`, and results report the region they landed in.
+  Omitted, it still means `arrangement`, so existing calls keep their meaning;
+  `clip create` defaults it to the region its `type` lives in.
+
+  Four results gained the track identity they were missing: `clip create` and
+  `clip duplicate` reported only `trackName` and now carry `trackUuid`,
+  `trackIndex` and `region`; `clip consolidate`'s rows and `clip detach-audio`
+  had the uuid and gain the index and region. All four report the **landing**
+  track, which `onOccupied: 'relocate'` can make differ from the one asked for.
+
+- **`track resolve`** (gated on `track.read`) — turn any addressing form into the
+  others, so a caller holding an index can find the uuid without listing.
+
+- **The `fx` group's results say which index space their `trackIndex` counts in**,
+  and a chain is reachable positionally wherever it is reachable by uuid.
+
+- Several parameter objects became optional where every field in them was already
+  optional, so a no-argument call no longer has to pass `{}`.
+
 ## [0.4.1] — 2026-08-18
 
 Regenerated against surface **7.2**. This artifact was pinned at 7.0, so it had

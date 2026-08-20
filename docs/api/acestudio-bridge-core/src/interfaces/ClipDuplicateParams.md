@@ -34,10 +34,20 @@ Where to place the copy, in ticks. Defaults to immediately after the source, whi
 
 ***
 
+### region?
+
+```ts
+optional region?: string;
+```
+
+Which index space `trackIndex` counts in: `arrangement` (the default), `video`, `marker`, or `chord`. Copying a video clip onto a chosen layer needs it — the Video band counts its own index space (ADR 0104), so an arrangement index cannot name one.
+
+***
+
 ### trackIndex?
 
 ```ts
 optional trackIndex?: number;
 ```
 
-Destination track index (0-based). Defaults to the source's own track. The track must hold the clip's type.
+Destination track position (0-based) in `region`. Defaults to the source's own track. The track must hold the clip's type.

@@ -4,13 +4,23 @@ Success payload of `track get`.
 
 ## Properties
 
-### color
+### clipCount?
 
 ```ts
-color: string;
+optional clipCount?: number;
 ```
 
-Track color as a hex string, e.g. #ec4f44.
+Number of clips (patterns) on the track. Omitted for the master bus and an empty slot, which hold no clips at all.
+
+***
+
+### color?
+
+```ts
+optional color?: string;
+```
+
+Track color as a hex string, e.g. #ec4f44. Omitted for an empty slot and for the master, neither of which has one.
 
 ***
 
@@ -34,18 +44,28 @@ Default lyric language. Sing tracks only.
 
 ***
 
-### mixer
+### isProtected?
 
 ```ts
-mixer: {
+optional isProtected?: boolean;
+```
+
+Whether this marker track is system-owned and so protected from user delete and rename. **Marker tracks only** — omitted for every other type, which cannot be protected at all, rather than reported false.
+
+***
+
+### mixer?
+
+```ts
+optional mixer?: {
   gain: number;
-  mute: boolean;
-  pan: number;
-  solo: boolean;
+  mute?: boolean;
+  pan?: number;
+  solo?: boolean;
 };
 ```
 
-Mixer settings, as `track get` reports them.
+Mixer settings, as `track get` reports them. Only `gain` is universal. The master bus carries a level and nothing else — `track set` refuses the other four on it — so the three it does not have are optional here rather than reported as neutral values it does not hold.
 
 #### gain
 
@@ -53,48 +73,58 @@ Mixer settings, as `track get` reports them.
 gain: number;
 ```
 
-Volume gain: 0.0 and above; 1.0 = unity.
+Volume gain: 0.0 and above; 1.0 = unity. The one setting the master bus has.
 
-#### mute
-
-```ts
-mute: boolean;
-```
-
-Whether the track is muted.
-
-#### pan
+#### mute?
 
 ```ts
-pan: number;
+optional mute?: boolean;
 ```
 
-Stereo pan: -1.0 (left) to 1.0 (right).
+Whether the track is muted. Omitted for the master.
 
-#### solo
+#### pan?
 
 ```ts
-solo: boolean;
+optional pan?: number;
 ```
 
-Whether the track is soloed.
+Stereo pan: -1.0 (left) to 1.0 (right). Omitted for the master.
+
+#### solo?
+
+```ts
+optional solo?: boolean;
+```
+
+Whether the track is soloed. Omitted for the master.
 
 ***
 
-### rawName
+### protectedRole?
 
 ```ts
-rawName: string;
+optional protectedRole?: string;
 ```
 
-Name the user explicitly set; empty string when using the default fallback.
+Which system role a protected marker track fills: `sections` or `lyrics`. Stable and locale-independent, unlike `trackName`. **Protected marker tracks only.**
 
 ***
 
-### recordInput
+### rawName?
 
 ```ts
-recordInput: {
+optional rawName?: string;
+```
+
+Name the user explicitly set; empty string when using the default fallback. Omitted for an empty slot and for the master, neither of which can be renamed.
+
+***
+
+### recordInput?
+
+```ts
+optional recordInput?: {
   inputChannelIndex?: number;
   listen: boolean;
   midiInput?: {
@@ -176,6 +206,16 @@ optional recordMode?: "monophonic" | "polyphonic";
 ```
 
 How a chord played onto a Sing track is captured. Exactly one applies at a time: `monophonic` trims the overlaps into one vocal part, `polyphonic` splits the chord into separate parts.
+
+***
+
+### region?
+
+```ts
+optional region?: string;
+```
+
+Which index space `trackIndex` counts in: `arrangement`, `video`, `marker`, or `chord`. Travels with `trackIndex`, and omitted with it for the master.
 
 ***
 
@@ -319,13 +359,33 @@ One of: singer, choir, instrument, ensemble.
 
 ***
 
-### trackName
+### soundSourceName?
 
 ```ts
-trackName: string;
+optional soundSourceName?: string;
 ```
 
-Current display name.
+Sound-source name, as `track list` reports it: the source name for Sing and Instrument tracks, 'N-member choir'/'N-member ensemble' in choir/ensemble mode, empty for GenericMidi, which carries an external instrument instead. Omitted for the types that can have none. `soundSourceInfo` is the same thing in full; this is the one-line form, carried so this struct is a superset of the listing entry's.
+
+***
+
+### trackIndex?
+
+```ts
+optional trackIndex?: number;
+```
+
+0-based position, in the index space of `region`. Omitted for the master bus, which has no position in any region.
+
+***
+
+### trackName?
+
+```ts
+optional trackName?: string;
+```
+
+Current display name. Omitted for the master bus, which carries no name of its own.
 
 ***
 
@@ -335,4 +395,14 @@ Current display name.
 trackType: string;
 ```
 
-One of: Sing, Instrument, GenericMidi, Audio, Unknown.
+One of: Sing, Instrument, GenericMidi, Audio, Video, Marker, Chord, Empty (an arrangement slot holding no track), or Master.
+
+***
+
+### trackUuid?
+
+```ts
+optional trackUuid?: string;
+```
+
+Track UUID in braces format, or `master` for the master bus. The definitive handle: it works in every region, where an index needs `region` to be read. Omitted for an empty arrangement slot, which has none to hand out.

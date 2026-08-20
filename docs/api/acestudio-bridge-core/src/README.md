@@ -355,6 +355,8 @@ The connection core for programming against a running ACE Studio.
 - [TrackRenameParams](interfaces/TrackRenameParams.md)
 - [TrackReorderParams](interfaces/TrackReorderParams.md)
 - [TrackReorderResult](interfaces/TrackReorderResult.md)
+- [TrackResolveParams](interfaces/TrackResolveParams.md)
+- [TrackResolveResult](interfaces/TrackResolveResult.md)
 - [TrackSetInputParams](interfaces/TrackSetInputParams.md)
 - [TrackSetInputResult](interfaces/TrackSetInputResult.md)
 - [TrackSetLanguageParams](interfaces/TrackSetLanguageParams.md)

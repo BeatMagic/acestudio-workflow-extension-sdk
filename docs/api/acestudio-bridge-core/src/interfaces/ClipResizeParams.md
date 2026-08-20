@@ -20,7 +20,7 @@ How far into the source the clip starts showing, in ticks. Trims the front witho
 optional clipInSec?: number;
 ```
 
-The head trim in SECONDS — the source-media axis's own unit, and the only one `setVideoClipGeometry` offered for it (ADR 0069 §1). OPTIONAL, and when present it WINS over `clipIn`.
+The head trim in SECONDS — the source-media axis's own unit, and the only one `setVideoClipGeometry` offered for it (ADR 0069 §1). OPTIONAL. Alone it governs; against `clipIn` the clip's native unit decides (ADR 0032 §5), which for the media clips this quantity applies to means this one.
 
 ***
 
@@ -50,7 +50,7 @@ New length for the clip, in ticks.
 optional durSec?: number;
 ```
 
-New length for the clip, in seconds, measured forward from wherever this call leaves the clip's start. OPTIONAL, and when present it WINS over `dur`. A non-positive value is refused, as its tick twin is.
+New length for the clip, in seconds, measured forward from wherever this call leaves the clip's start. OPTIONAL. Alone it governs; against `dur` the clip's native unit decides (ADR 0032 §5). A non-positive value is refused, as its tick twin is.
 
 ***
 
@@ -80,4 +80,4 @@ New start for the clip, in ticks.
 optional posSec?: number;
 ```
 
-New start for the clip, in seconds. OPTIONAL, and when present it WINS over `pos` — including at 0, which is a position like any other.
+New start for the clip, in seconds. OPTIONAL, and when present it WINS over `pos` when the clip is second-native; on a tick-native clip `pos` wins instead (ADR 0032 §5). Alone, it governs — including at 0, which is a position like any other.

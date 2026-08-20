@@ -19,12 +19,15 @@ Number of clips returned.
 ```ts
 clips: {
   clipBegin: number;
+  clipBeginSec: number;
   clipColor: string;
   clipEnd: number;
+  clipEndSec: number;
   clipName: string;
   clipType: string;
   clipUuid: string;
   enabled: boolean;
+  nativeUnit: "second" | "tick";
   noteCount?: number;
   videoMedia?: {
      clipInSec: number;
@@ -50,6 +53,14 @@ clipBegin: number;
 
 Visible region start on the global timeline, in ticks.
 
+#### clipBeginSec
+
+```ts
+clipBeginSec: number;
+```
+
+`clipBegin` in seconds.
+
 #### clipColor
 
 ```ts
@@ -65,6 +76,14 @@ clipEnd: number;
 ```
 
 Visible region end on the global timeline, in ticks.
+
+#### clipEndSec
+
+```ts
+clipEndSec: number;
+```
+
+`clipEnd` in seconds.
 
 #### clipName
 
@@ -97,6 +116,14 @@ enabled: boolean;
 ```
 
 Whether the clip is enabled. A disabled clip is skipped at playback and export; an enabled one still goes silent under a track mute or another track's solo, so this is the clip's own switch, not final audibility. Reported per row so a caller learns which clips are live from the same call that enumerates them, rather than one `clip get` per clip. That matters for the question this answers most often: whether any MIDI-like track holds an enabled clip, which decides whether a tempo sync would de-align content that owns the current grid. Mute is a different question and does not appear here — muted content still owns the grid.
+
+#### nativeUnit
+
+```ts
+nativeUnit: "second" | "tick";
+```
+
+Which unit an entity's geometry is stored in — the one value that is exact, with the other reported beside it as a conversion under the current tempo curve (ADR 0032 §2-4). Declared here because every group that reports geometry names it. It follows the entity's own anchoring, which `PatternFactory::preferredGeometryTimeUnit` is the source of truth for: media that plays at wall-clock speed is second-native, content written against the grid is tick-native.
 
 #### noteCount?
 

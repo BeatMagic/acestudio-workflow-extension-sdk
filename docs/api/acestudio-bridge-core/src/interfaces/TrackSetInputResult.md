@@ -62,10 +62,30 @@ How a chord played onto a Sing track is captured. Exactly one applies at a time:
 
 ***
 
+### region
+
+```ts
+region: string;
+```
+
+Which index space `trackIndex` counts in. A recordable track is always in the arrangement, so this is `arrangement`; it is written out rather than implied, so a caller reading any result with a `trackIndex` needs no table of which groups are exempt (ADR 0129 §2).
+
+***
+
 ### trackIndex
 
 ```ts
 trackIndex: number;
 ```
 
-0-based index of the track.
+0-based position, in the index space of `region`.
+
+***
+
+### trackUuid
+
+```ts
+trackUuid: string;
+```
+
+Track UUID in braces format — the stable handle, reported beside the index so a caller that addressed by index can store one (ADR 0129 §3).

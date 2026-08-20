@@ -20,7 +20,7 @@ Clip index within the track (0-based, chronological order). Pair with `trackInde
 optional clipUuid?: string;
 ```
 
-Stable clip UUID, with braces, as `clip list` reports it. The only form that reaches a clip in the pinned Video or Marker band.
+Stable clip UUID, with braces, as `clip list` reports it.
 
 ***
 
@@ -30,7 +30,17 @@ Stable clip UUID, with braces, as `clip list` reports it. The only form that rea
 optional preferredTimeUnit?: string;
 ```
 
-Time unit for returned geometry values: `default`, `tick`, or `second`. Defaults to `default` (the pattern's native unit).
+Time unit for the DEPRECATED `geometry.pos`/`dur`/... fields: `default`, `tick`, or `second`. Defaults to `default` (the pattern's native unit). DEPRECATED: the `*Tick` and `*Sec` pairs are both always populated, so there is nothing left to prefer. Still honoured for the legacy fields.
+
+***
+
+### region?
+
+```ts
+optional region?: string;
+```
+
+Which index space `trackIndex` counts in: `arrangement` (the default), `video`, `marker`, or `chord`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track (ADR 0129 §1).
 
 ***
 
@@ -40,4 +50,4 @@ Time unit for returned geometry values: `default`, `tick`, or `second`. Defaults
 optional trackIndex?: number;
 ```
 
-Track index (0-based) in the arrangement. Pair with `clipIndex`.
+Track position (0-based) in `region`. Pair with `clipIndex`.

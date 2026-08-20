@@ -147,6 +147,7 @@ const REQUIRED_TOKENS: {
   track list: "track.read";
   track rename: "track.write";
   track reorder: "track.write";
+  track resolve: "track.read";
   track set: "track.write";
   track set-input: "track.write";
   track set-language: "track.write";
@@ -1047,6 +1048,12 @@ readonly track rename: "track.write" = 'track.write';
 
 ```ts
 readonly track reorder: "track.write" = 'track.write';
+```
+
+### track resolve
+
+```ts
+readonly track resolve: "track.read" = 'track.read';
 ```
 
 ### track set

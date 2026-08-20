@@ -1425,6 +1425,15 @@ const PUBLIC_SURFACE: {
      takesParams: true;
      ungated: false;
    }, {
+     capability: "track.read";
+     domain: "track";
+     fingerprintPrecondition: false;
+     method: "resolve";
+     mutating: false;
+     path: "track resolve";
+     takesParams: true;
+     ungated: false;
+   }, {
      capability: "track.write";
      domain: "track";
      fingerprintPrecondition: false;
@@ -1796,6 +1805,7 @@ const PUBLIC_SURFACE: {
      track list: "track.read";
      track rename: "track.write";
      track reorder: "track.write";
+     track resolve: "track.read";
      track set: "track.write";
      track set-input: "track.write";
      track set-language: "track.write";
@@ -3285,6 +3295,15 @@ readonly operations: readonly [{
   takesParams: true;
   ungated: false;
 }, {
+  capability: "track.read";
+  domain: "track";
+  fingerprintPrecondition: false;
+  method: "resolve";
+  mutating: false;
+  path: "track resolve";
+  takesParams: true;
+  ungated: false;
+}, {
   capability: "track.write";
   domain: "track";
   fingerprintPrecondition: false;
@@ -3661,6 +3680,7 @@ readonly requiredTokens: {
   track list: "track.read";
   track rename: "track.write";
   track reorder: "track.write";
+  track resolve: "track.read";
   track set: "track.write";
   track set-input: "track.write";
   track set-language: "track.write";
@@ -4557,6 +4577,12 @@ readonly track rename: "track.write" = 'track.write';
 
 ```ts
 readonly track reorder: "track.write" = 'track.write';
+```
+
+#### requiredTokens.track resolve
+
+```ts
+readonly track resolve: "track.read" = 'track.read';
 ```
 
 #### requiredTokens.track set

@@ -16,11 +16,14 @@
  * accepting a different major fails the handshake.
  *
  * @remarks
- * Mirrors `WorkflowExtensionHandshake::kProtocolVersion` on the Studio side.
+ * Mirrors `kCoreSessionProtocolVersion` on the Studio side — one integer for the
+ * whole core seam, which `WorkflowExtensionHandshake::kProtocolVersion` is an alias
+ * of. The value is a major and any difference is a mismatch: there is no minor for a
+ * host to tolerate, so this must track that constant exactly.
  *
  * @public
  */
-export const PROTOCOL_VERSION = 1;
+export const PROTOCOL_VERSION = 2;
 
 /**
  * The error object a JSON-RPC peer answers with in place of a result. The host

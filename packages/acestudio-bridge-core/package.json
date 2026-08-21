@@ -1,6 +1,6 @@
 {
   "name": "@timedomain/acestudio-bridge-core",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "type": "module",
   "description": "Control a running ACE Studio from your own code. The layer under the workflow extension SDK.",
   "license": "MIT",

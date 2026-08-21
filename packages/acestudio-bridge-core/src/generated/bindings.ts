@@ -3,10 +3,10 @@
 // The public capability bindings: the operations the capability registry
 // publishes (ADR 0094 §2), plus the scaffolding every consumer shares.
 //
-// Surface version: 7.2
+// Surface version: 9.0
 
 /** The contract surface version these bindings were generated from (`major.minor`). The handshake compares it against the host's: a major mismatch is a typed error at connect, minor drift is fine under the tolerant-reader rule. */
-export const SURFACE_VERSION = '7.2';
+export const SURFACE_VERSION = '9.0';
 
 /** Every canonical error code, as a string-literal union. `BridgeError.code` narrows against it, so error handling is exhaustiveness-checked by the compiler. Codes are a contract; the message beside one is not. */
 export type BridgeErrorCode =
@@ -142,6 +142,8 @@ export interface PreconditionCallOptions extends MutatingCallOptions {
 export interface OperationDescriptor {
     /** Canonical path, exactly as the operation tree spells it. */
     readonly path: string;
+    /** The JSON-RPC method the host serves this operation as (ADR 0127 §1): each segment of `path` becomes a dotted segment, kebab lowered to camel, so path `'auth get-token'` is served as `auth.getToken`. Emitted rather than derived from `domain` and `method`, which coincide with it only while every path is two segments and none is a wildcard route; re-deriving the rule here is how the two ends drift apart. Send this, not `path`. */
+    readonly wire: string;
     /** Domain group the binding nests under; empty for a root-level operation. */
     readonly domain: string;
     /** Binding method name — the camelCased verb. */
@@ -339,37 +341,47 @@ export const CAPABILITY_TOKENS = [
 export interface BlendAddParams {
     /** Where to insert the seed. Defaults to the end of the recipe. */
     at?: number;
-    /** **Required.** Which blend to add to, by display name or ref. */
-    blend: string;
+    /** Which blend, by display name or ref. A name matching more than one blend is an error listing the candidates. Give this or a track target, never both and never neither. */
+    blend?: string;
     /** Whether Style should follow Timbre for this seed. */
     link?: boolean;
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track carrying a voice mix, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would edit an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** **Required.** Which voice seed to add, by seed name or ref. Use `voice seeds --model \<name\>` to see what the blend's model allows. */
     seed: string;
     /** Style weight for the new seed, 0 to 1. Defaults to 0.2. An error on a timbre-only model, which has no Style axis. */
     style?: number;
     /** Timbre weight for the new seed, 0 to 1. Defaults to 0.2, matching the app: a seed you add is an alteration to the blend's base voice, not an equal partner in it. */
     timbre?: number;
+    /** 0-based index in the arrangement, naming a track subject the terminal-ergonomic way. */
+    trackIndex?: number;
+    /** Track UUID in braces format. Names the live mix on that track as the subject instead of a library entry. */
+    trackUuid?: string;
 }
 
 /** Success payload of `blend add`. */
 export interface BlendAddResult {
     /** Avatar id, or -1 when the blend falls back to its first seed's avatar. */
     avatar?: number;
-    /** Group discriminator of the blended-voice library this blend belongs to. */
-    group: string;
-    /** The blend's library id. */
-    id: number;
+    /** Group discriminator of the library this voice belongs to. Absent with `id`. */
+    group?: string;
+    /** The blend's library id. Absent when the recipe is a track's live mix that names no library voice — a freshly adjusted stock singer has a recipe and no entry to point at yet. */
+    id?: number;
     /** Full English name of the blend's native language. */
     language?: string;
     /** Id of the vocal synth model the blend sings through. Fixed when the blend was created. */
     modelId: number;
     /** Name of that model. */
     modelName: string;
-    /** Display name. */
+    /** Display name. On a track this is the name the app itself shows, which for an unsaved mix is the underlying voice's rather than empty. */
     name: string;
-    /** Ref for this blend, accepted by `--blend` here and by `sound-source load --source`. */
-    ref: string;
-    /** How many seeds the recipe holds. */
+    /** Ref for this blend, accepted by `--blend` here and by `sound-source load --source`. Absent with `id`. On a track this names the voice the mix was loaded from, which is a saved blend only once one has been saved — `saveState` is what says whether it still matches. */
+    ref?: string;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks carry a voice mix. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way (ADR 0129 §2). Absent with `trackIndex`. */
+    region?: string;
+    /** How far a track's voice mix has travelled from the stock voice it was mounted as. This is what Studio captions a Sing track with — the singer's own name, the literal "Unsaved VoiceMix", or a saved blend's name — and what tells a caller whether there is a recipe worth saving. Declared here rather than in one group because `sound-source get`, `choir get` and `track get` all describe the same track's mix. Three groups spelling one roster themselves is three rosters that can drift. There is no value for "the project could not say". A mix whose state is unreadable reports the field absent, the way a track with no position omits its index rather than sending a sentinel a caller would read as a position (ADR 0129 §6). */
+    saveState?: 'unmixed' | 'unsaved' | 'saved' | 'changed';
+    /** How many seeds the recipe holds. On a track this is never zero: every voice is a recipe of seeds, and an ordinary one is a recipe of exactly one — so a stock voice already names its seed, and `saveState` rather than this count is what says whether the recipe has been adjusted. */
     seedCount: number;
     /** The recipe, in order. */
     seeds: {
@@ -392,6 +404,10 @@ export interface BlendAddResult {
     tags?: string[];
     /** True when the model carries no Style axis. Seeds on such a blend report no `style`, and passing `--style` is an error rather than a value that quietly does nothing. */
     timbreOnly?: boolean;
+    /** 0-based position of the track whose recipe this is. Present only for a track subject. */
+    trackIndex?: number;
+    /** UUID of that track, in braces format. Present only for a track subject. */
+    trackUuid?: string;
 }
 
 /** Arguments for `blend create`. */
@@ -412,21 +428,25 @@ export interface BlendCreateParams {
 export interface BlendCreateResult {
     /** Avatar id, or -1 when the blend falls back to its first seed's avatar. */
     avatar?: number;
-    /** Group discriminator of the blended-voice library this blend belongs to. */
-    group: string;
-    /** The blend's library id. */
-    id: number;
+    /** Group discriminator of the library this voice belongs to. Absent with `id`. */
+    group?: string;
+    /** The blend's library id. Absent when the recipe is a track's live mix that names no library voice — a freshly adjusted stock singer has a recipe and no entry to point at yet. */
+    id?: number;
     /** Full English name of the blend's native language. */
     language?: string;
     /** Id of the vocal synth model the blend sings through. Fixed when the blend was created. */
     modelId: number;
     /** Name of that model. */
     modelName: string;
-    /** Display name. */
+    /** Display name. On a track this is the name the app itself shows, which for an unsaved mix is the underlying voice's rather than empty. */
     name: string;
-    /** Ref for this blend, accepted by `--blend` here and by `sound-source load --source`. */
-    ref: string;
-    /** How many seeds the recipe holds. */
+    /** Ref for this blend, accepted by `--blend` here and by `sound-source load --source`. Absent with `id`. On a track this names the voice the mix was loaded from, which is a saved blend only once one has been saved — `saveState` is what says whether it still matches. */
+    ref?: string;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks carry a voice mix. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way (ADR 0129 §2). Absent with `trackIndex`. */
+    region?: string;
+    /** How far a track's voice mix has travelled from the stock voice it was mounted as. This is what Studio captions a Sing track with — the singer's own name, the literal "Unsaved VoiceMix", or a saved blend's name — and what tells a caller whether there is a recipe worth saving. Declared here rather than in one group because `sound-source get`, `choir get` and `track get` all describe the same track's mix. Three groups spelling one roster themselves is three rosters that can drift. There is no value for "the project could not say". A mix whose state is unreadable reports the field absent, the way a track with no position omits its index rather than sending a sentinel a caller would read as a position (ADR 0129 §6). */
+    saveState?: 'unmixed' | 'unsaved' | 'saved' | 'changed';
+    /** How many seeds the recipe holds. On a track this is never zero: every voice is a recipe of seeds, and an ordinary one is a recipe of exactly one — so a stock voice already names its seed, and `saveState` rather than this count is what says whether the recipe has been adjusted. */
     seedCount: number;
     /** The recipe, in order. */
     seeds: {
@@ -449,6 +469,10 @@ export interface BlendCreateResult {
     tags?: string[];
     /** True when the model carries no Style axis. Seeds on such a blend report no `style`, and passing `--style` is an error rather than a value that quietly does nothing. */
     timbreOnly?: boolean;
+    /** 0-based position of the track whose recipe this is. Present only for a track subject. */
+    trackIndex?: number;
+    /** UUID of that track, in braces format. Present only for a track subject. */
+    trackUuid?: string;
 }
 
 /** Arguments for `blend delete`. */
@@ -471,29 +495,39 @@ export interface BlendDeleteResult {
 
 /** Arguments for `blend get`. */
 export interface BlendGetParams {
-    /** **Required.** Which blend, by display name or ref. A name matching more than one blend is an error listing the candidates. */
-    blend: string;
+    /** Which blend, by display name or ref. A name matching more than one blend is an error listing the candidates. Give this or a track target, never both and never neither. */
+    blend?: string;
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track carrying a voice mix, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would edit an unrelated track (ADR 0129 §2). */
+    region?: string;
+    /** 0-based index in the arrangement, naming a track subject the terminal-ergonomic way. */
+    trackIndex?: number;
+    /** Track UUID in braces format. Names the live mix on that track as the subject instead of a library entry. */
+    trackUuid?: string;
 }
 
 /** Success payload of `blend get`. */
 export interface BlendGetResult {
     /** Avatar id, or -1 when the blend falls back to its first seed's avatar. */
     avatar?: number;
-    /** Group discriminator of the blended-voice library this blend belongs to. */
-    group: string;
-    /** The blend's library id. */
-    id: number;
+    /** Group discriminator of the library this voice belongs to. Absent with `id`. */
+    group?: string;
+    /** The blend's library id. Absent when the recipe is a track's live mix that names no library voice — a freshly adjusted stock singer has a recipe and no entry to point at yet. */
+    id?: number;
     /** Full English name of the blend's native language. */
     language?: string;
     /** Id of the vocal synth model the blend sings through. Fixed when the blend was created. */
     modelId: number;
     /** Name of that model. */
     modelName: string;
-    /** Display name. */
+    /** Display name. On a track this is the name the app itself shows, which for an unsaved mix is the underlying voice's rather than empty. */
     name: string;
-    /** Ref for this blend, accepted by `--blend` here and by `sound-source load --source`. */
-    ref: string;
-    /** How many seeds the recipe holds. */
+    /** Ref for this blend, accepted by `--blend` here and by `sound-source load --source`. Absent with `id`. On a track this names the voice the mix was loaded from, which is a saved blend only once one has been saved — `saveState` is what says whether it still matches. */
+    ref?: string;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks carry a voice mix. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way (ADR 0129 §2). Absent with `trackIndex`. */
+    region?: string;
+    /** How far a track's voice mix has travelled from the stock voice it was mounted as. This is what Studio captions a Sing track with — the singer's own name, the literal "Unsaved VoiceMix", or a saved blend's name — and what tells a caller whether there is a recipe worth saving. Declared here rather than in one group because `sound-source get`, `choir get` and `track get` all describe the same track's mix. Three groups spelling one roster themselves is three rosters that can drift. There is no value for "the project could not say". A mix whose state is unreadable reports the field absent, the way a track with no position omits its index rather than sending a sentinel a caller would read as a position (ADR 0129 §6). */
+    saveState?: 'unmixed' | 'unsaved' | 'saved' | 'changed';
+    /** How many seeds the recipe holds. On a track this is never zero: every voice is a recipe of seeds, and an ordinary one is a recipe of exactly one — so a stock voice already names its seed, and `saveState` rather than this count is what says whether the recipe has been adjusted. */
     seedCount: number;
     /** The recipe, in order. */
     seeds: {
@@ -516,6 +550,10 @@ export interface BlendGetResult {
     tags?: string[];
     /** True when the model carries no Style axis. Seeds on such a blend report no `style`, and passing `--style` is an error rather than a value that quietly does nothing. */
     timbreOnly?: boolean;
+    /** 0-based position of the track whose recipe this is. Present only for a track subject. */
+    trackIndex?: number;
+    /** UUID of that track, in braces format. Present only for a track subject. */
+    trackUuid?: string;
 }
 
 /** Arguments for `blend list`. */
@@ -551,33 +589,112 @@ export interface BlendListResult {
     maximum: number;
 }
 
+/** Arguments for `blend promote`. */
+export interface BlendPromoteParams {
+    /** Avatar id for a new entry. Defaults to the mix's own, falling back to the first avatar the library offers when the mix never picked one. */
+    avatar?: number;
+    /** Native language for the saved entry, as a full English name. Must be one the model and seeds allow. Defaults to the track's own singing language, which is what the app's dialog offers first. */
+    language?: string;
+    /** Display name for a new library entry. Omit to update the entry the mix came from instead. */
+    name?: string;
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track carrying a voice mix, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would read an unrelated track (ADR 0129 §2). */
+    region?: string;
+    /** Tag names to attach to a new entry, for filtering in `sound-source list`. Ignored without `name`: updating an entry keeps the tags it has, which `blend set --tags` is how you change. */
+    tags?: string[];
+    /** 0-based index in the arrangement. */
+    trackIndex?: number;
+    /** Track UUID in braces format. */
+    trackUuid?: string;
+}
+
+/** Success payload of `blend promote`. */
+export interface BlendPromoteResult {
+    /** Avatar id, or -1 when the blend falls back to its first seed's avatar. */
+    avatar?: number;
+    /** Group discriminator of the library this voice belongs to. Absent with `id`. */
+    group?: string;
+    /** The blend's library id. Absent when the recipe is a track's live mix that names no library voice — a freshly adjusted stock singer has a recipe and no entry to point at yet. */
+    id?: number;
+    /** Full English name of the blend's native language. */
+    language?: string;
+    /** Id of the vocal synth model the blend sings through. Fixed when the blend was created. */
+    modelId: number;
+    /** Name of that model. */
+    modelName: string;
+    /** Display name. On a track this is the name the app itself shows, which for an unsaved mix is the underlying voice's rather than empty. */
+    name: string;
+    /** Ref for this blend, accepted by `--blend` here and by `sound-source load --source`. Absent with `id`. On a track this names the voice the mix was loaded from, which is a saved blend only once one has been saved — `saveState` is what says whether it still matches. */
+    ref?: string;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks carry a voice mix. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way (ADR 0129 §2). Absent with `trackIndex`. */
+    region?: string;
+    /** How far a track's voice mix has travelled from the stock voice it was mounted as. This is what Studio captions a Sing track with — the singer's own name, the literal "Unsaved VoiceMix", or a saved blend's name — and what tells a caller whether there is a recipe worth saving. Declared here rather than in one group because `sound-source get`, `choir get` and `track get` all describe the same track's mix. Three groups spelling one roster themselves is three rosters that can drift. There is no value for "the project could not say". A mix whose state is unreadable reports the field absent, the way a track with no position omits its index rather than sending a sentinel a caller would read as a position (ADR 0129 §6). */
+    saveState?: 'unmixed' | 'unsaved' | 'saved' | 'changed';
+    /** How many seeds the recipe holds. On a track this is never zero: every voice is a recipe of seeds, and an ordinary one is a recipe of exactly one — so a stock voice already names its seed, and `saveState` rather than this count is what says whether the recipe has been adjusted. */
+    seedCount: number;
+    /** The recipe, in order. */
+    seeds: {
+        /** The voice seed's code. */
+        code: number;
+        /** 0-based position in the recipe, which is what `blend set --member` and `blend remove --member` address. */
+        index: number;
+        /** Whether Style follows Timbre for this seed. The UI shows this as the link between the two sliders. */
+        link: boolean;
+        /** The seed's display name. Absent when the seed is no longer in the local registry, which can happen to a blend saved against a voice you no longer have. */
+        name?: string;
+        /** This seed's Style weight, 0 to 1. Absent on a timbre-only model, which has no Style axis at all. */
+        style?: number;
+        /** This seed's Timbre weight, 0 to 1. The UI calls this Timbre. */
+        timbre: number;
+    }[];
+    /** Every language this blend can sing, which is what its model and seeds allow between them. */
+    supportedLanguages?: string[];
+    /** Tag names attached to the blend. */
+    tags?: string[];
+    /** True when the model carries no Style axis. Seeds on such a blend report no `style`, and passing `--style` is an error rather than a value that quietly does nothing. */
+    timbreOnly?: boolean;
+    /** 0-based position of the track whose recipe this is. Present only for a track subject. */
+    trackIndex?: number;
+    /** UUID of that track, in braces format. Present only for a track subject. */
+    trackUuid?: string;
+}
+
 /** Arguments for `blend remove`. */
 export interface BlendRemoveParams {
-    /** **Required.** Which blend, by display name or ref. */
-    blend: string;
+    /** Which blend, by display name or ref. A name matching more than one blend is an error listing the candidates. Give this or a track target, never both and never neither. */
+    blend?: string;
     /** **Required.** Which seed to remove, by 0-based position in the recipe. */
     member: number;
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track carrying a voice mix, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would edit an unrelated track (ADR 0129 §2). */
+    region?: string;
+    /** 0-based index in the arrangement, naming a track subject the terminal-ergonomic way. */
+    trackIndex?: number;
+    /** Track UUID in braces format. Names the live mix on that track as the subject instead of a library entry. */
+    trackUuid?: string;
 }
 
 /** Success payload of `blend remove`. */
 export interface BlendRemoveResult {
     /** Avatar id, or -1 when the blend falls back to its first seed's avatar. */
     avatar?: number;
-    /** Group discriminator of the blended-voice library this blend belongs to. */
-    group: string;
-    /** The blend's library id. */
-    id: number;
+    /** Group discriminator of the library this voice belongs to. Absent with `id`. */
+    group?: string;
+    /** The blend's library id. Absent when the recipe is a track's live mix that names no library voice — a freshly adjusted stock singer has a recipe and no entry to point at yet. */
+    id?: number;
     /** Full English name of the blend's native language. */
     language?: string;
     /** Id of the vocal synth model the blend sings through. Fixed when the blend was created. */
     modelId: number;
     /** Name of that model. */
     modelName: string;
-    /** Display name. */
+    /** Display name. On a track this is the name the app itself shows, which for an unsaved mix is the underlying voice's rather than empty. */
     name: string;
-    /** Ref for this blend, accepted by `--blend` here and by `sound-source load --source`. */
-    ref: string;
-    /** How many seeds the recipe holds. */
+    /** Ref for this blend, accepted by `--blend` here and by `sound-source load --source`. Absent with `id`. On a track this names the voice the mix was loaded from, which is a saved blend only once one has been saved — `saveState` is what says whether it still matches. */
+    ref?: string;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks carry a voice mix. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way (ADR 0129 §2). Absent with `trackIndex`. */
+    region?: string;
+    /** How far a track's voice mix has travelled from the stock voice it was mounted as. This is what Studio captions a Sing track with — the singer's own name, the literal "Unsaved VoiceMix", or a saved blend's name — and what tells a caller whether there is a recipe worth saving. Declared here rather than in one group because `sound-source get`, `choir get` and `track get` all describe the same track's mix. Three groups spelling one roster themselves is three rosters that can drift. There is no value for "the project could not say". A mix whose state is unreadable reports the field absent, the way a track with no position omits its index rather than sending a sentinel a caller would read as a position (ADR 0129 §6). */
+    saveState?: 'unmixed' | 'unsaved' | 'saved' | 'changed';
+    /** How many seeds the recipe holds. On a track this is never zero: every voice is a recipe of seeds, and an ordinary one is a recipe of exactly one — so a stock voice already names its seed, and `saveState` rather than this count is what says whether the recipe has been adjusted. */
     seedCount: number;
     /** The recipe, in order. */
     seeds: {
@@ -600,37 +717,51 @@ export interface BlendRemoveResult {
     tags?: string[];
     /** True when the model carries no Style axis. Seeds on such a blend report no `style`, and passing `--style` is an error rather than a value that quietly does nothing. */
     timbreOnly?: boolean;
+    /** 0-based position of the track whose recipe this is. Present only for a track subject. */
+    trackIndex?: number;
+    /** UUID of that track, in braces format. Present only for a track subject. */
+    trackUuid?: string;
 }
 
 /** Arguments for `blend reorder`. */
 export interface BlendReorderParams {
-    /** **Required.** Which blend, by display name or ref. */
-    blend: string;
+    /** Which blend, by display name or ref. A name matching more than one blend is an error listing the candidates. Give this or a track target, never both and never neither. */
+    blend?: string;
     /** **Required.** Which seed to move, by 0-based position. */
     member: number;
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track carrying a voice mix, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would edit an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** **Required.** Where to move it. */
     to: number;
+    /** 0-based index in the arrangement, naming a track subject the terminal-ergonomic way. */
+    trackIndex?: number;
+    /** Track UUID in braces format. Names the live mix on that track as the subject instead of a library entry. */
+    trackUuid?: string;
 }
 
 /** Success payload of `blend reorder`. */
 export interface BlendReorderResult {
     /** Avatar id, or -1 when the blend falls back to its first seed's avatar. */
     avatar?: number;
-    /** Group discriminator of the blended-voice library this blend belongs to. */
-    group: string;
-    /** The blend's library id. */
-    id: number;
+    /** Group discriminator of the library this voice belongs to. Absent with `id`. */
+    group?: string;
+    /** The blend's library id. Absent when the recipe is a track's live mix that names no library voice — a freshly adjusted stock singer has a recipe and no entry to point at yet. */
+    id?: number;
     /** Full English name of the blend's native language. */
     language?: string;
     /** Id of the vocal synth model the blend sings through. Fixed when the blend was created. */
     modelId: number;
     /** Name of that model. */
     modelName: string;
-    /** Display name. */
+    /** Display name. On a track this is the name the app itself shows, which for an unsaved mix is the underlying voice's rather than empty. */
     name: string;
-    /** Ref for this blend, accepted by `--blend` here and by `sound-source load --source`. */
-    ref: string;
-    /** How many seeds the recipe holds. */
+    /** Ref for this blend, accepted by `--blend` here and by `sound-source load --source`. Absent with `id`. On a track this names the voice the mix was loaded from, which is a saved blend only once one has been saved — `saveState` is what says whether it still matches. */
+    ref?: string;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks carry a voice mix. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way (ADR 0129 §2). Absent with `trackIndex`. */
+    region?: string;
+    /** How far a track's voice mix has travelled from the stock voice it was mounted as. This is what Studio captions a Sing track with — the singer's own name, the literal "Unsaved VoiceMix", or a saved blend's name — and what tells a caller whether there is a recipe worth saving. Declared here rather than in one group because `sound-source get`, `choir get` and `track get` all describe the same track's mix. Three groups spelling one roster themselves is three rosters that can drift. There is no value for "the project could not say". A mix whose state is unreadable reports the field absent, the way a track with no position omits its index rather than sending a sentinel a caller would read as a position (ADR 0129 §6). */
+    saveState?: 'unmixed' | 'unsaved' | 'saved' | 'changed';
+    /** How many seeds the recipe holds. On a track this is never zero: every voice is a recipe of seeds, and an ordinary one is a recipe of exactly one — so a stock voice already names its seed, and `saveState` rather than this count is what says whether the recipe has been adjusted. */
     seedCount: number;
     /** The recipe, in order. */
     seeds: {
@@ -653,14 +784,18 @@ export interface BlendReorderResult {
     tags?: string[];
     /** True when the model carries no Style axis. Seeds on such a blend report no `style`, and passing `--style` is an error rather than a value that quietly does nothing. */
     timbreOnly?: boolean;
+    /** 0-based position of the track whose recipe this is. Present only for a track subject. */
+    trackIndex?: number;
+    /** UUID of that track, in braces format. Present only for a track subject. */
+    trackUuid?: string;
 }
 
 /** Arguments for `blend set`. */
 export interface BlendSetParams {
     /** New avatar id. Blend-level. */
     avatar?: number;
-    /** **Required.** Which blend, by display name or ref. */
-    blend: string;
+    /** Which blend, by display name or ref. A name matching more than one blend is an error listing the candidates. Give this or a track target, never both and never neither. */
+    blend?: string;
     /** New native language, as a full English name. Must be one the model and seeds allow. Blend-level. */
     language?: string;
     /** Whether Style should follow Timbre for this seed. Requires `member`. */
@@ -669,33 +804,43 @@ export interface BlendSetParams {
     member?: number;
     /** New display name. Blend-level. */
     name?: string;
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track carrying a voice mix, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would edit an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** This seed's Style weight, 0 to 1. Requires `member`, and requires a model that has a Style axis: on a timbre-only model this is an error rather than a value that silently does nothing. */
     style?: number;
     /** Replacement tag list. Replaces the existing tags rather than adding to them. Blend-level. */
     tags?: string[];
     /** This seed's Timbre weight, 0 to 1. Requires `member`. */
     timbre?: number;
+    /** 0-based index in the arrangement, naming a track subject the terminal-ergonomic way. */
+    trackIndex?: number;
+    /** Track UUID in braces format. Names the live mix on that track as the subject instead of a library entry. */
+    trackUuid?: string;
 }
 
 /** Success payload of `blend set`. */
 export interface BlendSetResult {
     /** Avatar id, or -1 when the blend falls back to its first seed's avatar. */
     avatar?: number;
-    /** Group discriminator of the blended-voice library this blend belongs to. */
-    group: string;
-    /** The blend's library id. */
-    id: number;
+    /** Group discriminator of the library this voice belongs to. Absent with `id`. */
+    group?: string;
+    /** The blend's library id. Absent when the recipe is a track's live mix that names no library voice — a freshly adjusted stock singer has a recipe and no entry to point at yet. */
+    id?: number;
     /** Full English name of the blend's native language. */
     language?: string;
     /** Id of the vocal synth model the blend sings through. Fixed when the blend was created. */
     modelId: number;
     /** Name of that model. */
     modelName: string;
-    /** Display name. */
+    /** Display name. On a track this is the name the app itself shows, which for an unsaved mix is the underlying voice's rather than empty. */
     name: string;
-    /** Ref for this blend, accepted by `--blend` here and by `sound-source load --source`. */
-    ref: string;
-    /** How many seeds the recipe holds. */
+    /** Ref for this blend, accepted by `--blend` here and by `sound-source load --source`. Absent with `id`. On a track this names the voice the mix was loaded from, which is a saved blend only once one has been saved — `saveState` is what says whether it still matches. */
+    ref?: string;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks carry a voice mix. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way (ADR 0129 §2). Absent with `trackIndex`. */
+    region?: string;
+    /** How far a track's voice mix has travelled from the stock voice it was mounted as. This is what Studio captions a Sing track with — the singer's own name, the literal "Unsaved VoiceMix", or a saved blend's name — and what tells a caller whether there is a recipe worth saving. Declared here rather than in one group because `sound-source get`, `choir get` and `track get` all describe the same track's mix. Three groups spelling one roster themselves is three rosters that can drift. There is no value for "the project could not say". A mix whose state is unreadable reports the field absent, the way a track with no position omits its index rather than sending a sentinel a caller would read as a position (ADR 0129 §6). */
+    saveState?: 'unmixed' | 'unsaved' | 'saved' | 'changed';
+    /** How many seeds the recipe holds. On a track this is never zero: every voice is a recipe of seeds, and an ordinary one is a recipe of exactly one — so a stock voice already names its seed, and `saveState` rather than this count is what says whether the recipe has been adjusted. */
     seedCount: number;
     /** The recipe, in order. */
     seeds: {
@@ -718,12 +863,16 @@ export interface BlendSetResult {
     tags?: string[];
     /** True when the model carries no Style axis. Seeds on such a blend report no `style`, and passing `--style` is an error rather than a value that quietly does nothing. */
     timbreOnly?: boolean;
+    /** 0-based position of the track whose recipe this is. Present only for a track subject. */
+    trackIndex?: number;
+    /** UUID of that track, in braces format. Present only for a track subject. */
+    trackUuid?: string;
 }
 
 /** The `blend` operations, mirroring the canonical operation tree 1:1. */
 export interface BlendOperations {
     /**
-     * Add a voice seed to a blend.
+     * Add a voice seed to a blend, or to a track's live mix.
      *
      * Requires the `voice.write` capability.
      */
@@ -744,11 +893,11 @@ export interface BlendOperations {
     delete(params: BlendDeleteParams, options?: MutatingCallOptions): Promise<BlendDeleteResult>;
 
     /**
-     * Read one blended voice: its model, its seeds, and each seed's weights.
+     * Read a recipe: its model, its seeds, and each seed's weights. Reads a track's live mix when given a track target instead of a blend.
      *
      * Requires the `voice.read` capability.
      */
-    get(params: BlendGetParams, options?: CallOptions): Promise<BlendGetResult>;
+    get(params?: BlendGetParams, options?: CallOptions): Promise<BlendGetResult>;
 
     /**
      * List the blended voices in your library, with how full the library is.
@@ -758,25 +907,32 @@ export interface BlendOperations {
     list(params?: BlendListParams, options?: CallOptions): Promise<BlendListResult>;
 
     /**
-     * Remove one voice seed from a blend.
+     * Save the mix playing on a track into your blended-voice library.
+     *
+     * Requires the `voice.write` capability.
+     */
+    promote(params?: BlendPromoteParams, options?: MutatingCallOptions): Promise<BlendPromoteResult>;
+
+    /**
+     * Remove one voice seed from a blend, or from a track's live mix.
      *
      * Requires the `voice.write` capability.
      */
     remove(params: BlendRemoveParams, options?: MutatingCallOptions): Promise<BlendRemoveResult>;
 
     /**
-     * Move a voice seed to another position in a blend's recipe.
+     * Move a voice seed to another position in a recipe.
      *
      * Requires the `voice.write` capability.
      */
     reorder(params: BlendReorderParams, options?: MutatingCallOptions): Promise<BlendReorderResult>;
 
     /**
-     * Change a blend's name, tags, avatar or language, or one seed's weights.
+     * Change a voice's name, tags, avatar or language, or one seed's weights.
      *
      * Requires the `voice.write` capability.
      */
-    set(params: BlendSetParams, options?: MutatingCallOptions): Promise<BlendSetResult>;
+    set(params?: BlendSetParams, options?: MutatingCallOptions): Promise<BlendSetResult>;
 }
 
 // --- canvas ----------------------------------------------------------------
@@ -844,12 +1000,18 @@ export interface CaretGetParams {
 export interface CaretGetResult {
     /** Which UI area holds caret focus: `arrangement` (track view) or `editor` (pattern editor). Folded in from the retired `marker get-focus`, because a caret position without the view that owns it is ambiguous. */
     focus: string;
+    /** The caret's row in the view's row space, where a pinned band takes negative rows. Named `raw` because that is the whole point: unprefixed, it is indistinguishable from a region-local index, and on an arrangement track the two coincide — so a caller tests it successfully and misaddresses the moment a pinned content track is involved (ADR 0129 §6). Reported rather than withheld, because a caller working in screen geometry has nowhere else to get it. */
+    rawTrackRow: number;
+    /** Which index space `trackIndex` counts in: `arrangement`, `video`, `marker` or `chord`. Position 1 names a different track in each band (ADR 0104), so the index is unreadable without it. */
+    region?: string;
     /** The scope actually used — `global` or `editor`. `arrangement` normalizes to `global`, so the answer names one of the two the caret really has. */
     scope: string;
     /** Caret position in ticks: global ticks under `global` scope, ticks local to the open clip under `editor` scope. */
     tick: number;
-    /** 0-based track index of the caret. Users see tracks starting from 1. */
-    trackIndex: number;
+    /** 0-based position of the caret's track in `region` (ADR 0129 §3). Users see tracks starting from 1. Absent together with `region` when the project cannot place the track. */
+    trackIndex?: number;
+    /** UUID of the caret's track, in braces. The handle to store, since an index moves when tracks are added or reordered (ADR 0129 §2). */
+    trackUuid?: string;
 }
 
 /** Arguments for `caret set`. */
@@ -858,14 +1020,20 @@ export interface CaretSetParams {
     forceSeek?: boolean;
     /** Whether `tick` is in global (project-level) coordinates. False treats it as a tick local to the open editor clip. Omitted means global. */
     is_global_tick?: boolean;
+    /** The target row in the view's row space, for a caller that already holds screen geometry. Mutually exclusive with the other two forms — naming the same track twice has no rule for which wins, so it is refused. */
+    rawTrackRow?: number;
+    /** Which index space `trackIndex` counts in. Defaults to `arrangement`, which is what an unqualified index has always meant here. */
+    region?: string;
     /** Scope to target: `"arrangement"` / `"global"`, or `"editor"`. Omitted targets whichever view currently has focus. */
     scope?: string;
     /** Whether to snap the selection to line selection after moving. Omitted means it does. */
     set_to_line_selection?: boolean;
     /** Target position in ticks. Must be non-negative. */
     tick: number;
-    /** Track index (0-based). Omitted keeps the current track. */
+    /** 0-based position of the target track in `region`. Omitted keeps the current track. Mutually exclusive with `trackUuid` and `rawTrackRow`. */
     trackIndex?: number;
+    /** UUID of the target track, in braces. Names a track in any region, so it needs no `region` beside it. Mutually exclusive with `trackIndex`. */
+    trackUuid?: string;
 }
 
 /** The `caret` operations, mirroring the canonical operation tree 1:1. */
@@ -893,6 +1061,8 @@ export interface ChoirAddParams {
     at?: number;
     /** Which vocal synth model the new member sings through, by model name or generation. Omit for the voice's default. */
     model?: string;
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track this group operates on, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would act on an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** Which voice to add, by display name or ref — the same thing `sound-source load --source` accepts, including a blended voice. */
     source: string;
     /** 0-based index in the arrangement. */
@@ -911,6 +1081,8 @@ export interface ChoirAddResult {
     memberIndex?: number;
     /** Display name of the affected member's voice. */
     memberName?: string;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2). */
+    region: string;
     /** 0-based index of the track. */
     trackIndex: number;
     /** UUID of that track. */
@@ -919,6 +1091,8 @@ export interface ChoirAddResult {
 
 /** Arguments for `choir disable`. */
 export interface ChoirDisableParams {
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track this group operates on, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would act on an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** 0-based index in the arrangement. */
     trackIndex?: number;
     /** Track UUID in braces format. */
@@ -929,6 +1103,8 @@ export interface ChoirDisableParams {
 export interface ChoirDisableResult {
     /** The voice that remains: the former member 0, now the track's only AI voice. */
     leaderName: string;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2). */
+    region: string;
     /** How many non-leader members were dropped. This is why disabling is not the inverse of enabling. */
     removedCount: number;
     /** 0-based index of the track. */
@@ -939,6 +1115,8 @@ export interface ChoirDisableResult {
 
 /** Arguments for `choir enable`. */
 export interface ChoirEnableParams {
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track this group operates on, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would act on an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** 0-based index in the arrangement. */
     trackIndex?: number;
     /** Track UUID in braces format. */
@@ -949,6 +1127,8 @@ export interface ChoirEnableParams {
 export interface ChoirEnableResult {
     /** How many members the choir now holds. Enabling keeps the existing AI voice as the leader, so this is 1 unless the track already had a choir. */
     memberCount: number;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2). */
+    region: string;
     /** 0-based index of the track. */
     trackIndex: number;
     /** The track's name after enabling. Turning choir mode on renames the track, which is why the new name is reported. */
@@ -959,6 +1139,8 @@ export interface ChoirEnableResult {
 
 /** Arguments for `choir get`. */
 export interface ChoirGetParams {
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track this group operates on, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would act on an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** 0-based index in the arrangement. */
     trackIndex?: number;
     /** Track UUID in braces format. */
@@ -981,7 +1163,7 @@ export interface ChoirGetResult {
         index: number;
         /** True for member 0. The leader is what the track falls back to when choir mode is turned off. */
         isLeader: boolean;
-        /** True when this member's voice is a blend rather than an ordinary voice. A choir member may be either. */
+        /** True when this member's voice has been adjusted away from the stock voice it started as — the same test `track get` reports for a singer track. A choir member may be either. Not "has more than one seed": a single seed at a fractional weight is an average against the base model, which is a blend the seed count cannot detect. Read `seedCount` for the recipe's size. */
         isVoiceBlend?: boolean;
         /** The vocal synth model this member sings through. */
         modelName?: string;
@@ -991,9 +1173,15 @@ export interface ChoirGetResult {
         name: string;
         /** Ref of that voice, in the same form `sound-source load --source` accepts. */
         ref?: string;
+        /** How far a track's voice mix has travelled from the stock voice it was mounted as. This is what Studio captions a Sing track with — the singer's own name, the literal "Unsaved VoiceMix", or a saved blend's name — and what tells a caller whether there is a recipe worth saving. Declared here rather than in one group because `sound-source get`, `choir get` and `track get` all describe the same track's mix. Three groups spelling one roster themselves is three rosters that can drift. There is no value for "the project could not say". A mix whose state is unreadable reports the field absent, the way a track with no position omits its index rather than sending a sentinel a caller would read as a position (ADR 0129 §6). */
+        saveState?: 'unmixed' | 'unsaved' | 'saved' | 'changed';
+        /** How many seed voices the member's recipe names. Every voice is a recipe of seeds and an ordinary one is a recipe of exactly one, so a stock voice reports `1` — which is why `1` is an ordinary case rather than a contradiction of `isVoiceBlend`, and why a count cannot stand in for it. See there. */
+        seedCount?: number;
     }[];
     /** Timing offset between members, in milliseconds. The UI calls this Offset. */
     offset?: number;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2). */
+    region: string;
     /** Stereo spread across the members, 0 to 1. The UI calls this Spread. */
     spread?: number;
     /** 0-based index of the track. */
@@ -1006,6 +1194,8 @@ export interface ChoirGetResult {
 export interface ChoirRemoveParams {
     /** Which member to remove. `0` is the leader and is refused. */
     member: number;
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track this group operates on, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would act on an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** 0-based index in the arrangement. */
     trackIndex?: number;
     /** Track UUID in braces format. */
@@ -1022,6 +1212,8 @@ export interface ChoirRemoveResult {
     memberIndex?: number;
     /** Display name of the affected member's voice. */
     memberName?: string;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2). */
+    region: string;
     /** 0-based index of the track. */
     trackIndex: number;
     /** UUID of that track. */
@@ -1032,6 +1224,8 @@ export interface ChoirRemoveResult {
 export interface ChoirReorderParams {
     /** Which member to move. */
     member: number;
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track this group operates on, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would act on an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** Where to move it. `0` promotes it to leader. */
     to: number;
     /** 0-based index in the arrangement. */
@@ -1050,6 +1244,8 @@ export interface ChoirReorderResult {
     memberIndex?: number;
     /** Display name of the affected member's voice. */
     memberName?: string;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2). */
+    region: string;
     /** 0-based index of the track. */
     trackIndex: number;
     /** UUID of that track. */
@@ -1066,6 +1262,8 @@ export interface ChoirSetParams {
     mute?: boolean;
     /** Timing offset between members, in milliseconds. Choir-level. */
     offset?: number;
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track this group operates on, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would act on an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** Stereo spread across the members, 0 to 1. Choir-level. */
     spread?: number;
     /** 0-based index in the arrangement. */
@@ -1132,7 +1330,9 @@ export interface ChoirOperations {
 export interface ClipAudioContentParams {
     /** Clip index within the track (0-based). The clip must be of type `Audio`; other clip types return an error. */
     clipIndex: number;
-    /** Track index (0-based). */
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video`, `marker`, or `chord`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track (ADR 0129 §1). */
+    region?: string;
+    /** Track position (0-based) in `region`. */
     trackIndex: number;
 }
 
@@ -1170,21 +1370,39 @@ export interface ClipConsolidateResult {
         clipUuid: string;
         /** How many source clips contributed to this one. */
         consolidatedClipCount: number;
-        /** A clip's geometry in the *wire* vocabulary a write speaks, always in ticks. A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set. */
+        /** A clip's geometry in the *wire* vocabulary a write speaks, in both units. The bare names are ticks and the `*Sec` names are seconds; `nativeUnit` says which of the two the clip stores, and so which is exact (ADR 0032 §3-4). A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set. */
         geometry: {
             /** Offset into the source the visible region starts at — what a write's `clipIn` sets. */
             clipIn: number;
+            /** `clipIn` in seconds. For a second-native clip this is the exact trim — the value the entity stores — and the tick field above is the conversion. */
+            clipInSec: number;
             /** Visible region duration — what a write's `dur` sets. */
             dur: number;
+            /** `dur` in seconds. */
+            durSec: number;
             /** Visible region end on the global timeline (pos + dur). Reported, never accepted: a caller wanting an end names `pos` and `dur`, and reads this back to check itself. */
             end: number;
+            /** `end` in seconds. */
+            endSec: number;
+            /** Which unit an entity's geometry is stored in — the one value that is exact, with the other reported beside it as a conversion under the current tempo curve (ADR 0032 §2-4). Declared here because every group that reports geometry names it. It follows the entity's own anchoring, which `PatternFactory::preferredGeometryTimeUnit` is the source of truth for: media that plays at wall-clock speed is second-native, content written against the grid is tick-native. */
+            nativeUnit: 'second' | 'tick';
             /** Visible region start on the global timeline — what a write's `pos` sets. */
             pos: number;
+            /** `pos` in seconds. */
+            posSec: number;
             /** Duration of the full editable (source) region. */
             sourceDur: number;
+            /** `sourceDur` in seconds. */
+            sourceDurSec: number;
             /** Start of the full editable (source) region on the global timeline. Reported for completeness; a write never addresses it directly, because a move slides the source underneath so the visible region lands where asked. */
             sourcePos: number;
+            /** `sourcePos` in seconds. */
+            sourcePosSec: number;
         };
+        /** Which index space `trackIndex` counts in. */
+        region?: string;
+        /** 0-based position of that track in `region` — the identity the UI shows a person, beside the handle a program stores (ADR 0129 §3). Absent together with `region` when the project cannot place the track, which is an inconsistency rather than anything a caller did. */
+        trackIndex?: number;
         /** Name of that track. */
         trackName: string;
         /** Id of the track it was placed on. */
@@ -1192,8 +1410,12 @@ export interface ClipConsolidateResult {
     }[];
     /** Range start actually used, in ticks. */
     rangeBegin: number;
+    /** `rangeBegin` in seconds. */
+    rangeBeginSec: number;
     /** Range end actually used (exclusive), in ticks. */
     rangeEnd: number;
+    /** `rangeEnd` in seconds. */
+    rangeEndSec: number;
     /** How many tracks produced a consolidated clip — at most the number of `trackUuids` given. */
     trackCount: number;
 }
@@ -1223,7 +1445,9 @@ export interface ClipCreateParams {
     onOccupied?: string;
     /** Clip start position, in ticks. */
     pos: number;
-    /** Target track index (0-based). Empty tracks are automatically converted to the appropriate type. Required for `sing`, `instrument` and `genericMidi`, where it is the arrangement index. For `marker` it is OPTIONAL and means something else: the local index of the lane inside the Marker band, which is an ordered first-class region (ADR 0019/0104) rather than a single fixture. Omit for the band's first lane. Read the band with `track list --type marker`, whose rows carry `protectedRole` for finding the Sections or Lyrics lane by role. Rejected only for `chord`: there is exactly one Chord track, so an index beside the type would suggest a choice that does not exist. */
+    /** Which index space `trackIndex` counts in. Optional, and it defaults to the region the `type` lives in — `marker` for a marker clip, `chord` for a chord clip, `arrangement` for the note types — so an existing call keeps meaning what it meant. Declared so the space is stated rather than inferred from `type` (ADR 0129 §1). A value that contradicts `type` is refused: a marker clip cannot land in the arrangement, so `region: "arrangement"` beside `type: "marker"` is a caller mistake worth reporting rather than an instruction to silently ignore one of the two. */
+    region?: string;
+    /** Target track index (0-based). Empty tracks are automatically converted to the appropriate type. Required for `sing`, `instrument` and `genericMidi`, where it counts in the arrangement. For `marker` it is OPTIONAL and counts in the Marker band, which is an ordered first-class region (ADR 0019/0104) rather than a single fixture. Omit for the band's first lane. Read the band with `track list --type marker`, whose rows carry `protectedRole` for finding the Sections or Lyrics lane by role. Rejected only for `chord`: there is exactly one Chord track, so an index beside the type would suggest a choice that does not exist. */
     trackIndex?: number;
     /** Clip type: `sing`, `instrument`, `genericMidi`, `marker`, or `chord` — the same spellings `clipType` is reported in. Matched case-insensitively. `audio` and `video` are not creatable here: a media clip's duration comes from the file, not from `dur`. Use `import file` instead. */
     type: string;
@@ -1233,20 +1457,32 @@ export interface ClipCreateParams {
 export interface ClipCreateResult {
     /** Clip start on the global timeline, in ticks. */
     clipBegin: number;
+    /** `clipBegin` in seconds. */
+    clipBeginSec: number;
     /** Clip end on the global timeline, in ticks (pos + dur). */
     clipEnd: number;
+    /** `clipEnd` in seconds. */
+    clipEndSec: number;
     /** Display name of the created clip (auto-generated when no name was given). */
     clipName: string;
     /** Type of the created clip, echoing `type` in its canonical spelling: `sing`, `instrument`, `genericMidi`, `marker` or `chord`. Echoed because `type` is matched case-insensitively, so this is how a caller learns the spelling the rest of the surface will report. */
     clipType: string;
     /** UUID of the created clip, with braces. Address it with `clip get`, `note add`, and the other id-taking commands. */
     clipUuid: string;
+    /** Which unit an entity's geometry is stored in — the one value that is exact, with the other reported beside it as a conversion under the current tempo curve (ADR 0032 §2-4). Declared here because every group that reports geometry names it. It follows the entity's own anchoring, which `PatternFactory::preferredGeometryTimeUnit` is the source of truth for: media that plays at wall-clock speed is second-native, content written against the grid is tick-native. */
+    nativeUnit: 'second' | 'tick';
     /** Number of notes in the new clip. */
     noteCount: number;
     /** UUIDs of the initial notes, in the clip's own note order — the order `clip note-content` reports. Empty when the clip was created without content. */
     noteUuids: string[];
+    /** Which index space `trackIndex` counts in: `arrangement`, `marker`, or `chord` — the region the created clip's type lives in. */
+    region?: string;
+    /** 0-based position of that track in `region`. Absent together with `region` when the project cannot place the track, which is an inconsistency rather than anything a caller did. */
+    trackIndex?: number;
     /** Name of the track the clip was placed on. */
     trackName: string;
+    /** UUID of that track, with braces — the handle a later track write takes. Not derivable from `trackName`, which is a display string and not unique. */
+    trackUuid: string;
 }
 
 /** Arguments for `clip delete`. */
@@ -1277,6 +1513,10 @@ export interface ClipDetachAudioResult {
     detachedClipUuids: string[];
     /** How many video clips were detached. */
     detachedCount: number;
+    /** Which index space `trackIndex` counts in. Always `arrangement`: the extraction creates an audio track, and audio tracks live only there. */
+    region?: string;
+    /** 0-based position of the created track in `region`. The track is minted by this call, so its position is not something the caller could know (ADR 0129 §3). Absent together with `region` when the project cannot place the track, which is an inconsistency rather than anything a caller did. */
+    trackIndex?: number;
     /** Name of the created audio track. */
     trackName: string;
     /** UUID of the audio track the extraction created. */
@@ -1291,7 +1531,9 @@ export interface ClipDuplicateParams {
     onOccupied?: string;
     /** Where to place the copy, in ticks. Defaults to immediately after the source, which is where duplicating in the arrangement puts it. */
     pos?: number;
-    /** Destination track index (0-based). Defaults to the source's own track. The track must hold the clip's type. */
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video`, `marker`, or `chord`. Copying a video clip onto a chosen layer needs it — the Video band counts its own index space (ADR 0104), so an arrangement index cannot name one. */
+    region?: string;
+    /** Destination track position (0-based) in `region`. Defaults to the source's own track. The track must hold the clip's type. */
     trackIndex?: number;
 }
 
@@ -1303,36 +1545,58 @@ export interface ClipDuplicateResult {
     clipType: string;
     /** UUID of the new copy, with braces. */
     clipUuid: string;
-    /** A clip's geometry in the *wire* vocabulary a write speaks, always in ticks. A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set. */
+    /** A clip's geometry in the *wire* vocabulary a write speaks, in both units. The bare names are ticks and the `*Sec` names are seconds; `nativeUnit` says which of the two the clip stores, and so which is exact (ADR 0032 §3-4). A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set. */
     geometry: {
         /** Offset into the source the visible region starts at — what a write's `clipIn` sets. */
         clipIn: number;
+        /** `clipIn` in seconds. For a second-native clip this is the exact trim — the value the entity stores — and the tick field above is the conversion. */
+        clipInSec: number;
         /** Visible region duration — what a write's `dur` sets. */
         dur: number;
+        /** `dur` in seconds. */
+        durSec: number;
         /** Visible region end on the global timeline (pos + dur). Reported, never accepted: a caller wanting an end names `pos` and `dur`, and reads this back to check itself. */
         end: number;
+        /** `end` in seconds. */
+        endSec: number;
+        /** Which unit an entity's geometry is stored in — the one value that is exact, with the other reported beside it as a conversion under the current tempo curve (ADR 0032 §2-4). Declared here because every group that reports geometry names it. It follows the entity's own anchoring, which `PatternFactory::preferredGeometryTimeUnit` is the source of truth for: media that plays at wall-clock speed is second-native, content written against the grid is tick-native. */
+        nativeUnit: 'second' | 'tick';
         /** Visible region start on the global timeline — what a write's `pos` sets. */
         pos: number;
+        /** `pos` in seconds. */
+        posSec: number;
         /** Duration of the full editable (source) region. */
         sourceDur: number;
+        /** `sourceDur` in seconds. */
+        sourceDurSec: number;
         /** Start of the full editable (source) region on the global timeline. Reported for completeness; a write never addresses it directly, because a move slides the source underneath so the visible region lands where asked. */
         sourcePos: number;
+        /** `sourcePos` in seconds. */
+        sourcePosSec: number;
     };
+    /** Which index space `trackIndex` counts in. */
+    region?: string;
     /** UUID of the clip that was copied. */
     sourceClipUuid: string;
+    /** 0-based position of that track in `region` — where the copy actually landed, which `onOccupied=relocate` can make differ from what was asked. Absent together with `region` when the project cannot place the track, which is an inconsistency rather than anything a caller did. */
+    trackIndex?: number;
     /** Name of the track the copy landed on. Differs from the requested track when `onOccupied=relocate` stacked it on a new one. */
     trackName: string;
+    /** UUID of that track, with braces. */
+    trackUuid: string;
 }
 
 /** Arguments for `clip get`. */
 export interface ClipGetParams {
     /** Clip index within the track (0-based, chronological order). Pair with `trackIndex`. */
     clipIndex?: number;
-    /** Stable clip UUID, with braces, as `clip list` reports it. The only form that reaches a clip in the pinned Video or Marker band. */
+    /** Stable clip UUID, with braces, as `clip list` reports it. */
     clipUuid?: string;
-    /** Time unit for returned geometry values: `default`, `tick`, or `second`. Defaults to `default` (the pattern's native unit). */
+    /** Time unit for the DEPRECATED `geometry.pos`/`dur`/... fields: `default`, `tick`, or `second`. Defaults to `default` (the pattern's native unit). DEPRECATED: the `*Tick` and `*Sec` pairs are both always populated, so there is nothing left to prefer. Still honoured for the legacy fields. */
     preferredTimeUnit?: string;
-    /** Track index (0-based) in the arrangement. Pair with `clipIndex`. */
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video`, `marker`, or `chord`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track (ADR 0129 §1). */
+    region?: string;
+    /** Track position (0-based) in `region`. Pair with `clipIndex`. */
     trackIndex?: number;
 }
 
@@ -1350,26 +1614,56 @@ export interface ClipGetResult {
     enabled: boolean;
     /** A clip's geometry in the *entity* vocabulary, as `clip get` reports it, in whichever unit `usedTimeUnit` names. `pos`/`dur`/`end` are the whole editable region — for a media clip, its source — and the visible region is the four `clip*` fields. A write reports [`ClipWriteGeometry`] instead, which names the visible region a write's own arguments address. */
     geometry: {
-        /** Visible region start on the global timeline. */
+        /** Visible region start on the global timeline, in the unit `usedTimeUnit` names. DEPRECATED — see `pos`. */
         clipBegin: number;
-        /** Duration of the visible (clipped) region. */
+        /** Visible region start on the global timeline, in seconds. */
+        clipBeginSec: number;
+        /** Visible region start on the global timeline, in ticks. */
+        clipBeginTick: number;
+        /** Duration of the visible (clipped) region, in the unit `usedTimeUnit` names. DEPRECATED — see `pos`. */
         clipDur: number;
-        /** Visible region end on the global timeline. */
+        /** Duration of the visible region, in seconds. */
+        clipDurSec: number;
+        /** Duration of the visible region, in ticks. */
+        clipDurTick: number;
+        /** Visible region end on the global timeline, in the unit `usedTimeUnit` names. DEPRECATED — see `pos`. */
         clipEnd: number;
-        /** Start of the visible (clipped) region, pattern-local. */
+        /** Visible region end on the global timeline, in seconds. */
+        clipEndSec: number;
+        /** Visible region end on the global timeline, in ticks. */
+        clipEndTick: number;
+        /** Start of the visible (clipped) region, pattern-local, in the unit `usedTimeUnit` names. DEPRECATED — see `pos`. */
         clipPos: number;
-        /** Full pattern duration, including trimmed-away regions. */
+        /** Start of the visible region, pattern-local, in seconds. */
+        clipPosSec: number;
+        /** Start of the visible region, pattern-local, in ticks. */
+        clipPosTick: number;
+        /** Full pattern duration, including trimmed-away regions, in the unit `usedTimeUnit` names. DEPRECATED — see `pos`. */
         dur: number;
-        /** Pattern end on the global timeline (pos + dur). */
+        /** Full pattern duration including trimmed-away regions, in seconds. */
+        durSec: number;
+        /** Full pattern duration including trimmed-away regions, in ticks. */
+        durTick: number;
+        /** Pattern end on the global timeline (pos + dur), in the unit `usedTimeUnit` names. DEPRECATED — see `pos`. */
         end: number;
-        /** Pattern start on the global timeline. */
+        /** Pattern end on the global timeline, in seconds. */
+        endSec: number;
+        /** Pattern end on the global timeline, in ticks. */
+        endTick: number;
+        /** Which unit an entity's geometry is stored in — the one value that is exact, with the other reported beside it as a conversion under the current tempo curve (ADR 0032 §2-4). Declared here because every group that reports geometry names it. It follows the entity's own anchoring, which `PatternFactory::preferredGeometryTimeUnit` is the source of truth for: media that plays at wall-clock speed is second-native, content written against the grid is tick-native. */
+        nativeUnit: 'second' | 'tick';
+        /** Pattern start on the global timeline, in the unit `usedTimeUnit` names. DEPRECATED in favour of `posTick` / `posSec`, which say what they are. A caller reading this has to consult `usedTimeUnit` to know what it got, and a caller that forgets reads seconds as ticks. Kept because removing it is a breaking change; every field below is unambiguous. */
         pos: number;
+        /** Pattern start on the global timeline, in seconds. Always seconds, whatever `usedTimeUnit` says. */
+        posSec: number;
+        /** Pattern start on the global timeline, in ticks. Always ticks, whatever `usedTimeUnit` says. */
+        posTick: number;
     };
     /** Whether the clip color follows the track color. */
     isColorLinkToTrack: boolean;
     /** User-supplied name; empty string when the display name is auto-generated. */
     rawName: string;
-    /** Time unit of the geometry values: `tick`, `second`, `tick (not native)`, or `second (not native)`. */
+    /** Which unit the DEPRECATED `geometry.pos`/`dur`/... fields are denominated in for this call: `tick`, `second`, `tick (not native)`, or `second (not native)`. DEPRECATED with them. `geometry.nativeUnit` answers "which value is exact" as a typed field, and the `*Tick` / `*Sec` pairs are unambiguous without consulting anything, so neither this nor `preferredTimeUnit` has a job left. The `(not native)` suffix is still emitted, deliberately: dropping it would change the value of a field callers already parse. Read `geometry.nativeUnit` for that fact instead; the suffix goes when this field does. */
     usedTimeUnit: string;
     /** The media a clip points at — the half of a clip's identity its geometry does not carry: which file it shows, which Library asset it references, whether its embedded audio is silent, and how its visible region is trimmed out of the source. Reported by BOTH `clip list` (per row) and `clip get`, out of one producer, so the two reads cannot answer differently about the same clip. On the row for the reason `enabled` is: a caller mirroring the timeline needs the media of every clip it enumerates, and per-clip media would make that one `clip get` per clip. Present only for a clip that HAS media, the way `noteCount` is present only for a note-based one — today that means a Video clip (which is also how a still image is placed). An Audio clip's file and load state are `clip audio-content`'s answer and are not restated here. Every field is present whenever the struct itself is: each is read straight off the clip, which always has an answer, so there is no "carried by a newer writer only" tier inside it. */
     videoMedia?: {
@@ -1395,9 +1689,11 @@ export interface ClipGetResult {
 
 /** Arguments for `clip list`. */
 export interface ClipListParams {
-    /** Track index (0-based) in the arrangement. */
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video`, `marker`, or `chord`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track (ADR 0129 §1). */
+    region?: string;
+    /** Track position (0-based) in `region`. */
     trackIndex?: number;
-    /** Track UUID in braces format. Required to address a track in the pinned Video or Marker band, which `trackIndex` cannot name. */
+    /** Track UUID in braces format. The definitive handle: it names a track in every region, where an index needs `region` to be read. */
     trackUuid?: string;
 }
 
@@ -1409,10 +1705,14 @@ export interface ClipListResult {
     clips: {
         /** Visible region start on the global timeline, in ticks. */
         clipBegin: number;
+        /** `clipBegin` in seconds. */
+        clipBeginSec: number;
         /** Resolved hex color, upper-case with leading '#'. */
         clipColor: string;
         /** Visible region end on the global timeline, in ticks. */
         clipEnd: number;
+        /** `clipEnd` in seconds. */
+        clipEndSec: number;
         /** Display name (auto-generated when no raw name is set). */
         clipName: string;
         /** Clip type: `sing`, `instrument`, `genericMidi`, `audio`, `chord`, `video`, or `marker`. */
@@ -1421,6 +1721,8 @@ export interface ClipListResult {
         clipUuid: string;
         /** Whether the clip is enabled. A disabled clip is skipped at playback and export; an enabled one still goes silent under a track mute or another track's solo, so this is the clip's own switch, not final audibility. Reported per row so a caller learns which clips are live from the same call that enumerates them, rather than one `clip get` per clip. That matters for the question this answers most often: whether any MIDI-like track holds an enabled clip, which decides whether a tempo sync would de-align content that owns the current grid. Mute is a different question and does not appear here — muted content still owns the grid. */
         enabled: boolean;
+        /** Which unit an entity's geometry is stored in — the one value that is exact, with the other reported beside it as a conversion under the current tempo curve (ADR 0032 §2-4). Declared here because every group that reports geometry names it. It follows the entity's own anchoring, which `PatternFactory::preferredGeometryTimeUnit` is the source of truth for: media that plays at wall-clock speed is second-native, content written against the grid is tick-native. */
+        nativeUnit: 'second' | 'tick';
         /** Visible note count. Present only for note-based clips (Sing/Instrument/GenericMidi); absent for Audio and Chord. */
         noteCount?: number;
         /** The media a clip points at — the half of a clip's identity its geometry does not carry: which file it shows, which Library asset it references, whether its embedded audio is silent, and how its visible region is trimmed out of the source. Reported by BOTH `clip list` (per row) and `clip get`, out of one producer, so the two reads cannot answer differently about the same clip. On the row for the reason `enabled` is: a caller mirroring the timeline needs the media of every clip it enumerates, and per-clip media would make that one `clip get` per clip. Present only for a clip that HAS media, the way `noteCount` is present only for a note-based one — today that means a Video clip (which is also how a still image is placed). An Audio clip's file and load state are `clip audio-content`'s answer and are not restated here. Every field is present whenever the struct itself is: each is read straight off the clip, which always has an answer, so there is no "carried by a newer writer only" tier inside it. */
@@ -1456,7 +1758,9 @@ export interface ClipLyricsParams {
     rangeEnd?: number;
     /** Coordinate system for `rangeBegin`/`rangeEnd`: `project` (default) = global timeline; `clip-local` = coordinates from the clip's own start. */
     rangeScope?: string;
-    /** Track index (0-based). */
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video`, `marker`, or `chord`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track (ADR 0129 §1). */
+    region?: string;
+    /** Track position (0-based) in `region`. */
     trackIndex: number;
 }
 
@@ -1498,7 +1802,7 @@ export interface ClipMoveParams {
     onOccupied?: string;
     /** Absolute destination for the clip's start, in ticks. Mutually exclusive with `moveLater` / `moveEarlier`. */
     pos?: number;
-    /** Absolute destination for the clip's start, in seconds. OPTIONAL, and when present it WINS over `pos` — including at 0, which is a position like any other. Mutually exclusive with `moveLater` / `moveEarlier`. The pair the retired `moveVideoClip` carried, restored: converting between the units needs the tempo curve, and the CLI's time-value grammar does not stand in for it — that compiles `1.5s` to ticks client-side, so a caller on the wire is left with a `convert time-to-tick` round trip. */
+    /** Absolute destination for the clip's start, in seconds. OPTIONAL. When it is the only spelling given it governs — including at 0, which is a position like any other. When `pos` is given too, the clip's native unit decides between them (ADR 0032 §5), so this wins on a second-native clip and `pos` wins on a tick-native one: each keeps the value that needed no conversion. Mutually exclusive with `moveLater` / `moveEarlier`. The pair the retired `moveVideoClip` carried, restored: converting between the units needs the tempo curve, and the CLI's time-value grammar does not stand in for it — that compiles `1.5s` to ticks client-side, so a caller on the wire is left with a `convert time-to-tick` round trip. */
     posSec?: number;
 }
 
@@ -1510,20 +1814,34 @@ export interface ClipMoveResult {
     clipType: string;
     /** UUID of the clip, with braces. */
     clipUuid: string;
-    /** A clip's geometry in the *wire* vocabulary a write speaks, always in ticks. A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set. */
+    /** A clip's geometry in the *wire* vocabulary a write speaks, in both units. The bare names are ticks and the `*Sec` names are seconds; `nativeUnit` says which of the two the clip stores, and so which is exact (ADR 0032 §3-4). A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set. */
     geometry: {
         /** Offset into the source the visible region starts at — what a write's `clipIn` sets. */
         clipIn: number;
+        /** `clipIn` in seconds. For a second-native clip this is the exact trim — the value the entity stores — and the tick field above is the conversion. */
+        clipInSec: number;
         /** Visible region duration — what a write's `dur` sets. */
         dur: number;
+        /** `dur` in seconds. */
+        durSec: number;
         /** Visible region end on the global timeline (pos + dur). Reported, never accepted: a caller wanting an end names `pos` and `dur`, and reads this back to check itself. */
         end: number;
+        /** `end` in seconds. */
+        endSec: number;
+        /** Which unit an entity's geometry is stored in — the one value that is exact, with the other reported beside it as a conversion under the current tempo curve (ADR 0032 §2-4). Declared here because every group that reports geometry names it. It follows the entity's own anchoring, which `PatternFactory::preferredGeometryTimeUnit` is the source of truth for: media that plays at wall-clock speed is second-native, content written against the grid is tick-native. */
+        nativeUnit: 'second' | 'tick';
         /** Visible region start on the global timeline — what a write's `pos` sets. */
         pos: number;
+        /** `pos` in seconds. */
+        posSec: number;
         /** Duration of the full editable (source) region. */
         sourceDur: number;
+        /** `sourceDur` in seconds. */
+        sourceDurSec: number;
         /** Start of the full editable (source) region on the global timeline. Reported for completeness; a write never addresses it directly, because a move slides the source underneath so the visible region lands where asked. */
         sourcePos: number;
+        /** `sourcePos` in seconds. */
+        sourcePosSec: number;
     };
     /** Absent when the write did exactly what was asked, which is the ordinary case. Declared on the result rather than merged into an envelope beside it, because a result the declared type does not describe is the type ADR 0121 §3 calls one that lies. */
     warnings?: {
@@ -1544,7 +1862,9 @@ export interface ClipNoteContentParams {
     rangeEnd?: number;
     /** Coordinate system for `rangeBegin`/`rangeEnd`: `project` (default) = global timeline; `clip-local` = coordinates from the clip's own start. */
     rangeScope?: string;
-    /** Track index (0-based). */
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video`, `marker`, or `chord`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track (ADR 0129 §1). */
+    region?: string;
+    /** Track position (0-based) in `region`. */
     trackIndex: number;
 }
 
@@ -1643,19 +1963,19 @@ export interface ClipReplaceContentResult {
 export interface ClipResizeParams {
     /** How far into the source the clip starts showing, in ticks. Trims the front without moving the clip. `clipInSec` is the right axis for this quantity and this is the tolerated one (ADR 0069 §1): the source-media axis is not on the tempo grid, so a tick head trim only means anything once measured against the tempo where the clip sits — which is what the handler does to it. */
     clipIn?: number;
-    /** The head trim in SECONDS — the source-media axis's own unit, and the only one `setVideoClipGeometry` offered for it (ADR 0069 §1). OPTIONAL, and when present it WINS over `clipIn`. */
+    /** The head trim in SECONDS — the source-media axis's own unit, and the only one `setVideoClipGeometry` offered for it (ADR 0069 §1). OPTIONAL. Alone it governs; against `clipIn` the clip's native unit decides (ADR 0032 §5), which for the media clips this quantity applies to means this one. */
     clipInSec?: number;
     /** UUID of the target clip, with or without curly braces. */
     clipUuid: string;
     /** New length for the clip, in ticks. */
     dur?: number;
-    /** New length for the clip, in seconds, measured forward from wherever this call leaves the clip's start. OPTIONAL, and when present it WINS over `dur`. A non-positive value is refused, as its tick twin is. */
+    /** New length for the clip, in seconds, measured forward from wherever this call leaves the clip's start. OPTIONAL. Alone it governs; against `dur` the clip's native unit decides (ADR 0032 §5). A non-positive value is refused, as its tick twin is. */
     durSec?: number;
     /** What to do when the result would overlap another clip: `fail` (default), `cover`, or `relocate` (video only). */
     onOccupied?: string;
     /** New start for the clip, in ticks. */
     pos?: number;
-    /** New start for the clip, in seconds. OPTIONAL, and when present it WINS over `pos` — including at 0, which is a position like any other. */
+    /** New start for the clip, in seconds. OPTIONAL, and when present it WINS over `pos` when the clip is second-native; on a tick-native clip `pos` wins instead (ADR 0032 §5). Alone, it governs — including at 0, which is a position like any other. */
     posSec?: number;
 }
 
@@ -1667,20 +1987,34 @@ export interface ClipResizeResult {
     clipType: string;
     /** UUID of the clip, with braces. */
     clipUuid: string;
-    /** A clip's geometry in the *wire* vocabulary a write speaks, always in ticks. A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set. */
+    /** A clip's geometry in the *wire* vocabulary a write speaks, in both units. The bare names are ticks and the `*Sec` names are seconds; `nativeUnit` says which of the two the clip stores, and so which is exact (ADR 0032 §3-4). A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set. */
     geometry: {
         /** Offset into the source the visible region starts at — what a write's `clipIn` sets. */
         clipIn: number;
+        /** `clipIn` in seconds. For a second-native clip this is the exact trim — the value the entity stores — and the tick field above is the conversion. */
+        clipInSec: number;
         /** Visible region duration — what a write's `dur` sets. */
         dur: number;
+        /** `dur` in seconds. */
+        durSec: number;
         /** Visible region end on the global timeline (pos + dur). Reported, never accepted: a caller wanting an end names `pos` and `dur`, and reads this back to check itself. */
         end: number;
+        /** `end` in seconds. */
+        endSec: number;
+        /** Which unit an entity's geometry is stored in — the one value that is exact, with the other reported beside it as a conversion under the current tempo curve (ADR 0032 §2-4). Declared here because every group that reports geometry names it. It follows the entity's own anchoring, which `PatternFactory::preferredGeometryTimeUnit` is the source of truth for: media that plays at wall-clock speed is second-native, content written against the grid is tick-native. */
+        nativeUnit: 'second' | 'tick';
         /** Visible region start on the global timeline — what a write's `pos` sets. */
         pos: number;
+        /** `pos` in seconds. */
+        posSec: number;
         /** Duration of the full editable (source) region. */
         sourceDur: number;
+        /** `sourceDur` in seconds. */
+        sourceDurSec: number;
         /** Start of the full editable (source) region on the global timeline. Reported for completeness; a write never addresses it directly, because a move slides the source underneath so the visible region lands where asked. */
         sourcePos: number;
+        /** `sourcePos` in seconds. */
+        sourcePosSec: number;
     };
     /** Absent when the write did exactly what was asked, which is the ordinary case. Declared on the result rather than merged into an envelope beside it, because a result the declared type does not describe is the type ADR 0121 §3 calls one that lies. */
     warnings?: {
@@ -1713,20 +2047,34 @@ export interface ClipSetResult {
     clipUuid: string;
     /** Effective color as upper-case `#RRGGBB`. */
     color: string;
-    /** A clip's geometry in the *wire* vocabulary a write speaks, always in ticks. A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set. */
+    /** A clip's geometry in the *wire* vocabulary a write speaks, in both units. The bare names are ticks and the `*Sec` names are seconds; `nativeUnit` says which of the two the clip stores, and so which is exact (ADR 0032 §3-4). A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set. */
     geometry?: {
         /** Offset into the source the visible region starts at — what a write's `clipIn` sets. */
         clipIn: number;
+        /** `clipIn` in seconds. For a second-native clip this is the exact trim — the value the entity stores — and the tick field above is the conversion. */
+        clipInSec: number;
         /** Visible region duration — what a write's `dur` sets. */
         dur: number;
+        /** `dur` in seconds. */
+        durSec: number;
         /** Visible region end on the global timeline (pos + dur). Reported, never accepted: a caller wanting an end names `pos` and `dur`, and reads this back to check itself. */
         end: number;
+        /** `end` in seconds. */
+        endSec: number;
+        /** Which unit an entity's geometry is stored in — the one value that is exact, with the other reported beside it as a conversion under the current tempo curve (ADR 0032 §2-4). Declared here because every group that reports geometry names it. It follows the entity's own anchoring, which `PatternFactory::preferredGeometryTimeUnit` is the source of truth for: media that plays at wall-clock speed is second-native, content written against the grid is tick-native. */
+        nativeUnit: 'second' | 'tick';
         /** Visible region start on the global timeline — what a write's `pos` sets. */
         pos: number;
+        /** `pos` in seconds. */
+        posSec: number;
         /** Duration of the full editable (source) region. */
         sourceDur: number;
+        /** `sourceDur` in seconds. */
+        sourceDurSec: number;
         /** Start of the full editable (source) region on the global timeline. Reported for completeness; a write never addresses it directly, because a move slides the source underneath so the visible region lands where asked. */
         sourcePos: number;
+        /** `sourcePos` in seconds. */
+        sourcePosSec: number;
     };
     /** True when the clip follows its track's color instead of carrying its own. */
     isColorLinkToTrack: boolean;
@@ -1844,20 +2192,34 @@ export interface ClipSplitResult {
         clipType: string;
         /** UUID of the clip, with braces. */
         clipUuid: string;
-        /** A clip's geometry in the *wire* vocabulary a write speaks, always in ticks. A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set. */
+        /** A clip's geometry in the *wire* vocabulary a write speaks, in both units. The bare names are ticks and the `*Sec` names are seconds; `nativeUnit` says which of the two the clip stores, and so which is exact (ADR 0032 §3-4). A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set. */
         geometry: {
             /** Offset into the source the visible region starts at — what a write's `clipIn` sets. */
             clipIn: number;
+            /** `clipIn` in seconds. For a second-native clip this is the exact trim — the value the entity stores — and the tick field above is the conversion. */
+            clipInSec: number;
             /** Visible region duration — what a write's `dur` sets. */
             dur: number;
+            /** `dur` in seconds. */
+            durSec: number;
             /** Visible region end on the global timeline (pos + dur). Reported, never accepted: a caller wanting an end names `pos` and `dur`, and reads this back to check itself. */
             end: number;
+            /** `end` in seconds. */
+            endSec: number;
+            /** Which unit an entity's geometry is stored in — the one value that is exact, with the other reported beside it as a conversion under the current tempo curve (ADR 0032 §2-4). Declared here because every group that reports geometry names it. It follows the entity's own anchoring, which `PatternFactory::preferredGeometryTimeUnit` is the source of truth for: media that plays at wall-clock speed is second-native, content written against the grid is tick-native. */
+            nativeUnit: 'second' | 'tick';
             /** Visible region start on the global timeline — what a write's `pos` sets. */
             pos: number;
+            /** `pos` in seconds. */
+            posSec: number;
             /** Duration of the full editable (source) region. */
             sourceDur: number;
+            /** `sourceDur` in seconds. */
+            sourceDurSec: number;
             /** Start of the full editable (source) region on the global timeline. Reported for completeness; a write never addresses it directly, because a move slides the source underneath so the visible region lands where asked. */
             sourcePos: number;
+            /** `sourcePos` in seconds. */
+            sourcePosSec: number;
         };
     };
     /** The identity+geometry row every plain geometry write echoes back, always in ticks. */
@@ -1868,20 +2230,34 @@ export interface ClipSplitResult {
         clipType: string;
         /** UUID of the clip, with braces. */
         clipUuid: string;
-        /** A clip's geometry in the *wire* vocabulary a write speaks, always in ticks. A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set. */
+        /** A clip's geometry in the *wire* vocabulary a write speaks, in both units. The bare names are ticks and the `*Sec` names are seconds; `nativeUnit` says which of the two the clip stores, and so which is exact (ADR 0032 §3-4). A geometry write addresses the visible region: `pos` and `dur` are where the clip starts and how long it is, and `clipIn` slides which part of the source shows (ledger §2.6, `ClipWriteUtils.h`). The echo answers under those same names, so `clip move \{pos: X\}` reports `pos: X`. Reusing [`ClipGeometry`], whose `pos` is the source start, would answer a different number under the very key the caller just set. */
         geometry: {
             /** Offset into the source the visible region starts at — what a write's `clipIn` sets. */
             clipIn: number;
+            /** `clipIn` in seconds. For a second-native clip this is the exact trim — the value the entity stores — and the tick field above is the conversion. */
+            clipInSec: number;
             /** Visible region duration — what a write's `dur` sets. */
             dur: number;
+            /** `dur` in seconds. */
+            durSec: number;
             /** Visible region end on the global timeline (pos + dur). Reported, never accepted: a caller wanting an end names `pos` and `dur`, and reads this back to check itself. */
             end: number;
+            /** `end` in seconds. */
+            endSec: number;
+            /** Which unit an entity's geometry is stored in — the one value that is exact, with the other reported beside it as a conversion under the current tempo curve (ADR 0032 §2-4). Declared here because every group that reports geometry names it. It follows the entity's own anchoring, which `PatternFactory::preferredGeometryTimeUnit` is the source of truth for: media that plays at wall-clock speed is second-native, content written against the grid is tick-native. */
+            nativeUnit: 'second' | 'tick';
             /** Visible region start on the global timeline — what a write's `pos` sets. */
             pos: number;
+            /** `pos` in seconds. */
+            posSec: number;
             /** Duration of the full editable (source) region. */
             sourceDur: number;
+            /** `sourceDur` in seconds. */
+            sourceDurSec: number;
             /** Start of the full editable (source) region on the global timeline. Reported for completeness; a write never addresses it directly, because a move slides the source underneath so the visible region lands where asked. */
             sourcePos: number;
+            /** `sourcePos` in seconds. */
+            sourcePosSec: number;
         };
     };
 }
@@ -2302,8 +2678,12 @@ export interface EditorCurrentClipResult {
     clipType: string;
     /** Track default language code (CHN/JPN/ENG/SPA/KOR). Present only for Sing clips. */
     defaultLanguage?: string;
-    /** 0-based index of the clip's track in the project. */
-    trackIndex: number;
+    /** Which index space `trackIndex` counts in: `arrangement`, `video`, `marker` or `chord`. */
+    region?: string;
+    /** 0-based position of the clip's track in `region` (ADR 0129 §3). Absent together with `region` when the project cannot place the track. */
+    trackIndex?: number;
+    /** UUID of the clip's track, in braces (ADR 0129 §2). */
+    trackUuid?: string;
 }
 
 /** Success payload of `editor open`. */
@@ -2330,12 +2710,16 @@ export interface EditorStatusResult {
     isAvailable: boolean;
     /** Whether the editor window is currently shown. */
     isVisible: boolean;
+    /** Which index space `trackIndex` counts in: `arrangement`, `video`, `marker` or `chord`. Position 1 names a different track in each band (ADR 0104), so the index cannot be read without it. */
+    region?: string;
     /** Articulation display names supported by the whole ensemble. Present only for Instrument clips. */
     supportedArticulations?: string[];
     /** Languages supported by the whole choir, as English full names. Present only for Sing clips. */
     supportedLanguages?: string[];
-    /** 0-based index of the clip's track. Present only when the track is found in the project. */
+    /** 0-based position of the clip's track in `region` (ADR 0129 §3). Present only when the track is found in the project, and absent together with `region`. */
     trackIndex?: number;
+    /** UUID of the clip's track, in braces — the handle to store, since an index moves when tracks are added or reordered (ADR 0129 §2). */
+    trackUuid?: string;
 }
 
 /** Success payload of `editor tick-range`. */
@@ -2383,6 +2767,8 @@ export interface EditorOperations {
 export interface EnsembleAddParams {
     /** Where to insert the new member. Omit for the end. `0` makes the new instrument the leader and pushes the rest down. */
     at?: number;
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track this group operates on, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would act on an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** Which instrument to add, by display name or ref — the same thing `sound-source load --source` accepts. */
     source: string;
     /** 0-based index in the arrangement. */
@@ -2401,6 +2787,8 @@ export interface EnsembleAddResult {
     memberIndex?: number;
     /** Display name of the affected member's instrument. */
     memberName?: string;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2). */
+    region: string;
     /** 0-based index of the track. */
     trackIndex: number;
     /** UUID of that track. */
@@ -2409,6 +2797,8 @@ export interface EnsembleAddResult {
 
 /** Arguments for `ensemble disable`. */
 export interface EnsembleDisableParams {
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track this group operates on, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would act on an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** 0-based index in the arrangement. */
     trackIndex?: number;
     /** Track UUID in braces format. */
@@ -2419,6 +2809,8 @@ export interface EnsembleDisableParams {
 export interface EnsembleDisableResult {
     /** The instrument that remains: the former member 0, now the track's sole instrument. */
     leaderName: string;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2). */
+    region: string;
     /** How many non-leader members were dropped. This is why disabling is not the inverse of enabling. */
     removedCount: number;
     /** 0-based index of the track. */
@@ -2429,6 +2821,8 @@ export interface EnsembleDisableResult {
 
 /** Arguments for `ensemble enable`. */
 export interface EnsembleEnableParams {
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track this group operates on, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would act on an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** 0-based index in the arrangement. */
     trackIndex?: number;
     /** Track UUID in braces format. */
@@ -2439,6 +2833,8 @@ export interface EnsembleEnableParams {
 export interface EnsembleEnableResult {
     /** How many members the ensemble now holds. Enabling keeps the existing instrument as the leader, so this is 1 unless the track already had an ensemble. */
     memberCount: number;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2). */
+    region: string;
     /** 0-based index of the track. */
     trackIndex: number;
     /** The track's name after enabling. Turning ensemble mode on renames the track, which is why the new name is reported. */
@@ -2449,6 +2845,8 @@ export interface EnsembleEnableResult {
 
 /** Arguments for `ensemble get`. */
 export interface EnsembleGetParams {
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track this group operates on, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would act on an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** 0-based index in the arrangement. */
     trackIndex?: number;
     /** Track UUID in braces format. */
@@ -2482,6 +2880,8 @@ export interface EnsembleGetResult {
     }[];
     /** Timing offset between members, in milliseconds. The UI calls this Offset. */
     offset?: number;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2). */
+    region: string;
     /** Stereo spread across the members, 0 to 1. The UI calls this Spread. */
     spread?: number;
     /** 0-based index of the track. */
@@ -2494,6 +2894,8 @@ export interface EnsembleGetResult {
 export interface EnsembleRemoveParams {
     /** Which member to remove. `0` is the leader and is refused. */
     member: number;
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track this group operates on, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would act on an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** 0-based index in the arrangement. */
     trackIndex?: number;
     /** Track UUID in braces format. */
@@ -2510,6 +2912,8 @@ export interface EnsembleRemoveResult {
     memberIndex?: number;
     /** Display name of the affected member's instrument. */
     memberName?: string;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2). */
+    region: string;
     /** 0-based index of the track. */
     trackIndex: number;
     /** UUID of that track. */
@@ -2520,6 +2924,8 @@ export interface EnsembleRemoveResult {
 export interface EnsembleReorderParams {
     /** Which member to move. */
     member: number;
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track this group operates on, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would act on an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** Where to move it. `0` promotes it to leader. */
     to: number;
     /** 0-based index in the arrangement. */
@@ -2538,6 +2944,8 @@ export interface EnsembleReorderResult {
     memberIndex?: number;
     /** Display name of the affected member's instrument. */
     memberName?: string;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2). */
+    region: string;
     /** 0-based index of the track. */
     trackIndex: number;
     /** UUID of that track. */
@@ -2554,6 +2962,8 @@ export interface EnsembleSetParams {
     mute?: boolean;
     /** Timing offset between members, in milliseconds. Ensemble-level. */
     offset?: number;
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track this group operates on, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would act on an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** Stereo spread across the members, 0 to 1. Ensemble-level. */
     spread?: number;
     /** 0-based index in the arrangement. */
@@ -2854,9 +3264,11 @@ export interface FxAddParams {
     preset?: string;
     /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
     rack?: 'pre';
-    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video` or `marker`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track (ADR 0129 §1). Ignored beside `trackUuid`, which needs no region. */
+    region?: string;
+    /** 0-based position in `region`. Mutually exclusive with `trackUuid`. */
     trackIndex?: number;
-    /** Track UUID in braces format, or `master` for the master bus. */
+    /** Track UUID in braces format, or `master` for the master bus. The definitive handle: it works in every region, where an index needs `region` to be read. */
     trackUuid?: string;
     /** Which effect to insert, as a `typeId` from `fx list-available`. */
     type: string;
@@ -2893,7 +3305,9 @@ export interface FxAddResult {
     insertCount: number;
     /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
     rack?: 'pre';
-    /** 0-based index of the addressed track; absent for the master. Carried beside `trackUuid` because the index is the only track identity the UI shows a person — the uuid is the stable handle, this is the name a caller can put in front of a user. */
+    /** Which index space `trackIndex` counts in: `arrangement`, `video` or `marker`. Absent for the master alongside `trackIndex`, and present with it everywhere else (ADR 0129 §2). A chain hangs off every track type, video included, and a pinned band counts its own index space (ADR 0104) — so this is what stops a caller reading a video track's region-local index as an arrangement position and acting on an unrelated track. */
+    region?: string;
+    /** 0-based position of the addressed track in `region`; absent for the master. Carried beside `trackUuid` because the index is the only track identity the UI shows a person — the uuid is the stable handle, this is the name a caller can put in front of a user. */
     trackIndex?: number;
     /** UUID of the addressed track, or `master`. */
     trackUuid: string;
@@ -2909,11 +3323,13 @@ export interface FxApplyPresetParams {
     presetId?: number;
     /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
     rack?: 'pre';
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video` or `marker`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track (ADR 0129 §1). Ignored beside `trackUuid`, which needs no region. */
+    region?: string;
     /** 0-based slot in the chain. Mutually exclusive with `insert`. */
     slot?: number;
-    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    /** 0-based position in `region`. Mutually exclusive with `trackUuid`. */
     trackIndex?: number;
-    /** Track UUID in braces format, or `master` for the master bus. */
+    /** Track UUID in braces format, or `master` for the master bus. The definitive handle: it works in every region, where an index needs `region` to be read. */
     trackUuid?: string;
 }
 
@@ -2937,11 +3353,13 @@ export interface FxGetParamsParams {
     rack?: 'pre';
     /** Read `filter` as a regular expression instead of a glob. */
     regex?: boolean;
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video` or `marker`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track (ADR 0129 §1). Ignored beside `trackUuid`, which needs no region. */
+    region?: string;
     /** 0-based slot in the chain. Mutually exclusive with `insert`. */
     slot?: number;
-    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    /** 0-based position in `region`. Mutually exclusive with `trackUuid`. */
     trackIndex?: number;
-    /** Track UUID in braces format, or `master` for the master bus. */
+    /** Track UUID in braces format, or `master` for the master bus. The definitive handle: it works in every region, where an index needs `region` to be read. */
     trackUuid?: string;
 }
 
@@ -2998,9 +3416,11 @@ export interface FxGetParamsResult {
 export interface FxListParams {
     /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
     rack?: 'pre';
-    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video` or `marker`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track (ADR 0129 §1). Ignored beside `trackUuid`, which needs no region. */
+    region?: string;
+    /** 0-based position in `region`. Mutually exclusive with `trackUuid`. */
     trackIndex?: number;
-    /** Track UUID in braces format, or `master` for the master bus. */
+    /** Track UUID in braces format, or `master` for the master bus. The definitive handle: it works in every region, where an index needs `region` to be read. */
     trackUuid?: string;
 }
 
@@ -3035,7 +3455,9 @@ export interface FxListResult {
     }[];
     /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
     rack?: 'pre';
-    /** 0-based index of the addressed track; absent for the master. */
+    /** Which index space `trackIndex` counts in: `arrangement`, `video` or `marker`. Absent for the master alongside `trackIndex`, and present with it everywhere else (ADR 0129 §2). A chain hangs off every track type, video included, and a pinned band counts its own index space (ADR 0104) — so this is what stops a caller reading a video track's region-local index as an arrangement position and acting on an unrelated track. */
+    region?: string;
+    /** 0-based position of the addressed track in `region`; absent for the master, which has a position in none. */
     trackIndex?: number;
     /** UUID of the addressed track, or `master`. */
     trackUuid: string;
@@ -3090,11 +3512,13 @@ export interface FxListParamsParams {
     rack?: 'pre';
     /** Read `filter` as a regular expression instead of a glob. Unanchored, so `gain` matches anywhere in the name; case-insensitive like the glob. */
     regex?: boolean;
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video` or `marker`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track (ADR 0129 §1). Ignored beside `trackUuid`, which needs no region. */
+    region?: string;
     /** 0-based slot in the chain. Mutually exclusive with `insert`. */
     slot?: number;
-    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    /** 0-based position in `region`. Mutually exclusive with `trackUuid`. */
     trackIndex?: number;
-    /** Track UUID in braces format, or `master` for the master bus. */
+    /** Track UUID in braces format, or `master` for the master bus. The definitive handle: it works in every region, where an index needs `region` to be read. */
     trackUuid?: string;
 }
 
@@ -3147,11 +3571,13 @@ export interface FxOpenEditorParams {
     insert?: string;
     /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
     rack?: 'pre';
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video` or `marker`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track (ADR 0129 §1). Ignored beside `trackUuid`, which needs no region. */
+    region?: string;
     /** 0-based slot in the chain. Mutually exclusive with `insert`. */
     slot?: number;
-    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    /** 0-based position in `region`. Mutually exclusive with `trackUuid`. */
     trackIndex?: number;
-    /** Track UUID in braces format, or `master` for the master bus. */
+    /** Track UUID in braces format, or `master` for the master bus. The definitive handle: it works in every region, where an index needs `region` to be read. */
     trackUuid?: string;
 }
 
@@ -3171,11 +3597,13 @@ export interface FxRemoveParams {
     insert?: string;
     /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
     rack?: 'pre';
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video` or `marker`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track (ADR 0129 §1). Ignored beside `trackUuid`, which needs no region. */
+    region?: string;
     /** 0-based slot in the chain. Mutually exclusive with `insert`. */
     slot?: number;
-    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    /** 0-based position in `region`. Mutually exclusive with `trackUuid`. */
     trackIndex?: number;
-    /** Track UUID in braces format, or `master` for the master bus. */
+    /** Track UUID in braces format, or `master` for the master bus. The definitive handle: it works in every region, where an index needs `region` to be read. */
     trackUuid?: string;
 }
 
@@ -3187,9 +3615,11 @@ export interface FxRemoveResult {
     insertId: string;
     /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
     rack?: 'pre';
+    /** Which index space `trackIndex` counts in: `arrangement`, `video` or `marker`. Absent for the master alongside `trackIndex`, and present with it everywhere else (ADR 0129 §2). A chain hangs off every track type, video included, and a pinned band counts its own index space (ADR 0104) — so this is what stops a caller reading a video track's region-local index as an arrangement position and acting on an unrelated track. */
+    region?: string;
     /** Its slot afterwards. For a removal, the slot it left. */
     slot: number;
-    /** 0-based index of the addressed track; absent for the master. Carried beside `trackUuid` because the index is the only track identity the UI shows a person — the uuid is the stable handle, this is the name a caller can put in front of a user. */
+    /** 0-based position of the addressed track in `region`; absent for the master. Carried beside `trackUuid` because the index is the only track identity the UI shows a person — the uuid is the stable handle, this is the name a caller can put in front of a user. */
     trackIndex?: number;
     /** UUID of the addressed track, or `master`. */
     trackUuid: string;
@@ -3201,13 +3631,15 @@ export interface FxReorderParams {
     insert?: string;
     /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
     rack?: 'pre';
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video` or `marker`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track (ADR 0129 §1). Ignored beside `trackUuid`, which needs no region. */
+    region?: string;
     /** 0-based slot in the chain. Mutually exclusive with `insert`. */
     slot?: number;
     /** 0-based slot to move it to, counted in the chain as it is now. */
     to: number;
-    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    /** 0-based position in `region`. Mutually exclusive with `trackUuid`. */
     trackIndex?: number;
-    /** Track UUID in braces format, or `master` for the master bus. */
+    /** Track UUID in braces format, or `master` for the master bus. The definitive handle: it works in every region, where an index needs `region` to be read. */
     trackUuid?: string;
 }
 
@@ -3219,9 +3651,11 @@ export interface FxReorderResult {
     insertId: string;
     /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
     rack?: 'pre';
+    /** Which index space `trackIndex` counts in: `arrangement`, `video` or `marker`. Absent for the master alongside `trackIndex`, and present with it everywhere else (ADR 0129 §2). A chain hangs off every track type, video included, and a pinned band counts its own index space (ADR 0104) — so this is what stops a caller reading a video track's region-local index as an arrangement position and acting on an unrelated track. */
+    region?: string;
     /** Its slot afterwards. For a removal, the slot it left. */
     slot: number;
-    /** 0-based index of the addressed track; absent for the master. Carried beside `trackUuid` because the index is the only track identity the UI shows a person — the uuid is the stable handle, this is the name a caller can put in front of a user. */
+    /** 0-based position of the addressed track in `region`; absent for the master. Carried beside `trackUuid` because the index is the only track identity the UI shows a person — the uuid is the stable handle, this is the name a caller can put in front of a user. */
     trackIndex?: number;
     /** UUID of the addressed track, or `master`. */
     trackUuid: string;
@@ -3237,11 +3671,13 @@ export interface FxSavePresetParams {
     overwrite?: boolean;
     /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
     rack?: 'pre';
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video` or `marker`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track (ADR 0129 §1). Ignored beside `trackUuid`, which needs no region. */
+    region?: string;
     /** 0-based slot in the chain. Mutually exclusive with `insert`. */
     slot?: number;
-    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    /** 0-based position in `region`. Mutually exclusive with `trackUuid`. */
     trackIndex?: number;
-    /** Track UUID in braces format, or `master` for the master bus. */
+    /** Track UUID in braces format, or `master` for the master bus. The definitive handle: it works in every region, where an index needs `region` to be read. */
     trackUuid?: string;
 }
 
@@ -3285,11 +3721,13 @@ export interface FxSetParams {
     name?: string;
     /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
     rack?: 'pre';
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video` or `marker`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track (ADR 0129 §1). Ignored beside `trackUuid`, which needs no region. */
+    region?: string;
     /** 0-based slot in the chain. Mutually exclusive with `insert`. */
     slot?: number;
-    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    /** 0-based position in `region`. Mutually exclusive with `trackUuid`. */
     trackIndex?: number;
-    /** Track UUID in braces format, or `master` for the master bus. */
+    /** Track UUID in braces format, or `master` for the master bus. The definitive handle: it works in every region, where an index needs `region` to be read. */
     trackUuid?: string;
 }
 
@@ -3324,7 +3762,9 @@ export interface FxSetResult {
     insertCount: number;
     /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
     rack?: 'pre';
-    /** 0-based index of the addressed track; absent for the master. Carried beside `trackUuid` because the index is the only track identity the UI shows a person — the uuid is the stable handle, this is the name a caller can put in front of a user. */
+    /** Which index space `trackIndex` counts in: `arrangement`, `video` or `marker`. Absent for the master alongside `trackIndex`, and present with it everywhere else (ADR 0129 §2). A chain hangs off every track type, video included, and a pinned band counts its own index space (ADR 0104) — so this is what stops a caller reading a video track's region-local index as an arrangement position and acting on an unrelated track. */
+    region?: string;
+    /** 0-based position of the addressed track in `region`; absent for the master. Carried beside `trackUuid` because the index is the only track identity the UI shows a person — the uuid is the stable handle, this is the name a caller can put in front of a user. */
     trackIndex?: number;
     /** UUID of the addressed track, or `master`. */
     trackUuid: string;
@@ -3338,11 +3778,13 @@ export interface FxSetParamParams {
     param: string;
     /** Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header. */
     rack?: 'pre';
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video` or `marker`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track (ADR 0129 §1). Ignored beside `trackUuid`, which needs no region. */
+    region?: string;
     /** 0-based slot in the chain. Mutually exclusive with `insert`. */
     slot?: number;
-    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    /** 0-based position in `region`. Mutually exclusive with `trackUuid`. */
     trackIndex?: number;
-    /** Track UUID in braces format, or `master` for the master bus. */
+    /** Track UUID in braces format, or `master` for the master bus. The definitive handle: it works in every region, where an index needs `region` to be read. */
     trackUuid?: string;
     /** The new value, normalized to 0..1 — the same scale `fx get-params` reports. Plugins declare their own ranges and units, so one scale is the only one every parameter shares. */
     value: number;
@@ -3393,7 +3835,9 @@ export interface FxSetRoomParams {
     positionX?: number;
     /** Front/back position in metres, 0 at the centre. Must be given with `positionX`. */
     positionY?: number;
-    /** 0-based index in the arrangement. Mutually exclusive with `trackUuid`. */
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video` or `marker`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track (ADR 0129 §1). Ignored beside `trackUuid`, which needs no region. */
+    region?: string;
+    /** 0-based position in `region`. Mutually exclusive with `trackUuid`. */
     trackIndex?: number;
     /** Track UUID in braces format. */
     trackUuid?: string;
@@ -3409,11 +3853,13 @@ export interface FxSetRoomResult {
     positionX: number;
     /** Front/back position in metres, 0 at the centre. */
     positionY: number;
+    /** Which index space `trackIndex` counts in. Always `arrangement` here: the Room Effect is a Sing-track property and Sing tracks live only in the arrangement. Reported rather than implied so a caller reading any `trackIndex` on this surface can read its space off the same result (ADR 0129 §2). */
+    region: string;
     /** Depth of the current room in metres. */
     roomDepth?: number;
     /** Width of the current room in metres. A position is valid within plus or minus half of this. */
     roomWidth?: number;
-    /** 0-based index of the track. */
+    /** 0-based position of the track in `region`. */
     trackIndex: number;
     /** UUID of that track. */
     trackUuid: string;
@@ -3556,8 +4002,8 @@ export interface GenerativeAddLayerResult {
     jobId: string;
     /** Tick position the placed clip will end at (exclusive). */
     to?: number;
-    /** The track the result will be placed on, resolved at launch. For a command that creates its own target track, this is the created track's id — it exists already, empty, and the clip lands in it when the job settles. */
-    trackId: string;
+    /** The track the result will be placed on, resolved at launch, as a braced UUID. For a command that creates its own target track, this is the created track's handle — it exists already, empty, and the clip lands in it when the job settles. */
+    trackUuid: string;
 }
 
 /** Arguments for `generative enhance`. */
@@ -3620,8 +4066,8 @@ export interface GenerativeSeedAudioResult {
     jobId: string;
     /** Tick position the placed clip will end at (exclusive). */
     to?: number;
-    /** The track the result will be placed on, resolved at launch. For a command that creates its own target track, this is the created track's id — it exists already, empty, and the clip lands in it when the job settles. */
-    trackId: string;
+    /** The track the result will be placed on, resolved at launch, as a braced UUID. For a command that creates its own target track, this is the created track's handle — it exists already, empty, and the clip lands in it when the job settles. */
+    trackUuid: string;
 }
 
 /** Arguments for `generative song`. */
@@ -3680,8 +4126,8 @@ export interface GenerativeSoundEffectsResult {
     jobId: string;
     /** Tick position the placed clip will end at (exclusive). */
     to?: number;
-    /** The track the result will be placed on, resolved at launch. For a command that creates its own target track, this is the created track's id — it exists already, empty, and the clip lands in it when the job settles. */
-    trackId: string;
+    /** The track the result will be placed on, resolved at launch, as a braced UUID. For a command that creates its own target track, this is the created track's handle — it exists already, empty, and the clip lands in it when the job settles. */
+    trackUuid: string;
 }
 
 /** Arguments for `generative stem-split`. */
@@ -3708,8 +4154,8 @@ export interface GenerativeStemSplitResult {
     jobId: string;
     /** Which stem set a split produces — the Stem Splitter panel's four choices. `basic` and `professional` are free; `advanced` and `customized` bill their own SKUs. That is why the mode is a parameter and never inferred: a caller choosing between them is choosing what to spend. */
     mode?: 'basic' | 'professional' | 'advanced' | 'customized';
-    /** The tracks created to receive the stems, in stem order, inserted below the source clip's track. They exist already and are empty; each stem lands in its own track as the job settles. */
-    trackIds: string[];
+    /** The tracks created to receive the stems, in stem order, inserted below the source clip's track, as braced UUIDs. They exist already and are empty; each stem lands in its own track as the job settles. */
+    trackUuids: string[];
 }
 
 /** Arguments for `generative text2sample`. */
@@ -3742,8 +4188,8 @@ export interface GenerativeText2sampleResult {
     jobId: string;
     /** Tick position the placed clip will end at (exclusive). */
     to?: number;
-    /** The track the result will be placed on, resolved at launch. For a command that creates its own target track, this is the created track's id — it exists already, empty, and the clip lands in it when the job settles. */
-    trackId: string;
+    /** The track the result will be placed on, resolved at launch, as a braced UUID. For a command that creates its own target track, this is the created track's handle — it exists already, empty, and the clip lands in it when the job settles. */
+    trackUuid: string;
 }
 
 /** Arguments for `generative vocal2midi`. */
@@ -3772,8 +4218,8 @@ export interface GenerativeVocal2midiResult {
     jobId: string;
     /** Tick position the placed clip will end at (exclusive). */
     to?: number;
-    /** The track the result will be placed on, resolved at launch. For a command that creates its own target track, this is the created track's id — it exists already, empty, and the clip lands in it when the job settles. */
-    trackId: string;
+    /** The track the result will be placed on, resolved at launch, as a braced UUID. For a command that creates its own target track, this is the created track's handle — it exists already, empty, and the clip lands in it when the job settles. */
+    trackUuid: string;
 }
 
 /** Arguments for `generative voice-change`. */
@@ -3812,8 +4258,8 @@ export interface GenerativeVoiceChangeResult {
     jobId: string;
     /** The Voice Changer models being generated, in the order given. One job result per model, each settling on its own. */
     modelIds: number[];
-    /** The tracks created to receive each converted take, index-aligned with `modelIds`. */
-    trackIds: string[];
+    /** The tracks created to receive each converted take, index-aligned with `modelIds`, as braced UUIDs. */
+    trackUuids: string[];
 }
 
 /** The `generative` operations, mirroring the canonical operation tree 1:1. */
@@ -4009,14 +4455,16 @@ export interface ImportFileParams {
     path: string;
     /** Where the clip starts on the global timeline, in project ticks. Omit for tick 0, or name the same point in seconds with `posSec`. */
     pos?: number;
-    /** Where the clip starts on the global timeline, in seconds. OPTIONAL, and when present it WINS over `pos` — including at 0, which is a position like any other. Both units are carried because a video peer thinks in seconds while the timeline is native in ticks, and converting between them needs the tempo curve. The CLI's time-value grammar (`1.5s`) is not this: it compiles to ticks client-side, so it leaves an SDK caller with a `convert time-to-tick` round trip on a placement path. **Media kinds only.** */
+    /** Where the clip starts on the global timeline, in seconds. OPTIONAL, and when present it WINS over `pos` — including at 0, which is a position like any other. That is the native-unit rule (ADR 0032 §5) rather than an exception to it: every kind this call places is second-native, so seconds is always the spelling that needs no conversion. Both units are carried because a video peer thinks in seconds while the timeline is native in ticks, and converting between them needs the tempo curve. The CLI's time-value grammar (`1.5s`) is not this: it compiles to ticks client-side, so it leaves an SDK caller with a `convert time-to-tick` round trip on a placement path. **Media kinds only.** */
     posSec?: number;
+    /** Which index space `trackIndex` counts in: `arrangement` (the default) or `video`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track (ADR 0129 §1). The region has to match the kind being imported, and a mismatch is refused rather than ignored: a video file lands in the `video` region and nothing else lands there, so `region: "arrangement"` on a video import names a track that cannot hold it. */
+    region?: string;
     /** Split polyphonic content into separate monophonic voices, one track each. **MIDI and MusicXML only** — the desktop app asks this in a dialog; here it is an argument, defaulting to off (one track per source track). */
     splitPolyphonic?: boolean;
-    /** Target video track, by id. **Video only** — refused on any other kind, the same way `trackIndex` is refused on video. Omit to land on the region's head track — local index 0, which is the topmost layer and the one the monitor shows. Naming a track picks where the clip is *aimed*, not where it necessarily lands: if that track has no room at `pos`, `onOccupied: relocate` stacks the clip on a fresh track directly above the one named, so inserted footage is visible rather than hidden behind what was already there (ADR 0105). Check `createdTrack` and `trackUuid` to see where it went. */
-    trackId?: string;
-    /** Target track index (0-based) in the arrangement. **Not video** — the video region has its own local index space (ADR 0104), so an arrangement index cannot name a layer in it; pass `trackId` instead and this is refused rather than ignored. Omit to auto-route onto a new track after the existing content. An `Empty` slot is converted in place. */
+    /** Target track position (0-based) in `region`. Mutually exclusive with `trackUuid`. An `Empty` arrangement slot is a valid target and is converted in place. */
     trackIndex?: number;
+    /** Target track UUID in braces format. The definitive handle: it names a track in every region, where an index needs `region` to be read — so this is the form that reaches a video layer with nothing else to get right. Omit the addressing form entirely to auto-route: a media or foreign-project import lands on a new track after the existing content, and a video import lands on the region's head track — local index 0, the topmost layer and the one the monitor shows. */
+    trackUuid?: string;
     /** Adopt the source file's tempo map, replacing the project's over the imported range. **Foreign-project kinds only**, and off by default: rewriting someone's tempo is not a side effect of "import these notes". */
     withTempo?: boolean;
     /** Adopt the source file's time signatures. **Foreign-project kinds only**, off by default, same reasoning as `withTempo`. */
@@ -4037,12 +4485,16 @@ export interface ImportFileResult {
     clips?: Record<string, unknown>[];
     /** Media kinds only: whether this call created the track the clip landed on, rather than placing it on one that already existed. Two ways it becomes true: the region had no track to place on, or the target span was occupied and the clip was bumped to a fresh track above it. Neither is predictable from the arguments. */
     createdTrack?: boolean;
-    /** Media kinds only: the placed clip's geometry, in ticks — the same shape `clip get` reports. An open map here: this surface declares no fixed key set for it. */
+    /** Media kinds only: the placed clip's geometry — the same shape `clipRow` reports, in both units, with `nativeUnit` naming the exact one. An open map here: this surface declares no fixed key set for it. */
     geometry?: Record<string, unknown>;
     /** Audio clips only: `not_loaded`, `loaded_success` or `loaded_failed`. Usually `not_loaded` — decoding continues after this call returns. Poll `clip audio-content` and compare its fingerprint to see it settle. */
     loadingState?: string;
-    /** Media kinds only: the source's own length in ticks, before any `clipIn` / `dur` window was applied, measured at the position the clip landed on — the same axis `dur` is on, so a caller can size a window from it. Compare with `geometry` to see how much of the file is showing. */
+    /** Media kinds only: the source's own length in ticks, before any `clipIn` / `dur` window was applied, measured at the position the clip landed on — the same axis `dur` is on, so a caller can size a window from it. Compare with `geometry` to see how much of the file is showing. A converted, rounded value: a media source is measured in seconds, so its tick length depends on the tempo where the clip landed. Read `naturalDurSec` for the file's own length (ADR 0032 §2). */
     naturalDur?: number;
+    /** Media kinds only: the same source length in seconds — the file's own measurement, exact and independent of the tempo curve. This is the native unit for every kind this field describes, audio and video alike. */
+    naturalDurSec?: number;
+    /** Media kinds only: which index space `trackIndex` counts in — `arrangement` or `video`. Travels with `trackIndex` (ADR 0129 §2): a video layer's index is region-local, so the number alone would read as an arrangement position. */
+    region?: string;
     /** Foreign-project kinds only: `midi`, `musicxml` or `ufdata`. Its presence is what distinguishes the two output shapes. */
     sourceFormat?: string;
     /** The path that was imported, echoed back unchanged. The only field both shapes carry. */
@@ -4053,6 +4505,8 @@ export interface ImportFileResult {
     timeSignaturesImported?: boolean;
     /** Foreign-project kinds only: how many tracks the source file held. Larger than `clipCount` only if a placed clip could not be identified afterwards. */
     trackCount?: number;
+    /** Media kinds only: 0-based position of that track in `region` — the identity the UI shows a person, beside the handle a program stores (ADR 0129 §3). Where the clip actually landed, which `onOccupied: relocate` can make differ from what was asked for. */
+    trackIndex?: number;
     /** Media kinds only: name of the track the clip landed on, which may be one this command created. */
     trackName?: string;
     /** Media kinds only: id of the track the clip landed on — the handle a later track write takes. Not derivable from `trackName`, which is a display string and not unique. */
@@ -4073,6 +4527,8 @@ export interface ImportOperations {
 
 /** Arguments for `instrument disable`. */
 export interface InstrumentDisableParams {
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track this group operates on, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would act on an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** 0-based index in the arrangement. */
     trackIndex?: number;
     /** Track UUID in braces format. */
@@ -4089,6 +4545,8 @@ export interface InstrumentDisableResult {
     midiChannel: string;
     /** Display name of the mounted plugin. */
     name: string;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2). */
+    region: string;
     /** 0-based index of the track. */
     trackIndex: number;
     /** UUID of that track. */
@@ -4099,6 +4557,8 @@ export interface InstrumentDisableResult {
 
 /** Arguments for `instrument enable`. */
 export interface InstrumentEnableParams {
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track this group operates on, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would act on an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** 0-based index in the arrangement. */
     trackIndex?: number;
     /** Track UUID in braces format. */
@@ -4115,6 +4575,8 @@ export interface InstrumentEnableResult {
     midiChannel: string;
     /** Display name of the mounted plugin. */
     name: string;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2). */
+    region: string;
     /** 0-based index of the track. */
     trackIndex: number;
     /** UUID of that track. */
@@ -4127,6 +4589,8 @@ export interface InstrumentEnableResult {
 export interface InstrumentSetParams {
     /** Which MIDI channel the instrument should listen on: `1` through `16`. Channels are numbered the way every MIDI device numbers them. `all` is deliberately not accepted: a mounted instrument listens on one channel and the slot has no every-channel state, so asking for it is an error rather than a value quietly stored as 1. The track's *input* (`track set-input --midi-channel`) does accept `all`. */
     midiChannel: string;
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track this group operates on, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would act on an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** 0-based index in the arrangement. */
     trackIndex?: number;
     /** Track UUID in braces format. */
@@ -4143,6 +4607,8 @@ export interface InstrumentSetResult {
     midiChannel: string;
     /** Display name of the mounted plugin. */
     name: string;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2). */
+    region: string;
     /** 0-based index of the track. */
     trackIndex: number;
     /** UUID of that track. */
@@ -4284,18 +4750,26 @@ export interface JobListResult {
 export interface JobPlaceParams {
     /** Position to place at, in ticks. Omitted places at the project start. */
     at?: number;
+    /** Which index space `trackIndex` counts in. Only `arrangement`, the default, can hold a placement: a staged result becomes an audio clip, and the pinned bands hold video layers and marker lanes. Naming another region is refused with that reason rather than reported as a missing track. */
+    region?: string;
     /** The staged result id to place (from `job results`). */
     resultId: string;
-    /** Target track id to place the result onto. */
-    trackId: string;
+    /** Target track position (0-based) in `region`. Mutually exclusive with `trackUuid`. */
+    trackIndex?: number;
+    /** Target track UUID in braces format. The definitive handle: it names a track in every region, where an index needs `region` to be read. */
+    trackUuid?: string;
 }
 
 /** Success payload of `job place`. */
 export interface JobPlaceResult {
+    /** Which index space `trackIndex` counts in. Always `arrangement`, which is the only region a placement can reach. */
+    region?: string;
     /** The staged result that was placed. */
     resultId: string;
-    /** The track it was placed on. */
-    trackId: string;
+    /** 0-based position of that track in `region` — the identity the UI shows a person, beside the handle a program stores (ADR 0129 §3). Absent together with `region` when the project cannot place the track, which is an inconsistency rather than anything a caller did. */
+    trackIndex?: number;
+    /** UUID of the track it was placed on, with braces. */
+    trackUuid: string;
 }
 
 /** Arguments for `job results`. */
@@ -5007,6 +5481,8 @@ export interface RecordingStartResult {
     armedTracks: {
         /** Which recorder the track feeds: 'audio' for an Audio track, 'midi' for a note track. */
         kind: string;
+        /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2). */
+        region: string;
         /** 0-based track index (users see tracks numbered from 1). */
         trackIndex: number;
         /** The track's display name. */
@@ -5036,6 +5512,8 @@ export interface RecordingStopResult {
         kind: string;
         /** Absolute path of the recorded wav inside the project's Samples folder. Audio takes only. */
         path?: string;
+        /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2). */
+        region: string;
         /** 0-based track index (users see tracks numbered from 1). */
         trackIndex: number;
         /** The track's display name. */
@@ -5076,14 +5554,14 @@ export interface SelectionGetResult {
     editorType?: string;
     /** Whether anything is selected. Always false for the audio editor. */
     hasSelection?: boolean;
-    /** A `\{begin, end\}` range: ticks for the arrangement's horizontal (time) and vertical (track index) selection, local ticks for the editor's note selection range. */
+    /** A `\{begin, end\}` tick range: the arrangement's horizontal (time) selection, or the editor's note selection range in local ticks. Time only. The vertical selection had its own meaning for these two field names — track indices, not ticks — and now has its own type ([`VerticalSelection`]) rather than borrowing a range that says "ticks". */
     horizontalSelection?: {
         /** Inclusive start of the range. */
         begin: number;
         /** Exclusive end of the range. */
         end: number;
     };
-    /** The selected time range in seconds, beside the tick range that names the same span. Its own type rather than two more fields on [`SelectionRange`], which is shared with the vertical selection — whose `begin`/`end` are TRACK INDICES. Seconds there would be a possibility that does not exist, which is the same reason `clip resize` echoes its own row type rather than reusing a plain one. Reported because a caller that lays the selection over video thinks in seconds while the timeline is ticks, and converting between them needs the tempo curve. `convert tick-to-time` is not that route: it takes an `i32` tick, and a selection range is `i64`, so far enough along the timeline there is no conversion to make. */
+    /** The selected time range in seconds, beside the tick range that names the same span. Its own type rather than two more fields on [`SelectionRange`], which the editor's note range shares — and that range is local ticks, where seconds would be a possibility that does not exist. Same reason `clip resize` echoes its own row type rather than reusing a plain one. Reported because a caller that lays the selection over video thinks in seconds while the timeline is ticks, and converting between them needs the tempo curve. `convert tick-to-time` is not that route: it takes an `i32` tick, and a selection range is `i64`, so far enough along the timeline there is no conversion to make. */
     horizontalSelectionSec?: {
         /** Inclusive start of the range, in seconds. */
         beginSec: number;
@@ -5107,27 +5585,37 @@ export interface SelectionGetResult {
     }[];
     /** Number of selected track ids (may exceed selectedTracks' length if a selected slot has no track). */
     selectedTrackCount?: number;
-    /** Discrete set of selected tracks. Distinct from verticalSelection's contiguous index range. */
+    /** The tracks the user has selected, individually addressable and not necessarily contiguous — the track head selects them one at a time, so this set can hold gaps. A separate fact from `verticalSelection`, and neither derives from the other. Dragging the band syncs this set to match it, but a set with gaps has no expression as a single range. Read whichever answers the question being asked: they agree until a selection is made from the track head, and answering one from the other is wrong exactly from then on. */
     selectedTracks?: {
-        /** 0-based track index. */
-        trackIndex: number;
+        /** Which index space `trackIndex` counts in: `arrangement`, `video`, `marker` or `chord`. Reported rather than assumed, because position 1 names a different track in each band (ADR 0104). */
+        region?: string;
+        /** 0-based position of the track in `region` (ADR 0129 §3). Absent together with `region` when the project cannot place the track. */
+        trackIndex?: number;
         /** Track UUID in braces format. */
         trackUuid: string;
     }[];
     /** Number of selected notes; 0 or 1 for the chord editor. */
     selectionCount?: number;
-    /** A `\{begin, end\}` range: ticks for the arrangement's horizontal (time) and vertical (track index) selection, local ticks for the editor's note selection range. */
+    /** The vertical band of an arrangement selection: **one** contiguous range of tracks, given in both the view's row space and resolved against the regions (ADR 0129 §6). One range rather than one per region, because the user drags one band. A shape reporting several would model the implementation's difficulty — that a region-local index cannot span regions — and hand it to every consumer as a concept to collapse back into what was actually done. A cross-region band has no single region-*local* expression; it has a perfectly good single expression once each endpoint names its own region. Both forms are exact. Unlike the dual-unit rule (ADR 0032) neither is a rounding of the other — rows and region-local indices are a bijection over the layout in force — so nothing here says which is authoritative. **Every bound is inclusive**, including `rawEnd`. The band always covers at least the track it starts on, and the field is absent when nothing is selected, so there is no empty range for an exclusive end to express. The row pair this replaced was documented exclusive and was never produced that way: `TrackViewState` walks `first \<= second`. The rows are always reported; the resolved ends are reported per end, when that end falls on a row the project can place. Not every row belongs to a region — the tempo, time-signature and master rows are pinned bands with no index space of their own — and a drag across them is an ordinary thing to do. Reporting nothing for such a band would answer "nothing is selected" when something is, which is the worse error: it is the only answer a caller cannot tell apart from an empty selection. A named row with no region beside it is not the anonymous index §6 retires; that one was a bare `begin` whose space no reader could name. */
     verticalSelection?: {
-        /** Inclusive start of the range. */
-        begin: number;
-        /** Exclusive end of the range. */
-        end: number;
+        /** Inclusive 0-based position of the band's first row within `beginRegion`. Never present without it (ADR 0129 §1). */
+        beginIndex?: number;
+        /** Region the band's first row falls in. Absent together with `beginIndex` when that row belongs to no region — a tempo, time-signature or master row — in which case `rawBegin` is the only name that end has. */
+        beginRegion?: string;
+        /** Inclusive 0-based position of the band's last row within `endRegion`. */
+        endIndex?: number;
+        /** Region the band's last row falls in — the same as `beginRegion` unless the drag crossed a band boundary. Absent on the same terms. */
+        endRegion?: string;
+        /** Inclusive first row of the band, in the view's row space, where a pinned band takes negative rows. Prefixed `raw` because a bare `begin` on a track range is the anonymous number ADR 0129 §6 retires: nothing in the name says which index space it counts in, and on an arrangement track the row and the region-local index coincide — so a caller tests it successfully and misaddresses the moment a pinned content track is in play. */
+        rawBegin: number;
+        /** Inclusive last row of the band, in the same space. */
+        rawEnd: number;
     };
 }
 
 /** Arguments for `selection set`. */
 export interface SelectionSetParams {
-    /** A `\{begin, end\}` range: ticks for the arrangement's horizontal (time) and vertical (track index) selection, local ticks for the editor's note selection range. */
+    /** A `\{begin, end\}` tick range: the arrangement's horizontal (time) selection, or the editor's note selection range in local ticks. Time only. The vertical selection had its own meaning for these two field names — track indices, not ticks — and now has its own type ([`VerticalSelection`]) rather than borrowing a range that says "ticks". */
     horizontalSelection?: {
         /** Inclusive start of the range. */
         begin: number;
@@ -5154,17 +5642,27 @@ export interface SelectionSetParams {
     selectNotes?: boolean;
     /** [arrangement] Discrete set of tracks to select; each entry must have at least `trackIndex` or `trackUuid`. An empty array clears the track selection. Passing this selects that set instead of an area range. */
     tracks?: {
-        /** Addressed by position: 0-based index. */
+        /** Which index space `trackIndex` counts in. Defaults to `arrangement`, which is what an unqualified index has always meant here. */
+        region?: string;
+        /** Addressed by position: 0-based position in `region`. */
         trackIndex?: number;
-        /** Addressed by identity: the braced track UUID (`\{abc-...\}`). */
+        /** Addressed by identity: the braced track UUID (`\{abc-...\}`). Names a track in any region, so it needs no `region` beside it. */
         trackUuid?: string;
     }[];
-    /** A `\{begin, end\}` range: ticks for the arrangement's horizontal (time) and vertical (track index) selection, local ticks for the editor's note selection range. */
+    /** How a write names the vertical band it wants selected: the resolved region-local ends, or the raw view rows. One form per call. Two optional groups rather than a required [`VerticalSelection`], because a caller should not have to compute the addressing it did not use. Both ends of whichever form is given are required, and every bound is inclusive, as on the read side. The resolved form is what the rest of this surface speaks, and is the one to reach for. The raw form is here for a caller that already holds screen geometry — it is not a shortcut for "I did not want to look up the region", because a raw row means nothing without knowing the view's layout. */
     verticalSelection?: {
-        /** Inclusive start of the range. */
-        begin: number;
-        /** Exclusive end of the range. */
-        end: number;
+        /** Inclusive 0-based position of that end within `beginRegion`. Required with `endIndex`: one end is half a band. */
+        beginIndex?: number;
+        /** Which index space `beginIndex` counts in. Defaults to `arrangement` when omitted, as an unqualified index does everywhere a track is addressed (ADR 0129 §1) — so a band wholly inside the arrangement names two indices and nothing else. Each end defaults on its own: a drag out of the video band into the arrangement gives `beginRegion` and lets the other end take the default. */
+        beginRegion?: string;
+        /** Inclusive 0-based position of that end within `endRegion`. Required with `beginIndex`. */
+        endIndex?: number;
+        /** Which index space `endIndex` counts in. Defaults to `arrangement`, as `beginRegion` does. */
+        endRegion?: string;
+        /** Inclusive first row of the band, in the view's row space. Required with `rawEnd`, and refused alongside the resolved form. */
+        rawBegin?: number;
+        /** Inclusive last row of the band, in the view's row space. */
+        rawEnd?: number;
     };
 }
 
@@ -5172,7 +5670,7 @@ export interface SelectionSetParams {
 export interface SelectionSetResult {
     /** Clip type of the active editor. */
     editorType?: string;
-    /** A `\{begin, end\}` range: ticks for the arrangement's horizontal (time) and vertical (track index) selection, local ticks for the editor's note selection range. */
+    /** A `\{begin, end\}` tick range: the arrangement's horizontal (time) selection, or the editor's note selection range in local ticks. Time only. The vertical selection had its own meaning for these two field names — track indices, not ticks — and now has its own type ([`VerticalSelection`]) rather than borrowing a range that says "ticks". */
     horizontalSelection?: {
         /** Inclusive start of the range. */
         begin: number;
@@ -5193,7 +5691,7 @@ export interface SelectionSetResult {
     rangeEnd?: number;
     /** Total notes selected after the operation (UUID form). */
     selectionCount?: number;
-    /** A `\{begin, end\}` range: ticks for the arrangement's horizontal (time) and vertical (track index) selection, local ticks for the editor's note selection range. */
+    /** A `\{begin, end\}` tick range: the arrangement's horizontal (time) selection, or the editor's note selection range in local ticks. Time only. The vertical selection had its own meaning for these two field names — track indices, not ticks — and now has its own type ([`VerticalSelection`]) rather than borrowing a range that says "ticks". */
     selectionRange?: {
         /** Inclusive start of the range. */
         begin: number;
@@ -5202,12 +5700,20 @@ export interface SelectionSetResult {
     };
     /** True on success. */
     success?: boolean;
-    /** A `\{begin, end\}` range: ticks for the arrangement's horizontal (time) and vertical (track index) selection, local ticks for the editor's note selection range. */
+    /** The vertical band of an arrangement selection: **one** contiguous range of tracks, given in both the view's row space and resolved against the regions (ADR 0129 §6). One range rather than one per region, because the user drags one band. A shape reporting several would model the implementation's difficulty — that a region-local index cannot span regions — and hand it to every consumer as a concept to collapse back into what was actually done. A cross-region band has no single region-*local* expression; it has a perfectly good single expression once each endpoint names its own region. Both forms are exact. Unlike the dual-unit rule (ADR 0032) neither is a rounding of the other — rows and region-local indices are a bijection over the layout in force — so nothing here says which is authoritative. **Every bound is inclusive**, including `rawEnd`. The band always covers at least the track it starts on, and the field is absent when nothing is selected, so there is no empty range for an exclusive end to express. The row pair this replaced was documented exclusive and was never produced that way: `TrackViewState` walks `first \<= second`. The rows are always reported; the resolved ends are reported per end, when that end falls on a row the project can place. Not every row belongs to a region — the tempo, time-signature and master rows are pinned bands with no index space of their own — and a drag across them is an ordinary thing to do. Reporting nothing for such a band would answer "nothing is selected" when something is, which is the worse error: it is the only answer a caller cannot tell apart from an empty selection. A named row with no region beside it is not the anonymous index §6 retires; that one was a bare `begin` whose space no reader could name. */
     verticalSelection?: {
-        /** Inclusive start of the range. */
-        begin: number;
-        /** Exclusive end of the range. */
-        end: number;
+        /** Inclusive 0-based position of the band's first row within `beginRegion`. Never present without it (ADR 0129 §1). */
+        beginIndex?: number;
+        /** Region the band's first row falls in. Absent together with `beginIndex` when that row belongs to no region — a tempo, time-signature or master row — in which case `rawBegin` is the only name that end has. */
+        beginRegion?: string;
+        /** Inclusive 0-based position of the band's last row within `endRegion`. */
+        endIndex?: number;
+        /** Region the band's last row falls in — the same as `beginRegion` unless the drag crossed a band boundary. Absent on the same terms. */
+        endRegion?: string;
+        /** Inclusive first row of the band, in the view's row space, where a pinned band takes negative rows. Prefixed `raw` because a bare `begin` on a track range is the anonymous number ADR 0129 §6 retires: nothing in the name says which index space it counts in, and on an arrangement track the row and the region-local index coincide — so a caller tests it successfully and misaddresses the moment a pinned content track is in play. */
+        rawBegin: number;
+        /** Inclusive last row of the band, in the same space. */
+        rawEnd: number;
     };
 }
 
@@ -5242,6 +5748,8 @@ export interface SelectionOperations {
 
 /** Arguments for `sound-source get`. */
 export interface SoundSourceGetParams {
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track this group operates on, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would act on an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** 0-based index in the arrangement. */
     trackIndex?: number;
     /** Track UUID in braces format. */
@@ -5269,6 +5777,8 @@ export interface SoundSourceGetResult {
         /** True when the model carries no Style axis, so a blend on it has Timbre only. */
         timbreOnly?: boolean;
     };
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2). */
+    region: string;
     /** The sound source mounted on a track, as `sound-source get` reports it. Same shape as `SoundSourceRow`, but every field is independently absent — unlike a listing row, a mounted source's `ref` can be unresolvable (a plain voice with no library id) and its `tags` are not read back at all. */
     soundSource?: {
         /** Category name. AI instruments only. */
@@ -5299,9 +5809,11 @@ export interface SoundSourceGetResult {
         nativeLanguage?: string;
         /** Where a sound source comes from: the Voice Library's tabs, which is how a user thinks about it, and the project file's `group` discriminator spelled in words. An external instrument has none — it comes from the plugin scan, not from the account's library. */
         origin?: 'premade' | 'cloned' | 'community' | 'blended';
-        /** Precise handle for this source. Absent when the mounted source has no library id to resolve one from. */
+        /** Precise handle for this source. Absent when the mounted source has no library id to resolve one from. On a Sing track this names the voice the mix was loaded from, which is the singer it started as while `saveState` is `unmixed` or `unsaved`, and the blended voice it was saved as once that reads `saved` or `changed`. A blend is spelled `singer:\<library\>/\<id\>` either way, so the ref round-trips through `sound-source load --source` rather than resolving to an official singer numbered the same. */
         ref?: string;
-        /** How many voice seeds the recipe holds. Blended voices only. */
+        /** How far a track's voice mix has travelled from the stock voice it was mounted as. This is what Studio captions a Sing track with — the singer's own name, the literal "Unsaved VoiceMix", or a saved blend's name — and what tells a caller whether there is a recipe worth saving. Declared here rather than in one group because `sound-source get`, `choir get` and `track get` all describe the same track's mix. Three groups spelling one roster themselves is three rosters that can drift. There is no value for "the project could not say". A mix whose state is unreadable reports the field absent, the way a track with no position omits its index rather than sending a sentinel a caller would read as a position (ADR 0129 §6). */
+        saveState?: 'unmixed' | 'unsaved' | 'saved' | 'changed';
+        /** How many voice seeds the mounted mix's recipe holds. Every voice is a recipe of seeds and an ordinary one is a recipe of exactly one, so a stock voice that has never been adjusted reports `1` rather than `0`. That is exactly why a count cannot answer "is this a blend" — `saveState` does, and this is the size. */
         seedCount?: number;
         /** Full English names of every language this source can sing on its current model. Voices and choirs only. */
         supportedLanguages?: string[];
@@ -5399,6 +5911,8 @@ export interface SoundSourceLoadParams {
     format?: 'vst3' | 'vst2' | 'au';
     /** Which vocal synth model to sing through, by model name or by generation (`v1`, `v2`). Omit to take what the app would have picked. */
     model?: string;
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track this group operates on, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would act on an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** **Required.** Which sound source to load, by display name or by `ref`. A name that matches exactly one source loads it. A name that matches several is an error listing the candidates with their refs, and passing one of those refs back resolves it. A ref is always accepted directly, so a script never has to trigger the error to learn the syntax. */
     source: string;
     /** 0-based index in the arrangement. */
@@ -5423,6 +5937,8 @@ export interface SoundSourceLoadResult {
     name: string;
     /** Ref of the source that landed, resolved from `source`. */
     ref: string;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2). */
+    region: string;
     /** 0-based index of the track loaded onto. */
     trackIndex: number;
     /** What the track ended up as. Loading a voice onto a MIDI track converts it to `Sing`. */
@@ -5439,6 +5955,8 @@ export interface SoundSourceSetParams {
     member?: number;
     /** **Required.** Which vocal synth model to sing through, by model name (`Verse24`) or by generation (`v1`, `v2`). A generation picks that generation's recommended model for this voice. A name that names no model is an error; nothing is substituted, so a typo surfaces here rather than as a track that quietly sings through something else. */
     model: string;
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track this group operates on, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would act on an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** 0-based index in the arrangement. */
     trackIndex?: number;
     /** Track UUID in braces format. */
@@ -5451,6 +5969,8 @@ export interface SoundSourceSetResult {
     modelId: number;
     /** Name of that model. */
     modelName: string;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2). */
+    region: string;
     /** Languages the source can sing on the new model. A model change can narrow this, which is why it is reported back. */
     supportedLanguages?: string[];
     /** 0-based index of the track. */
@@ -5489,6 +6009,8 @@ export interface SoundSourceTagsResult {
 
 /** Arguments for `sound-source unload`. */
 export interface SoundSourceUnloadParams {
+    /** Which index space `trackIndex` counts in. Only `arrangement` can hold a track this group operates on, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would act on an unrelated track (ADR 0129 §2). */
+    region?: string;
     /** 0-based index in the arrangement. */
     trackIndex?: number;
     /** Track UUID in braces format. */
@@ -5499,6 +6021,8 @@ export interface SoundSourceUnloadParams {
 export interface SoundSourceUnloadResult {
     /** What the track is now. A Sing or Instrument track becomes `GenericMidi`; a MIDI track that merely had its external instrument unmounted stays `GenericMidi`. */
     newType: string;
+    /** Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2). */
+    region: string;
     /** 0-based index of the track. */
     trackIndex: number;
     /** Track name before the unload. */
@@ -5934,9 +6458,11 @@ export interface TrackDeleteResult {
 
 /** Arguments for `track duplicate`. */
 export interface TrackDuplicateParams {
-    /** 0-based index in the arrangement. */
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video`, `marker`, or `chord`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track. Ignored beside `trackUuid`, which needs no region. */
+    region?: string;
+    /** 0-based position in `region`. Mutually exclusive with `trackUuid`. */
     trackIndex?: number;
-    /** Track UUID in braces format. Required to address a track in the pinned Video or Marker band. */
+    /** Track UUID in braces format. The definitive handle: it works in every region, where an index needs `region` to be read. */
     trackUuid?: string;
 }
 
@@ -5960,33 +6486,43 @@ export interface TrackDuplicateResult {
 
 /** Arguments for `track get`. */
 export interface TrackGetParams {
-    /** 0-based track index (users see tracks numbered from 1). */
-    trackIndex: number;
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video`, `marker`, or `chord`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track. Ignored beside `trackUuid`, which needs no region. */
+    region?: string;
+    /** 0-based position in `region` (users see arrangement tracks numbered from 1). Mutually exclusive with `trackUuid`. An empty arrangement slot is a valid target here and answers with `trackType: "Empty"` — reading is how a caller learns that an index it saw in a listing is padding (ADR 0129 §4). So the range this accepts is every slot the arrangement holds, not only the ones up to its last content track; a write, which cannot take an empty slot, stops at the content range instead. */
+    trackIndex?: number;
+    /** Track UUID in braces format, or the well-known id `master` for the project's master bus. The definitive handle: it works in every region, where an index needs `region` to be read. */
+    trackUuid?: string;
 }
 
 /** Success payload of `track get`. */
 export interface TrackGetResult {
-    /** Track color as a hex string, e.g. #ec4f44. */
-    color: string;
+    /** Number of clips (patterns) on the track. Omitted for the master bus and an empty slot, which hold no clips at all. */
+    clipCount?: number;
+    /** Track color as a hex string, e.g. #ec4f44. Omitted for an empty slot and for the master, neither of which has one. */
+    color?: string;
     /** Default articulation for new notes. Instrument tracks only. */
     defaultArticulation?: string;
     /** Default lyric language. Sing tracks only. */
     defaultLanguage?: string;
-    /** Mixer settings, as `track get` reports them. */
-    mixer: {
-        /** Volume gain: 0.0 and above; 1.0 = unity. */
+    /** Whether this marker track is system-owned and so protected from user delete and rename. **Marker tracks only** — omitted for every other type, which cannot be protected at all, rather than reported false. */
+    isProtected?: boolean;
+    /** Mixer settings, as `track get` reports them. Only `gain` is universal. The master bus carries a level and nothing else — `track set` refuses the other four on it — so the three it does not have are optional here rather than reported as neutral values it does not hold. */
+    mixer?: {
+        /** Volume gain: 0.0 and above; 1.0 = unity. The one setting the master bus has. */
         gain: number;
-        /** Whether the track is muted. */
-        mute: boolean;
-        /** Stereo pan: -1.0 (left) to 1.0 (right). */
-        pan: number;
-        /** Whether the track is soloed. */
-        solo: boolean;
+        /** Whether the track is muted. Omitted for the master. */
+        mute?: boolean;
+        /** Stereo pan: -1.0 (left) to 1.0 (right). Omitted for the master. */
+        pan?: number;
+        /** Whether the track is soloed. Omitted for the master. */
+        solo?: boolean;
     };
-    /** Name the user explicitly set; empty string when using the default fallback. */
-    rawName: string;
+    /** Which system role a protected marker track fills: `sections` or `lyrics`. Stable and locale-independent, unlike `trackName`. **Protected marker tracks only.** */
+    protectedRole?: string;
+    /** Name the user explicitly set; empty string when using the default fallback. Omitted for an empty slot and for the master, neither of which can be renamed. */
+    rawName?: string;
     /** Record-input configuration, as `track get` reports it. */
-    recordInput: {
+    recordInput?: {
         /** Audio input channel: -1 = off, 0+ = specific channel. Audio tracks only. */
         inputChannelIndex?: number;
         /** Whether input monitoring is enabled. */
@@ -6005,13 +6541,15 @@ export interface TrackGetResult {
         /** How a chord played onto a Sing track is captured. Exactly one applies at a time: `monophonic` trims the overlaps into one vocal part, `polyphonic` splits the chord into separate parts. */
         recordMode?: 'monophonic' | 'polyphonic';
     };
+    /** Which index space `trackIndex` counts in: `arrangement`, `video`, `marker`, or `chord`. Travels with `trackIndex`, and omitted with it for the master. */
+    region?: string;
     /** Sound-source detail for a track, as `track get` reports it. Note tracks only (omitted for Audio); shape varies with track type and choir/ensemble mode. */
     soundSourceInfo?: {
         /** Instrument category name. Instrument (non-ensemble) mode only. */
         category?: string;
         /** Whether the track carries a sound source. A GenericMidi track with an external instrument mounted reports true: the slot is a sound source in every sense that matters, and reporting it empty made a mounted plugin indistinguishable from no plugin at all. Other fields are absent when this is false. `sound-source get` reports the same thing in more detail. */
         hasSource?: boolean;
-        /** True when the singer is a voice blend rather than a vanilla singer. Singer mode only. */
+        /** True when the singer's voice has been adjusted away from the stock voice it started as. Singer mode only. Equivalent to `saveState` being anything but `unmixed`. */
         isVoiceBlend?: boolean;
         /** Per-member detail. Choir/ensemble modes only. */
         members?: {
@@ -6019,7 +6557,7 @@ export interface TrackGetResult {
             category?: string;
             /** Member gain level. */
             gain: number;
-            /** True when the member is a voice blend. Choir members only. */
+            /** True when the member's voice has been adjusted away from the stock voice it started as. Choir members only. Equivalent to `saveState` being anything but `unmixed`. */
             isVoiceBlend?: boolean;
             /** Whether the member is muted. */
             mute: boolean;
@@ -6027,6 +6565,10 @@ export interface TrackGetResult {
             name: string;
             /** Member singer's native language, when determinable. Choir members only. */
             nativeLanguage?: string;
+            /** How far a track's voice mix has travelled from the stock voice it was mounted as. This is what Studio captions a Sing track with — the singer's own name, the literal "Unsaved VoiceMix", or a saved blend's name — and what tells a caller whether there is a recipe worth saving. Declared here rather than in one group because `sound-source get`, `choir get` and `track get` all describe the same track's mix. Three groups spelling one roster themselves is three rosters that can drift. There is no value for "the project could not say". A mix whose state is unreadable reports the field absent, the way a track with no position omits its index rather than sending a sentinel a caller would read as a position (ADR 0129 §6). */
+            saveState?: 'unmixed' | 'unsaved' | 'saved' | 'changed';
+            /** How many seed voices the member's recipe names. Choir members only. An ordinary voice is a recipe of exactly one seed, so a stock member reports `1`; `isVoiceBlend` is what says whether the recipe has been adjusted. */
+            seedCount?: number;
             /** Languages the member singer supports. Choir members only. */
             supportedLanguages?: string[];
         }[];
@@ -6043,20 +6585,30 @@ export interface TrackGetResult {
         name?: string;
         /** Singer's native language, when determinable. Singer mode only. */
         nativeLanguage?: string;
+        /** How far a track's voice mix has travelled from the stock voice it was mounted as. This is what Studio captions a Sing track with — the singer's own name, the literal "Unsaved VoiceMix", or a saved blend's name — and what tells a caller whether there is a recipe worth saving. Declared here rather than in one group because `sound-source get`, `choir get` and `track get` all describe the same track's mix. Three groups spelling one roster themselves is three rosters that can drift. There is no value for "the project could not say". A mix whose state is unreadable reports the field absent, the way a track with no position omits its index rather than sending a sentinel a caller would read as a position (ADR 0129 §6). */
+        saveState?: 'unmixed' | 'unsaved' | 'saved' | 'changed';
+        /** How many seed voices the mix's recipe names. Singer mode only. An ordinary voice is a recipe of exactly one seed, so a stock singer reports `1`; `isVoiceBlend` is what says whether the recipe has been adjusted. */
+        seedCount?: number;
         /** Languages the singer supports. Singer mode only. */
         supportedLanguages?: string[];
         /** One of: singer, choir, instrument, ensemble. */
         type?: string;
     };
-    /** Current display name. */
-    trackName: string;
-    /** One of: Sing, Instrument, GenericMidi, Audio, Unknown. */
+    /** Sound-source name, as `track list` reports it: the source name for Sing and Instrument tracks, 'N-member choir'/'N-member ensemble' in choir/ensemble mode, empty for GenericMidi, which carries an external instrument instead. Omitted for the types that can have none. `soundSourceInfo` is the same thing in full; this is the one-line form, carried so this struct is a superset of the listing entry's. */
+    soundSourceName?: string;
+    /** 0-based position, in the index space of `region`. Omitted for the master bus, which has no position in any region. */
+    trackIndex?: number;
+    /** Current display name. Omitted for the master bus, which carries no name of its own. */
+    trackName?: string;
+    /** One of: Sing, Instrument, GenericMidi, Audio, Video, Marker, Chord, Empty (an arrangement slot holding no track), or Master. */
     trackType: string;
+    /** Track UUID in braces format, or `master` for the master bus. The definitive handle: it works in every region, where an index needs `region` to be read. Omitted for an empty arrangement slot, which has none to hand out. */
+    trackUuid?: string;
 }
 
 /** Arguments for `track list`. */
 export interface TrackListParams {
-    /** Report a track that holds no clips even when its kind is one that is listed only while it has content. Defaults to false. Only the chord track is filtered this way, and the default mirrors what the user sees: every project carries a chord track, it stays hidden in the UI until someone opens it and writes a chord into it, and a caller enumerating tracks is asking what the project HAS rather than what it structurally always has. Ordinary tracks are reported whether or not they hold clips — a Sing track someone just created is a track, and its name and sound source are most of what a caller wants from the listing. */
+    /** Report empty tracks. Defaults to false. Two things are empty in this sense, and one flag covers both because a caller asking for the complete picture wants the whole of it: - **Empty arrangement slots** — the padding the arrangement maintains around its content tracks. One occupies an index, so a caller that reads a listing and then addresses index 4 can learn that index 4 is padding rather than guess. Reported with `trackType: "Empty"` and no `trackUuid`, because an empty slot has none to hand out. Every slot the arrangement holds is reported, which is the same range `track get` addresses once it accepts an empty target — so every index this answers with is one that verb answers for. Expect a nearly empty project to report most of a hundred of them. - **The contentless chord track** — every project carries one, it stays hidden in the UI until someone opens it and writes a chord into it, and a caller enumerating tracks is asking what the project HAS rather than what it structurally always has. No `type` spelling names an empty slot — it is a position in the arrangement rather than a kind of track — but this flag still answers to `type`, through the region each half lives in: the padding is added when `type` covers the arrangement at all (omitted, or naming at least one of `sing`/`instrument`/`genericMidi`/`audio`), and the chord track when `type` names `chord`. So a caller asking only about the pinned bands is not handed arrangement positions it did not ask about. Ordinary tracks are reported whether or not they hold clips — a Sing track someone just created is a track, and its name and sound source are most of what a caller wants from the listing. */
     includeEmpty?: boolean;
     /** Track kinds to list. Repeatable. Omit for the arrangement's content tracks, which is what this answers when nothing names a pinned region. The spellings are `track create`'s, plus `chord`, which names the chord track — one project fixture that `track create` therefore refuses. */
     type?: string[];
@@ -6064,12 +6616,12 @@ export interface TrackListParams {
 
 /** Success payload of `track list`. */
 export interface TrackListResult {
-    /** The length of `tracks` — the arrangement's content (non-empty-slot) track count when no `type` filter narrows it. */
+    /** How many of the reported tracks are content tracks — everything except the empty arrangement slots `includeEmpty` adds. It coincides with the length of `tracks` until `includeEmpty` puts empty slots in the array. A caller that wants the array's length reads the array. */
     contentTrackCount: number;
     /** The matching tracks: the arrangement in its own order, then the video band, then the marker band, then the chord track. */
     tracks: {
-        /** Number of clips (patterns) on the track. */
-        clipCount: number;
+        /** Number of clips (patterns) on the track. Omitted for an empty slot, which is a position rather than a track and so holds none. */
+        clipCount?: number;
         /** Whether this marker track is system-owned and so protected from user delete and rename. **Marker tracks only** — omitted for every other type, which cannot be protected at all, rather than reported false. */
         isProtected?: boolean;
         /** Which system role a protected marker track fills: `sections` or `lyrics`. Stable and locale-independent, unlike `trackName`, which is the localized display string derived from it. Reported because it is the idempotency key `track ensure-system` is addressed by: without it, the only way to learn which marker track holds which role is to call `track ensure-system` again and read back the id, turning an observation into a write-shaped probe. **Protected marker tracks only** — omitted for an ordinary one, which fills no role. */
@@ -6080,12 +6632,12 @@ export interface TrackListResult {
         soundSourceName?: string;
         /** 0-based position, in the index space of `region`. */
         trackIndex: number;
-        /** Current display name. */
-        trackName: string;
-        /** One of: Sing, Instrument, GenericMidi, Audio, Video, Marker, Chord. */
+        /** Current display name. Omitted for an empty slot, which nobody named. */
+        trackName?: string;
+        /** One of: Sing, Instrument, GenericMidi, Audio, Video, Marker, Chord, or Empty for a slot `includeEmpty` added. An `Empty` row carries this, `trackIndex` and `region` and nothing else: a slot is a position that holds no track, so every other field here is a property of a track it does not have. It is the same shape `track get` answers with for that slot, so the two verbs never describe one position two ways. */
         trackType: string;
-        /** Track UUID in braces format. The definitive handle: it works in every region, where an index needs `region` to be read. */
-        trackUuid: string;
+        /** Track UUID in braces format. The definitive handle: it works in every region, where an index needs `region` to be read. Omitted for an empty arrangement slot, which `includeEmpty` adds and which has no handle to hand out. Absence is the honest answer there — the alternative is a value that names padding the arrangement replaces the moment someone creates a track. */
+        trackUuid?: string;
     }[];
 }
 
@@ -6093,17 +6645,23 @@ export interface TrackListResult {
 export interface TrackRenameParams {
     /** New display name. Pass an empty string to restore the track's default fallback name (sound-source name for Sing/Instrument, audio filename for Audio, generic label for GenericMidi). */
     newName: string;
-    /** 0-based track index. */
-    trackIndex: number;
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video` or `marker`. A protected marker track is refused whichever form named it, and the chord track has no name to set. */
+    region?: string;
+    /** 0-based position in `region`. Mutually exclusive with `trackUuid`. */
+    trackIndex?: number;
+    /** Track UUID in braces format. Mutually exclusive with `trackIndex`. */
+    trackUuid?: string;
 }
 
 /** Arguments for `track reorder`. */
 export interface TrackReorderParams {
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video`, `marker`, or `chord`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track. Ignored beside `trackUuid`, which needs no region. */
+    region?: string;
     /** 0-based position to move to, in the same region the track already lives in. A track cannot leave its region: the pinned Video and Marker bands hold only their own type (ADR 0104). */
     toIndex: number;
-    /** 0-based index in the arrangement. */
+    /** 0-based position in `region`. Mutually exclusive with `trackUuid`. */
     trackIndex?: number;
-    /** Track UUID in braces format, e.g. `\{12345678-abcd-...\}`. Required to address a track in the pinned Video or Marker band, which `trackIndex` cannot name. */
+    /** Track UUID in braces format, e.g. `\{12345678-abcd-...\}`. The definitive handle: it works in every region, where an index needs `region` to be read. */
     trackUuid?: string;
 }
 
@@ -6125,6 +6683,35 @@ export interface TrackReorderResult {
     trackUuid: string;
 }
 
+/** Arguments for `track resolve`. */
+export interface TrackResolveParams {
+    /** Which index space `trackIndices` count in: `arrangement` (the default), `video`, `marker`, or `chord`. One region for the whole batch — a call spanning two of them is two calls. Does not apply to `trackUuids`, which name a track in any region. */
+    region?: string;
+    /** 0-based positions to resolve, in the index space `region` names. Repeatable. */
+    trackIndices?: number[];
+    /** Track UUIDs to resolve, in braces format. Repeatable. Takes `master`, which answers with no index or region because it has neither. */
+    trackUuids?: string[];
+}
+
+/** Success payload of `track resolve`. */
+export interface TrackResolveResult {
+    /** One entry per addressed track, positionally parallel to the input: every `trackUuids` entry in the order given, then every `trackIndices` entry in the order given. A caller reads its answers off by position rather than joining on an identity. */
+    tracks: {
+        /** Whether the addressed track exists. False leaves everything but the echoed identity absent. A miss is reported here rather than failing the call: bulk translation of a possibly stale uuid set is the main reason to call this verb, and failing all of it because one track was deleted would push the caller back to one request per track (ADR 0129 §5). A miss means the target is not there — a deleted track, or an index past the end of its region. A target that was never addressable at all is a different thing and refuses the whole call: a string that is not a uuid, a negative index, an unparsable `region`. Nothing about those is stale, and reporting one as a miss would tell a caller its track had been deleted when it had a typo. */
+        found: boolean;
+        /** Which index space `trackIndex` counts in: `arrangement`, `video`, `marker`, or `chord`. Absent for the master, and travels with `trackIndex` everywhere else. */
+        region?: string;
+        /** 0-based position in `region`. Absent for the master, which has no position, and for a miss addressed by uuid. */
+        trackIndex?: number;
+        /** Current display name — enough to render a human-readable label without a second call. Absent on a miss, and for the master bus, which carries no name of its own. */
+        trackName?: string;
+        /** One of: Sing, Instrument, GenericMidi, Audio, Video, Marker, Chord, Empty, or Master. Absent on a miss. */
+        trackType?: string;
+        /** Track UUID in braces format, or `master`. Absent for an empty arrangement slot, which has none, and for a miss addressed by index. */
+        trackUuid?: string;
+    }[];
+}
+
 /** Arguments for `track set`. */
 export interface TrackSetParams {
     /** Palette color hex string, e.g. `#EC4F44`. Must be one of the values `color-palette` returns. Also affects the default color for new clips on this track. The master bus has no color. */
@@ -6137,11 +6724,13 @@ export interface TrackSetParams {
     mute?: boolean;
     /** Stereo pan position: -1.0 (full left) to 1.0 (full right); 0.0 = center. The master bus has no pan. */
     pan?: number;
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video`, `marker`, or `chord`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track. Ignored beside `trackUuid`, which needs no region. */
+    region?: string;
     /** Solo the track (true) or unsolo (false). When any track is soloed, all non-soloed tracks are effectively muted. The master bus has no solo. */
     solo?: boolean;
-    /** 0-based track index. Addresses the arrangement only — the master bus has no index, so `trackUuid: "master"` is how you reach it. */
+    /** 0-based position in `region` (users see arrangement tracks numbered from 1). Mutually exclusive with `trackUuid` — the master bus has no index, so `trackUuid: "master"` is how you reach it. */
     trackIndex?: number;
-    /** Track UUID in braces format, e.g. `\{12345678-abcd-...\}`, or the well-known id `master` for the project's master bus. */
+    /** Track UUID in braces format, e.g. `\{12345678-abcd-...\}`, or the well-known id `master` for the project's master bus. The definitive handle: it works in every region, where an index needs `region` to be read. */
     trackUuid?: string;
 }
 
@@ -6155,8 +6744,12 @@ export interface TrackSetInputParams {
     midiDevice?: string;
     /** How to capture a chord played onto a Sing track: `monophonic` trims the overlaps into one vocal part, `polyphonic` splits it into separate parts. Sing tracks only. */
     recordMode?: string;
-    /** 0-based track index. */
-    trackIndex: number;
+    /** Which index space `trackIndex` counts in: `arrangement` (the default), `video` or `marker`. */
+    region?: string;
+    /** 0-based position in `region`. Mutually exclusive with `trackUuid`. */
+    trackIndex?: number;
+    /** Track UUID in braces format. Mutually exclusive with `trackIndex`. */
+    trackUuid?: string;
 }
 
 /** Success payload of `track set-input`. */
@@ -6174,15 +6767,21 @@ export interface TrackSetInputResult {
     };
     /** How a chord played onto a Sing track is captured. Exactly one applies at a time: `monophonic` trims the overlaps into one vocal part, `polyphonic` splits the chord into separate parts. */
     recordMode?: 'monophonic' | 'polyphonic';
-    /** 0-based index of the track. */
+    /** Which index space `trackIndex` counts in. A recordable track is always in the arrangement, so this is `arrangement`; it is written out rather than implied, so a caller reading any result with a `trackIndex` needs no table of which groups are exempt (ADR 0129 §2). */
+    region: string;
+    /** 0-based position, in the index space of `region`. */
     trackIndex: number;
+    /** Track UUID in braces format — the stable handle, reported beside the index so a caller that addressed by index can store one (ADR 0129 §3). */
+    trackUuid: string;
 }
 
 /** Arguments for `track set-language`. */
 export interface TrackSetLanguageParams {
     /** Default lyric language for notes added later, as a full English name (e.g. `Chinese`). `track get` reports the current value as `defaultLanguage`, and the singer's `supportedLanguages` is the set to choose from. Existing notes keep the language they were written with. */
     language: string;
-    /** 0-based index in the arrangement. */
+    /** Which index space `trackIndex` counts in. Only `arrangement`, this operation's default, can hold a Sing track, so it is the only region an index may count in here — another one is refused with that reason rather than read as a layer that cannot hold what this verb writes. Ignored beside `trackUuid`, which needs no region. Declared even though it is a constant, so a client writing generic code over anything carrying a `trackIndex` needs no table of exempt operations (ADR 0129 §2). */
+    region?: string;
+    /** 0-based position in `region`. Mutually exclusive with `trackUuid`. */
     trackIndex?: number;
     /** Track UUID in braces format. */
     trackUuid?: string;
@@ -6212,11 +6811,11 @@ export interface TrackOperations {
     duplicate(params?: TrackDuplicateParams, options?: MutatingCallOptions): Promise<TrackDuplicateResult>;
 
     /**
-     * Get comprehensive metadata for one track by index.
+     * Get comprehensive metadata for one track, by uuid or by index and region.
      *
      * Requires the `track.read` capability.
      */
-    get(params: TrackGetParams, options?: CallOptions): Promise<TrackGetResult>;
+    get(params?: TrackGetParams, options?: CallOptions): Promise<TrackGetResult>;
 
     /**
      * List tracks with their basic metadata and total count, optionally filtered to given track types.
@@ -6240,6 +6839,13 @@ export interface TrackOperations {
     reorder(params: TrackReorderParams, options?: MutatingCallOptions): Promise<TrackReorderResult>;
 
     /**
+     * Translate between a track's two identities in bulk.
+     *
+     * Requires the `track.read` capability.
+     */
+    resolve(params?: TrackResolveParams, options?: CallOptions): Promise<TrackResolveResult>;
+
+    /**
      * Update a track's mixer and display properties (color, pan, gain, mute, solo, monitor).
      *
      * Requires the `track.write` capability.
@@ -6251,7 +6857,7 @@ export interface TrackOperations {
      *
      * Requires the `track.write` capability.
      */
-    setInput(params: TrackSetInputParams, options?: MutatingCallOptions): Promise<TrackSetInputResult>;
+    setInput(params?: TrackSetInputParams, options?: MutatingCallOptions): Promise<TrackSetInputResult>;
 
     /**
      * Set the default lyric language for new notes on a Sing track.
@@ -6935,182 +7541,184 @@ export interface PublicBindings {
 
 /** Every operation in this artifact, sorted by path. */
 export const OPERATIONS = [
-    { path: 'blend add', domain: 'blend', method: 'add', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'blend create', domain: 'blend', method: 'create', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'blend delete', domain: 'blend', method: 'delete', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'blend get', domain: 'blend', method: 'get', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'blend list', domain: 'blend', method: 'list', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'blend remove', domain: 'blend', method: 'remove', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'blend reorder', domain: 'blend', method: 'reorder', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'blend set', domain: 'blend', method: 'set', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'canvas effective-size', domain: 'canvas', method: 'effectiveSize', capability: 'canvas.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
-    { path: 'canvas info', domain: 'canvas', method: 'info', capability: 'canvas.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
-    { path: 'caret get', domain: 'caret', method: 'get', capability: 'caret.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'caret set', domain: 'caret', method: 'set', capability: 'caret.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'choir add', domain: 'choir', method: 'add', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'choir disable', domain: 'choir', method: 'disable', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'choir enable', domain: 'choir', method: 'enable', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'choir get', domain: 'choir', method: 'get', capability: 'soundsource.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'choir remove', domain: 'choir', method: 'remove', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'choir reorder', domain: 'choir', method: 'reorder', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'choir set', domain: 'choir', method: 'set', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'clip audio-content', domain: 'clip', method: 'audioContent', capability: 'clip.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'clip consolidate', domain: 'clip', method: 'consolidate', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'clip create', domain: 'clip', method: 'create', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'clip delete', domain: 'clip', method: 'delete', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'clip detach-audio', domain: 'clip', method: 'detachAudio', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'clip duplicate', domain: 'clip', method: 'duplicate', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'clip get', domain: 'clip', method: 'get', capability: 'clip.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'clip list', domain: 'clip', method: 'list', capability: 'clip.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'clip lyrics', domain: 'clip', method: 'lyrics', capability: 'clip.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'clip move', domain: 'clip', method: 'move', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'clip note-content', domain: 'clip', method: 'noteContent', capability: 'clip.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'clip reattach-audio', domain: 'clip', method: 'reattachAudio', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'clip replace-content', domain: 'clip', method: 'replaceContent', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
-    { path: 'clip resize', domain: 'clip', method: 'resize', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'clip set', domain: 'clip', method: 'set', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'clip set-enabled', domain: 'clip', method: 'setEnabled', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'clip set-fades', domain: 'clip', method: 'setFades', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'clip set-gain', domain: 'clip', method: 'setGain', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'clip set-muted', domain: 'clip', method: 'setMuted', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'clip split', domain: 'clip', method: 'split', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'convert editor-to-global', domain: 'convert', method: 'editorToGlobal', capability: 'convert.editor-to-global', ungated: true, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'convert global-to-editor', domain: 'convert', method: 'globalToEditor', capability: 'convert.global-to-editor', ungated: true, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'convert measure-to-tick', domain: 'convert', method: 'measureToTick', capability: 'convert.measure-to-tick', ungated: true, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'convert tick-to-measure', domain: 'convert', method: 'tickToMeasure', capability: 'convert.tick-to-measure', ungated: true, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'convert tick-to-time', domain: 'convert', method: 'tickToTime', capability: 'convert.tick-to-time', ungated: true, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'convert time-to-tick', domain: 'convert', method: 'timeToTick', capability: 'convert.time-to-tick', ungated: true, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'device current', domain: 'device', method: 'current', capability: 'device.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
-    { path: 'device list', domain: 'device', method: 'list', capability: 'device.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
-    { path: 'device set-audio', domain: 'device', method: 'setAudio', capability: 'device.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'editor current-clip', domain: 'editor', method: 'currentClip', capability: 'editor.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
-    { path: 'editor open', domain: 'editor', method: 'open', capability: 'editor.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
-    { path: 'editor status', domain: 'editor', method: 'status', capability: 'editor.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
-    { path: 'editor tick-range', domain: 'editor', method: 'tickRange', capability: 'editor.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
-    { path: 'ensemble add', domain: 'ensemble', method: 'add', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'ensemble disable', domain: 'ensemble', method: 'disable', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'ensemble enable', domain: 'ensemble', method: 'enable', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'ensemble get', domain: 'ensemble', method: 'get', capability: 'soundsource.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'ensemble remove', domain: 'ensemble', method: 'remove', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'ensemble reorder', domain: 'ensemble', method: 'reorder', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'ensemble set', domain: 'ensemble', method: 'set', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'export audio', domain: 'export', method: 'audio', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'export fcpxml', domain: 'export', method: 'fcpxml', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'export lrc', domain: 'export', method: 'lrc', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'export midi', domain: 'export', method: 'midi', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'export song-template', domain: 'export', method: 'songTemplate', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'membership' },
-    { path: 'export video', domain: 'export', method: 'video', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'export vocal-sample', domain: 'export', method: 'vocalSample', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'membership' },
-    { path: 'fx add', domain: 'fx', method: 'add', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'fx apply-preset', domain: 'fx', method: 'applyPreset', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
-    { path: 'fx get-params', domain: 'fx', method: 'getParams', capability: 'fx.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'fx list', domain: 'fx', method: 'list', capability: 'fx.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'fx list-available', domain: 'fx', method: 'listAvailable', capability: 'fx.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'fx list-params', domain: 'fx', method: 'listParams', capability: 'fx.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'fx open-editor', domain: 'fx', method: 'openEditor', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'fx remove', domain: 'fx', method: 'remove', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'fx reorder', domain: 'fx', method: 'reorder', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'fx save-preset', domain: 'fx', method: 'savePreset', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'fx scan', domain: 'fx', method: 'scan', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'fx set', domain: 'fx', method: 'set', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'fx set-param', domain: 'fx', method: 'setParam', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
-    { path: 'fx set-room', domain: 'fx', method: 'setRoom', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'generative add-layer', domain: 'generative', method: 'addLayer', capability: 'generative.add-layer', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(add-a-layer)' },
-    { path: 'generative enhance', domain: 'generative', method: 'enhance', capability: 'generative.enhance', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(music-enhancer)' },
-    { path: 'generative seed-audio', domain: 'generative', method: 'seedAudio', capability: 'generative.seed-audio', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(seed-audio)' },
-    { path: 'generative song', domain: 'generative', method: 'song', capability: 'generative.song', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(song-generator)' },
-    { path: 'generative sound-effects', domain: 'generative', method: 'soundEffects', capability: 'generative.sound-effects', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(sound-effects)' },
-    { path: 'generative stem-split', domain: 'generative', method: 'stemSplit', capability: 'generative.stem-split', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(stem-splitter)' },
-    { path: 'generative text2sample', domain: 'generative', method: 'text2sample', capability: 'generative.text2sample', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(text2sample)' },
-    { path: 'generative vocal2midi', domain: 'generative', method: 'vocal2midi', capability: 'generative.vocal2midi', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'generative voice-change', domain: 'generative', method: 'voiceChange', capability: 'generative.voice-change', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'history list', domain: 'history', method: 'list', capability: 'history.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'history redo', domain: 'history', method: 'redo', capability: 'history.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
-    { path: 'history undo', domain: 'history', method: 'undo', capability: 'history.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
-    { path: 'import file', domain: 'import', method: 'file', capability: 'import.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'instrument disable', domain: 'instrument', method: 'disable', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'instrument enable', domain: 'instrument', method: 'enable', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'instrument set', domain: 'instrument', method: 'set', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'job cancel', domain: 'job', method: 'cancel', capability: 'job.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'job discard-result', domain: 'job', method: 'discardResult', capability: 'job.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'job get', domain: 'job', method: 'get', capability: 'job.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'job list', domain: 'job', method: 'list', capability: 'job.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'job place', domain: 'job', method: 'place', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'job results', domain: 'job', method: 'results', capability: 'job.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'job wait', domain: 'job', method: 'wait', capability: 'job.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'note add', domain: 'note', method: 'add', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
-    { path: 'note delete', domain: 'note', method: 'delete', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
-    { path: 'note get', domain: 'note', method: 'get', capability: 'note.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'note move', domain: 'note', method: 'move', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
-    { path: 'note resize', domain: 'note', method: 'resize', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
-    { path: 'note set-articulation', domain: 'note', method: 'setArticulation', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
-    { path: 'note set-lyric', domain: 'note', method: 'setLyric', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
-    { path: 'note split', domain: 'note', method: 'split', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
-    { path: 'project collect-save', domain: 'project', method: 'collectSave', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'project dirty', domain: 'project', method: 'dirty', capability: 'project.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
-    { path: 'project info', domain: 'project', method: 'info', capability: 'project.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
-    { path: 'project new', domain: 'project', method: 'new', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'project open', domain: 'project', method: 'open', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'project recent', domain: 'project', method: 'recent', capability: 'project.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
-    { path: 'project recent-clear', domain: 'project', method: 'recentClear', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
-    { path: 'project save', domain: 'project', method: 'save', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
-    { path: 'project save-as', domain: 'project', method: 'saveAs', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'project synthesis-status', domain: 'project', method: 'synthesisStatus', capability: 'project.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
-    { path: 'recording start', domain: 'recording', method: 'start', capability: 'recording.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
-    { path: 'recording stop', domain: 'recording', method: 'stop', capability: 'recording.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
-    { path: 'selection get', domain: 'selection', method: 'get', capability: 'selection.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'selection set', domain: 'selection', method: 'set', capability: 'selection.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'sound-source get', domain: 'sound-source', method: 'get', capability: 'soundsource.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'sound-source list', domain: 'sound-source', method: 'list', capability: 'soundsource.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'sound-source load', domain: 'sound-source', method: 'load', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'sound-source set', domain: 'sound-source', method: 'set', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'sound-source tags', domain: 'sound-source', method: 'tags', capability: 'soundsource.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'sound-source unload', domain: 'sound-source', method: 'unload', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'tempo analyze', domain: 'tempo', method: 'analyze', capability: 'tempo.analyze', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'tempo apply-beat-analysis', domain: 'tempo', method: 'applyBeatAnalysis', capability: 'tempo.applyV2', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'tempo get', domain: 'tempo', method: 'get', capability: 'tempo.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
-    { path: 'tempo points', domain: 'tempo', method: 'points', capability: 'tempo.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
-    { path: 'tempo remove-point', domain: 'tempo', method: 'removePoint', capability: 'tempo.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
-    { path: 'tempo set', domain: 'tempo', method: 'set', capability: 'tempo.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
-    { path: 'tempo set-display-range', domain: 'tempo', method: 'setDisplayRange', capability: 'tempo.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'tempo set-point', domain: 'tempo', method: 'setPoint', capability: 'tempo.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
-    { path: 'timesig get', domain: 'timesig', method: 'get', capability: 'timesig.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
-    { path: 'timesig list', domain: 'timesig', method: 'list', capability: 'timesig.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
-    { path: 'timesig remove-at', domain: 'timesig', method: 'removeAt', capability: 'timesig.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
-    { path: 'timesig set', domain: 'timesig', method: 'set', capability: 'timesig.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
-    { path: 'timesig set-at', domain: 'timesig', method: 'setAt', capability: 'timesig.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
-    { path: 'track create', domain: 'track', method: 'create', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'track delete', domain: 'track', method: 'delete', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'track duplicate', domain: 'track', method: 'duplicate', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'track get', domain: 'track', method: 'get', capability: 'track.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'track list', domain: 'track', method: 'list', capability: 'track.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'track rename', domain: 'track', method: 'rename', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'track reorder', domain: 'track', method: 'reorder', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'track set', domain: 'track', method: 'set', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'track set-input', domain: 'track', method: 'setInput', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'track set-language', domain: 'track', method: 'setLanguage', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'transport loop', domain: 'transport', method: 'loop', capability: 'transport.state', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
-    { path: 'transport metronome', domain: 'transport', method: 'metronome', capability: 'transport.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'transport play', domain: 'transport', method: 'play', capability: 'transport.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
-    { path: 'transport seek', domain: 'transport', method: 'seek', capability: 'transport.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'transport set-loop', domain: 'transport', method: 'setLoop', capability: 'transport.control', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
-    { path: 'transport state', domain: 'transport', method: 'state', capability: 'transport.state', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
-    { path: 'transport stop', domain: 'transport', method: 'stop', capability: 'transport.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
-    { path: 'transport toggle', domain: 'transport', method: 'toggle', capability: 'transport.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
-    { path: 'ui get', domain: 'ui', method: 'get', capability: 'ui.state', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
-    { path: 'ui hide-panel', domain: 'ui', method: 'hidePanel', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'ui hide-special-track', domain: 'ui', method: 'hideSpecialTrack', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'ui hide-window', domain: 'ui', method: 'hideWindow', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'ui show-panel', domain: 'ui', method: 'showPanel', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'ui show-special-track', domain: 'ui', method: 'showSpecialTrack', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'ui show-window', domain: 'ui', method: 'showWindow', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'vocalparam layers', domain: 'vocalparam', method: 'layers', capability: 'vocalparam.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'vocalparam read', domain: 'vocalparam', method: 'read', capability: 'vocalparam.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'vocalparam write', domain: 'vocalparam', method: 'write', capability: 'vocalparam.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
-    { path: 'voice collect', domain: 'voice', method: 'collect', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
-    { path: 'voice community', domain: 'voice', method: 'community', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'voice seeds', domain: 'voice', method: 'seeds', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
-    { path: 'voice synth-models', domain: 'voice', method: 'synthModels', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'blend add', wire: 'blend.add', domain: 'blend', method: 'add', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'blend create', wire: 'blend.create', domain: 'blend', method: 'create', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'blend delete', wire: 'blend.delete', domain: 'blend', method: 'delete', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'blend get', wire: 'blend.get', domain: 'blend', method: 'get', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'blend list', wire: 'blend.list', domain: 'blend', method: 'list', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'blend promote', wire: 'blend.promote', domain: 'blend', method: 'promote', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'blend remove', wire: 'blend.remove', domain: 'blend', method: 'remove', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'blend reorder', wire: 'blend.reorder', domain: 'blend', method: 'reorder', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'blend set', wire: 'blend.set', domain: 'blend', method: 'set', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'canvas effective-size', wire: 'canvas.effectiveSize', domain: 'canvas', method: 'effectiveSize', capability: 'canvas.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'canvas info', wire: 'canvas.info', domain: 'canvas', method: 'info', capability: 'canvas.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'caret get', wire: 'caret.get', domain: 'caret', method: 'get', capability: 'caret.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'caret set', wire: 'caret.set', domain: 'caret', method: 'set', capability: 'caret.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'choir add', wire: 'choir.add', domain: 'choir', method: 'add', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'choir disable', wire: 'choir.disable', domain: 'choir', method: 'disable', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'choir enable', wire: 'choir.enable', domain: 'choir', method: 'enable', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'choir get', wire: 'choir.get', domain: 'choir', method: 'get', capability: 'soundsource.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'choir remove', wire: 'choir.remove', domain: 'choir', method: 'remove', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'choir reorder', wire: 'choir.reorder', domain: 'choir', method: 'reorder', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'choir set', wire: 'choir.set', domain: 'choir', method: 'set', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip audio-content', wire: 'clip.audioContent', domain: 'clip', method: 'audioContent', capability: 'clip.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip consolidate', wire: 'clip.consolidate', domain: 'clip', method: 'consolidate', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip create', wire: 'clip.create', domain: 'clip', method: 'create', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip delete', wire: 'clip.delete', domain: 'clip', method: 'delete', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip detach-audio', wire: 'clip.detachAudio', domain: 'clip', method: 'detachAudio', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip duplicate', wire: 'clip.duplicate', domain: 'clip', method: 'duplicate', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip get', wire: 'clip.get', domain: 'clip', method: 'get', capability: 'clip.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip list', wire: 'clip.list', domain: 'clip', method: 'list', capability: 'clip.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip lyrics', wire: 'clip.lyrics', domain: 'clip', method: 'lyrics', capability: 'clip.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip move', wire: 'clip.move', domain: 'clip', method: 'move', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip note-content', wire: 'clip.noteContent', domain: 'clip', method: 'noteContent', capability: 'clip.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip reattach-audio', wire: 'clip.reattachAudio', domain: 'clip', method: 'reattachAudio', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip replace-content', wire: 'clip.replaceContent', domain: 'clip', method: 'replaceContent', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'clip resize', wire: 'clip.resize', domain: 'clip', method: 'resize', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip set', wire: 'clip.set', domain: 'clip', method: 'set', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip set-enabled', wire: 'clip.setEnabled', domain: 'clip', method: 'setEnabled', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip set-fades', wire: 'clip.setFades', domain: 'clip', method: 'setFades', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip set-gain', wire: 'clip.setGain', domain: 'clip', method: 'setGain', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip set-muted', wire: 'clip.setMuted', domain: 'clip', method: 'setMuted', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'clip split', wire: 'clip.split', domain: 'clip', method: 'split', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'convert editor-to-global', wire: 'convert.editorToGlobal', domain: 'convert', method: 'editorToGlobal', capability: 'convert.editor-to-global', ungated: true, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'convert global-to-editor', wire: 'convert.globalToEditor', domain: 'convert', method: 'globalToEditor', capability: 'convert.global-to-editor', ungated: true, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'convert measure-to-tick', wire: 'convert.measureToTick', domain: 'convert', method: 'measureToTick', capability: 'convert.measure-to-tick', ungated: true, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'convert tick-to-measure', wire: 'convert.tickToMeasure', domain: 'convert', method: 'tickToMeasure', capability: 'convert.tick-to-measure', ungated: true, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'convert tick-to-time', wire: 'convert.tickToTime', domain: 'convert', method: 'tickToTime', capability: 'convert.tick-to-time', ungated: true, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'convert time-to-tick', wire: 'convert.timeToTick', domain: 'convert', method: 'timeToTick', capability: 'convert.time-to-tick', ungated: true, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'device current', wire: 'device.current', domain: 'device', method: 'current', capability: 'device.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'device list', wire: 'device.list', domain: 'device', method: 'list', capability: 'device.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'device set-audio', wire: 'device.setAudio', domain: 'device', method: 'setAudio', capability: 'device.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'editor current-clip', wire: 'editor.currentClip', domain: 'editor', method: 'currentClip', capability: 'editor.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'editor open', wire: 'editor.open', domain: 'editor', method: 'open', capability: 'editor.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'editor status', wire: 'editor.status', domain: 'editor', method: 'status', capability: 'editor.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'editor tick-range', wire: 'editor.tickRange', domain: 'editor', method: 'tickRange', capability: 'editor.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'ensemble add', wire: 'ensemble.add', domain: 'ensemble', method: 'add', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'ensemble disable', wire: 'ensemble.disable', domain: 'ensemble', method: 'disable', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'ensemble enable', wire: 'ensemble.enable', domain: 'ensemble', method: 'enable', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'ensemble get', wire: 'ensemble.get', domain: 'ensemble', method: 'get', capability: 'soundsource.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'ensemble remove', wire: 'ensemble.remove', domain: 'ensemble', method: 'remove', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'ensemble reorder', wire: 'ensemble.reorder', domain: 'ensemble', method: 'reorder', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'ensemble set', wire: 'ensemble.set', domain: 'ensemble', method: 'set', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'export audio', wire: 'export.audio', domain: 'export', method: 'audio', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'export fcpxml', wire: 'export.fcpxml', domain: 'export', method: 'fcpxml', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'export lrc', wire: 'export.lrc', domain: 'export', method: 'lrc', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'export midi', wire: 'export.midi', domain: 'export', method: 'midi', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'export song-template', wire: 'export.songTemplate', domain: 'export', method: 'songTemplate', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'membership' },
+    { path: 'export video', wire: 'export.video', domain: 'export', method: 'video', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'export vocal-sample', wire: 'export.vocalSample', domain: 'export', method: 'vocalSample', capability: 'export.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'membership' },
+    { path: 'fx add', wire: 'fx.add', domain: 'fx', method: 'add', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'fx apply-preset', wire: 'fx.applyPreset', domain: 'fx', method: 'applyPreset', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'fx get-params', wire: 'fx.getParams', domain: 'fx', method: 'getParams', capability: 'fx.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'fx list', wire: 'fx.list', domain: 'fx', method: 'list', capability: 'fx.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'fx list-available', wire: 'fx.listAvailable', domain: 'fx', method: 'listAvailable', capability: 'fx.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'fx list-params', wire: 'fx.listParams', domain: 'fx', method: 'listParams', capability: 'fx.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'fx open-editor', wire: 'fx.openEditor', domain: 'fx', method: 'openEditor', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'fx remove', wire: 'fx.remove', domain: 'fx', method: 'remove', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'fx reorder', wire: 'fx.reorder', domain: 'fx', method: 'reorder', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'fx save-preset', wire: 'fx.savePreset', domain: 'fx', method: 'savePreset', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'fx scan', wire: 'fx.scan', domain: 'fx', method: 'scan', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'fx set', wire: 'fx.set', domain: 'fx', method: 'set', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'fx set-param', wire: 'fx.setParam', domain: 'fx', method: 'setParam', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'fx set-room', wire: 'fx.setRoom', domain: 'fx', method: 'setRoom', capability: 'fx.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'generative add-layer', wire: 'generative.addLayer', domain: 'generative', method: 'addLayer', capability: 'generative.add-layer', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(add-a-layer)' },
+    { path: 'generative enhance', wire: 'generative.enhance', domain: 'generative', method: 'enhance', capability: 'generative.enhance', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(music-enhancer)' },
+    { path: 'generative seed-audio', wire: 'generative.seedAudio', domain: 'generative', method: 'seedAudio', capability: 'generative.seed-audio', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(seed-audio)' },
+    { path: 'generative song', wire: 'generative.song', domain: 'generative', method: 'song', capability: 'generative.song', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(song-generator)' },
+    { path: 'generative sound-effects', wire: 'generative.soundEffects', domain: 'generative', method: 'soundEffects', capability: 'generative.sound-effects', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(sound-effects)' },
+    { path: 'generative stem-split', wire: 'generative.stemSplit', domain: 'generative', method: 'stemSplit', capability: 'generative.stem-split', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(stem-splitter)' },
+    { path: 'generative text2sample', wire: 'generative.text2sample', domain: 'generative', method: 'text2sample', capability: 'generative.text2sample', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true, entitlement: 'credits(text2sample)' },
+    { path: 'generative vocal2midi', wire: 'generative.vocal2midi', domain: 'generative', method: 'vocal2midi', capability: 'generative.vocal2midi', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'generative voice-change', wire: 'generative.voiceChange', domain: 'generative', method: 'voiceChange', capability: 'generative.voice-change', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'history list', wire: 'history.list', domain: 'history', method: 'list', capability: 'history.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'history redo', wire: 'history.redo', domain: 'history', method: 'redo', capability: 'history.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'history undo', wire: 'history.undo', domain: 'history', method: 'undo', capability: 'history.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'import file', wire: 'import.file', domain: 'import', method: 'file', capability: 'import.invoke', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'instrument disable', wire: 'instrument.disable', domain: 'instrument', method: 'disable', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'instrument enable', wire: 'instrument.enable', domain: 'instrument', method: 'enable', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'instrument set', wire: 'instrument.set', domain: 'instrument', method: 'set', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'job cancel', wire: 'job.cancel', domain: 'job', method: 'cancel', capability: 'job.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'job discard-result', wire: 'job.discardResult', domain: 'job', method: 'discardResult', capability: 'job.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'job get', wire: 'job.get', domain: 'job', method: 'get', capability: 'job.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'job list', wire: 'job.list', domain: 'job', method: 'list', capability: 'job.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'job place', wire: 'job.place', domain: 'job', method: 'place', capability: 'clip.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'job results', wire: 'job.results', domain: 'job', method: 'results', capability: 'job.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'job wait', wire: 'job.wait', domain: 'job', method: 'wait', capability: 'job.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'note add', wire: 'note.add', domain: 'note', method: 'add', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'note delete', wire: 'note.delete', domain: 'note', method: 'delete', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'note get', wire: 'note.get', domain: 'note', method: 'get', capability: 'note.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'note move', wire: 'note.move', domain: 'note', method: 'move', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'note resize', wire: 'note.resize', domain: 'note', method: 'resize', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'note set-articulation', wire: 'note.setArticulation', domain: 'note', method: 'setArticulation', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'note set-lyric', wire: 'note.setLyric', domain: 'note', method: 'setLyric', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'note split', wire: 'note.split', domain: 'note', method: 'split', capability: 'note.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'project collect-save', wire: 'project.collectSave', domain: 'project', method: 'collectSave', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'project dirty', wire: 'project.dirty', domain: 'project', method: 'dirty', capability: 'project.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'project info', wire: 'project.info', domain: 'project', method: 'info', capability: 'project.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'project new', wire: 'project.new', domain: 'project', method: 'new', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'project open', wire: 'project.open', domain: 'project', method: 'open', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'project recent', wire: 'project.recent', domain: 'project', method: 'recent', capability: 'project.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'project recent-clear', wire: 'project.recentClear', domain: 'project', method: 'recentClear', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'project save', wire: 'project.save', domain: 'project', method: 'save', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'project save-as', wire: 'project.saveAs', domain: 'project', method: 'saveAs', capability: 'project.lifecycle', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'project synthesis-status', wire: 'project.synthesisStatus', domain: 'project', method: 'synthesisStatus', capability: 'project.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'recording start', wire: 'recording.start', domain: 'recording', method: 'start', capability: 'recording.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'recording stop', wire: 'recording.stop', domain: 'recording', method: 'stop', capability: 'recording.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'selection get', wire: 'selection.get', domain: 'selection', method: 'get', capability: 'selection.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'selection set', wire: 'selection.set', domain: 'selection', method: 'set', capability: 'selection.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'sound-source get', wire: 'soundSource.get', domain: 'sound-source', method: 'get', capability: 'soundsource.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'sound-source list', wire: 'soundSource.list', domain: 'sound-source', method: 'list', capability: 'soundsource.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'sound-source load', wire: 'soundSource.load', domain: 'sound-source', method: 'load', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'sound-source set', wire: 'soundSource.set', domain: 'sound-source', method: 'set', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'sound-source tags', wire: 'soundSource.tags', domain: 'sound-source', method: 'tags', capability: 'soundsource.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'sound-source unload', wire: 'soundSource.unload', domain: 'sound-source', method: 'unload', capability: 'soundsource.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'tempo analyze', wire: 'tempo.analyze', domain: 'tempo', method: 'analyze', capability: 'tempo.analyze', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'tempo apply-beat-analysis', wire: 'tempo.applyBeatAnalysis', domain: 'tempo', method: 'applyBeatAnalysis', capability: 'tempo.applyV2', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'tempo get', wire: 'tempo.get', domain: 'tempo', method: 'get', capability: 'tempo.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'tempo points', wire: 'tempo.points', domain: 'tempo', method: 'points', capability: 'tempo.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'tempo remove-point', wire: 'tempo.removePoint', domain: 'tempo', method: 'removePoint', capability: 'tempo.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'tempo set', wire: 'tempo.set', domain: 'tempo', method: 'set', capability: 'tempo.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'tempo set-display-range', wire: 'tempo.setDisplayRange', domain: 'tempo', method: 'setDisplayRange', capability: 'tempo.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'tempo set-point', wire: 'tempo.setPoint', domain: 'tempo', method: 'setPoint', capability: 'tempo.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'timesig get', wire: 'timesig.get', domain: 'timesig', method: 'get', capability: 'timesig.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'timesig list', wire: 'timesig.list', domain: 'timesig', method: 'list', capability: 'timesig.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'timesig remove-at', wire: 'timesig.removeAt', domain: 'timesig', method: 'removeAt', capability: 'timesig.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'timesig set', wire: 'timesig.set', domain: 'timesig', method: 'set', capability: 'timesig.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'timesig set-at', wire: 'timesig.setAt', domain: 'timesig', method: 'setAt', capability: 'timesig.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'track create', wire: 'track.create', domain: 'track', method: 'create', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'track delete', wire: 'track.delete', domain: 'track', method: 'delete', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'track duplicate', wire: 'track.duplicate', domain: 'track', method: 'duplicate', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'track get', wire: 'track.get', domain: 'track', method: 'get', capability: 'track.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'track list', wire: 'track.list', domain: 'track', method: 'list', capability: 'track.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'track rename', wire: 'track.rename', domain: 'track', method: 'rename', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'track reorder', wire: 'track.reorder', domain: 'track', method: 'reorder', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'track resolve', wire: 'track.resolve', domain: 'track', method: 'resolve', capability: 'track.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'track set', wire: 'track.set', domain: 'track', method: 'set', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'track set-input', wire: 'track.setInput', domain: 'track', method: 'setInput', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'track set-language', wire: 'track.setLanguage', domain: 'track', method: 'setLanguage', capability: 'track.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'transport loop', wire: 'transport.loop', domain: 'transport', method: 'loop', capability: 'transport.state', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'transport metronome', wire: 'transport.metronome', domain: 'transport', method: 'metronome', capability: 'transport.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'transport play', wire: 'transport.play', domain: 'transport', method: 'play', capability: 'transport.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'transport seek', wire: 'transport.seek', domain: 'transport', method: 'seek', capability: 'transport.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'transport set-loop', wire: 'transport.setLoop', domain: 'transport', method: 'setLoop', capability: 'transport.control', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'transport state', wire: 'transport.state', domain: 'transport', method: 'state', capability: 'transport.state', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'transport stop', wire: 'transport.stop', domain: 'transport', method: 'stop', capability: 'transport.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'transport toggle', wire: 'transport.toggle', domain: 'transport', method: 'toggle', capability: 'transport.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: false },
+    { path: 'ui get', wire: 'ui.get', domain: 'ui', method: 'get', capability: 'ui.state', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: false },
+    { path: 'ui hide-panel', wire: 'ui.hidePanel', domain: 'ui', method: 'hidePanel', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'ui hide-special-track', wire: 'ui.hideSpecialTrack', domain: 'ui', method: 'hideSpecialTrack', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'ui hide-window', wire: 'ui.hideWindow', domain: 'ui', method: 'hideWindow', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'ui show-panel', wire: 'ui.showPanel', domain: 'ui', method: 'showPanel', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'ui show-special-track', wire: 'ui.showSpecialTrack', domain: 'ui', method: 'showSpecialTrack', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'ui show-window', wire: 'ui.showWindow', domain: 'ui', method: 'showWindow', capability: 'ui.control', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'vocalparam layers', wire: 'vocalparam.layers', domain: 'vocalparam', method: 'layers', capability: 'vocalparam.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'vocalparam read', wire: 'vocalparam.read', domain: 'vocalparam', method: 'read', capability: 'vocalparam.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'vocalparam write', wire: 'vocalparam.write', domain: 'vocalparam', method: 'write', capability: 'vocalparam.write', ungated: false, mutating: true, fingerprintPrecondition: true, takesParams: true },
+    { path: 'voice collect', wire: 'voice.collect', domain: 'voice', method: 'collect', capability: 'voice.write', ungated: false, mutating: true, fingerprintPrecondition: false, takesParams: true },
+    { path: 'voice community', wire: 'voice.community', domain: 'voice', method: 'community', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'voice seeds', wire: 'voice.seeds', domain: 'voice', method: 'seeds', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
+    { path: 'voice synth-models', wire: 'voice.synthModels', domain: 'voice', method: 'synthModels', capability: 'voice.read', ungated: false, mutating: false, fingerprintPrecondition: false, takesParams: true },
 ] as const satisfies readonly OperationDescriptor[];
 
 /** Every observable channel in this artifact, sorted by notification. The runtime binds one handler per row and guards the subscribe with the row's capability; a channel absent from this table is not observable from this artifact at all. */
@@ -7133,6 +7741,7 @@ export const REQUIRED_TOKENS = {
     'blend delete': 'voice.write',
     'blend get': 'voice.read',
     'blend list': 'voice.read',
+    'blend promote': 'voice.write',
     'blend remove': 'voice.write',
     'blend reorder': 'voice.write',
     'blend set': 'voice.write',
@@ -7273,6 +7882,7 @@ export const REQUIRED_TOKENS = {
     'track list': 'track.read',
     'track rename': 'track.write',
     'track reorder': 'track.write',
+    'track resolve': 'track.read',
     'track set': 'track.write',
     'track set-input': 'track.write',
     'track set-language': 'track.write',

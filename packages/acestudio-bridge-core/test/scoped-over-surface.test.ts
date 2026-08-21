@@ -34,6 +34,7 @@ import type {
 const FOREIGN_OPERATIONS = [
   {
     path: "media probe",
+    wire: "media.probe",
     domain: "media",
     method: "probe",
     capability: "media.probe",
@@ -44,6 +45,7 @@ const FOREIGN_OPERATIONS = [
   },
   {
     path: "media cut-audio",
+    wire: "media.cutAudio",
     domain: "media",
     method: "cutAudio",
     capability: "media.cutAudio",
@@ -54,6 +56,7 @@ const FOREIGN_OPERATIONS = [
   },
   {
     path: "canvas set",
+    wire: "canvas.set",
     domain: "canvas",
     method: "set",
     capability: "canvas.write",
@@ -64,6 +67,7 @@ const FOREIGN_OPERATIONS = [
   },
   {
     path: "special-tracks list",
+    wire: "specialTracks.list",
     domain: "special-tracks",
     method: "list",
     capability: "track.read",
@@ -74,6 +78,7 @@ const FOREIGN_OPERATIONS = [
   },
   {
     path: "time now",
+    wire: "time.now",
     domain: "time",
     method: "now",
     capability: "time.now",

@@ -24,6 +24,26 @@ Whether `tick` is in global (project-level) coordinates. False treats it as a ti
 
 ***
 
+### rawTrackRow?
+
+```ts
+optional rawTrackRow?: number;
+```
+
+The target row in the view's row space, for a caller that already holds screen geometry. Mutually exclusive with the other two forms — naming the same track twice has no rule for which wins, so it is refused.
+
+***
+
+### region?
+
+```ts
+optional region?: string;
+```
+
+Which index space `trackIndex` counts in. Defaults to `arrangement`, which is what an unqualified index has always meant here.
+
+***
+
 ### scope?
 
 ```ts
@@ -60,4 +80,14 @@ Target position in ticks. Must be non-negative.
 optional trackIndex?: number;
 ```
 
-Track index (0-based). Omitted keeps the current track.
+0-based position of the target track in `region`. Omitted keeps the current track. Mutually exclusive with `trackUuid` and `rawTrackRow`.
+
+***
+
+### trackUuid?
+
+```ts
+optional trackUuid?: string;
+```
+
+UUID of the target track, in braces. Names a track in any region, so it needs no `region` beside it. Mutually exclusive with `trackIndex`.

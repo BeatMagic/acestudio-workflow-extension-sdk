@@ -34,6 +34,16 @@ Front/back position in metres, 0 at the centre.
 
 ***
 
+### region
+
+```ts
+region: string;
+```
+
+Which index space `trackIndex` counts in. Always `arrangement` here: the Room Effect is a Sing-track property and Sing tracks live only in the arrangement. Reported rather than implied so a caller reading any `trackIndex` on this surface can read its space off the same result (ADR 0129 §2).
+
+***
+
 ### roomDepth?
 
 ```ts
@@ -60,7 +70,7 @@ Width of the current room in metres. A position is valid within plus or minus ha
 trackIndex: number;
 ```
 
-0-based index of the track.
+0-based position of the track in `region`.
 
 ***
 

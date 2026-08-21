@@ -46,6 +46,8 @@ members: {
   mute: boolean;
   name: string;
   ref?: string;
+  saveState?: "unmixed" | "unsaved" | "saved" | "changed";
+  seedCount?: number;
 }[];
 ```
 
@@ -81,7 +83,7 @@ True for member 0. The leader is what the track falls back to when choir mode is
 optional isVoiceBlend?: boolean;
 ```
 
-True when this member's voice is a blend rather than an ordinary voice. A choir member may be either.
+True when this member's voice has been adjusted away from the stock voice it started as — the same test `track get` reports for a singer track. A choir member may be either. Not "has more than one seed": a single seed at a fractional weight is an average against the base model, which is a blend the seed count cannot detect. Read `seedCount` for the recipe's size.
 
 #### modelName?
 
@@ -115,6 +117,22 @@ optional ref?: string;
 
 Ref of that voice, in the same form `sound-source load --source` accepts.
 
+#### saveState?
+
+```ts
+optional saveState?: "unmixed" | "unsaved" | "saved" | "changed";
+```
+
+How far a track's voice mix has travelled from the stock voice it was mounted as. This is what Studio captions a Sing track with — the singer's own name, the literal "Unsaved VoiceMix", or a saved blend's name — and what tells a caller whether there is a recipe worth saving. Declared here rather than in one group because `sound-source get`, `choir get` and `track get` all describe the same track's mix. Three groups spelling one roster themselves is three rosters that can drift. There is no value for "the project could not say". A mix whose state is unreadable reports the field absent, the way a track with no position omits its index rather than sending a sentinel a caller would read as a position (ADR 0129 §6).
+
+#### seedCount?
+
+```ts
+optional seedCount?: number;
+```
+
+How many seed voices the member's recipe names. Every voice is a recipe of seeds and an ordinary one is a recipe of exactly one, so a stock voice reports `1` — which is why `1` is an ordinary case rather than a contradiction of `isVoiceBlend`, and why a count cannot stand in for it. See there.
+
 ***
 
 ### offset?
@@ -124,6 +142,16 @@ optional offset?: number;
 ```
 
 Timing offset between members, in milliseconds. The UI calls this Offset.
+
+***
+
+### region
+
+```ts
+region: string;
+```
+
+Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2).
 
 ***
 

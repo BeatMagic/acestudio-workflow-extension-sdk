@@ -256,6 +256,7 @@ describe("the pass inside a binding", () => {
     // built from the generated table.
     const declared: OperationDescriptor = {
       path: "curve write",
+      wire: "curve.write",
       domain: "curve",
       method: "write",
       capability: "curve.write",

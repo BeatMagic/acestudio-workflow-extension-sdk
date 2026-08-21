@@ -10,6 +10,7 @@ const OPERATIONS: readonly [{
   path: "blend add";
   takesParams: true;
   ungated: false;
+  wire: "blend.add";
 }, {
   capability: "voice.write";
   domain: "blend";
@@ -19,6 +20,7 @@ const OPERATIONS: readonly [{
   path: "blend create";
   takesParams: true;
   ungated: false;
+  wire: "blend.create";
 }, {
   capability: "voice.write";
   domain: "blend";
@@ -28,6 +30,7 @@ const OPERATIONS: readonly [{
   path: "blend delete";
   takesParams: true;
   ungated: false;
+  wire: "blend.delete";
 }, {
   capability: "voice.read";
   domain: "blend";
@@ -37,6 +40,7 @@ const OPERATIONS: readonly [{
   path: "blend get";
   takesParams: true;
   ungated: false;
+  wire: "blend.get";
 }, {
   capability: "voice.read";
   domain: "blend";
@@ -46,6 +50,17 @@ const OPERATIONS: readonly [{
   path: "blend list";
   takesParams: true;
   ungated: false;
+  wire: "blend.list";
+}, {
+  capability: "voice.write";
+  domain: "blend";
+  fingerprintPrecondition: false;
+  method: "promote";
+  mutating: true;
+  path: "blend promote";
+  takesParams: true;
+  ungated: false;
+  wire: "blend.promote";
 }, {
   capability: "voice.write";
   domain: "blend";
@@ -55,6 +70,7 @@ const OPERATIONS: readonly [{
   path: "blend remove";
   takesParams: true;
   ungated: false;
+  wire: "blend.remove";
 }, {
   capability: "voice.write";
   domain: "blend";
@@ -64,6 +80,7 @@ const OPERATIONS: readonly [{
   path: "blend reorder";
   takesParams: true;
   ungated: false;
+  wire: "blend.reorder";
 }, {
   capability: "voice.write";
   domain: "blend";
@@ -73,6 +90,7 @@ const OPERATIONS: readonly [{
   path: "blend set";
   takesParams: true;
   ungated: false;
+  wire: "blend.set";
 }, {
   capability: "canvas.read";
   domain: "canvas";
@@ -82,6 +100,7 @@ const OPERATIONS: readonly [{
   path: "canvas effective-size";
   takesParams: false;
   ungated: false;
+  wire: "canvas.effectiveSize";
 }, {
   capability: "canvas.read";
   domain: "canvas";
@@ -91,6 +110,7 @@ const OPERATIONS: readonly [{
   path: "canvas info";
   takesParams: false;
   ungated: false;
+  wire: "canvas.info";
 }, {
   capability: "caret.read";
   domain: "caret";
@@ -100,6 +120,7 @@ const OPERATIONS: readonly [{
   path: "caret get";
   takesParams: true;
   ungated: false;
+  wire: "caret.get";
 }, {
   capability: "caret.write";
   domain: "caret";
@@ -109,6 +130,7 @@ const OPERATIONS: readonly [{
   path: "caret set";
   takesParams: true;
   ungated: false;
+  wire: "caret.set";
 }, {
   capability: "soundsource.write";
   domain: "choir";
@@ -118,6 +140,7 @@ const OPERATIONS: readonly [{
   path: "choir add";
   takesParams: true;
   ungated: false;
+  wire: "choir.add";
 }, {
   capability: "soundsource.write";
   domain: "choir";
@@ -127,6 +150,7 @@ const OPERATIONS: readonly [{
   path: "choir disable";
   takesParams: true;
   ungated: false;
+  wire: "choir.disable";
 }, {
   capability: "soundsource.write";
   domain: "choir";
@@ -136,6 +160,7 @@ const OPERATIONS: readonly [{
   path: "choir enable";
   takesParams: true;
   ungated: false;
+  wire: "choir.enable";
 }, {
   capability: "soundsource.read";
   domain: "choir";
@@ -145,6 +170,7 @@ const OPERATIONS: readonly [{
   path: "choir get";
   takesParams: true;
   ungated: false;
+  wire: "choir.get";
 }, {
   capability: "soundsource.write";
   domain: "choir";
@@ -154,6 +180,7 @@ const OPERATIONS: readonly [{
   path: "choir remove";
   takesParams: true;
   ungated: false;
+  wire: "choir.remove";
 }, {
   capability: "soundsource.write";
   domain: "choir";
@@ -163,6 +190,7 @@ const OPERATIONS: readonly [{
   path: "choir reorder";
   takesParams: true;
   ungated: false;
+  wire: "choir.reorder";
 }, {
   capability: "soundsource.write";
   domain: "choir";
@@ -172,6 +200,7 @@ const OPERATIONS: readonly [{
   path: "choir set";
   takesParams: true;
   ungated: false;
+  wire: "choir.set";
 }, {
   capability: "clip.read";
   domain: "clip";
@@ -181,6 +210,7 @@ const OPERATIONS: readonly [{
   path: "clip audio-content";
   takesParams: true;
   ungated: false;
+  wire: "clip.audioContent";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -190,6 +220,7 @@ const OPERATIONS: readonly [{
   path: "clip consolidate";
   takesParams: true;
   ungated: false;
+  wire: "clip.consolidate";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -199,6 +230,7 @@ const OPERATIONS: readonly [{
   path: "clip create";
   takesParams: true;
   ungated: false;
+  wire: "clip.create";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -208,6 +240,7 @@ const OPERATIONS: readonly [{
   path: "clip delete";
   takesParams: true;
   ungated: false;
+  wire: "clip.delete";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -217,6 +250,7 @@ const OPERATIONS: readonly [{
   path: "clip detach-audio";
   takesParams: true;
   ungated: false;
+  wire: "clip.detachAudio";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -226,6 +260,7 @@ const OPERATIONS: readonly [{
   path: "clip duplicate";
   takesParams: true;
   ungated: false;
+  wire: "clip.duplicate";
 }, {
   capability: "clip.read";
   domain: "clip";
@@ -235,6 +270,7 @@ const OPERATIONS: readonly [{
   path: "clip get";
   takesParams: true;
   ungated: false;
+  wire: "clip.get";
 }, {
   capability: "clip.read";
   domain: "clip";
@@ -244,6 +280,7 @@ const OPERATIONS: readonly [{
   path: "clip list";
   takesParams: true;
   ungated: false;
+  wire: "clip.list";
 }, {
   capability: "clip.read";
   domain: "clip";
@@ -253,6 +290,7 @@ const OPERATIONS: readonly [{
   path: "clip lyrics";
   takesParams: true;
   ungated: false;
+  wire: "clip.lyrics";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -262,6 +300,7 @@ const OPERATIONS: readonly [{
   path: "clip move";
   takesParams: true;
   ungated: false;
+  wire: "clip.move";
 }, {
   capability: "clip.read";
   domain: "clip";
@@ -271,6 +310,7 @@ const OPERATIONS: readonly [{
   path: "clip note-content";
   takesParams: true;
   ungated: false;
+  wire: "clip.noteContent";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -280,6 +320,7 @@ const OPERATIONS: readonly [{
   path: "clip reattach-audio";
   takesParams: true;
   ungated: false;
+  wire: "clip.reattachAudio";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -289,6 +330,7 @@ const OPERATIONS: readonly [{
   path: "clip replace-content";
   takesParams: true;
   ungated: false;
+  wire: "clip.replaceContent";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -298,6 +340,7 @@ const OPERATIONS: readonly [{
   path: "clip resize";
   takesParams: true;
   ungated: false;
+  wire: "clip.resize";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -307,6 +350,7 @@ const OPERATIONS: readonly [{
   path: "clip set";
   takesParams: true;
   ungated: false;
+  wire: "clip.set";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -316,6 +360,7 @@ const OPERATIONS: readonly [{
   path: "clip set-enabled";
   takesParams: true;
   ungated: false;
+  wire: "clip.setEnabled";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -325,6 +370,7 @@ const OPERATIONS: readonly [{
   path: "clip set-fades";
   takesParams: true;
   ungated: false;
+  wire: "clip.setFades";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -334,6 +380,7 @@ const OPERATIONS: readonly [{
   path: "clip set-gain";
   takesParams: true;
   ungated: false;
+  wire: "clip.setGain";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -343,6 +390,7 @@ const OPERATIONS: readonly [{
   path: "clip set-muted";
   takesParams: true;
   ungated: false;
+  wire: "clip.setMuted";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -352,6 +400,7 @@ const OPERATIONS: readonly [{
   path: "clip split";
   takesParams: true;
   ungated: false;
+  wire: "clip.split";
 }, {
   capability: "convert.editor-to-global";
   domain: "convert";
@@ -361,6 +410,7 @@ const OPERATIONS: readonly [{
   path: "convert editor-to-global";
   takesParams: true;
   ungated: true;
+  wire: "convert.editorToGlobal";
 }, {
   capability: "convert.global-to-editor";
   domain: "convert";
@@ -370,6 +420,7 @@ const OPERATIONS: readonly [{
   path: "convert global-to-editor";
   takesParams: true;
   ungated: true;
+  wire: "convert.globalToEditor";
 }, {
   capability: "convert.measure-to-tick";
   domain: "convert";
@@ -379,6 +430,7 @@ const OPERATIONS: readonly [{
   path: "convert measure-to-tick";
   takesParams: true;
   ungated: true;
+  wire: "convert.measureToTick";
 }, {
   capability: "convert.tick-to-measure";
   domain: "convert";
@@ -388,6 +440,7 @@ const OPERATIONS: readonly [{
   path: "convert tick-to-measure";
   takesParams: true;
   ungated: true;
+  wire: "convert.tickToMeasure";
 }, {
   capability: "convert.tick-to-time";
   domain: "convert";
@@ -397,6 +450,7 @@ const OPERATIONS: readonly [{
   path: "convert tick-to-time";
   takesParams: true;
   ungated: true;
+  wire: "convert.tickToTime";
 }, {
   capability: "convert.time-to-tick";
   domain: "convert";
@@ -406,6 +460,7 @@ const OPERATIONS: readonly [{
   path: "convert time-to-tick";
   takesParams: true;
   ungated: true;
+  wire: "convert.timeToTick";
 }, {
   capability: "device.read";
   domain: "device";
@@ -415,6 +470,7 @@ const OPERATIONS: readonly [{
   path: "device current";
   takesParams: false;
   ungated: false;
+  wire: "device.current";
 }, {
   capability: "device.read";
   domain: "device";
@@ -424,6 +480,7 @@ const OPERATIONS: readonly [{
   path: "device list";
   takesParams: false;
   ungated: false;
+  wire: "device.list";
 }, {
   capability: "device.write";
   domain: "device";
@@ -433,6 +490,7 @@ const OPERATIONS: readonly [{
   path: "device set-audio";
   takesParams: true;
   ungated: false;
+  wire: "device.setAudio";
 }, {
   capability: "editor.read";
   domain: "editor";
@@ -442,6 +500,7 @@ const OPERATIONS: readonly [{
   path: "editor current-clip";
   takesParams: false;
   ungated: false;
+  wire: "editor.currentClip";
 }, {
   capability: "editor.write";
   domain: "editor";
@@ -451,6 +510,7 @@ const OPERATIONS: readonly [{
   path: "editor open";
   takesParams: false;
   ungated: false;
+  wire: "editor.open";
 }, {
   capability: "editor.read";
   domain: "editor";
@@ -460,6 +520,7 @@ const OPERATIONS: readonly [{
   path: "editor status";
   takesParams: false;
   ungated: false;
+  wire: "editor.status";
 }, {
   capability: "editor.read";
   domain: "editor";
@@ -469,6 +530,7 @@ const OPERATIONS: readonly [{
   path: "editor tick-range";
   takesParams: false;
   ungated: false;
+  wire: "editor.tickRange";
 }, {
   capability: "soundsource.write";
   domain: "ensemble";
@@ -478,6 +540,7 @@ const OPERATIONS: readonly [{
   path: "ensemble add";
   takesParams: true;
   ungated: false;
+  wire: "ensemble.add";
 }, {
   capability: "soundsource.write";
   domain: "ensemble";
@@ -487,6 +550,7 @@ const OPERATIONS: readonly [{
   path: "ensemble disable";
   takesParams: true;
   ungated: false;
+  wire: "ensemble.disable";
 }, {
   capability: "soundsource.write";
   domain: "ensemble";
@@ -496,6 +560,7 @@ const OPERATIONS: readonly [{
   path: "ensemble enable";
   takesParams: true;
   ungated: false;
+  wire: "ensemble.enable";
 }, {
   capability: "soundsource.read";
   domain: "ensemble";
@@ -505,6 +570,7 @@ const OPERATIONS: readonly [{
   path: "ensemble get";
   takesParams: true;
   ungated: false;
+  wire: "ensemble.get";
 }, {
   capability: "soundsource.write";
   domain: "ensemble";
@@ -514,6 +580,7 @@ const OPERATIONS: readonly [{
   path: "ensemble remove";
   takesParams: true;
   ungated: false;
+  wire: "ensemble.remove";
 }, {
   capability: "soundsource.write";
   domain: "ensemble";
@@ -523,6 +590,7 @@ const OPERATIONS: readonly [{
   path: "ensemble reorder";
   takesParams: true;
   ungated: false;
+  wire: "ensemble.reorder";
 }, {
   capability: "soundsource.write";
   domain: "ensemble";
@@ -532,6 +600,7 @@ const OPERATIONS: readonly [{
   path: "ensemble set";
   takesParams: true;
   ungated: false;
+  wire: "ensemble.set";
 }, {
   capability: "export.invoke";
   domain: "export";
@@ -541,6 +610,7 @@ const OPERATIONS: readonly [{
   path: "export audio";
   takesParams: true;
   ungated: false;
+  wire: "export.audio";
 }, {
   capability: "export.invoke";
   domain: "export";
@@ -550,6 +620,7 @@ const OPERATIONS: readonly [{
   path: "export fcpxml";
   takesParams: true;
   ungated: false;
+  wire: "export.fcpxml";
 }, {
   capability: "export.invoke";
   domain: "export";
@@ -559,6 +630,7 @@ const OPERATIONS: readonly [{
   path: "export lrc";
   takesParams: true;
   ungated: false;
+  wire: "export.lrc";
 }, {
   capability: "export.invoke";
   domain: "export";
@@ -568,6 +640,7 @@ const OPERATIONS: readonly [{
   path: "export midi";
   takesParams: true;
   ungated: false;
+  wire: "export.midi";
 }, {
   capability: "export.invoke";
   domain: "export";
@@ -578,6 +651,7 @@ const OPERATIONS: readonly [{
   path: "export song-template";
   takesParams: true;
   ungated: false;
+  wire: "export.songTemplate";
 }, {
   capability: "export.invoke";
   domain: "export";
@@ -587,6 +661,7 @@ const OPERATIONS: readonly [{
   path: "export video";
   takesParams: true;
   ungated: false;
+  wire: "export.video";
 }, {
   capability: "export.invoke";
   domain: "export";
@@ -597,6 +672,7 @@ const OPERATIONS: readonly [{
   path: "export vocal-sample";
   takesParams: true;
   ungated: false;
+  wire: "export.vocalSample";
 }, {
   capability: "fx.write";
   domain: "fx";
@@ -606,6 +682,7 @@ const OPERATIONS: readonly [{
   path: "fx add";
   takesParams: true;
   ungated: false;
+  wire: "fx.add";
 }, {
   capability: "fx.write";
   domain: "fx";
@@ -615,6 +692,7 @@ const OPERATIONS: readonly [{
   path: "fx apply-preset";
   takesParams: true;
   ungated: false;
+  wire: "fx.applyPreset";
 }, {
   capability: "fx.read";
   domain: "fx";
@@ -624,6 +702,7 @@ const OPERATIONS: readonly [{
   path: "fx get-params";
   takesParams: true;
   ungated: false;
+  wire: "fx.getParams";
 }, {
   capability: "fx.read";
   domain: "fx";
@@ -633,6 +712,7 @@ const OPERATIONS: readonly [{
   path: "fx list";
   takesParams: true;
   ungated: false;
+  wire: "fx.list";
 }, {
   capability: "fx.read";
   domain: "fx";
@@ -642,6 +722,7 @@ const OPERATIONS: readonly [{
   path: "fx list-available";
   takesParams: true;
   ungated: false;
+  wire: "fx.listAvailable";
 }, {
   capability: "fx.read";
   domain: "fx";
@@ -651,6 +732,7 @@ const OPERATIONS: readonly [{
   path: "fx list-params";
   takesParams: true;
   ungated: false;
+  wire: "fx.listParams";
 }, {
   capability: "ui.control";
   domain: "fx";
@@ -660,6 +742,7 @@ const OPERATIONS: readonly [{
   path: "fx open-editor";
   takesParams: true;
   ungated: false;
+  wire: "fx.openEditor";
 }, {
   capability: "fx.write";
   domain: "fx";
@@ -669,6 +752,7 @@ const OPERATIONS: readonly [{
   path: "fx remove";
   takesParams: true;
   ungated: false;
+  wire: "fx.remove";
 }, {
   capability: "fx.write";
   domain: "fx";
@@ -678,6 +762,7 @@ const OPERATIONS: readonly [{
   path: "fx reorder";
   takesParams: true;
   ungated: false;
+  wire: "fx.reorder";
 }, {
   capability: "fx.write";
   domain: "fx";
@@ -687,6 +772,7 @@ const OPERATIONS: readonly [{
   path: "fx save-preset";
   takesParams: true;
   ungated: false;
+  wire: "fx.savePreset";
 }, {
   capability: "fx.write";
   domain: "fx";
@@ -696,6 +782,7 @@ const OPERATIONS: readonly [{
   path: "fx scan";
   takesParams: true;
   ungated: false;
+  wire: "fx.scan";
 }, {
   capability: "fx.write";
   domain: "fx";
@@ -705,6 +792,7 @@ const OPERATIONS: readonly [{
   path: "fx set";
   takesParams: true;
   ungated: false;
+  wire: "fx.set";
 }, {
   capability: "fx.write";
   domain: "fx";
@@ -714,6 +802,7 @@ const OPERATIONS: readonly [{
   path: "fx set-param";
   takesParams: true;
   ungated: false;
+  wire: "fx.setParam";
 }, {
   capability: "fx.write";
   domain: "fx";
@@ -723,6 +812,7 @@ const OPERATIONS: readonly [{
   path: "fx set-room";
   takesParams: true;
   ungated: false;
+  wire: "fx.setRoom";
 }, {
   capability: "generative.add-layer";
   domain: "generative";
@@ -733,6 +823,7 @@ const OPERATIONS: readonly [{
   path: "generative add-layer";
   takesParams: true;
   ungated: false;
+  wire: "generative.addLayer";
 }, {
   capability: "generative.enhance";
   domain: "generative";
@@ -743,6 +834,7 @@ const OPERATIONS: readonly [{
   path: "generative enhance";
   takesParams: true;
   ungated: false;
+  wire: "generative.enhance";
 }, {
   capability: "generative.seed-audio";
   domain: "generative";
@@ -753,6 +845,7 @@ const OPERATIONS: readonly [{
   path: "generative seed-audio";
   takesParams: true;
   ungated: false;
+  wire: "generative.seedAudio";
 }, {
   capability: "generative.song";
   domain: "generative";
@@ -763,6 +856,7 @@ const OPERATIONS: readonly [{
   path: "generative song";
   takesParams: true;
   ungated: false;
+  wire: "generative.song";
 }, {
   capability: "generative.sound-effects";
   domain: "generative";
@@ -773,6 +867,7 @@ const OPERATIONS: readonly [{
   path: "generative sound-effects";
   takesParams: true;
   ungated: false;
+  wire: "generative.soundEffects";
 }, {
   capability: "generative.stem-split";
   domain: "generative";
@@ -783,6 +878,7 @@ const OPERATIONS: readonly [{
   path: "generative stem-split";
   takesParams: true;
   ungated: false;
+  wire: "generative.stemSplit";
 }, {
   capability: "generative.text2sample";
   domain: "generative";
@@ -793,6 +889,7 @@ const OPERATIONS: readonly [{
   path: "generative text2sample";
   takesParams: true;
   ungated: false;
+  wire: "generative.text2sample";
 }, {
   capability: "generative.vocal2midi";
   domain: "generative";
@@ -802,6 +899,7 @@ const OPERATIONS: readonly [{
   path: "generative vocal2midi";
   takesParams: true;
   ungated: false;
+  wire: "generative.vocal2midi";
 }, {
   capability: "generative.voice-change";
   domain: "generative";
@@ -811,6 +909,7 @@ const OPERATIONS: readonly [{
   path: "generative voice-change";
   takesParams: true;
   ungated: false;
+  wire: "generative.voiceChange";
 }, {
   capability: "history.read";
   domain: "history";
@@ -820,6 +919,7 @@ const OPERATIONS: readonly [{
   path: "history list";
   takesParams: true;
   ungated: false;
+  wire: "history.list";
 }, {
   capability: "history.control";
   domain: "history";
@@ -829,6 +929,7 @@ const OPERATIONS: readonly [{
   path: "history redo";
   takesParams: false;
   ungated: false;
+  wire: "history.redo";
 }, {
   capability: "history.control";
   domain: "history";
@@ -838,6 +939,7 @@ const OPERATIONS: readonly [{
   path: "history undo";
   takesParams: false;
   ungated: false;
+  wire: "history.undo";
 }, {
   capability: "import.invoke";
   domain: "import";
@@ -847,6 +949,7 @@ const OPERATIONS: readonly [{
   path: "import file";
   takesParams: true;
   ungated: false;
+  wire: "import.file";
 }, {
   capability: "soundsource.write";
   domain: "instrument";
@@ -856,6 +959,7 @@ const OPERATIONS: readonly [{
   path: "instrument disable";
   takesParams: true;
   ungated: false;
+  wire: "instrument.disable";
 }, {
   capability: "soundsource.write";
   domain: "instrument";
@@ -865,6 +969,7 @@ const OPERATIONS: readonly [{
   path: "instrument enable";
   takesParams: true;
   ungated: false;
+  wire: "instrument.enable";
 }, {
   capability: "soundsource.write";
   domain: "instrument";
@@ -874,6 +979,7 @@ const OPERATIONS: readonly [{
   path: "instrument set";
   takesParams: true;
   ungated: false;
+  wire: "instrument.set";
 }, {
   capability: "job.control";
   domain: "job";
@@ -883,6 +989,7 @@ const OPERATIONS: readonly [{
   path: "job cancel";
   takesParams: true;
   ungated: false;
+  wire: "job.cancel";
 }, {
   capability: "job.control";
   domain: "job";
@@ -892,6 +999,7 @@ const OPERATIONS: readonly [{
   path: "job discard-result";
   takesParams: true;
   ungated: false;
+  wire: "job.discardResult";
 }, {
   capability: "job.read";
   domain: "job";
@@ -901,6 +1009,7 @@ const OPERATIONS: readonly [{
   path: "job get";
   takesParams: true;
   ungated: false;
+  wire: "job.get";
 }, {
   capability: "job.read";
   domain: "job";
@@ -910,6 +1019,7 @@ const OPERATIONS: readonly [{
   path: "job list";
   takesParams: true;
   ungated: false;
+  wire: "job.list";
 }, {
   capability: "clip.write";
   domain: "job";
@@ -919,6 +1029,7 @@ const OPERATIONS: readonly [{
   path: "job place";
   takesParams: true;
   ungated: false;
+  wire: "job.place";
 }, {
   capability: "job.read";
   domain: "job";
@@ -928,6 +1039,7 @@ const OPERATIONS: readonly [{
   path: "job results";
   takesParams: true;
   ungated: false;
+  wire: "job.results";
 }, {
   capability: "job.read";
   domain: "job";
@@ -937,6 +1049,7 @@ const OPERATIONS: readonly [{
   path: "job wait";
   takesParams: true;
   ungated: false;
+  wire: "job.wait";
 }, {
   capability: "note.write";
   domain: "note";
@@ -946,6 +1059,7 @@ const OPERATIONS: readonly [{
   path: "note add";
   takesParams: true;
   ungated: false;
+  wire: "note.add";
 }, {
   capability: "note.write";
   domain: "note";
@@ -955,6 +1069,7 @@ const OPERATIONS: readonly [{
   path: "note delete";
   takesParams: true;
   ungated: false;
+  wire: "note.delete";
 }, {
   capability: "note.read";
   domain: "note";
@@ -964,6 +1079,7 @@ const OPERATIONS: readonly [{
   path: "note get";
   takesParams: true;
   ungated: false;
+  wire: "note.get";
 }, {
   capability: "note.write";
   domain: "note";
@@ -973,6 +1089,7 @@ const OPERATIONS: readonly [{
   path: "note move";
   takesParams: true;
   ungated: false;
+  wire: "note.move";
 }, {
   capability: "note.write";
   domain: "note";
@@ -982,6 +1099,7 @@ const OPERATIONS: readonly [{
   path: "note resize";
   takesParams: true;
   ungated: false;
+  wire: "note.resize";
 }, {
   capability: "note.write";
   domain: "note";
@@ -991,6 +1109,7 @@ const OPERATIONS: readonly [{
   path: "note set-articulation";
   takesParams: true;
   ungated: false;
+  wire: "note.setArticulation";
 }, {
   capability: "note.write";
   domain: "note";
@@ -1000,6 +1119,7 @@ const OPERATIONS: readonly [{
   path: "note set-lyric";
   takesParams: true;
   ungated: false;
+  wire: "note.setLyric";
 }, {
   capability: "note.write";
   domain: "note";
@@ -1009,6 +1129,7 @@ const OPERATIONS: readonly [{
   path: "note split";
   takesParams: true;
   ungated: false;
+  wire: "note.split";
 }, {
   capability: "project.lifecycle";
   domain: "project";
@@ -1018,6 +1139,7 @@ const OPERATIONS: readonly [{
   path: "project collect-save";
   takesParams: true;
   ungated: false;
+  wire: "project.collectSave";
 }, {
   capability: "project.read";
   domain: "project";
@@ -1027,6 +1149,7 @@ const OPERATIONS: readonly [{
   path: "project dirty";
   takesParams: false;
   ungated: false;
+  wire: "project.dirty";
 }, {
   capability: "project.read";
   domain: "project";
@@ -1036,6 +1159,7 @@ const OPERATIONS: readonly [{
   path: "project info";
   takesParams: false;
   ungated: false;
+  wire: "project.info";
 }, {
   capability: "project.lifecycle";
   domain: "project";
@@ -1045,6 +1169,7 @@ const OPERATIONS: readonly [{
   path: "project new";
   takesParams: true;
   ungated: false;
+  wire: "project.new";
 }, {
   capability: "project.lifecycle";
   domain: "project";
@@ -1054,6 +1179,7 @@ const OPERATIONS: readonly [{
   path: "project open";
   takesParams: true;
   ungated: false;
+  wire: "project.open";
 }, {
   capability: "project.read";
   domain: "project";
@@ -1063,6 +1189,7 @@ const OPERATIONS: readonly [{
   path: "project recent";
   takesParams: false;
   ungated: false;
+  wire: "project.recent";
 }, {
   capability: "project.lifecycle";
   domain: "project";
@@ -1072,6 +1199,7 @@ const OPERATIONS: readonly [{
   path: "project recent-clear";
   takesParams: false;
   ungated: false;
+  wire: "project.recentClear";
 }, {
   capability: "project.lifecycle";
   domain: "project";
@@ -1081,6 +1209,7 @@ const OPERATIONS: readonly [{
   path: "project save";
   takesParams: false;
   ungated: false;
+  wire: "project.save";
 }, {
   capability: "project.lifecycle";
   domain: "project";
@@ -1090,6 +1219,7 @@ const OPERATIONS: readonly [{
   path: "project save-as";
   takesParams: true;
   ungated: false;
+  wire: "project.saveAs";
 }, {
   capability: "project.read";
   domain: "project";
@@ -1099,6 +1229,7 @@ const OPERATIONS: readonly [{
   path: "project synthesis-status";
   takesParams: false;
   ungated: false;
+  wire: "project.synthesisStatus";
 }, {
   capability: "recording.control";
   domain: "recording";
@@ -1108,6 +1239,7 @@ const OPERATIONS: readonly [{
   path: "recording start";
   takesParams: false;
   ungated: false;
+  wire: "recording.start";
 }, {
   capability: "recording.control";
   domain: "recording";
@@ -1117,6 +1249,7 @@ const OPERATIONS: readonly [{
   path: "recording stop";
   takesParams: false;
   ungated: false;
+  wire: "recording.stop";
 }, {
   capability: "selection.read";
   domain: "selection";
@@ -1126,6 +1259,7 @@ const OPERATIONS: readonly [{
   path: "selection get";
   takesParams: true;
   ungated: false;
+  wire: "selection.get";
 }, {
   capability: "selection.write";
   domain: "selection";
@@ -1135,6 +1269,7 @@ const OPERATIONS: readonly [{
   path: "selection set";
   takesParams: true;
   ungated: false;
+  wire: "selection.set";
 }, {
   capability: "soundsource.read";
   domain: "sound-source";
@@ -1144,6 +1279,7 @@ const OPERATIONS: readonly [{
   path: "sound-source get";
   takesParams: true;
   ungated: false;
+  wire: "soundSource.get";
 }, {
   capability: "soundsource.read";
   domain: "sound-source";
@@ -1153,6 +1289,7 @@ const OPERATIONS: readonly [{
   path: "sound-source list";
   takesParams: true;
   ungated: false;
+  wire: "soundSource.list";
 }, {
   capability: "soundsource.write";
   domain: "sound-source";
@@ -1162,6 +1299,7 @@ const OPERATIONS: readonly [{
   path: "sound-source load";
   takesParams: true;
   ungated: false;
+  wire: "soundSource.load";
 }, {
   capability: "soundsource.write";
   domain: "sound-source";
@@ -1171,6 +1309,7 @@ const OPERATIONS: readonly [{
   path: "sound-source set";
   takesParams: true;
   ungated: false;
+  wire: "soundSource.set";
 }, {
   capability: "soundsource.read";
   domain: "sound-source";
@@ -1180,6 +1319,7 @@ const OPERATIONS: readonly [{
   path: "sound-source tags";
   takesParams: true;
   ungated: false;
+  wire: "soundSource.tags";
 }, {
   capability: "soundsource.write";
   domain: "sound-source";
@@ -1189,6 +1329,7 @@ const OPERATIONS: readonly [{
   path: "sound-source unload";
   takesParams: true;
   ungated: false;
+  wire: "soundSource.unload";
 }, {
   capability: "tempo.analyze";
   domain: "tempo";
@@ -1198,6 +1339,7 @@ const OPERATIONS: readonly [{
   path: "tempo analyze";
   takesParams: true;
   ungated: false;
+  wire: "tempo.analyze";
 }, {
   capability: "tempo.applyV2";
   domain: "tempo";
@@ -1207,6 +1349,7 @@ const OPERATIONS: readonly [{
   path: "tempo apply-beat-analysis";
   takesParams: true;
   ungated: false;
+  wire: "tempo.applyBeatAnalysis";
 }, {
   capability: "tempo.read";
   domain: "tempo";
@@ -1216,6 +1359,7 @@ const OPERATIONS: readonly [{
   path: "tempo get";
   takesParams: false;
   ungated: false;
+  wire: "tempo.get";
 }, {
   capability: "tempo.read";
   domain: "tempo";
@@ -1225,6 +1369,7 @@ const OPERATIONS: readonly [{
   path: "tempo points";
   takesParams: false;
   ungated: false;
+  wire: "tempo.points";
 }, {
   capability: "tempo.write";
   domain: "tempo";
@@ -1234,6 +1379,7 @@ const OPERATIONS: readonly [{
   path: "tempo remove-point";
   takesParams: true;
   ungated: false;
+  wire: "tempo.removePoint";
 }, {
   capability: "tempo.write";
   domain: "tempo";
@@ -1243,6 +1389,7 @@ const OPERATIONS: readonly [{
   path: "tempo set";
   takesParams: true;
   ungated: false;
+  wire: "tempo.set";
 }, {
   capability: "tempo.write";
   domain: "tempo";
@@ -1252,6 +1399,7 @@ const OPERATIONS: readonly [{
   path: "tempo set-display-range";
   takesParams: true;
   ungated: false;
+  wire: "tempo.setDisplayRange";
 }, {
   capability: "tempo.write";
   domain: "tempo";
@@ -1261,6 +1409,7 @@ const OPERATIONS: readonly [{
   path: "tempo set-point";
   takesParams: true;
   ungated: false;
+  wire: "tempo.setPoint";
 }, {
   capability: "timesig.read";
   domain: "timesig";
@@ -1270,6 +1419,7 @@ const OPERATIONS: readonly [{
   path: "timesig get";
   takesParams: false;
   ungated: false;
+  wire: "timesig.get";
 }, {
   capability: "timesig.read";
   domain: "timesig";
@@ -1279,6 +1429,7 @@ const OPERATIONS: readonly [{
   path: "timesig list";
   takesParams: false;
   ungated: false;
+  wire: "timesig.list";
 }, {
   capability: "timesig.write";
   domain: "timesig";
@@ -1288,6 +1439,7 @@ const OPERATIONS: readonly [{
   path: "timesig remove-at";
   takesParams: true;
   ungated: false;
+  wire: "timesig.removeAt";
 }, {
   capability: "timesig.write";
   domain: "timesig";
@@ -1297,6 +1449,7 @@ const OPERATIONS: readonly [{
   path: "timesig set";
   takesParams: true;
   ungated: false;
+  wire: "timesig.set";
 }, {
   capability: "timesig.write";
   domain: "timesig";
@@ -1306,6 +1459,7 @@ const OPERATIONS: readonly [{
   path: "timesig set-at";
   takesParams: true;
   ungated: false;
+  wire: "timesig.setAt";
 }, {
   capability: "track.write";
   domain: "track";
@@ -1315,6 +1469,7 @@ const OPERATIONS: readonly [{
   path: "track create";
   takesParams: true;
   ungated: false;
+  wire: "track.create";
 }, {
   capability: "track.write";
   domain: "track";
@@ -1324,6 +1479,7 @@ const OPERATIONS: readonly [{
   path: "track delete";
   takesParams: true;
   ungated: false;
+  wire: "track.delete";
 }, {
   capability: "track.write";
   domain: "track";
@@ -1333,6 +1489,7 @@ const OPERATIONS: readonly [{
   path: "track duplicate";
   takesParams: true;
   ungated: false;
+  wire: "track.duplicate";
 }, {
   capability: "track.read";
   domain: "track";
@@ -1342,6 +1499,7 @@ const OPERATIONS: readonly [{
   path: "track get";
   takesParams: true;
   ungated: false;
+  wire: "track.get";
 }, {
   capability: "track.read";
   domain: "track";
@@ -1351,6 +1509,7 @@ const OPERATIONS: readonly [{
   path: "track list";
   takesParams: true;
   ungated: false;
+  wire: "track.list";
 }, {
   capability: "track.write";
   domain: "track";
@@ -1360,6 +1519,7 @@ const OPERATIONS: readonly [{
   path: "track rename";
   takesParams: true;
   ungated: false;
+  wire: "track.rename";
 }, {
   capability: "track.write";
   domain: "track";
@@ -1369,6 +1529,17 @@ const OPERATIONS: readonly [{
   path: "track reorder";
   takesParams: true;
   ungated: false;
+  wire: "track.reorder";
+}, {
+  capability: "track.read";
+  domain: "track";
+  fingerprintPrecondition: false;
+  method: "resolve";
+  mutating: false;
+  path: "track resolve";
+  takesParams: true;
+  ungated: false;
+  wire: "track.resolve";
 }, {
   capability: "track.write";
   domain: "track";
@@ -1378,6 +1549,7 @@ const OPERATIONS: readonly [{
   path: "track set";
   takesParams: true;
   ungated: false;
+  wire: "track.set";
 }, {
   capability: "track.write";
   domain: "track";
@@ -1387,6 +1559,7 @@ const OPERATIONS: readonly [{
   path: "track set-input";
   takesParams: true;
   ungated: false;
+  wire: "track.setInput";
 }, {
   capability: "track.write";
   domain: "track";
@@ -1396,6 +1569,7 @@ const OPERATIONS: readonly [{
   path: "track set-language";
   takesParams: true;
   ungated: false;
+  wire: "track.setLanguage";
 }, {
   capability: "transport.state";
   domain: "transport";
@@ -1405,6 +1579,7 @@ const OPERATIONS: readonly [{
   path: "transport loop";
   takesParams: false;
   ungated: false;
+  wire: "transport.loop";
 }, {
   capability: "transport.control";
   domain: "transport";
@@ -1414,6 +1589,7 @@ const OPERATIONS: readonly [{
   path: "transport metronome";
   takesParams: true;
   ungated: false;
+  wire: "transport.metronome";
 }, {
   capability: "transport.control";
   domain: "transport";
@@ -1423,6 +1599,7 @@ const OPERATIONS: readonly [{
   path: "transport play";
   takesParams: false;
   ungated: false;
+  wire: "transport.play";
 }, {
   capability: "transport.control";
   domain: "transport";
@@ -1432,6 +1609,7 @@ const OPERATIONS: readonly [{
   path: "transport seek";
   takesParams: true;
   ungated: false;
+  wire: "transport.seek";
 }, {
   capability: "transport.control";
   domain: "transport";
@@ -1441,6 +1619,7 @@ const OPERATIONS: readonly [{
   path: "transport set-loop";
   takesParams: true;
   ungated: false;
+  wire: "transport.setLoop";
 }, {
   capability: "transport.state";
   domain: "transport";
@@ -1450,6 +1629,7 @@ const OPERATIONS: readonly [{
   path: "transport state";
   takesParams: false;
   ungated: false;
+  wire: "transport.state";
 }, {
   capability: "transport.control";
   domain: "transport";
@@ -1459,6 +1639,7 @@ const OPERATIONS: readonly [{
   path: "transport stop";
   takesParams: false;
   ungated: false;
+  wire: "transport.stop";
 }, {
   capability: "transport.control";
   domain: "transport";
@@ -1468,6 +1649,7 @@ const OPERATIONS: readonly [{
   path: "transport toggle";
   takesParams: false;
   ungated: false;
+  wire: "transport.toggle";
 }, {
   capability: "ui.state";
   domain: "ui";
@@ -1477,6 +1659,7 @@ const OPERATIONS: readonly [{
   path: "ui get";
   takesParams: false;
   ungated: false;
+  wire: "ui.get";
 }, {
   capability: "ui.control";
   domain: "ui";
@@ -1486,6 +1669,7 @@ const OPERATIONS: readonly [{
   path: "ui hide-panel";
   takesParams: true;
   ungated: false;
+  wire: "ui.hidePanel";
 }, {
   capability: "ui.control";
   domain: "ui";
@@ -1495,6 +1679,7 @@ const OPERATIONS: readonly [{
   path: "ui hide-special-track";
   takesParams: true;
   ungated: false;
+  wire: "ui.hideSpecialTrack";
 }, {
   capability: "ui.control";
   domain: "ui";
@@ -1504,6 +1689,7 @@ const OPERATIONS: readonly [{
   path: "ui hide-window";
   takesParams: true;
   ungated: false;
+  wire: "ui.hideWindow";
 }, {
   capability: "ui.control";
   domain: "ui";
@@ -1513,6 +1699,7 @@ const OPERATIONS: readonly [{
   path: "ui show-panel";
   takesParams: true;
   ungated: false;
+  wire: "ui.showPanel";
 }, {
   capability: "ui.control";
   domain: "ui";
@@ -1522,6 +1709,7 @@ const OPERATIONS: readonly [{
   path: "ui show-special-track";
   takesParams: true;
   ungated: false;
+  wire: "ui.showSpecialTrack";
 }, {
   capability: "ui.control";
   domain: "ui";
@@ -1531,6 +1719,7 @@ const OPERATIONS: readonly [{
   path: "ui show-window";
   takesParams: true;
   ungated: false;
+  wire: "ui.showWindow";
 }, {
   capability: "vocalparam.read";
   domain: "vocalparam";
@@ -1540,6 +1729,7 @@ const OPERATIONS: readonly [{
   path: "vocalparam layers";
   takesParams: true;
   ungated: false;
+  wire: "vocalparam.layers";
 }, {
   capability: "vocalparam.read";
   domain: "vocalparam";
@@ -1549,6 +1739,7 @@ const OPERATIONS: readonly [{
   path: "vocalparam read";
   takesParams: true;
   ungated: false;
+  wire: "vocalparam.read";
 }, {
   capability: "vocalparam.write";
   domain: "vocalparam";
@@ -1558,6 +1749,7 @@ const OPERATIONS: readonly [{
   path: "vocalparam write";
   takesParams: true;
   ungated: false;
+  wire: "vocalparam.write";
 }, {
   capability: "voice.write";
   domain: "voice";
@@ -1567,6 +1759,7 @@ const OPERATIONS: readonly [{
   path: "voice collect";
   takesParams: true;
   ungated: false;
+  wire: "voice.collect";
 }, {
   capability: "voice.read";
   domain: "voice";
@@ -1576,6 +1769,7 @@ const OPERATIONS: readonly [{
   path: "voice community";
   takesParams: true;
   ungated: false;
+  wire: "voice.community";
 }, {
   capability: "voice.read";
   domain: "voice";
@@ -1585,6 +1779,7 @@ const OPERATIONS: readonly [{
   path: "voice seeds";
   takesParams: true;
   ungated: false;
+  wire: "voice.seeds";
 }, {
   capability: "voice.read";
   domain: "voice";
@@ -1594,6 +1789,7 @@ const OPERATIONS: readonly [{
   path: "voice synth-models";
   takesParams: true;
   ungated: false;
+  wire: "voice.synthModels";
 }];
 ```
 

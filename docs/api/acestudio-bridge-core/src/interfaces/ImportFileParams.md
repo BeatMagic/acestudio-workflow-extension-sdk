@@ -90,7 +90,17 @@ Where the clip starts on the global timeline, in project ticks. Omit for tick 0,
 optional posSec?: number;
 ```
 
-Where the clip starts on the global timeline, in seconds. OPTIONAL, and when present it WINS over `pos` — including at 0, which is a position like any other. Both units are carried because a video peer thinks in seconds while the timeline is native in ticks, and converting between them needs the tempo curve. The CLI's time-value grammar (`1.5s`) is not this: it compiles to ticks client-side, so it leaves an SDK caller with a `convert time-to-tick` round trip on a placement path. **Media kinds only.**
+Where the clip starts on the global timeline, in seconds. OPTIONAL, and when present it WINS over `pos` — including at 0, which is a position like any other. That is the native-unit rule (ADR 0032 §5) rather than an exception to it: every kind this call places is second-native, so seconds is always the spelling that needs no conversion. Both units are carried because a video peer thinks in seconds while the timeline is native in ticks, and converting between them needs the tempo curve. The CLI's time-value grammar (`1.5s`) is not this: it compiles to ticks client-side, so it leaves an SDK caller with a `convert time-to-tick` round trip on a placement path. **Media kinds only.**
+
+***
+
+### region?
+
+```ts
+optional region?: string;
+```
+
+Which index space `trackIndex` counts in: `arrangement` (the default) or `video`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track (ADR 0129 §1). The region has to match the kind being imported, and a mismatch is refused rather than ignored: a video file lands in the `video` region and nothing else lands there, so `region: "arrangement"` on a video import names a track that cannot hold it.
 
 ***
 
@@ -104,23 +114,23 @@ Split polyphonic content into separate monophonic voices, one track each. **MIDI
 
 ***
 
-### trackId?
-
-```ts
-optional trackId?: string;
-```
-
-Target video track, by id. **Video only** — refused on any other kind, the same way `trackIndex` is refused on video. Omit to land on the region's head track — local index 0, which is the topmost layer and the one the monitor shows. Naming a track picks where the clip is *aimed*, not where it necessarily lands: if that track has no room at `pos`, `onOccupied: relocate` stacks the clip on a fresh track directly above the one named, so inserted footage is visible rather than hidden behind what was already there (ADR 0105). Check `createdTrack` and `trackUuid` to see where it went.
-
-***
-
 ### trackIndex?
 
 ```ts
 optional trackIndex?: number;
 ```
 
-Target track index (0-based) in the arrangement. **Not video** — the video region has its own local index space (ADR 0104), so an arrangement index cannot name a layer in it; pass `trackId` instead and this is refused rather than ignored. Omit to auto-route onto a new track after the existing content. An `Empty` slot is converted in place.
+Target track position (0-based) in `region`. Mutually exclusive with `trackUuid`. An `Empty` arrangement slot is a valid target and is converted in place.
+
+***
+
+### trackUuid?
+
+```ts
+optional trackUuid?: string;
+```
+
+Target track UUID in braces format. The definitive handle: it names a track in every region, where an index needs `region` to be read — so this is the form that reaches a video layer with nothing else to get right. Omit the addressing form entirely to auto-route: a media or foreign-project import lands on a new track after the existing content, and a video import lands on the region's head track — local index 0, the topmost layer and the one the monitor shows.
 
 ***
 

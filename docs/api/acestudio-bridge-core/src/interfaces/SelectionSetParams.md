@@ -13,7 +13,7 @@ optional horizontalSelection?: {
 };
 ```
 
-A `\{begin, end\}` range: ticks for the arrangement's horizontal (time) and vertical (track index) selection, local ticks for the editor's note selection range.
+A `\{begin, end\}` tick range: the arrangement's horizontal (time) selection, or the editor's note selection range in local ticks. Time only. The vertical selection had its own meaning for these two field names — track indices, not ticks — and now has its own type ([`VerticalSelection`]) rather than borrowing a range that says "ticks".
 
 #### begin
 
@@ -123,6 +123,7 @@ optional selectNotes?: boolean;
 
 ```ts
 optional tracks?: {
+  region?: string;
   trackIndex?: number;
   trackUuid?: string;
 }[];
@@ -130,13 +131,21 @@ optional tracks?: {
 
 [arrangement] Discrete set of tracks to select; each entry must have at least `trackIndex` or `trackUuid`. An empty array clears the track selection. Passing this selects that set instead of an area range.
 
+#### region?
+
+```ts
+optional region?: string;
+```
+
+Which index space `trackIndex` counts in. Defaults to `arrangement`, which is what an unqualified index has always meant here.
+
 #### trackIndex?
 
 ```ts
 optional trackIndex?: number;
 ```
 
-Addressed by position: 0-based index.
+Addressed by position: 0-based position in `region`.
 
 #### trackUuid?
 
@@ -144,7 +153,7 @@ Addressed by position: 0-based index.
 optional trackUuid?: string;
 ```
 
-Addressed by identity: the braced track UUID (`\{abc-...\}`).
+Addressed by identity: the braced track UUID (`\{abc-...\}`). Names a track in any region, so it needs no `region` beside it.
 
 ***
 
@@ -152,25 +161,61 @@ Addressed by identity: the braced track UUID (`\{abc-...\}`).
 
 ```ts
 optional verticalSelection?: {
-  begin: number;
-  end: number;
+  beginIndex?: number;
+  beginRegion?: string;
+  endIndex?: number;
+  endRegion?: string;
+  rawBegin?: number;
+  rawEnd?: number;
 };
 ```
 
-A `\{begin, end\}` range: ticks for the arrangement's horizontal (time) and vertical (track index) selection, local ticks for the editor's note selection range.
+How a write names the vertical band it wants selected: the resolved region-local ends, or the raw view rows. One form per call. Two optional groups rather than a required [`VerticalSelection`], because a caller should not have to compute the addressing it did not use. Both ends of whichever form is given are required, and every bound is inclusive, as on the read side. The resolved form is what the rest of this surface speaks, and is the one to reach for. The raw form is here for a caller that already holds screen geometry — it is not a shortcut for "I did not want to look up the region", because a raw row means nothing without knowing the view's layout.
 
-#### begin
-
-```ts
-begin: number;
-```
-
-Inclusive start of the range.
-
-#### end
+#### beginIndex?
 
 ```ts
-end: number;
+optional beginIndex?: number;
 ```
 
-Exclusive end of the range.
+Inclusive 0-based position of that end within `beginRegion`. Required with `endIndex`: one end is half a band.
+
+#### beginRegion?
+
+```ts
+optional beginRegion?: string;
+```
+
+Which index space `beginIndex` counts in. Defaults to `arrangement` when omitted, as an unqualified index does everywhere a track is addressed (ADR 0129 §1) — so a band wholly inside the arrangement names two indices and nothing else. Each end defaults on its own: a drag out of the video band into the arrangement gives `beginRegion` and lets the other end take the default.
+
+#### endIndex?
+
+```ts
+optional endIndex?: number;
+```
+
+Inclusive 0-based position of that end within `endRegion`. Required with `beginIndex`.
+
+#### endRegion?
+
+```ts
+optional endRegion?: string;
+```
+
+Which index space `endIndex` counts in. Defaults to `arrangement`, as `beginRegion` does.
+
+#### rawBegin?
+
+```ts
+optional rawBegin?: number;
+```
+
+Inclusive first row of the band, in the view's row space. Required with `rawEnd`, and refused alongside the resolved form.
+
+#### rawEnd?
+
+```ts
+optional rawEnd?: number;
+```
+
+Inclusive last row of the band, in the view's row space.

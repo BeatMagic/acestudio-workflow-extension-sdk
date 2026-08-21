@@ -34,13 +34,23 @@ Front/back position in metres, 0 at the centre. Must be given with `positionX`.
 
 ***
 
+### region?
+
+```ts
+optional region?: string;
+```
+
+Which index space `trackIndex` counts in: `arrangement` (the default), `video` or `marker`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track (ADR 0129 §1). Ignored beside `trackUuid`, which needs no region.
+
+***
+
 ### trackIndex?
 
 ```ts
 optional trackIndex?: number;
 ```
 
-0-based index in the arrangement. Mutually exclusive with `trackUuid`.
+0-based position in `region`. Mutually exclusive with `trackUuid`.
 
 ***
 

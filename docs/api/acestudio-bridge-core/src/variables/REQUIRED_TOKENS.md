@@ -7,6 +7,7 @@ const REQUIRED_TOKENS: {
   blend delete: "voice.write";
   blend get: "voice.read";
   blend list: "voice.read";
+  blend promote: "voice.write";
   blend remove: "voice.write";
   blend reorder: "voice.write";
   blend set: "voice.write";
@@ -147,6 +148,7 @@ const REQUIRED_TOKENS: {
   track list: "track.read";
   track rename: "track.write";
   track reorder: "track.write";
+  track resolve: "track.read";
   track set: "track.write";
   track set-input: "track.write";
   track set-language: "track.write";
@@ -207,6 +209,12 @@ readonly blend get: "voice.read" = 'voice.read';
 
 ```ts
 readonly blend list: "voice.read" = 'voice.read';
+```
+
+### blend promote
+
+```ts
+readonly blend promote: "voice.write" = 'voice.write';
 ```
 
 ### blend remove
@@ -1047,6 +1055,12 @@ readonly track rename: "track.write" = 'track.write';
 
 ```ts
 readonly track reorder: "track.write" = 'track.write';
+```
+
+### track resolve
+
+```ts
+readonly track resolve: "track.read" = 'track.read';
 ```
 
 ### track set

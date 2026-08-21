@@ -54,6 +54,16 @@ Stereo pan position: -1.0 (full left) to 1.0 (full right); 0.0 = center. The mas
 
 ***
 
+### region?
+
+```ts
+optional region?: string;
+```
+
+Which index space `trackIndex` counts in: `arrangement` (the default), `video`, `marker`, or `chord`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track. Ignored beside `trackUuid`, which needs no region.
+
+***
+
 ### solo?
 
 ```ts
@@ -70,7 +80,7 @@ Solo the track (true) or unsolo (false). When any track is soloed, all non-soloe
 optional trackIndex?: number;
 ```
 
-0-based track index. Addresses the arrangement only — the master bus has no index, so `trackUuid: "master"` is how you reach it.
+0-based position in `region` (users see arrangement tracks numbered from 1). Mutually exclusive with `trackUuid` — the master bus has no index, so `trackUuid: "master"` is how you reach it.
 
 ***
 
@@ -80,4 +90,4 @@ optional trackIndex?: number;
 optional trackUuid?: string;
 ```
 
-Track UUID in braces format, e.g. `\{12345678-abcd-...\}`, or the well-known id `master` for the project's master bus.
+Track UUID in braces format, e.g. `\{12345678-abcd-...\}`, or the well-known id `master` for the project's master bus. The definitive handle: it works in every region, where an index needs `region` to be read.

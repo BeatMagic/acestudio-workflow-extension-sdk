@@ -14,10 +14,30 @@ New display name. Pass an empty string to restore the track's default fallback n
 
 ***
 
-### trackIndex
+### region?
 
 ```ts
-trackIndex: number;
+optional region?: string;
 ```
 
-0-based track index.
+Which index space `trackIndex` counts in: `arrangement` (the default), `video` or `marker`. A protected marker track is refused whichever form named it, and the chord track has no name to set.
+
+***
+
+### trackIndex?
+
+```ts
+optional trackIndex?: number;
+```
+
+0-based position in `region`. Mutually exclusive with `trackUuid`.
+
+***
+
+### trackUuid?
+
+```ts
+optional trackUuid?: string;
+```
+
+Track UUID in braces format. Mutually exclusive with `trackIndex`.

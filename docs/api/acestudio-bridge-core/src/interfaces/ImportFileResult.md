@@ -70,7 +70,7 @@ Media kinds only: whether this call created the track the clip landed on, rather
 optional geometry?: Record<string, unknown>;
 ```
 
-Media kinds only: the placed clip's geometry, in ticks — the same shape `clip get` reports. An open map here: this surface declares no fixed key set for it.
+Media kinds only: the placed clip's geometry — the same shape `clipRow` reports, in both units, with `nativeUnit` naming the exact one. An open map here: this surface declares no fixed key set for it.
 
 ***
 
@@ -90,7 +90,27 @@ Audio clips only: `not_loaded`, `loaded_success` or `loaded_failed`. Usually `no
 optional naturalDur?: number;
 ```
 
-Media kinds only: the source's own length in ticks, before any `clipIn` / `dur` window was applied, measured at the position the clip landed on — the same axis `dur` is on, so a caller can size a window from it. Compare with `geometry` to see how much of the file is showing.
+Media kinds only: the source's own length in ticks, before any `clipIn` / `dur` window was applied, measured at the position the clip landed on — the same axis `dur` is on, so a caller can size a window from it. Compare with `geometry` to see how much of the file is showing. A converted, rounded value: a media source is measured in seconds, so its tick length depends on the tempo where the clip landed. Read `naturalDurSec` for the file's own length (ADR 0032 §2).
+
+***
+
+### naturalDurSec?
+
+```ts
+optional naturalDurSec?: number;
+```
+
+Media kinds only: the same source length in seconds — the file's own measurement, exact and independent of the tempo curve. This is the native unit for every kind this field describes, audio and video alike.
+
+***
+
+### region?
+
+```ts
+optional region?: string;
+```
+
+Media kinds only: which index space `trackIndex` counts in — `arrangement` or `video`. Travels with `trackIndex` (ADR 0129 §2): a video layer's index is region-local, so the number alone would read as an arrangement position.
 
 ***
 
@@ -141,6 +161,16 @@ optional trackCount?: number;
 ```
 
 Foreign-project kinds only: how many tracks the source file held. Larger than `clipCount` only if a placed clip could not be identified afterwards.
+
+***
+
+### trackIndex?
+
+```ts
+optional trackIndex?: number;
+```
+
+Media kinds only: 0-based position of that track in `region` — the identity the UI shows a person, beside the handle a program stores (ADR 0129 §3). Where the clip actually landed, which `onOccupied: relocate` can make differ from what was asked for.
 
 ***
 

@@ -30,6 +30,7 @@ False after a successful stop. Reported so a caller can confirm the busy window 
 takes: {
   kind: string;
   path?: string;
+  region: string;
   trackIndex: number;
   trackName: string;
   trackType: string;
@@ -53,6 +54,14 @@ optional path?: string;
 ```
 
 Absolute path of the recorded wav inside the project's Samples folder. Audio takes only.
+
+#### region
+
+```ts
+region: string;
+```
+
+Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2).
 
 #### trackIndex
 

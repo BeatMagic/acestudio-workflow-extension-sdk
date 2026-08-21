@@ -10,7 +10,7 @@ The `blend` operations, mirroring the canonical operation tree 1:1.
 add(params, options?): Promise<BlendAddResult>;
 ```
 
-Add a voice seed to a blend.
+Add a voice seed to a blend, or to a track's live mix.
 
 Requires the `voice.write` capability.
 
@@ -85,16 +85,16 @@ Requires the `voice.write` capability.
 ### get()
 
 ```ts
-get(params, options?): Promise<BlendGetResult>;
+get(params?, options?): Promise<BlendGetResult>;
 ```
 
-Read one blended voice: its model, its seeds, and each seed's weights.
+Read a recipe: its model, its seeds, and each seed's weights. Reads a track's live mix when given a track target instead of a blend.
 
 Requires the `voice.read` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`BlendGetParams`](BlendGetParams.md)
 
@@ -134,13 +134,39 @@ Requires the `voice.read` capability.
 
 ***
 
+### promote()
+
+```ts
+promote(params?, options?): Promise<BlendPromoteResult>;
+```
+
+Save the mix playing on a track into your blended-voice library.
+
+Requires the `voice.write` capability.
+
+#### Parameters
+
+##### params?
+
+[`BlendPromoteParams`](BlendPromoteParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`BlendPromoteResult`](BlendPromoteResult.md)\>
+
+***
+
 ### remove()
 
 ```ts
 remove(params, options?): Promise<BlendRemoveResult>;
 ```
 
-Remove one voice seed from a blend.
+Remove one voice seed from a blend, or from a track's live mix.
 
 Requires the `voice.write` capability.
 
@@ -166,7 +192,7 @@ Requires the `voice.write` capability.
 reorder(params, options?): Promise<BlendReorderResult>;
 ```
 
-Move a voice seed to another position in a blend's recipe.
+Move a voice seed to another position in a recipe.
 
 Requires the `voice.write` capability.
 
@@ -189,16 +215,16 @@ Requires the `voice.write` capability.
 ### set()
 
 ```ts
-set(params, options?): Promise<BlendSetResult>;
+set(params?, options?): Promise<BlendSetResult>;
 ```
 
-Change a blend's name, tags, avatar or language, or one seed's weights.
+Change a voice's name, tags, avatar or language, or one seed's weights.
 
 Requires the `voice.write` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`BlendSetParams`](BlendSetParams.md)
 

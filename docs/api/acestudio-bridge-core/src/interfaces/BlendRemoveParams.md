@@ -4,13 +4,13 @@ Arguments for `blend remove`.
 
 ## Properties
 
-### blend
+### blend?
 
 ```ts
-blend: string;
+optional blend?: string;
 ```
 
-**Required.** Which blend, by display name or ref.
+Which blend, by display name or ref. A name matching more than one blend is an error listing the candidates. Give this or a track target, never both and never neither.
 
 ***
 
@@ -21,3 +21,33 @@ member: number;
 ```
 
 **Required.** Which seed to remove, by 0-based position in the recipe.
+
+***
+
+### region?
+
+```ts
+optional region?: string;
+```
+
+Which index space `trackIndex` counts in. Only `arrangement` can hold a track carrying a voice mix, so that is the default and the sole accepted value; naming another is refused rather than resolved against the arrangement, which would edit an unrelated track (ADR 0129 §2).
+
+***
+
+### trackIndex?
+
+```ts
+optional trackIndex?: number;
+```
+
+0-based index in the arrangement, naming a track subject the terminal-ergonomic way.
+
+***
+
+### trackUuid?
+
+```ts
+optional trackUuid?: string;
+```
+
+Track UUID in braces format. Names the live mix on that track as the subject instead of a library entry.

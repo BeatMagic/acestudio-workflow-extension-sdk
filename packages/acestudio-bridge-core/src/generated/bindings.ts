@@ -7916,7 +7916,7 @@ export const PROFILES = {
     'surface.extension-sdk': ['canvas.read', 'session.handshake', 'session.move', 'session.ping', 'session.shutdown', 'workflow.dev', 'workflow.ui'],
     'transport.v1': ['transport.control'],
     'ui.v1': ['workflow.ui'],
-    'timeline.tempo.v1': ['tempo.applyV2'],
+    'timeline.tempo.v1': ['tempo.analyze', 'tempo.applyV2', 'tempo.read', 'tempo.write'],
     'generative.all.v1': ['generative.add-layer', 'generative.enhance', 'generative.seed-audio', 'generative.song', 'generative.sound-effects', 'generative.stem-split', 'generative.text2sample', 'generative.vocal2midi', 'generative.voice-change'],
 } as const satisfies Readonly<Record<string, readonly CapabilityToken[]>>;
 

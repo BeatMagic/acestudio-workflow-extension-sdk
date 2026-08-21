@@ -13,6 +13,63 @@ Entries from 0.3.2 down were reconstructed from git history rather than written 
 the time, so read them as a summary of each release's headline change and the PR as
 the record.
 
+## [0.5.0] — 2026-08-21
+
+Regenerated against surface **9.0**, two majors on from the 7.2 this artifact was
+pinned at.
+
+### Breaking
+
+- **`OperationDescriptor` gains a required `wire`** — the JSON-RPC method the host
+  actually serves an operation as. It was previously re-derived from `domain` and
+  `method`, which coincides with the served name only while every path is two
+  segments and none is a wildcard route; emitting it ends the guess. **Send `wire`,
+  not `path`.**
+
+  This only breaks code that *constructs* a descriptor — a hand-built table, or a
+  test fixture standing in for a second artifact's rows. Reading the generated
+  `OPERATIONS` is unaffected.
+
+- **Fields that a result cannot always answer are now optional.** A result had been
+  declaring as required several fields the host omits in real states, so a caller
+  who trusted the type read `undefined` where it expected a value. The types now say
+  what the host actually sends:
+
+  - `CaretGetResult.trackIndex` — absent together with `region` when the project
+    cannot place the caret's track.
+  - `TrackGetResult` — `trackName`, `rawName`, `color`, `mixer`, `recordInput`, and
+    `mixer`'s own `mute` / `pan` / `solo`: the master bus and an empty slot have no
+    name to rename, no colour, and no per-track mix.
+  - `TrackListResult` rows — `clipCount`, `trackName`, `trackUuid`, for the same
+    reason.
+  - Every blend result's `group`, `id` and `ref` — absent when the recipe is a
+    track's live mix that names no library voice. `saveState` is what says whether
+    there is a recipe worth saving.
+  - `RecordingStartResult` — `trackIndex`, `begin`, `end`.
+  - `JobPlaceResult.trackId`.
+
+  **Migration: narrow before use.** Under `strictNullChecks` the compiler points at
+  every site; each one was already a latent runtime bug.
+
+- **Parameters that name a track or a blend are now optional**, because a second
+  spelling can supply the same subject — `trackUuid` beside `trackIndex`,
+  `region` beside either. Widening, so no call needs changing.
+
+### Added
+
+- **`blend promote`** — save a track's voice mix into the blended-voice library
+  (`BlendPromoteParams` / `BlendPromoteResult`).
+- **`track resolve`** (`TrackResolveParams` / `TrackResolveResult`).
+- **`region` on the track-addressing params and results**, naming which index space
+  a `trackIndex` counts in — `arrangement`, `video`, `marker` or `chord`. Position 1
+  names a different track in each band, so the index is unreadable without it.
+- **`saveState`** on the results that describe a track's voice mix, saying how far
+  the mix has travelled from the stock voice it was mounted as.
+
+### Changed
+
+- `SURFACE_VERSION` is `'9.0'`.
+
 ## [0.4.1] — 2026-08-18
 
 Regenerated against surface **7.2**. This artifact was pinned at 7.0, so it had

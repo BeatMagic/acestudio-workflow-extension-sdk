@@ -21,23 +21,28 @@ export type AtRootOf<Rows extends SurfaceRow, T extends string> = Extract<Reacha
 // @public
 export interface BlendAddParams {
     at?: number;
-    blend: string;
+    blend?: string;
     link?: boolean;
+    region?: string;
     seed: string;
     style?: number;
     timbre?: number;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
 export interface BlendAddResult {
     avatar?: number;
-    group: string;
-    id: number;
+    group?: string;
+    id?: number;
     language?: string;
     modelId: number;
     modelName: string;
     name: string;
-    ref: string;
+    ref?: string;
+    region?: string;
+    saveState?: 'unmixed' | 'unsaved' | 'saved' | 'changed';
     seedCount: number;
     seeds: {
         code: number;
@@ -50,6 +55,8 @@ export interface BlendAddResult {
     supportedLanguages?: string[];
     tags?: string[];
     timbreOnly?: boolean;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -64,13 +71,15 @@ export interface BlendCreateParams {
 // @public
 export interface BlendCreateResult {
     avatar?: number;
-    group: string;
-    id: number;
+    group?: string;
+    id?: number;
     language?: string;
     modelId: number;
     modelName: string;
     name: string;
-    ref: string;
+    ref?: string;
+    region?: string;
+    saveState?: 'unmixed' | 'unsaved' | 'saved' | 'changed';
     seedCount: number;
     seeds: {
         code: number;
@@ -83,6 +92,8 @@ export interface BlendCreateResult {
     supportedLanguages?: string[];
     tags?: string[];
     timbreOnly?: boolean;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -100,19 +111,24 @@ export interface BlendDeleteResult {
 
 // @public
 export interface BlendGetParams {
-    blend: string;
+    blend?: string;
+    region?: string;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
 export interface BlendGetResult {
     avatar?: number;
-    group: string;
-    id: number;
+    group?: string;
+    id?: number;
     language?: string;
     modelId: number;
     modelName: string;
     name: string;
-    ref: string;
+    ref?: string;
+    region?: string;
+    saveState?: 'unmixed' | 'unsaved' | 'saved' | 'changed';
     seedCount: number;
     seeds: {
         code: number;
@@ -125,6 +141,8 @@ export interface BlendGetResult {
     supportedLanguages?: string[];
     tags?: string[];
     timbreOnly?: boolean;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -153,29 +171,74 @@ export interface BlendOperations {
     add(params: BlendAddParams, options?: MutatingCallOptions): Promise<BlendAddResult>;
     create(params: BlendCreateParams, options?: MutatingCallOptions): Promise<BlendCreateResult>;
     delete(params: BlendDeleteParams, options?: MutatingCallOptions): Promise<BlendDeleteResult>;
-    get(params: BlendGetParams, options?: CallOptions): Promise<BlendGetResult>;
+    get(params?: BlendGetParams, options?: CallOptions): Promise<BlendGetResult>;
     list(params?: BlendListParams, options?: CallOptions): Promise<BlendListResult>;
+    promote(params?: BlendPromoteParams, options?: MutatingCallOptions): Promise<BlendPromoteResult>;
     remove(params: BlendRemoveParams, options?: MutatingCallOptions): Promise<BlendRemoveResult>;
     reorder(params: BlendReorderParams, options?: MutatingCallOptions): Promise<BlendReorderResult>;
-    set(params: BlendSetParams, options?: MutatingCallOptions): Promise<BlendSetResult>;
+    set(params?: BlendSetParams, options?: MutatingCallOptions): Promise<BlendSetResult>;
+}
+
+// @public
+export interface BlendPromoteParams {
+    avatar?: number;
+    language?: string;
+    name?: string;
+    region?: string;
+    tags?: string[];
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface BlendPromoteResult {
+    avatar?: number;
+    group?: string;
+    id?: number;
+    language?: string;
+    modelId: number;
+    modelName: string;
+    name: string;
+    ref?: string;
+    region?: string;
+    saveState?: 'unmixed' | 'unsaved' | 'saved' | 'changed';
+    seedCount: number;
+    seeds: {
+        code: number;
+        index: number;
+        link: boolean;
+        name?: string;
+        style?: number;
+        timbre: number;
+    }[];
+    supportedLanguages?: string[];
+    tags?: string[];
+    timbreOnly?: boolean;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
 export interface BlendRemoveParams {
-    blend: string;
+    blend?: string;
     member: number;
+    region?: string;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
 export interface BlendRemoveResult {
     avatar?: number;
-    group: string;
-    id: number;
+    group?: string;
+    id?: number;
     language?: string;
     modelId: number;
     modelName: string;
     name: string;
-    ref: string;
+    ref?: string;
+    region?: string;
+    saveState?: 'unmixed' | 'unsaved' | 'saved' | 'changed';
     seedCount: number;
     seeds: {
         code: number;
@@ -188,25 +251,32 @@ export interface BlendRemoveResult {
     supportedLanguages?: string[];
     tags?: string[];
     timbreOnly?: boolean;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
 export interface BlendReorderParams {
-    blend: string;
+    blend?: string;
     member: number;
+    region?: string;
     to: number;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
 export interface BlendReorderResult {
     avatar?: number;
-    group: string;
-    id: number;
+    group?: string;
+    id?: number;
     language?: string;
     modelId: number;
     modelName: string;
     name: string;
-    ref: string;
+    ref?: string;
+    region?: string;
+    saveState?: 'unmixed' | 'unsaved' | 'saved' | 'changed';
     seedCount: number;
     seeds: {
         code: number;
@@ -219,31 +289,38 @@ export interface BlendReorderResult {
     supportedLanguages?: string[];
     tags?: string[];
     timbreOnly?: boolean;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
 export interface BlendSetParams {
     avatar?: number;
-    blend: string;
+    blend?: string;
     language?: string;
     link?: boolean;
     member?: number;
     name?: string;
+    region?: string;
     style?: number;
     tags?: string[];
     timbre?: number;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
 export interface BlendSetResult {
     avatar?: number;
-    group: string;
-    id: number;
+    group?: string;
+    id?: number;
     language?: string;
     modelId: number;
     modelName: string;
     name: string;
-    ref: string;
+    ref?: string;
+    region?: string;
+    saveState?: 'unmixed' | 'unsaved' | 'saved' | 'changed';
     seedCount: number;
     seeds: {
         code: number;
@@ -256,6 +333,8 @@ export interface BlendSetResult {
     supportedLanguages?: string[];
     tags?: string[];
     timbreOnly?: boolean;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -398,9 +477,12 @@ export interface CaretGetParams {
 // @public
 export interface CaretGetResult {
     focus: string;
+    rawTrackRow: number;
+    region?: string;
     scope: string;
     tick: number;
-    trackIndex: number;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -413,10 +495,13 @@ export interface CaretOperations {
 export interface CaretSetParams {
     forceSeek?: boolean;
     is_global_tick?: boolean;
+    rawTrackRow?: number;
+    region?: string;
     scope?: string;
     set_to_line_selection?: boolean;
     tick: number;
     trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public (undocumented)
@@ -485,6 +570,7 @@ export type ChannelRow = (typeof NOTIFICATION_CHANNELS)[number];
 export interface ChoirAddParams {
     at?: number;
     model?: string;
+    region?: string;
     source: string;
     trackIndex?: number;
     trackUuid?: string;
@@ -496,12 +582,14 @@ export interface ChoirAddResult {
     memberCount: number;
     memberIndex?: number;
     memberName?: string;
+    region: string;
     trackIndex: number;
     trackUuid: string;
 }
 
 // @public
 export interface ChoirDisableParams {
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -509,6 +597,7 @@ export interface ChoirDisableParams {
 // @public
 export interface ChoirDisableResult {
     leaderName: string;
+    region: string;
     removedCount: number;
     trackIndex: number;
     trackUuid: string;
@@ -516,6 +605,7 @@ export interface ChoirDisableResult {
 
 // @public
 export interface ChoirEnableParams {
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -523,6 +613,7 @@ export interface ChoirEnableParams {
 // @public
 export interface ChoirEnableResult {
     memberCount: number;
+    region: string;
     trackIndex: number;
     trackName?: string;
     trackUuid: string;
@@ -530,6 +621,7 @@ export interface ChoirEnableResult {
 
 // @public
 export interface ChoirGetParams {
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -548,8 +640,11 @@ export interface ChoirGetResult {
         mute: boolean;
         name: string;
         ref?: string;
+        saveState?: 'unmixed' | 'unsaved' | 'saved' | 'changed';
+        seedCount?: number;
     }[];
     offset?: number;
+    region: string;
     spread?: number;
     trackIndex: number;
     trackUuid: string;
@@ -569,6 +664,7 @@ export interface ChoirOperations {
 // @public
 export interface ChoirRemoveParams {
     member: number;
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -579,6 +675,7 @@ export interface ChoirRemoveResult {
     memberCount: number;
     memberIndex?: number;
     memberName?: string;
+    region: string;
     trackIndex: number;
     trackUuid: string;
 }
@@ -586,6 +683,7 @@ export interface ChoirRemoveResult {
 // @public
 export interface ChoirReorderParams {
     member: number;
+    region?: string;
     to: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -597,6 +695,7 @@ export interface ChoirReorderResult {
     memberCount: number;
     memberIndex?: number;
     memberName?: string;
+    region: string;
     trackIndex: number;
     trackUuid: string;
 }
@@ -607,6 +706,7 @@ export interface ChoirSetParams {
     member?: number;
     mute?: boolean;
     offset?: number;
+    region?: string;
     spread?: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -615,6 +715,7 @@ export interface ChoirSetParams {
 // @public
 export interface ClipAudioContentParams {
     clipIndex: number;
+    region?: string;
     trackIndex: number;
 }
 
@@ -642,17 +743,28 @@ export interface ClipConsolidateResult {
         consolidatedClipCount: number;
         geometry: {
             clipIn: number;
+            clipInSec: number;
             dur: number;
+            durSec: number;
             end: number;
+            endSec: number;
+            nativeUnit: 'second' | 'tick';
             pos: number;
+            posSec: number;
             sourceDur: number;
+            sourceDurSec: number;
             sourcePos: number;
+            sourcePosSec: number;
         };
+        region?: string;
+        trackIndex?: number;
         trackName: string;
         trackUuid: string;
     }[];
     rangeBegin: number;
+    rangeBeginSec: number;
     rangeEnd: number;
+    rangeEndSec: number;
     trackCount: number;
 }
 
@@ -670,6 +782,7 @@ export interface ClipCreateParams {
     }[];
     onOccupied?: string;
     pos: number;
+    region?: string;
     trackIndex?: number;
     type: string;
 }
@@ -677,13 +790,19 @@ export interface ClipCreateParams {
 // @public
 export interface ClipCreateResult {
     clipBegin: number;
+    clipBeginSec: number;
     clipEnd: number;
+    clipEndSec: number;
     clipName: string;
     clipType: string;
     clipUuid: string;
+    nativeUnit: 'second' | 'tick';
     noteCount: number;
     noteUuids: string[];
+    region?: string;
+    trackIndex?: number;
     trackName: string;
+    trackUuid: string;
 }
 
 // @public
@@ -707,6 +826,8 @@ export interface ClipDetachAudioResult {
     clipUuids: string[];
     detachedClipUuids: string[];
     detachedCount: number;
+    region?: string;
+    trackIndex?: number;
     trackName: string;
     trackUuid: string;
 }
@@ -716,6 +837,7 @@ export interface ClipDuplicateParams {
     clipUuid: string;
     onOccupied?: string;
     pos?: number;
+    region?: string;
     trackIndex?: number;
 }
 
@@ -726,14 +848,24 @@ export interface ClipDuplicateResult {
     clipUuid: string;
     geometry: {
         clipIn: number;
+        clipInSec: number;
         dur: number;
+        durSec: number;
         end: number;
+        endSec: number;
+        nativeUnit: 'second' | 'tick';
         pos: number;
+        posSec: number;
         sourceDur: number;
+        sourceDurSec: number;
         sourcePos: number;
+        sourcePosSec: number;
     };
+    region?: string;
     sourceClipUuid: string;
+    trackIndex?: number;
     trackName: string;
+    trackUuid: string;
 }
 
 // @public
@@ -741,6 +873,7 @@ export interface ClipGetParams {
     clipIndex?: number;
     clipUuid?: string;
     preferredTimeUnit?: string;
+    region?: string;
     trackIndex?: number;
 }
 
@@ -753,12 +886,27 @@ export interface ClipGetResult {
     enabled: boolean;
     geometry: {
         clipBegin: number;
+        clipBeginSec: number;
+        clipBeginTick: number;
         clipDur: number;
+        clipDurSec: number;
+        clipDurTick: number;
         clipEnd: number;
+        clipEndSec: number;
+        clipEndTick: number;
         clipPos: number;
+        clipPosSec: number;
+        clipPosTick: number;
         dur: number;
+        durSec: number;
+        durTick: number;
         end: number;
+        endSec: number;
+        endTick: number;
+        nativeUnit: 'second' | 'tick';
         pos: number;
+        posSec: number;
+        posTick: number;
     };
     isColorLinkToTrack: boolean;
     rawName: string;
@@ -778,6 +926,7 @@ export interface ClipGetResult {
 
 // @public
 export interface ClipListParams {
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -787,12 +936,15 @@ export interface ClipListResult {
     clipCount: number;
     clips: {
         clipBegin: number;
+        clipBeginSec: number;
         clipColor: string;
         clipEnd: number;
+        clipEndSec: number;
         clipName: string;
         clipType: string;
         clipUuid: string;
         enabled: boolean;
+        nativeUnit: 'second' | 'tick';
         noteCount?: number;
         videoMedia?: {
             clipInSec: number;
@@ -814,6 +966,7 @@ export interface ClipLyricsParams {
     rangeBegin?: number;
     rangeEnd?: number;
     rangeScope?: string;
+    region?: string;
     trackIndex: number;
 }
 
@@ -850,11 +1003,18 @@ export interface ClipMoveResult {
     clipUuid: string;
     geometry: {
         clipIn: number;
+        clipInSec: number;
         dur: number;
+        durSec: number;
         end: number;
+        endSec: number;
+        nativeUnit: 'second' | 'tick';
         pos: number;
+        posSec: number;
         sourceDur: number;
+        sourceDurSec: number;
         sourcePos: number;
+        sourcePosSec: number;
     };
     warnings?: {
         code: string;
@@ -868,6 +1028,7 @@ export interface ClipNoteContentParams {
     rangeBegin?: number;
     rangeEnd?: number;
     rangeScope?: string;
+    region?: string;
     trackIndex: number;
 }
 
@@ -972,11 +1133,18 @@ export interface ClipResizeResult {
     clipUuid: string;
     geometry: {
         clipIn: number;
+        clipInSec: number;
         dur: number;
+        durSec: number;
         end: number;
+        endSec: number;
+        nativeUnit: 'second' | 'tick';
         pos: number;
+        posSec: number;
         sourceDur: number;
+        sourceDurSec: number;
         sourcePos: number;
+        sourcePosSec: number;
     };
     warnings?: {
         code: string;
@@ -1062,11 +1230,18 @@ export interface ClipSetResult {
     color: string;
     geometry?: {
         clipIn: number;
+        clipInSec: number;
         dur: number;
+        durSec: number;
         end: number;
+        endSec: number;
+        nativeUnit: 'second' | 'tick';
         pos: number;
+        posSec: number;
         sourceDur: number;
+        sourceDurSec: number;
         sourcePos: number;
+        sourcePosSec: number;
     };
     isColorLinkToTrack: boolean;
     rawName: string;
@@ -1087,11 +1262,18 @@ export interface ClipSplitResult {
         clipUuid: string;
         geometry: {
             clipIn: number;
+            clipInSec: number;
             dur: number;
+            durSec: number;
             end: number;
+            endSec: number;
+            nativeUnit: 'second' | 'tick';
             pos: number;
+            posSec: number;
             sourceDur: number;
+            sourceDurSec: number;
             sourcePos: number;
+            sourcePosSec: number;
         };
     };
     tail: {
@@ -1100,11 +1282,18 @@ export interface ClipSplitResult {
         clipUuid: string;
         geometry: {
             clipIn: number;
+            clipInSec: number;
             dur: number;
+            durSec: number;
             end: number;
+            endSec: number;
+            nativeUnit: 'second' | 'tick';
             pos: number;
+            posSec: number;
             sourceDur: number;
+            sourceDurSec: number;
             sourcePos: number;
+            sourcePosSec: number;
         };
     };
 }
@@ -1320,7 +1509,9 @@ export interface EditorCurrentClipResult {
     clipName: string;
     clipType: string;
     defaultLanguage?: string;
-    trackIndex: number;
+    region?: string;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -1346,9 +1537,11 @@ export interface EditorStatusResult {
     editorType?: string;
     isAvailable: boolean;
     isVisible: boolean;
+    region?: string;
     supportedArticulations?: string[];
     supportedLanguages?: string[];
     trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -1363,6 +1556,7 @@ export function encodeFrame(message: string): Buffer;
 // @public
 export interface EnsembleAddParams {
     at?: number;
+    region?: string;
     source: string;
     trackIndex?: number;
     trackUuid?: string;
@@ -1374,12 +1568,14 @@ export interface EnsembleAddResult {
     memberCount: number;
     memberIndex?: number;
     memberName?: string;
+    region: string;
     trackIndex: number;
     trackUuid: string;
 }
 
 // @public
 export interface EnsembleDisableParams {
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -1387,6 +1583,7 @@ export interface EnsembleDisableParams {
 // @public
 export interface EnsembleDisableResult {
     leaderName: string;
+    region: string;
     removedCount: number;
     trackIndex: number;
     trackUuid: string;
@@ -1394,6 +1591,7 @@ export interface EnsembleDisableResult {
 
 // @public
 export interface EnsembleEnableParams {
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -1401,6 +1599,7 @@ export interface EnsembleEnableParams {
 // @public
 export interface EnsembleEnableResult {
     memberCount: number;
+    region: string;
     trackIndex: number;
     trackName?: string;
     trackUuid: string;
@@ -1408,6 +1607,7 @@ export interface EnsembleEnableResult {
 
 // @public
 export interface EnsembleGetParams {
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -1427,6 +1627,7 @@ export interface EnsembleGetResult {
         ref?: string;
     }[];
     offset?: number;
+    region: string;
     spread?: number;
     trackIndex: number;
     trackUuid: string;
@@ -1446,6 +1647,7 @@ export interface EnsembleOperations {
 // @public
 export interface EnsembleRemoveParams {
     member: number;
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -1456,6 +1658,7 @@ export interface EnsembleRemoveResult {
     memberCount: number;
     memberIndex?: number;
     memberName?: string;
+    region: string;
     trackIndex: number;
     trackUuid: string;
 }
@@ -1463,6 +1666,7 @@ export interface EnsembleRemoveResult {
 // @public
 export interface EnsembleReorderParams {
     member: number;
+    region?: string;
     to: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -1474,6 +1678,7 @@ export interface EnsembleReorderResult {
     memberCount: number;
     memberIndex?: number;
     memberName?: string;
+    region: string;
     trackIndex: number;
     trackUuid: string;
 }
@@ -1484,6 +1689,7 @@ export interface EnsembleSetParams {
     member?: number;
     mute?: boolean;
     offset?: number;
+    region?: string;
     spread?: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -1632,6 +1838,7 @@ export interface FxAddParams {
     at?: number;
     preset?: string;
     rack?: 'pre';
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
     type: string;
@@ -1654,6 +1861,7 @@ export interface FxAddResult {
     };
     insertCount: number;
     rack?: 'pre';
+    region?: string;
     trackIndex?: number;
     trackUuid: string;
 }
@@ -1664,6 +1872,7 @@ export interface FxApplyPresetParams {
     preset?: string;
     presetId?: number;
     rack?: 'pre';
+    region?: string;
     slot?: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -1682,6 +1891,7 @@ export interface FxGetParamsParams {
     insert?: string;
     rack?: 'pre';
     regex?: boolean;
+    region?: string;
     slot?: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -1740,6 +1950,7 @@ export interface FxListAvailableResult {
 // @public
 export interface FxListParams {
     rack?: 'pre';
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -1751,6 +1962,7 @@ export interface FxListParamsParams {
     insert?: string;
     rack?: 'pre';
     regex?: boolean;
+    region?: string;
     slot?: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -1797,6 +2009,7 @@ export interface FxListResult {
         vendor?: string;
     }[];
     rack?: 'pre';
+    region?: string;
     trackIndex?: number;
     trackUuid: string;
 }
@@ -1805,6 +2018,7 @@ export interface FxListResult {
 export interface FxOpenEditorParams {
     insert?: string;
     rack?: 'pre';
+    region?: string;
     slot?: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -1839,6 +2053,7 @@ export interface FxOperations {
 export interface FxRemoveParams {
     insert?: string;
     rack?: 'pre';
+    region?: string;
     slot?: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -1849,6 +2064,7 @@ export interface FxRemoveResult {
     insertCount: number;
     insertId: string;
     rack?: 'pre';
+    region?: string;
     slot: number;
     trackIndex?: number;
     trackUuid: string;
@@ -1858,6 +2074,7 @@ export interface FxRemoveResult {
 export interface FxReorderParams {
     insert?: string;
     rack?: 'pre';
+    region?: string;
     slot?: number;
     to: number;
     trackIndex?: number;
@@ -1869,6 +2086,7 @@ export interface FxReorderResult {
     insertCount: number;
     insertId: string;
     rack?: 'pre';
+    region?: string;
     slot: number;
     trackIndex?: number;
     trackUuid: string;
@@ -1880,6 +2098,7 @@ export interface FxSavePresetParams {
     name: string;
     overwrite?: boolean;
     rack?: 'pre';
+    region?: string;
     slot?: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -1910,6 +2129,7 @@ export interface FxSetParamParams {
     insert?: string;
     param: string;
     rack?: 'pre';
+    region?: string;
     slot?: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -1944,6 +2164,7 @@ export interface FxSetParams {
     insert?: string;
     name?: string;
     rack?: 'pre';
+    region?: string;
     slot?: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -1966,6 +2187,7 @@ export interface FxSetResult {
     };
     insertCount: number;
     rack?: 'pre';
+    region?: string;
     trackIndex?: number;
     trackUuid: string;
 }
@@ -1975,6 +2197,7 @@ export interface FxSetRoomParams {
     enabled?: boolean;
     positionX?: number;
     positionY?: number;
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
     type?: 'studio-room' | 'choir-hall' | 'church';
@@ -1985,6 +2208,7 @@ export interface FxSetRoomResult {
     enabled: boolean;
     positionX: number;
     positionY: number;
+    region: string;
     roomDepth?: number;
     roomWidth?: number;
     trackIndex: number;
@@ -2011,7 +2235,7 @@ export interface GenerativeAddLayerResult {
     jobClass: string;
     jobId: string;
     to?: number;
-    trackId: string;
+    trackUuid: string;
 }
 
 // @public
@@ -2064,7 +2288,7 @@ export interface GenerativeSeedAudioResult {
     jobClass: string;
     jobId: string;
     to?: number;
-    trackId: string;
+    trackUuid: string;
 }
 
 // @public
@@ -2102,7 +2326,7 @@ export interface GenerativeSoundEffectsResult {
     jobClass: string;
     jobId: string;
     to?: number;
-    trackId: string;
+    trackUuid: string;
 }
 
 // @public
@@ -2123,7 +2347,7 @@ export interface GenerativeStemSplitResult {
     // (undocumented)
     jobId: string;
     mode?: 'basic' | 'professional' | 'advanced' | 'customized';
-    trackIds: string[];
+    trackUuids: string[];
 }
 
 // @public
@@ -2144,7 +2368,7 @@ export interface GenerativeText2sampleResult {
     jobClass: string;
     jobId: string;
     to?: number;
-    trackId: string;
+    trackUuid: string;
 }
 
 // @public
@@ -2163,7 +2387,7 @@ export interface GenerativeVocal2midiResult {
     jobClass: string;
     jobId: string;
     to?: number;
-    trackId: string;
+    trackUuid: string;
 }
 
 // @public
@@ -2190,7 +2414,7 @@ export interface GenerativeVoiceChangeResult {
     // (undocumented)
     jobId: string;
     modelIds: number[];
-    trackIds: string[];
+    trackUuids: string[];
 }
 
 // @public
@@ -2284,9 +2508,10 @@ export interface ImportFileParams {
     path: string;
     pos?: number;
     posSec?: number;
+    region?: string;
     splitPolyphonic?: boolean;
-    trackId?: string;
     trackIndex?: number;
+    trackUuid?: string;
     withTempo?: boolean;
     withTimeSignatures?: boolean;
 }
@@ -2302,11 +2527,14 @@ export interface ImportFileResult {
     geometry?: Record<string, unknown>;
     loadingState?: string;
     naturalDur?: number;
+    naturalDurSec?: number;
+    region?: string;
     sourceFormat?: string;
     sourcePath: string;
     tempoImported?: boolean;
     timeSignaturesImported?: boolean;
     trackCount?: number;
+    trackIndex?: number;
     trackName?: string;
     trackUuid?: string;
 }
@@ -2326,6 +2554,7 @@ export type InDomainOf<Rows extends SurfaceRow, T extends string> = Exclude<Reac
 
 // @public
 export interface InstrumentDisableParams {
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -2336,6 +2565,7 @@ export interface InstrumentDisableResult {
     format?: string;
     midiChannel: string;
     name: string;
+    region: string;
     trackIndex: number;
     trackUuid: string;
     vendor?: string;
@@ -2343,6 +2573,7 @@ export interface InstrumentDisableResult {
 
 // @public
 export interface InstrumentEnableParams {
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -2353,6 +2584,7 @@ export interface InstrumentEnableResult {
     format?: string;
     midiChannel: string;
     name: string;
+    region: string;
     trackIndex: number;
     trackUuid: string;
     vendor?: string;
@@ -2368,6 +2600,7 @@ export interface InstrumentOperations {
 // @public
 export interface InstrumentSetParams {
     midiChannel: string;
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -2378,6 +2611,7 @@ export interface InstrumentSetResult {
     format?: string;
     midiChannel: string;
     name: string;
+    region: string;
     trackIndex: number;
     trackUuid: string;
     vendor?: string;
@@ -2497,14 +2731,18 @@ export interface JobOperations {
 // @public
 export interface JobPlaceParams {
     at?: number;
+    region?: string;
     resultId: string;
-    trackId: string;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
 export interface JobPlaceResult {
+    region?: string;
     resultId: string;
-    trackId: string;
+    trackIndex?: number;
+    trackUuid: string;
 }
 
 // @public
@@ -2890,6 +3128,7 @@ export interface OperationDescriptor {
     readonly path: string;
     readonly takesParams: boolean;
     readonly ungated: boolean;
+    readonly wire: string;
 }
 
 // @public (undocumented)
@@ -2907,6 +3146,7 @@ export interface OperationPeer {
 // @public
 export const OPERATIONS: readonly [{
     readonly path: "blend add";
+    readonly wire: "blend.add";
     readonly domain: "blend";
     readonly method: "add";
     readonly capability: "voice.write";
@@ -2916,6 +3156,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "blend create";
+    readonly wire: "blend.create";
     readonly domain: "blend";
     readonly method: "create";
     readonly capability: "voice.write";
@@ -2925,6 +3166,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "blend delete";
+    readonly wire: "blend.delete";
     readonly domain: "blend";
     readonly method: "delete";
     readonly capability: "voice.write";
@@ -2934,6 +3176,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "blend get";
+    readonly wire: "blend.get";
     readonly domain: "blend";
     readonly method: "get";
     readonly capability: "voice.read";
@@ -2943,6 +3186,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "blend list";
+    readonly wire: "blend.list";
     readonly domain: "blend";
     readonly method: "list";
     readonly capability: "voice.read";
@@ -2951,7 +3195,18 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
+    readonly path: "blend promote";
+    readonly wire: "blend.promote";
+    readonly domain: "blend";
+    readonly method: "promote";
+    readonly capability: "voice.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
     readonly path: "blend remove";
+    readonly wire: "blend.remove";
     readonly domain: "blend";
     readonly method: "remove";
     readonly capability: "voice.write";
@@ -2961,6 +3216,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "blend reorder";
+    readonly wire: "blend.reorder";
     readonly domain: "blend";
     readonly method: "reorder";
     readonly capability: "voice.write";
@@ -2970,6 +3226,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "blend set";
+    readonly wire: "blend.set";
     readonly domain: "blend";
     readonly method: "set";
     readonly capability: "voice.write";
@@ -2979,6 +3236,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "canvas effective-size";
+    readonly wire: "canvas.effectiveSize";
     readonly domain: "canvas";
     readonly method: "effectiveSize";
     readonly capability: "canvas.read";
@@ -2988,6 +3246,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "canvas info";
+    readonly wire: "canvas.info";
     readonly domain: "canvas";
     readonly method: "info";
     readonly capability: "canvas.read";
@@ -2997,6 +3256,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "caret get";
+    readonly wire: "caret.get";
     readonly domain: "caret";
     readonly method: "get";
     readonly capability: "caret.read";
@@ -3006,6 +3266,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "caret set";
+    readonly wire: "caret.set";
     readonly domain: "caret";
     readonly method: "set";
     readonly capability: "caret.write";
@@ -3015,6 +3276,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "choir add";
+    readonly wire: "choir.add";
     readonly domain: "choir";
     readonly method: "add";
     readonly capability: "soundsource.write";
@@ -3024,6 +3286,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "choir disable";
+    readonly wire: "choir.disable";
     readonly domain: "choir";
     readonly method: "disable";
     readonly capability: "soundsource.write";
@@ -3033,6 +3296,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "choir enable";
+    readonly wire: "choir.enable";
     readonly domain: "choir";
     readonly method: "enable";
     readonly capability: "soundsource.write";
@@ -3042,6 +3306,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "choir get";
+    readonly wire: "choir.get";
     readonly domain: "choir";
     readonly method: "get";
     readonly capability: "soundsource.read";
@@ -3051,6 +3316,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "choir remove";
+    readonly wire: "choir.remove";
     readonly domain: "choir";
     readonly method: "remove";
     readonly capability: "soundsource.write";
@@ -3060,6 +3326,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "choir reorder";
+    readonly wire: "choir.reorder";
     readonly domain: "choir";
     readonly method: "reorder";
     readonly capability: "soundsource.write";
@@ -3069,6 +3336,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "choir set";
+    readonly wire: "choir.set";
     readonly domain: "choir";
     readonly method: "set";
     readonly capability: "soundsource.write";
@@ -3078,6 +3346,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "clip audio-content";
+    readonly wire: "clip.audioContent";
     readonly domain: "clip";
     readonly method: "audioContent";
     readonly capability: "clip.read";
@@ -3087,6 +3356,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "clip consolidate";
+    readonly wire: "clip.consolidate";
     readonly domain: "clip";
     readonly method: "consolidate";
     readonly capability: "clip.write";
@@ -3096,6 +3366,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "clip create";
+    readonly wire: "clip.create";
     readonly domain: "clip";
     readonly method: "create";
     readonly capability: "clip.write";
@@ -3105,6 +3376,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "clip delete";
+    readonly wire: "clip.delete";
     readonly domain: "clip";
     readonly method: "delete";
     readonly capability: "clip.write";
@@ -3114,6 +3386,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "clip detach-audio";
+    readonly wire: "clip.detachAudio";
     readonly domain: "clip";
     readonly method: "detachAudio";
     readonly capability: "clip.write";
@@ -3123,6 +3396,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "clip duplicate";
+    readonly wire: "clip.duplicate";
     readonly domain: "clip";
     readonly method: "duplicate";
     readonly capability: "clip.write";
@@ -3132,6 +3406,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "clip get";
+    readonly wire: "clip.get";
     readonly domain: "clip";
     readonly method: "get";
     readonly capability: "clip.read";
@@ -3141,6 +3416,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "clip list";
+    readonly wire: "clip.list";
     readonly domain: "clip";
     readonly method: "list";
     readonly capability: "clip.read";
@@ -3150,6 +3426,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "clip lyrics";
+    readonly wire: "clip.lyrics";
     readonly domain: "clip";
     readonly method: "lyrics";
     readonly capability: "clip.read";
@@ -3159,6 +3436,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "clip move";
+    readonly wire: "clip.move";
     readonly domain: "clip";
     readonly method: "move";
     readonly capability: "clip.write";
@@ -3168,6 +3446,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "clip note-content";
+    readonly wire: "clip.noteContent";
     readonly domain: "clip";
     readonly method: "noteContent";
     readonly capability: "clip.read";
@@ -3177,6 +3456,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "clip reattach-audio";
+    readonly wire: "clip.reattachAudio";
     readonly domain: "clip";
     readonly method: "reattachAudio";
     readonly capability: "clip.write";
@@ -3186,6 +3466,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "clip replace-content";
+    readonly wire: "clip.replaceContent";
     readonly domain: "clip";
     readonly method: "replaceContent";
     readonly capability: "clip.write";
@@ -3195,6 +3476,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "clip resize";
+    readonly wire: "clip.resize";
     readonly domain: "clip";
     readonly method: "resize";
     readonly capability: "clip.write";
@@ -3204,6 +3486,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "clip set";
+    readonly wire: "clip.set";
     readonly domain: "clip";
     readonly method: "set";
     readonly capability: "clip.write";
@@ -3213,6 +3496,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "clip set-enabled";
+    readonly wire: "clip.setEnabled";
     readonly domain: "clip";
     readonly method: "setEnabled";
     readonly capability: "clip.write";
@@ -3222,6 +3506,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "clip set-fades";
+    readonly wire: "clip.setFades";
     readonly domain: "clip";
     readonly method: "setFades";
     readonly capability: "clip.write";
@@ -3231,6 +3516,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "clip set-gain";
+    readonly wire: "clip.setGain";
     readonly domain: "clip";
     readonly method: "setGain";
     readonly capability: "clip.write";
@@ -3240,6 +3526,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "clip set-muted";
+    readonly wire: "clip.setMuted";
     readonly domain: "clip";
     readonly method: "setMuted";
     readonly capability: "clip.write";
@@ -3249,6 +3536,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "clip split";
+    readonly wire: "clip.split";
     readonly domain: "clip";
     readonly method: "split";
     readonly capability: "clip.write";
@@ -3258,6 +3546,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "convert editor-to-global";
+    readonly wire: "convert.editorToGlobal";
     readonly domain: "convert";
     readonly method: "editorToGlobal";
     readonly capability: "convert.editor-to-global";
@@ -3267,6 +3556,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "convert global-to-editor";
+    readonly wire: "convert.globalToEditor";
     readonly domain: "convert";
     readonly method: "globalToEditor";
     readonly capability: "convert.global-to-editor";
@@ -3276,6 +3566,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "convert measure-to-tick";
+    readonly wire: "convert.measureToTick";
     readonly domain: "convert";
     readonly method: "measureToTick";
     readonly capability: "convert.measure-to-tick";
@@ -3285,6 +3576,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "convert tick-to-measure";
+    readonly wire: "convert.tickToMeasure";
     readonly domain: "convert";
     readonly method: "tickToMeasure";
     readonly capability: "convert.tick-to-measure";
@@ -3294,6 +3586,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "convert tick-to-time";
+    readonly wire: "convert.tickToTime";
     readonly domain: "convert";
     readonly method: "tickToTime";
     readonly capability: "convert.tick-to-time";
@@ -3303,6 +3596,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "convert time-to-tick";
+    readonly wire: "convert.timeToTick";
     readonly domain: "convert";
     readonly method: "timeToTick";
     readonly capability: "convert.time-to-tick";
@@ -3312,6 +3606,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "device current";
+    readonly wire: "device.current";
     readonly domain: "device";
     readonly method: "current";
     readonly capability: "device.read";
@@ -3321,6 +3616,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "device list";
+    readonly wire: "device.list";
     readonly domain: "device";
     readonly method: "list";
     readonly capability: "device.read";
@@ -3330,6 +3626,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "device set-audio";
+    readonly wire: "device.setAudio";
     readonly domain: "device";
     readonly method: "setAudio";
     readonly capability: "device.write";
@@ -3339,6 +3636,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "editor current-clip";
+    readonly wire: "editor.currentClip";
     readonly domain: "editor";
     readonly method: "currentClip";
     readonly capability: "editor.read";
@@ -3348,6 +3646,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "editor open";
+    readonly wire: "editor.open";
     readonly domain: "editor";
     readonly method: "open";
     readonly capability: "editor.write";
@@ -3357,6 +3656,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "editor status";
+    readonly wire: "editor.status";
     readonly domain: "editor";
     readonly method: "status";
     readonly capability: "editor.read";
@@ -3366,6 +3666,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "editor tick-range";
+    readonly wire: "editor.tickRange";
     readonly domain: "editor";
     readonly method: "tickRange";
     readonly capability: "editor.read";
@@ -3375,6 +3676,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "ensemble add";
+    readonly wire: "ensemble.add";
     readonly domain: "ensemble";
     readonly method: "add";
     readonly capability: "soundsource.write";
@@ -3384,6 +3686,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "ensemble disable";
+    readonly wire: "ensemble.disable";
     readonly domain: "ensemble";
     readonly method: "disable";
     readonly capability: "soundsource.write";
@@ -3393,6 +3696,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "ensemble enable";
+    readonly wire: "ensemble.enable";
     readonly domain: "ensemble";
     readonly method: "enable";
     readonly capability: "soundsource.write";
@@ -3402,6 +3706,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "ensemble get";
+    readonly wire: "ensemble.get";
     readonly domain: "ensemble";
     readonly method: "get";
     readonly capability: "soundsource.read";
@@ -3411,6 +3716,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "ensemble remove";
+    readonly wire: "ensemble.remove";
     readonly domain: "ensemble";
     readonly method: "remove";
     readonly capability: "soundsource.write";
@@ -3420,6 +3726,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "ensemble reorder";
+    readonly wire: "ensemble.reorder";
     readonly domain: "ensemble";
     readonly method: "reorder";
     readonly capability: "soundsource.write";
@@ -3429,6 +3736,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "ensemble set";
+    readonly wire: "ensemble.set";
     readonly domain: "ensemble";
     readonly method: "set";
     readonly capability: "soundsource.write";
@@ -3438,6 +3746,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "export audio";
+    readonly wire: "export.audio";
     readonly domain: "export";
     readonly method: "audio";
     readonly capability: "export.invoke";
@@ -3447,6 +3756,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "export fcpxml";
+    readonly wire: "export.fcpxml";
     readonly domain: "export";
     readonly method: "fcpxml";
     readonly capability: "export.invoke";
@@ -3456,6 +3766,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "export lrc";
+    readonly wire: "export.lrc";
     readonly domain: "export";
     readonly method: "lrc";
     readonly capability: "export.invoke";
@@ -3465,6 +3776,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "export midi";
+    readonly wire: "export.midi";
     readonly domain: "export";
     readonly method: "midi";
     readonly capability: "export.invoke";
@@ -3474,6 +3786,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "export song-template";
+    readonly wire: "export.songTemplate";
     readonly domain: "export";
     readonly method: "songTemplate";
     readonly capability: "export.invoke";
@@ -3484,6 +3797,7 @@ export const OPERATIONS: readonly [{
     readonly entitlement: "membership";
 }, {
     readonly path: "export video";
+    readonly wire: "export.video";
     readonly domain: "export";
     readonly method: "video";
     readonly capability: "export.invoke";
@@ -3493,6 +3807,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "export vocal-sample";
+    readonly wire: "export.vocalSample";
     readonly domain: "export";
     readonly method: "vocalSample";
     readonly capability: "export.invoke";
@@ -3503,6 +3818,7 @@ export const OPERATIONS: readonly [{
     readonly entitlement: "membership";
 }, {
     readonly path: "fx add";
+    readonly wire: "fx.add";
     readonly domain: "fx";
     readonly method: "add";
     readonly capability: "fx.write";
@@ -3512,6 +3828,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "fx apply-preset";
+    readonly wire: "fx.applyPreset";
     readonly domain: "fx";
     readonly method: "applyPreset";
     readonly capability: "fx.write";
@@ -3521,6 +3838,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "fx get-params";
+    readonly wire: "fx.getParams";
     readonly domain: "fx";
     readonly method: "getParams";
     readonly capability: "fx.read";
@@ -3530,6 +3848,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "fx list";
+    readonly wire: "fx.list";
     readonly domain: "fx";
     readonly method: "list";
     readonly capability: "fx.read";
@@ -3539,6 +3858,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "fx list-available";
+    readonly wire: "fx.listAvailable";
     readonly domain: "fx";
     readonly method: "listAvailable";
     readonly capability: "fx.read";
@@ -3548,6 +3868,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "fx list-params";
+    readonly wire: "fx.listParams";
     readonly domain: "fx";
     readonly method: "listParams";
     readonly capability: "fx.read";
@@ -3557,6 +3878,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "fx open-editor";
+    readonly wire: "fx.openEditor";
     readonly domain: "fx";
     readonly method: "openEditor";
     readonly capability: "ui.control";
@@ -3566,6 +3888,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "fx remove";
+    readonly wire: "fx.remove";
     readonly domain: "fx";
     readonly method: "remove";
     readonly capability: "fx.write";
@@ -3575,6 +3898,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "fx reorder";
+    readonly wire: "fx.reorder";
     readonly domain: "fx";
     readonly method: "reorder";
     readonly capability: "fx.write";
@@ -3584,6 +3908,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "fx save-preset";
+    readonly wire: "fx.savePreset";
     readonly domain: "fx";
     readonly method: "savePreset";
     readonly capability: "fx.write";
@@ -3593,6 +3918,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "fx scan";
+    readonly wire: "fx.scan";
     readonly domain: "fx";
     readonly method: "scan";
     readonly capability: "fx.write";
@@ -3602,6 +3928,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "fx set";
+    readonly wire: "fx.set";
     readonly domain: "fx";
     readonly method: "set";
     readonly capability: "fx.write";
@@ -3611,6 +3938,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "fx set-param";
+    readonly wire: "fx.setParam";
     readonly domain: "fx";
     readonly method: "setParam";
     readonly capability: "fx.write";
@@ -3620,6 +3948,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "fx set-room";
+    readonly wire: "fx.setRoom";
     readonly domain: "fx";
     readonly method: "setRoom";
     readonly capability: "fx.write";
@@ -3629,6 +3958,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "generative add-layer";
+    readonly wire: "generative.addLayer";
     readonly domain: "generative";
     readonly method: "addLayer";
     readonly capability: "generative.add-layer";
@@ -3639,6 +3969,7 @@ export const OPERATIONS: readonly [{
     readonly entitlement: "credits(add-a-layer)";
 }, {
     readonly path: "generative enhance";
+    readonly wire: "generative.enhance";
     readonly domain: "generative";
     readonly method: "enhance";
     readonly capability: "generative.enhance";
@@ -3649,6 +3980,7 @@ export const OPERATIONS: readonly [{
     readonly entitlement: "credits(music-enhancer)";
 }, {
     readonly path: "generative seed-audio";
+    readonly wire: "generative.seedAudio";
     readonly domain: "generative";
     readonly method: "seedAudio";
     readonly capability: "generative.seed-audio";
@@ -3659,6 +3991,7 @@ export const OPERATIONS: readonly [{
     readonly entitlement: "credits(seed-audio)";
 }, {
     readonly path: "generative song";
+    readonly wire: "generative.song";
     readonly domain: "generative";
     readonly method: "song";
     readonly capability: "generative.song";
@@ -3669,6 +4002,7 @@ export const OPERATIONS: readonly [{
     readonly entitlement: "credits(song-generator)";
 }, {
     readonly path: "generative sound-effects";
+    readonly wire: "generative.soundEffects";
     readonly domain: "generative";
     readonly method: "soundEffects";
     readonly capability: "generative.sound-effects";
@@ -3679,6 +4013,7 @@ export const OPERATIONS: readonly [{
     readonly entitlement: "credits(sound-effects)";
 }, {
     readonly path: "generative stem-split";
+    readonly wire: "generative.stemSplit";
     readonly domain: "generative";
     readonly method: "stemSplit";
     readonly capability: "generative.stem-split";
@@ -3689,6 +4024,7 @@ export const OPERATIONS: readonly [{
     readonly entitlement: "credits(stem-splitter)";
 }, {
     readonly path: "generative text2sample";
+    readonly wire: "generative.text2sample";
     readonly domain: "generative";
     readonly method: "text2sample";
     readonly capability: "generative.text2sample";
@@ -3699,6 +4035,7 @@ export const OPERATIONS: readonly [{
     readonly entitlement: "credits(text2sample)";
 }, {
     readonly path: "generative vocal2midi";
+    readonly wire: "generative.vocal2midi";
     readonly domain: "generative";
     readonly method: "vocal2midi";
     readonly capability: "generative.vocal2midi";
@@ -3708,6 +4045,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "generative voice-change";
+    readonly wire: "generative.voiceChange";
     readonly domain: "generative";
     readonly method: "voiceChange";
     readonly capability: "generative.voice-change";
@@ -3717,6 +4055,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "history list";
+    readonly wire: "history.list";
     readonly domain: "history";
     readonly method: "list";
     readonly capability: "history.read";
@@ -3726,6 +4065,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "history redo";
+    readonly wire: "history.redo";
     readonly domain: "history";
     readonly method: "redo";
     readonly capability: "history.control";
@@ -3735,6 +4075,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "history undo";
+    readonly wire: "history.undo";
     readonly domain: "history";
     readonly method: "undo";
     readonly capability: "history.control";
@@ -3744,6 +4085,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "import file";
+    readonly wire: "import.file";
     readonly domain: "import";
     readonly method: "file";
     readonly capability: "import.invoke";
@@ -3753,6 +4095,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "instrument disable";
+    readonly wire: "instrument.disable";
     readonly domain: "instrument";
     readonly method: "disable";
     readonly capability: "soundsource.write";
@@ -3762,6 +4105,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "instrument enable";
+    readonly wire: "instrument.enable";
     readonly domain: "instrument";
     readonly method: "enable";
     readonly capability: "soundsource.write";
@@ -3771,6 +4115,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "instrument set";
+    readonly wire: "instrument.set";
     readonly domain: "instrument";
     readonly method: "set";
     readonly capability: "soundsource.write";
@@ -3780,6 +4125,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "job cancel";
+    readonly wire: "job.cancel";
     readonly domain: "job";
     readonly method: "cancel";
     readonly capability: "job.control";
@@ -3789,6 +4135,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "job discard-result";
+    readonly wire: "job.discardResult";
     readonly domain: "job";
     readonly method: "discardResult";
     readonly capability: "job.control";
@@ -3798,6 +4145,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "job get";
+    readonly wire: "job.get";
     readonly domain: "job";
     readonly method: "get";
     readonly capability: "job.read";
@@ -3807,6 +4155,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "job list";
+    readonly wire: "job.list";
     readonly domain: "job";
     readonly method: "list";
     readonly capability: "job.read";
@@ -3816,6 +4165,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "job place";
+    readonly wire: "job.place";
     readonly domain: "job";
     readonly method: "place";
     readonly capability: "clip.write";
@@ -3825,6 +4175,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "job results";
+    readonly wire: "job.results";
     readonly domain: "job";
     readonly method: "results";
     readonly capability: "job.read";
@@ -3834,6 +4185,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "job wait";
+    readonly wire: "job.wait";
     readonly domain: "job";
     readonly method: "wait";
     readonly capability: "job.read";
@@ -3843,6 +4195,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "note add";
+    readonly wire: "note.add";
     readonly domain: "note";
     readonly method: "add";
     readonly capability: "note.write";
@@ -3852,6 +4205,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "note delete";
+    readonly wire: "note.delete";
     readonly domain: "note";
     readonly method: "delete";
     readonly capability: "note.write";
@@ -3861,6 +4215,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "note get";
+    readonly wire: "note.get";
     readonly domain: "note";
     readonly method: "get";
     readonly capability: "note.read";
@@ -3870,6 +4225,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "note move";
+    readonly wire: "note.move";
     readonly domain: "note";
     readonly method: "move";
     readonly capability: "note.write";
@@ -3879,6 +4235,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "note resize";
+    readonly wire: "note.resize";
     readonly domain: "note";
     readonly method: "resize";
     readonly capability: "note.write";
@@ -3888,6 +4245,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "note set-articulation";
+    readonly wire: "note.setArticulation";
     readonly domain: "note";
     readonly method: "setArticulation";
     readonly capability: "note.write";
@@ -3897,6 +4255,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "note set-lyric";
+    readonly wire: "note.setLyric";
     readonly domain: "note";
     readonly method: "setLyric";
     readonly capability: "note.write";
@@ -3906,6 +4265,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "note split";
+    readonly wire: "note.split";
     readonly domain: "note";
     readonly method: "split";
     readonly capability: "note.write";
@@ -3915,6 +4275,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "project collect-save";
+    readonly wire: "project.collectSave";
     readonly domain: "project";
     readonly method: "collectSave";
     readonly capability: "project.lifecycle";
@@ -3924,6 +4285,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "project dirty";
+    readonly wire: "project.dirty";
     readonly domain: "project";
     readonly method: "dirty";
     readonly capability: "project.read";
@@ -3933,6 +4295,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "project info";
+    readonly wire: "project.info";
     readonly domain: "project";
     readonly method: "info";
     readonly capability: "project.read";
@@ -3942,6 +4305,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "project new";
+    readonly wire: "project.new";
     readonly domain: "project";
     readonly method: "new";
     readonly capability: "project.lifecycle";
@@ -3951,6 +4315,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "project open";
+    readonly wire: "project.open";
     readonly domain: "project";
     readonly method: "open";
     readonly capability: "project.lifecycle";
@@ -3960,6 +4325,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "project recent";
+    readonly wire: "project.recent";
     readonly domain: "project";
     readonly method: "recent";
     readonly capability: "project.read";
@@ -3969,6 +4335,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "project recent-clear";
+    readonly wire: "project.recentClear";
     readonly domain: "project";
     readonly method: "recentClear";
     readonly capability: "project.lifecycle";
@@ -3978,6 +4345,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "project save";
+    readonly wire: "project.save";
     readonly domain: "project";
     readonly method: "save";
     readonly capability: "project.lifecycle";
@@ -3987,6 +4355,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "project save-as";
+    readonly wire: "project.saveAs";
     readonly domain: "project";
     readonly method: "saveAs";
     readonly capability: "project.lifecycle";
@@ -3996,6 +4365,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "project synthesis-status";
+    readonly wire: "project.synthesisStatus";
     readonly domain: "project";
     readonly method: "synthesisStatus";
     readonly capability: "project.read";
@@ -4005,6 +4375,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "recording start";
+    readonly wire: "recording.start";
     readonly domain: "recording";
     readonly method: "start";
     readonly capability: "recording.control";
@@ -4014,6 +4385,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "recording stop";
+    readonly wire: "recording.stop";
     readonly domain: "recording";
     readonly method: "stop";
     readonly capability: "recording.control";
@@ -4023,6 +4395,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "selection get";
+    readonly wire: "selection.get";
     readonly domain: "selection";
     readonly method: "get";
     readonly capability: "selection.read";
@@ -4032,6 +4405,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "selection set";
+    readonly wire: "selection.set";
     readonly domain: "selection";
     readonly method: "set";
     readonly capability: "selection.write";
@@ -4041,6 +4415,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "sound-source get";
+    readonly wire: "soundSource.get";
     readonly domain: "sound-source";
     readonly method: "get";
     readonly capability: "soundsource.read";
@@ -4050,6 +4425,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "sound-source list";
+    readonly wire: "soundSource.list";
     readonly domain: "sound-source";
     readonly method: "list";
     readonly capability: "soundsource.read";
@@ -4059,6 +4435,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "sound-source load";
+    readonly wire: "soundSource.load";
     readonly domain: "sound-source";
     readonly method: "load";
     readonly capability: "soundsource.write";
@@ -4068,6 +4445,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "sound-source set";
+    readonly wire: "soundSource.set";
     readonly domain: "sound-source";
     readonly method: "set";
     readonly capability: "soundsource.write";
@@ -4077,6 +4455,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "sound-source tags";
+    readonly wire: "soundSource.tags";
     readonly domain: "sound-source";
     readonly method: "tags";
     readonly capability: "soundsource.read";
@@ -4086,6 +4465,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "sound-source unload";
+    readonly wire: "soundSource.unload";
     readonly domain: "sound-source";
     readonly method: "unload";
     readonly capability: "soundsource.write";
@@ -4095,6 +4475,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "tempo analyze";
+    readonly wire: "tempo.analyze";
     readonly domain: "tempo";
     readonly method: "analyze";
     readonly capability: "tempo.analyze";
@@ -4104,6 +4485,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "tempo apply-beat-analysis";
+    readonly wire: "tempo.applyBeatAnalysis";
     readonly domain: "tempo";
     readonly method: "applyBeatAnalysis";
     readonly capability: "tempo.applyV2";
@@ -4113,6 +4495,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "tempo get";
+    readonly wire: "tempo.get";
     readonly domain: "tempo";
     readonly method: "get";
     readonly capability: "tempo.read";
@@ -4122,6 +4505,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "tempo points";
+    readonly wire: "tempo.points";
     readonly domain: "tempo";
     readonly method: "points";
     readonly capability: "tempo.read";
@@ -4131,6 +4515,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "tempo remove-point";
+    readonly wire: "tempo.removePoint";
     readonly domain: "tempo";
     readonly method: "removePoint";
     readonly capability: "tempo.write";
@@ -4140,6 +4525,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "tempo set";
+    readonly wire: "tempo.set";
     readonly domain: "tempo";
     readonly method: "set";
     readonly capability: "tempo.write";
@@ -4149,6 +4535,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "tempo set-display-range";
+    readonly wire: "tempo.setDisplayRange";
     readonly domain: "tempo";
     readonly method: "setDisplayRange";
     readonly capability: "tempo.write";
@@ -4158,6 +4545,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "tempo set-point";
+    readonly wire: "tempo.setPoint";
     readonly domain: "tempo";
     readonly method: "setPoint";
     readonly capability: "tempo.write";
@@ -4167,6 +4555,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "timesig get";
+    readonly wire: "timesig.get";
     readonly domain: "timesig";
     readonly method: "get";
     readonly capability: "timesig.read";
@@ -4176,6 +4565,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "timesig list";
+    readonly wire: "timesig.list";
     readonly domain: "timesig";
     readonly method: "list";
     readonly capability: "timesig.read";
@@ -4185,6 +4575,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "timesig remove-at";
+    readonly wire: "timesig.removeAt";
     readonly domain: "timesig";
     readonly method: "removeAt";
     readonly capability: "timesig.write";
@@ -4194,6 +4585,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "timesig set";
+    readonly wire: "timesig.set";
     readonly domain: "timesig";
     readonly method: "set";
     readonly capability: "timesig.write";
@@ -4203,6 +4595,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "timesig set-at";
+    readonly wire: "timesig.setAt";
     readonly domain: "timesig";
     readonly method: "setAt";
     readonly capability: "timesig.write";
@@ -4212,6 +4605,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "track create";
+    readonly wire: "track.create";
     readonly domain: "track";
     readonly method: "create";
     readonly capability: "track.write";
@@ -4221,6 +4615,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "track delete";
+    readonly wire: "track.delete";
     readonly domain: "track";
     readonly method: "delete";
     readonly capability: "track.write";
@@ -4230,6 +4625,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "track duplicate";
+    readonly wire: "track.duplicate";
     readonly domain: "track";
     readonly method: "duplicate";
     readonly capability: "track.write";
@@ -4239,6 +4635,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "track get";
+    readonly wire: "track.get";
     readonly domain: "track";
     readonly method: "get";
     readonly capability: "track.read";
@@ -4248,6 +4645,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "track list";
+    readonly wire: "track.list";
     readonly domain: "track";
     readonly method: "list";
     readonly capability: "track.read";
@@ -4257,6 +4655,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "track rename";
+    readonly wire: "track.rename";
     readonly domain: "track";
     readonly method: "rename";
     readonly capability: "track.write";
@@ -4266,6 +4665,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "track reorder";
+    readonly wire: "track.reorder";
     readonly domain: "track";
     readonly method: "reorder";
     readonly capability: "track.write";
@@ -4274,7 +4674,18 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
+    readonly path: "track resolve";
+    readonly wire: "track.resolve";
+    readonly domain: "track";
+    readonly method: "resolve";
+    readonly capability: "track.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
     readonly path: "track set";
+    readonly wire: "track.set";
     readonly domain: "track";
     readonly method: "set";
     readonly capability: "track.write";
@@ -4284,6 +4695,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "track set-input";
+    readonly wire: "track.setInput";
     readonly domain: "track";
     readonly method: "setInput";
     readonly capability: "track.write";
@@ -4293,6 +4705,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "track set-language";
+    readonly wire: "track.setLanguage";
     readonly domain: "track";
     readonly method: "setLanguage";
     readonly capability: "track.write";
@@ -4302,6 +4715,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "transport loop";
+    readonly wire: "transport.loop";
     readonly domain: "transport";
     readonly method: "loop";
     readonly capability: "transport.state";
@@ -4311,6 +4725,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "transport metronome";
+    readonly wire: "transport.metronome";
     readonly domain: "transport";
     readonly method: "metronome";
     readonly capability: "transport.control";
@@ -4320,6 +4735,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "transport play";
+    readonly wire: "transport.play";
     readonly domain: "transport";
     readonly method: "play";
     readonly capability: "transport.control";
@@ -4329,6 +4745,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "transport seek";
+    readonly wire: "transport.seek";
     readonly domain: "transport";
     readonly method: "seek";
     readonly capability: "transport.control";
@@ -4338,6 +4755,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "transport set-loop";
+    readonly wire: "transport.setLoop";
     readonly domain: "transport";
     readonly method: "setLoop";
     readonly capability: "transport.control";
@@ -4347,6 +4765,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "transport state";
+    readonly wire: "transport.state";
     readonly domain: "transport";
     readonly method: "state";
     readonly capability: "transport.state";
@@ -4356,6 +4775,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "transport stop";
+    readonly wire: "transport.stop";
     readonly domain: "transport";
     readonly method: "stop";
     readonly capability: "transport.control";
@@ -4365,6 +4785,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "transport toggle";
+    readonly wire: "transport.toggle";
     readonly domain: "transport";
     readonly method: "toggle";
     readonly capability: "transport.control";
@@ -4374,6 +4795,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "ui get";
+    readonly wire: "ui.get";
     readonly domain: "ui";
     readonly method: "get";
     readonly capability: "ui.state";
@@ -4383,6 +4805,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: false;
 }, {
     readonly path: "ui hide-panel";
+    readonly wire: "ui.hidePanel";
     readonly domain: "ui";
     readonly method: "hidePanel";
     readonly capability: "ui.control";
@@ -4392,6 +4815,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "ui hide-special-track";
+    readonly wire: "ui.hideSpecialTrack";
     readonly domain: "ui";
     readonly method: "hideSpecialTrack";
     readonly capability: "ui.control";
@@ -4401,6 +4825,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "ui hide-window";
+    readonly wire: "ui.hideWindow";
     readonly domain: "ui";
     readonly method: "hideWindow";
     readonly capability: "ui.control";
@@ -4410,6 +4835,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "ui show-panel";
+    readonly wire: "ui.showPanel";
     readonly domain: "ui";
     readonly method: "showPanel";
     readonly capability: "ui.control";
@@ -4419,6 +4845,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "ui show-special-track";
+    readonly wire: "ui.showSpecialTrack";
     readonly domain: "ui";
     readonly method: "showSpecialTrack";
     readonly capability: "ui.control";
@@ -4428,6 +4855,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "ui show-window";
+    readonly wire: "ui.showWindow";
     readonly domain: "ui";
     readonly method: "showWindow";
     readonly capability: "ui.control";
@@ -4437,6 +4865,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "vocalparam layers";
+    readonly wire: "vocalparam.layers";
     readonly domain: "vocalparam";
     readonly method: "layers";
     readonly capability: "vocalparam.read";
@@ -4446,6 +4875,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "vocalparam read";
+    readonly wire: "vocalparam.read";
     readonly domain: "vocalparam";
     readonly method: "read";
     readonly capability: "vocalparam.read";
@@ -4455,6 +4885,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "vocalparam write";
+    readonly wire: "vocalparam.write";
     readonly domain: "vocalparam";
     readonly method: "write";
     readonly capability: "vocalparam.write";
@@ -4464,6 +4895,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "voice collect";
+    readonly wire: "voice.collect";
     readonly domain: "voice";
     readonly method: "collect";
     readonly capability: "voice.write";
@@ -4473,6 +4905,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "voice community";
+    readonly wire: "voice.community";
     readonly domain: "voice";
     readonly method: "community";
     readonly capability: "voice.read";
@@ -4482,6 +4915,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "voice seeds";
+    readonly wire: "voice.seeds";
     readonly domain: "voice";
     readonly method: "seeds";
     readonly capability: "voice.read";
@@ -4491,6 +4925,7 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
 }, {
     readonly path: "voice synth-models";
+    readonly wire: "voice.synthModels";
     readonly domain: "voice";
     readonly method: "synthModels";
     readonly capability: "voice.read";
@@ -4688,6 +5123,7 @@ export const PROTOCOL_VERSION = 1;
 export const PUBLIC_SURFACE: {
     readonly operations: readonly [{
         readonly path: "blend add";
+        readonly wire: "blend.add";
         readonly domain: "blend";
         readonly method: "add";
         readonly capability: "voice.write";
@@ -4697,6 +5133,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "blend create";
+        readonly wire: "blend.create";
         readonly domain: "blend";
         readonly method: "create";
         readonly capability: "voice.write";
@@ -4706,6 +5143,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "blend delete";
+        readonly wire: "blend.delete";
         readonly domain: "blend";
         readonly method: "delete";
         readonly capability: "voice.write";
@@ -4715,6 +5153,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "blend get";
+        readonly wire: "blend.get";
         readonly domain: "blend";
         readonly method: "get";
         readonly capability: "voice.read";
@@ -4724,6 +5163,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "blend list";
+        readonly wire: "blend.list";
         readonly domain: "blend";
         readonly method: "list";
         readonly capability: "voice.read";
@@ -4732,7 +5172,18 @@ export const PUBLIC_SURFACE: {
         readonly fingerprintPrecondition: false;
         readonly takesParams: true;
     }, {
+        readonly path: "blend promote";
+        readonly wire: "blend.promote";
+        readonly domain: "blend";
+        readonly method: "promote";
+        readonly capability: "voice.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
         readonly path: "blend remove";
+        readonly wire: "blend.remove";
         readonly domain: "blend";
         readonly method: "remove";
         readonly capability: "voice.write";
@@ -4742,6 +5193,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "blend reorder";
+        readonly wire: "blend.reorder";
         readonly domain: "blend";
         readonly method: "reorder";
         readonly capability: "voice.write";
@@ -4751,6 +5203,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "blend set";
+        readonly wire: "blend.set";
         readonly domain: "blend";
         readonly method: "set";
         readonly capability: "voice.write";
@@ -4760,6 +5213,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "canvas effective-size";
+        readonly wire: "canvas.effectiveSize";
         readonly domain: "canvas";
         readonly method: "effectiveSize";
         readonly capability: "canvas.read";
@@ -4769,6 +5223,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "canvas info";
+        readonly wire: "canvas.info";
         readonly domain: "canvas";
         readonly method: "info";
         readonly capability: "canvas.read";
@@ -4778,6 +5233,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "caret get";
+        readonly wire: "caret.get";
         readonly domain: "caret";
         readonly method: "get";
         readonly capability: "caret.read";
@@ -4787,6 +5243,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "caret set";
+        readonly wire: "caret.set";
         readonly domain: "caret";
         readonly method: "set";
         readonly capability: "caret.write";
@@ -4796,6 +5253,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "choir add";
+        readonly wire: "choir.add";
         readonly domain: "choir";
         readonly method: "add";
         readonly capability: "soundsource.write";
@@ -4805,6 +5263,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "choir disable";
+        readonly wire: "choir.disable";
         readonly domain: "choir";
         readonly method: "disable";
         readonly capability: "soundsource.write";
@@ -4814,6 +5273,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "choir enable";
+        readonly wire: "choir.enable";
         readonly domain: "choir";
         readonly method: "enable";
         readonly capability: "soundsource.write";
@@ -4823,6 +5283,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "choir get";
+        readonly wire: "choir.get";
         readonly domain: "choir";
         readonly method: "get";
         readonly capability: "soundsource.read";
@@ -4832,6 +5293,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "choir remove";
+        readonly wire: "choir.remove";
         readonly domain: "choir";
         readonly method: "remove";
         readonly capability: "soundsource.write";
@@ -4841,6 +5303,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "choir reorder";
+        readonly wire: "choir.reorder";
         readonly domain: "choir";
         readonly method: "reorder";
         readonly capability: "soundsource.write";
@@ -4850,6 +5313,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "choir set";
+        readonly wire: "choir.set";
         readonly domain: "choir";
         readonly method: "set";
         readonly capability: "soundsource.write";
@@ -4859,6 +5323,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "clip audio-content";
+        readonly wire: "clip.audioContent";
         readonly domain: "clip";
         readonly method: "audioContent";
         readonly capability: "clip.read";
@@ -4868,6 +5333,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "clip consolidate";
+        readonly wire: "clip.consolidate";
         readonly domain: "clip";
         readonly method: "consolidate";
         readonly capability: "clip.write";
@@ -4877,6 +5343,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "clip create";
+        readonly wire: "clip.create";
         readonly domain: "clip";
         readonly method: "create";
         readonly capability: "clip.write";
@@ -4886,6 +5353,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "clip delete";
+        readonly wire: "clip.delete";
         readonly domain: "clip";
         readonly method: "delete";
         readonly capability: "clip.write";
@@ -4895,6 +5363,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "clip detach-audio";
+        readonly wire: "clip.detachAudio";
         readonly domain: "clip";
         readonly method: "detachAudio";
         readonly capability: "clip.write";
@@ -4904,6 +5373,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "clip duplicate";
+        readonly wire: "clip.duplicate";
         readonly domain: "clip";
         readonly method: "duplicate";
         readonly capability: "clip.write";
@@ -4913,6 +5383,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "clip get";
+        readonly wire: "clip.get";
         readonly domain: "clip";
         readonly method: "get";
         readonly capability: "clip.read";
@@ -4922,6 +5393,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "clip list";
+        readonly wire: "clip.list";
         readonly domain: "clip";
         readonly method: "list";
         readonly capability: "clip.read";
@@ -4931,6 +5403,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "clip lyrics";
+        readonly wire: "clip.lyrics";
         readonly domain: "clip";
         readonly method: "lyrics";
         readonly capability: "clip.read";
@@ -4940,6 +5413,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "clip move";
+        readonly wire: "clip.move";
         readonly domain: "clip";
         readonly method: "move";
         readonly capability: "clip.write";
@@ -4949,6 +5423,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "clip note-content";
+        readonly wire: "clip.noteContent";
         readonly domain: "clip";
         readonly method: "noteContent";
         readonly capability: "clip.read";
@@ -4958,6 +5433,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "clip reattach-audio";
+        readonly wire: "clip.reattachAudio";
         readonly domain: "clip";
         readonly method: "reattachAudio";
         readonly capability: "clip.write";
@@ -4967,6 +5443,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "clip replace-content";
+        readonly wire: "clip.replaceContent";
         readonly domain: "clip";
         readonly method: "replaceContent";
         readonly capability: "clip.write";
@@ -4976,6 +5453,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "clip resize";
+        readonly wire: "clip.resize";
         readonly domain: "clip";
         readonly method: "resize";
         readonly capability: "clip.write";
@@ -4985,6 +5463,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "clip set";
+        readonly wire: "clip.set";
         readonly domain: "clip";
         readonly method: "set";
         readonly capability: "clip.write";
@@ -4994,6 +5473,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "clip set-enabled";
+        readonly wire: "clip.setEnabled";
         readonly domain: "clip";
         readonly method: "setEnabled";
         readonly capability: "clip.write";
@@ -5003,6 +5483,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "clip set-fades";
+        readonly wire: "clip.setFades";
         readonly domain: "clip";
         readonly method: "setFades";
         readonly capability: "clip.write";
@@ -5012,6 +5493,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "clip set-gain";
+        readonly wire: "clip.setGain";
         readonly domain: "clip";
         readonly method: "setGain";
         readonly capability: "clip.write";
@@ -5021,6 +5503,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "clip set-muted";
+        readonly wire: "clip.setMuted";
         readonly domain: "clip";
         readonly method: "setMuted";
         readonly capability: "clip.write";
@@ -5030,6 +5513,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "clip split";
+        readonly wire: "clip.split";
         readonly domain: "clip";
         readonly method: "split";
         readonly capability: "clip.write";
@@ -5039,6 +5523,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "convert editor-to-global";
+        readonly wire: "convert.editorToGlobal";
         readonly domain: "convert";
         readonly method: "editorToGlobal";
         readonly capability: "convert.editor-to-global";
@@ -5048,6 +5533,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "convert global-to-editor";
+        readonly wire: "convert.globalToEditor";
         readonly domain: "convert";
         readonly method: "globalToEditor";
         readonly capability: "convert.global-to-editor";
@@ -5057,6 +5543,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "convert measure-to-tick";
+        readonly wire: "convert.measureToTick";
         readonly domain: "convert";
         readonly method: "measureToTick";
         readonly capability: "convert.measure-to-tick";
@@ -5066,6 +5553,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "convert tick-to-measure";
+        readonly wire: "convert.tickToMeasure";
         readonly domain: "convert";
         readonly method: "tickToMeasure";
         readonly capability: "convert.tick-to-measure";
@@ -5075,6 +5563,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "convert tick-to-time";
+        readonly wire: "convert.tickToTime";
         readonly domain: "convert";
         readonly method: "tickToTime";
         readonly capability: "convert.tick-to-time";
@@ -5084,6 +5573,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "convert time-to-tick";
+        readonly wire: "convert.timeToTick";
         readonly domain: "convert";
         readonly method: "timeToTick";
         readonly capability: "convert.time-to-tick";
@@ -5093,6 +5583,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "device current";
+        readonly wire: "device.current";
         readonly domain: "device";
         readonly method: "current";
         readonly capability: "device.read";
@@ -5102,6 +5593,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "device list";
+        readonly wire: "device.list";
         readonly domain: "device";
         readonly method: "list";
         readonly capability: "device.read";
@@ -5111,6 +5603,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "device set-audio";
+        readonly wire: "device.setAudio";
         readonly domain: "device";
         readonly method: "setAudio";
         readonly capability: "device.write";
@@ -5120,6 +5613,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "editor current-clip";
+        readonly wire: "editor.currentClip";
         readonly domain: "editor";
         readonly method: "currentClip";
         readonly capability: "editor.read";
@@ -5129,6 +5623,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "editor open";
+        readonly wire: "editor.open";
         readonly domain: "editor";
         readonly method: "open";
         readonly capability: "editor.write";
@@ -5138,6 +5633,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "editor status";
+        readonly wire: "editor.status";
         readonly domain: "editor";
         readonly method: "status";
         readonly capability: "editor.read";
@@ -5147,6 +5643,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "editor tick-range";
+        readonly wire: "editor.tickRange";
         readonly domain: "editor";
         readonly method: "tickRange";
         readonly capability: "editor.read";
@@ -5156,6 +5653,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "ensemble add";
+        readonly wire: "ensemble.add";
         readonly domain: "ensemble";
         readonly method: "add";
         readonly capability: "soundsource.write";
@@ -5165,6 +5663,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "ensemble disable";
+        readonly wire: "ensemble.disable";
         readonly domain: "ensemble";
         readonly method: "disable";
         readonly capability: "soundsource.write";
@@ -5174,6 +5673,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "ensemble enable";
+        readonly wire: "ensemble.enable";
         readonly domain: "ensemble";
         readonly method: "enable";
         readonly capability: "soundsource.write";
@@ -5183,6 +5683,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "ensemble get";
+        readonly wire: "ensemble.get";
         readonly domain: "ensemble";
         readonly method: "get";
         readonly capability: "soundsource.read";
@@ -5192,6 +5693,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "ensemble remove";
+        readonly wire: "ensemble.remove";
         readonly domain: "ensemble";
         readonly method: "remove";
         readonly capability: "soundsource.write";
@@ -5201,6 +5703,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "ensemble reorder";
+        readonly wire: "ensemble.reorder";
         readonly domain: "ensemble";
         readonly method: "reorder";
         readonly capability: "soundsource.write";
@@ -5210,6 +5713,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "ensemble set";
+        readonly wire: "ensemble.set";
         readonly domain: "ensemble";
         readonly method: "set";
         readonly capability: "soundsource.write";
@@ -5219,6 +5723,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "export audio";
+        readonly wire: "export.audio";
         readonly domain: "export";
         readonly method: "audio";
         readonly capability: "export.invoke";
@@ -5228,6 +5733,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "export fcpxml";
+        readonly wire: "export.fcpxml";
         readonly domain: "export";
         readonly method: "fcpxml";
         readonly capability: "export.invoke";
@@ -5237,6 +5743,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "export lrc";
+        readonly wire: "export.lrc";
         readonly domain: "export";
         readonly method: "lrc";
         readonly capability: "export.invoke";
@@ -5246,6 +5753,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "export midi";
+        readonly wire: "export.midi";
         readonly domain: "export";
         readonly method: "midi";
         readonly capability: "export.invoke";
@@ -5255,6 +5763,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "export song-template";
+        readonly wire: "export.songTemplate";
         readonly domain: "export";
         readonly method: "songTemplate";
         readonly capability: "export.invoke";
@@ -5265,6 +5774,7 @@ export const PUBLIC_SURFACE: {
         readonly entitlement: "membership";
     }, {
         readonly path: "export video";
+        readonly wire: "export.video";
         readonly domain: "export";
         readonly method: "video";
         readonly capability: "export.invoke";
@@ -5274,6 +5784,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "export vocal-sample";
+        readonly wire: "export.vocalSample";
         readonly domain: "export";
         readonly method: "vocalSample";
         readonly capability: "export.invoke";
@@ -5284,6 +5795,7 @@ export const PUBLIC_SURFACE: {
         readonly entitlement: "membership";
     }, {
         readonly path: "fx add";
+        readonly wire: "fx.add";
         readonly domain: "fx";
         readonly method: "add";
         readonly capability: "fx.write";
@@ -5293,6 +5805,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "fx apply-preset";
+        readonly wire: "fx.applyPreset";
         readonly domain: "fx";
         readonly method: "applyPreset";
         readonly capability: "fx.write";
@@ -5302,6 +5815,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "fx get-params";
+        readonly wire: "fx.getParams";
         readonly domain: "fx";
         readonly method: "getParams";
         readonly capability: "fx.read";
@@ -5311,6 +5825,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "fx list";
+        readonly wire: "fx.list";
         readonly domain: "fx";
         readonly method: "list";
         readonly capability: "fx.read";
@@ -5320,6 +5835,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "fx list-available";
+        readonly wire: "fx.listAvailable";
         readonly domain: "fx";
         readonly method: "listAvailable";
         readonly capability: "fx.read";
@@ -5329,6 +5845,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "fx list-params";
+        readonly wire: "fx.listParams";
         readonly domain: "fx";
         readonly method: "listParams";
         readonly capability: "fx.read";
@@ -5338,6 +5855,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "fx open-editor";
+        readonly wire: "fx.openEditor";
         readonly domain: "fx";
         readonly method: "openEditor";
         readonly capability: "ui.control";
@@ -5347,6 +5865,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "fx remove";
+        readonly wire: "fx.remove";
         readonly domain: "fx";
         readonly method: "remove";
         readonly capability: "fx.write";
@@ -5356,6 +5875,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "fx reorder";
+        readonly wire: "fx.reorder";
         readonly domain: "fx";
         readonly method: "reorder";
         readonly capability: "fx.write";
@@ -5365,6 +5885,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "fx save-preset";
+        readonly wire: "fx.savePreset";
         readonly domain: "fx";
         readonly method: "savePreset";
         readonly capability: "fx.write";
@@ -5374,6 +5895,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "fx scan";
+        readonly wire: "fx.scan";
         readonly domain: "fx";
         readonly method: "scan";
         readonly capability: "fx.write";
@@ -5383,6 +5905,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "fx set";
+        readonly wire: "fx.set";
         readonly domain: "fx";
         readonly method: "set";
         readonly capability: "fx.write";
@@ -5392,6 +5915,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "fx set-param";
+        readonly wire: "fx.setParam";
         readonly domain: "fx";
         readonly method: "setParam";
         readonly capability: "fx.write";
@@ -5401,6 +5925,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "fx set-room";
+        readonly wire: "fx.setRoom";
         readonly domain: "fx";
         readonly method: "setRoom";
         readonly capability: "fx.write";
@@ -5410,6 +5935,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "generative add-layer";
+        readonly wire: "generative.addLayer";
         readonly domain: "generative";
         readonly method: "addLayer";
         readonly capability: "generative.add-layer";
@@ -5420,6 +5946,7 @@ export const PUBLIC_SURFACE: {
         readonly entitlement: "credits(add-a-layer)";
     }, {
         readonly path: "generative enhance";
+        readonly wire: "generative.enhance";
         readonly domain: "generative";
         readonly method: "enhance";
         readonly capability: "generative.enhance";
@@ -5430,6 +5957,7 @@ export const PUBLIC_SURFACE: {
         readonly entitlement: "credits(music-enhancer)";
     }, {
         readonly path: "generative seed-audio";
+        readonly wire: "generative.seedAudio";
         readonly domain: "generative";
         readonly method: "seedAudio";
         readonly capability: "generative.seed-audio";
@@ -5440,6 +5968,7 @@ export const PUBLIC_SURFACE: {
         readonly entitlement: "credits(seed-audio)";
     }, {
         readonly path: "generative song";
+        readonly wire: "generative.song";
         readonly domain: "generative";
         readonly method: "song";
         readonly capability: "generative.song";
@@ -5450,6 +5979,7 @@ export const PUBLIC_SURFACE: {
         readonly entitlement: "credits(song-generator)";
     }, {
         readonly path: "generative sound-effects";
+        readonly wire: "generative.soundEffects";
         readonly domain: "generative";
         readonly method: "soundEffects";
         readonly capability: "generative.sound-effects";
@@ -5460,6 +5990,7 @@ export const PUBLIC_SURFACE: {
         readonly entitlement: "credits(sound-effects)";
     }, {
         readonly path: "generative stem-split";
+        readonly wire: "generative.stemSplit";
         readonly domain: "generative";
         readonly method: "stemSplit";
         readonly capability: "generative.stem-split";
@@ -5470,6 +6001,7 @@ export const PUBLIC_SURFACE: {
         readonly entitlement: "credits(stem-splitter)";
     }, {
         readonly path: "generative text2sample";
+        readonly wire: "generative.text2sample";
         readonly domain: "generative";
         readonly method: "text2sample";
         readonly capability: "generative.text2sample";
@@ -5480,6 +6012,7 @@ export const PUBLIC_SURFACE: {
         readonly entitlement: "credits(text2sample)";
     }, {
         readonly path: "generative vocal2midi";
+        readonly wire: "generative.vocal2midi";
         readonly domain: "generative";
         readonly method: "vocal2midi";
         readonly capability: "generative.vocal2midi";
@@ -5489,6 +6022,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "generative voice-change";
+        readonly wire: "generative.voiceChange";
         readonly domain: "generative";
         readonly method: "voiceChange";
         readonly capability: "generative.voice-change";
@@ -5498,6 +6032,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "history list";
+        readonly wire: "history.list";
         readonly domain: "history";
         readonly method: "list";
         readonly capability: "history.read";
@@ -5507,6 +6042,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "history redo";
+        readonly wire: "history.redo";
         readonly domain: "history";
         readonly method: "redo";
         readonly capability: "history.control";
@@ -5516,6 +6052,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "history undo";
+        readonly wire: "history.undo";
         readonly domain: "history";
         readonly method: "undo";
         readonly capability: "history.control";
@@ -5525,6 +6062,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "import file";
+        readonly wire: "import.file";
         readonly domain: "import";
         readonly method: "file";
         readonly capability: "import.invoke";
@@ -5534,6 +6072,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "instrument disable";
+        readonly wire: "instrument.disable";
         readonly domain: "instrument";
         readonly method: "disable";
         readonly capability: "soundsource.write";
@@ -5543,6 +6082,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "instrument enable";
+        readonly wire: "instrument.enable";
         readonly domain: "instrument";
         readonly method: "enable";
         readonly capability: "soundsource.write";
@@ -5552,6 +6092,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "instrument set";
+        readonly wire: "instrument.set";
         readonly domain: "instrument";
         readonly method: "set";
         readonly capability: "soundsource.write";
@@ -5561,6 +6102,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "job cancel";
+        readonly wire: "job.cancel";
         readonly domain: "job";
         readonly method: "cancel";
         readonly capability: "job.control";
@@ -5570,6 +6112,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "job discard-result";
+        readonly wire: "job.discardResult";
         readonly domain: "job";
         readonly method: "discardResult";
         readonly capability: "job.control";
@@ -5579,6 +6122,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "job get";
+        readonly wire: "job.get";
         readonly domain: "job";
         readonly method: "get";
         readonly capability: "job.read";
@@ -5588,6 +6132,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "job list";
+        readonly wire: "job.list";
         readonly domain: "job";
         readonly method: "list";
         readonly capability: "job.read";
@@ -5597,6 +6142,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "job place";
+        readonly wire: "job.place";
         readonly domain: "job";
         readonly method: "place";
         readonly capability: "clip.write";
@@ -5606,6 +6152,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "job results";
+        readonly wire: "job.results";
         readonly domain: "job";
         readonly method: "results";
         readonly capability: "job.read";
@@ -5615,6 +6162,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "job wait";
+        readonly wire: "job.wait";
         readonly domain: "job";
         readonly method: "wait";
         readonly capability: "job.read";
@@ -5624,6 +6172,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "note add";
+        readonly wire: "note.add";
         readonly domain: "note";
         readonly method: "add";
         readonly capability: "note.write";
@@ -5633,6 +6182,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "note delete";
+        readonly wire: "note.delete";
         readonly domain: "note";
         readonly method: "delete";
         readonly capability: "note.write";
@@ -5642,6 +6192,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "note get";
+        readonly wire: "note.get";
         readonly domain: "note";
         readonly method: "get";
         readonly capability: "note.read";
@@ -5651,6 +6202,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "note move";
+        readonly wire: "note.move";
         readonly domain: "note";
         readonly method: "move";
         readonly capability: "note.write";
@@ -5660,6 +6212,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "note resize";
+        readonly wire: "note.resize";
         readonly domain: "note";
         readonly method: "resize";
         readonly capability: "note.write";
@@ -5669,6 +6222,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "note set-articulation";
+        readonly wire: "note.setArticulation";
         readonly domain: "note";
         readonly method: "setArticulation";
         readonly capability: "note.write";
@@ -5678,6 +6232,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "note set-lyric";
+        readonly wire: "note.setLyric";
         readonly domain: "note";
         readonly method: "setLyric";
         readonly capability: "note.write";
@@ -5687,6 +6242,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "note split";
+        readonly wire: "note.split";
         readonly domain: "note";
         readonly method: "split";
         readonly capability: "note.write";
@@ -5696,6 +6252,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "project collect-save";
+        readonly wire: "project.collectSave";
         readonly domain: "project";
         readonly method: "collectSave";
         readonly capability: "project.lifecycle";
@@ -5705,6 +6262,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "project dirty";
+        readonly wire: "project.dirty";
         readonly domain: "project";
         readonly method: "dirty";
         readonly capability: "project.read";
@@ -5714,6 +6272,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "project info";
+        readonly wire: "project.info";
         readonly domain: "project";
         readonly method: "info";
         readonly capability: "project.read";
@@ -5723,6 +6282,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "project new";
+        readonly wire: "project.new";
         readonly domain: "project";
         readonly method: "new";
         readonly capability: "project.lifecycle";
@@ -5732,6 +6292,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "project open";
+        readonly wire: "project.open";
         readonly domain: "project";
         readonly method: "open";
         readonly capability: "project.lifecycle";
@@ -5741,6 +6302,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "project recent";
+        readonly wire: "project.recent";
         readonly domain: "project";
         readonly method: "recent";
         readonly capability: "project.read";
@@ -5750,6 +6312,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "project recent-clear";
+        readonly wire: "project.recentClear";
         readonly domain: "project";
         readonly method: "recentClear";
         readonly capability: "project.lifecycle";
@@ -5759,6 +6322,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "project save";
+        readonly wire: "project.save";
         readonly domain: "project";
         readonly method: "save";
         readonly capability: "project.lifecycle";
@@ -5768,6 +6332,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "project save-as";
+        readonly wire: "project.saveAs";
         readonly domain: "project";
         readonly method: "saveAs";
         readonly capability: "project.lifecycle";
@@ -5777,6 +6342,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "project synthesis-status";
+        readonly wire: "project.synthesisStatus";
         readonly domain: "project";
         readonly method: "synthesisStatus";
         readonly capability: "project.read";
@@ -5786,6 +6352,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "recording start";
+        readonly wire: "recording.start";
         readonly domain: "recording";
         readonly method: "start";
         readonly capability: "recording.control";
@@ -5795,6 +6362,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "recording stop";
+        readonly wire: "recording.stop";
         readonly domain: "recording";
         readonly method: "stop";
         readonly capability: "recording.control";
@@ -5804,6 +6372,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "selection get";
+        readonly wire: "selection.get";
         readonly domain: "selection";
         readonly method: "get";
         readonly capability: "selection.read";
@@ -5813,6 +6382,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "selection set";
+        readonly wire: "selection.set";
         readonly domain: "selection";
         readonly method: "set";
         readonly capability: "selection.write";
@@ -5822,6 +6392,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "sound-source get";
+        readonly wire: "soundSource.get";
         readonly domain: "sound-source";
         readonly method: "get";
         readonly capability: "soundsource.read";
@@ -5831,6 +6402,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "sound-source list";
+        readonly wire: "soundSource.list";
         readonly domain: "sound-source";
         readonly method: "list";
         readonly capability: "soundsource.read";
@@ -5840,6 +6412,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "sound-source load";
+        readonly wire: "soundSource.load";
         readonly domain: "sound-source";
         readonly method: "load";
         readonly capability: "soundsource.write";
@@ -5849,6 +6422,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "sound-source set";
+        readonly wire: "soundSource.set";
         readonly domain: "sound-source";
         readonly method: "set";
         readonly capability: "soundsource.write";
@@ -5858,6 +6432,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "sound-source tags";
+        readonly wire: "soundSource.tags";
         readonly domain: "sound-source";
         readonly method: "tags";
         readonly capability: "soundsource.read";
@@ -5867,6 +6442,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "sound-source unload";
+        readonly wire: "soundSource.unload";
         readonly domain: "sound-source";
         readonly method: "unload";
         readonly capability: "soundsource.write";
@@ -5876,6 +6452,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "tempo analyze";
+        readonly wire: "tempo.analyze";
         readonly domain: "tempo";
         readonly method: "analyze";
         readonly capability: "tempo.analyze";
@@ -5885,6 +6462,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "tempo apply-beat-analysis";
+        readonly wire: "tempo.applyBeatAnalysis";
         readonly domain: "tempo";
         readonly method: "applyBeatAnalysis";
         readonly capability: "tempo.applyV2";
@@ -5894,6 +6472,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "tempo get";
+        readonly wire: "tempo.get";
         readonly domain: "tempo";
         readonly method: "get";
         readonly capability: "tempo.read";
@@ -5903,6 +6482,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "tempo points";
+        readonly wire: "tempo.points";
         readonly domain: "tempo";
         readonly method: "points";
         readonly capability: "tempo.read";
@@ -5912,6 +6492,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "tempo remove-point";
+        readonly wire: "tempo.removePoint";
         readonly domain: "tempo";
         readonly method: "removePoint";
         readonly capability: "tempo.write";
@@ -5921,6 +6502,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "tempo set";
+        readonly wire: "tempo.set";
         readonly domain: "tempo";
         readonly method: "set";
         readonly capability: "tempo.write";
@@ -5930,6 +6512,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "tempo set-display-range";
+        readonly wire: "tempo.setDisplayRange";
         readonly domain: "tempo";
         readonly method: "setDisplayRange";
         readonly capability: "tempo.write";
@@ -5939,6 +6522,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "tempo set-point";
+        readonly wire: "tempo.setPoint";
         readonly domain: "tempo";
         readonly method: "setPoint";
         readonly capability: "tempo.write";
@@ -5948,6 +6532,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "timesig get";
+        readonly wire: "timesig.get";
         readonly domain: "timesig";
         readonly method: "get";
         readonly capability: "timesig.read";
@@ -5957,6 +6542,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "timesig list";
+        readonly wire: "timesig.list";
         readonly domain: "timesig";
         readonly method: "list";
         readonly capability: "timesig.read";
@@ -5966,6 +6552,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "timesig remove-at";
+        readonly wire: "timesig.removeAt";
         readonly domain: "timesig";
         readonly method: "removeAt";
         readonly capability: "timesig.write";
@@ -5975,6 +6562,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "timesig set";
+        readonly wire: "timesig.set";
         readonly domain: "timesig";
         readonly method: "set";
         readonly capability: "timesig.write";
@@ -5984,6 +6572,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "timesig set-at";
+        readonly wire: "timesig.setAt";
         readonly domain: "timesig";
         readonly method: "setAt";
         readonly capability: "timesig.write";
@@ -5993,6 +6582,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "track create";
+        readonly wire: "track.create";
         readonly domain: "track";
         readonly method: "create";
         readonly capability: "track.write";
@@ -6002,6 +6592,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "track delete";
+        readonly wire: "track.delete";
         readonly domain: "track";
         readonly method: "delete";
         readonly capability: "track.write";
@@ -6011,6 +6602,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "track duplicate";
+        readonly wire: "track.duplicate";
         readonly domain: "track";
         readonly method: "duplicate";
         readonly capability: "track.write";
@@ -6020,6 +6612,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "track get";
+        readonly wire: "track.get";
         readonly domain: "track";
         readonly method: "get";
         readonly capability: "track.read";
@@ -6029,6 +6622,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "track list";
+        readonly wire: "track.list";
         readonly domain: "track";
         readonly method: "list";
         readonly capability: "track.read";
@@ -6038,6 +6632,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "track rename";
+        readonly wire: "track.rename";
         readonly domain: "track";
         readonly method: "rename";
         readonly capability: "track.write";
@@ -6047,6 +6642,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "track reorder";
+        readonly wire: "track.reorder";
         readonly domain: "track";
         readonly method: "reorder";
         readonly capability: "track.write";
@@ -6055,7 +6651,18 @@ export const PUBLIC_SURFACE: {
         readonly fingerprintPrecondition: false;
         readonly takesParams: true;
     }, {
+        readonly path: "track resolve";
+        readonly wire: "track.resolve";
+        readonly domain: "track";
+        readonly method: "resolve";
+        readonly capability: "track.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
         readonly path: "track set";
+        readonly wire: "track.set";
         readonly domain: "track";
         readonly method: "set";
         readonly capability: "track.write";
@@ -6065,6 +6672,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "track set-input";
+        readonly wire: "track.setInput";
         readonly domain: "track";
         readonly method: "setInput";
         readonly capability: "track.write";
@@ -6074,6 +6682,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "track set-language";
+        readonly wire: "track.setLanguage";
         readonly domain: "track";
         readonly method: "setLanguage";
         readonly capability: "track.write";
@@ -6083,6 +6692,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "transport loop";
+        readonly wire: "transport.loop";
         readonly domain: "transport";
         readonly method: "loop";
         readonly capability: "transport.state";
@@ -6092,6 +6702,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "transport metronome";
+        readonly wire: "transport.metronome";
         readonly domain: "transport";
         readonly method: "metronome";
         readonly capability: "transport.control";
@@ -6101,6 +6712,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "transport play";
+        readonly wire: "transport.play";
         readonly domain: "transport";
         readonly method: "play";
         readonly capability: "transport.control";
@@ -6110,6 +6722,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "transport seek";
+        readonly wire: "transport.seek";
         readonly domain: "transport";
         readonly method: "seek";
         readonly capability: "transport.control";
@@ -6119,6 +6732,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "transport set-loop";
+        readonly wire: "transport.setLoop";
         readonly domain: "transport";
         readonly method: "setLoop";
         readonly capability: "transport.control";
@@ -6128,6 +6742,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "transport state";
+        readonly wire: "transport.state";
         readonly domain: "transport";
         readonly method: "state";
         readonly capability: "transport.state";
@@ -6137,6 +6752,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "transport stop";
+        readonly wire: "transport.stop";
         readonly domain: "transport";
         readonly method: "stop";
         readonly capability: "transport.control";
@@ -6146,6 +6762,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "transport toggle";
+        readonly wire: "transport.toggle";
         readonly domain: "transport";
         readonly method: "toggle";
         readonly capability: "transport.control";
@@ -6155,6 +6772,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "ui get";
+        readonly wire: "ui.get";
         readonly domain: "ui";
         readonly method: "get";
         readonly capability: "ui.state";
@@ -6164,6 +6782,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: false;
     }, {
         readonly path: "ui hide-panel";
+        readonly wire: "ui.hidePanel";
         readonly domain: "ui";
         readonly method: "hidePanel";
         readonly capability: "ui.control";
@@ -6173,6 +6792,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "ui hide-special-track";
+        readonly wire: "ui.hideSpecialTrack";
         readonly domain: "ui";
         readonly method: "hideSpecialTrack";
         readonly capability: "ui.control";
@@ -6182,6 +6802,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "ui hide-window";
+        readonly wire: "ui.hideWindow";
         readonly domain: "ui";
         readonly method: "hideWindow";
         readonly capability: "ui.control";
@@ -6191,6 +6812,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "ui show-panel";
+        readonly wire: "ui.showPanel";
         readonly domain: "ui";
         readonly method: "showPanel";
         readonly capability: "ui.control";
@@ -6200,6 +6822,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "ui show-special-track";
+        readonly wire: "ui.showSpecialTrack";
         readonly domain: "ui";
         readonly method: "showSpecialTrack";
         readonly capability: "ui.control";
@@ -6209,6 +6832,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "ui show-window";
+        readonly wire: "ui.showWindow";
         readonly domain: "ui";
         readonly method: "showWindow";
         readonly capability: "ui.control";
@@ -6218,6 +6842,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "vocalparam layers";
+        readonly wire: "vocalparam.layers";
         readonly domain: "vocalparam";
         readonly method: "layers";
         readonly capability: "vocalparam.read";
@@ -6227,6 +6852,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "vocalparam read";
+        readonly wire: "vocalparam.read";
         readonly domain: "vocalparam";
         readonly method: "read";
         readonly capability: "vocalparam.read";
@@ -6236,6 +6862,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "vocalparam write";
+        readonly wire: "vocalparam.write";
         readonly domain: "vocalparam";
         readonly method: "write";
         readonly capability: "vocalparam.write";
@@ -6245,6 +6872,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "voice collect";
+        readonly wire: "voice.collect";
         readonly domain: "voice";
         readonly method: "collect";
         readonly capability: "voice.write";
@@ -6254,6 +6882,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "voice community";
+        readonly wire: "voice.community";
         readonly domain: "voice";
         readonly method: "community";
         readonly capability: "voice.read";
@@ -6263,6 +6892,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "voice seeds";
+        readonly wire: "voice.seeds";
         readonly domain: "voice";
         readonly method: "seeds";
         readonly capability: "voice.read";
@@ -6272,6 +6902,7 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
     }, {
         readonly path: "voice synth-models";
+        readonly wire: "voice.synthModels";
         readonly domain: "voice";
         readonly method: "synthModels";
         readonly capability: "voice.read";
@@ -6333,6 +6964,7 @@ export const PUBLIC_SURFACE: {
         readonly 'blend delete': "voice.write";
         readonly 'blend get': "voice.read";
         readonly 'blend list': "voice.read";
+        readonly 'blend promote': "voice.write";
         readonly 'blend remove': "voice.write";
         readonly 'blend reorder': "voice.write";
         readonly 'blend set': "voice.write";
@@ -6473,6 +7105,7 @@ export const PUBLIC_SURFACE: {
         readonly 'track list': "track.read";
         readonly 'track rename': "track.write";
         readonly 'track reorder': "track.write";
+        readonly 'track resolve': "track.read";
         readonly 'track set': "track.write";
         readonly 'track set-input': "track.write";
         readonly 'track set-language': "track.write";
@@ -6586,6 +7219,7 @@ export interface RecordingOperations {
 export interface RecordingStartResult {
     armedTracks: {
         kind: string;
+        region: string;
         trackIndex: number;
         trackName: string;
         trackType: string;
@@ -6603,6 +7237,7 @@ export interface RecordingStopResult {
     takes: {
         kind: string;
         path?: string;
+        region: string;
         trackIndex: number;
         trackName: string;
         trackType: string;
@@ -6625,6 +7260,7 @@ export const REQUIRED_TOKENS: {
     readonly 'blend delete': "voice.write";
     readonly 'blend get': "voice.read";
     readonly 'blend list': "voice.read";
+    readonly 'blend promote': "voice.write";
     readonly 'blend remove': "voice.write";
     readonly 'blend reorder': "voice.write";
     readonly 'blend set': "voice.write";
@@ -6765,6 +7401,7 @@ export const REQUIRED_TOKENS: {
     readonly 'track list': "track.read";
     readonly 'track rename': "track.write";
     readonly 'track reorder': "track.write";
+    readonly 'track resolve': "track.read";
     readonly 'track set': "track.write";
     readonly 'track set-input': "track.write";
     readonly 'track set-language': "track.write";
@@ -6849,13 +7486,18 @@ export interface SelectionGetResult {
     }[];
     selectedTrackCount?: number;
     selectedTracks?: {
-        trackIndex: number;
+        region?: string;
+        trackIndex?: number;
         trackUuid: string;
     }[];
     selectionCount?: number;
     verticalSelection?: {
-        begin: number;
-        end: number;
+        beginIndex?: number;
+        beginRegion?: string;
+        endIndex?: number;
+        endRegion?: string;
+        rawBegin: number;
+        rawEnd: number;
     };
 }
 
@@ -6884,12 +7526,17 @@ export interface SelectionSetParams {
     scope: string;
     selectNotes?: boolean;
     tracks?: {
+        region?: string;
         trackIndex?: number;
         trackUuid?: string;
     }[];
     verticalSelection?: {
-        begin: number;
-        end: number;
+        beginIndex?: number;
+        beginRegion?: string;
+        endIndex?: number;
+        endRegion?: string;
+        rawBegin?: number;
+        rawEnd?: number;
     };
 }
 
@@ -6913,8 +7560,12 @@ export interface SelectionSetResult {
     };
     success?: boolean;
     verticalSelection?: {
-        begin: number;
-        end: number;
+        beginIndex?: number;
+        beginRegion?: string;
+        endIndex?: number;
+        endRegion?: string;
+        rawBegin: number;
+        rawEnd: number;
     };
 }
 
@@ -6956,6 +7607,7 @@ export interface ShutdownParams {
 
 // @public
 export interface SoundSourceGetParams {
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -6972,6 +7624,7 @@ export interface SoundSourceGetResult {
         supportedLanguages?: string[];
         timbreOnly?: boolean;
     };
+    region: string;
     soundSource?: {
         category?: string;
         categoryId?: number;
@@ -6988,6 +7641,7 @@ export interface SoundSourceGetResult {
         nativeLanguage?: string;
         origin?: 'premade' | 'cloned' | 'community' | 'blended';
         ref?: string;
+        saveState?: 'unmixed' | 'unsaved' | 'saved' | 'changed';
         seedCount?: number;
         supportedLanguages?: string[];
         tags?: string[];
@@ -7044,6 +7698,7 @@ export interface SoundSourceListResult {
 export interface SoundSourceLoadParams {
     format?: 'vst3' | 'vst2' | 'au';
     model?: string;
+    region?: string;
     source: string;
     trackIndex?: number;
     trackUuid?: string;
@@ -7058,6 +7713,7 @@ export interface SoundSourceLoadResult {
     modelName?: string;
     name: string;
     ref: string;
+    region: string;
     trackIndex: number;
     trackType: string;
     trackUuid: string;
@@ -7078,6 +7734,7 @@ export interface SoundSourceOperations {
 export interface SoundSourceSetParams {
     member?: number;
     model: string;
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -7086,6 +7743,7 @@ export interface SoundSourceSetParams {
 export interface SoundSourceSetResult {
     modelId: number;
     modelName: string;
+    region: string;
     supportedLanguages?: string[];
     trackIndex: number;
     trackUuid: string;
@@ -7112,6 +7770,7 @@ export interface SoundSourceTagsResult {
 
 // @public
 export interface SoundSourceUnloadParams {
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -7119,13 +7778,14 @@ export interface SoundSourceUnloadParams {
 // @public
 export interface SoundSourceUnloadResult {
     newType: string;
+    region: string;
     trackIndex: number;
     trackName: string;
     trackUuid: string;
 }
 
 // @public
-export const SURFACE_VERSION = "7.2";
+export const SURFACE_VERSION = "9.0";
 
 // @public
 export interface SurfaceRow {
@@ -7348,6 +8008,7 @@ export interface TrackDeleteResult {
 
 // @public
 export interface TrackDuplicateParams {
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -7365,22 +8026,27 @@ export interface TrackDuplicateResult {
 
 // @public
 export interface TrackGetParams {
-    trackIndex: number;
+    region?: string;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
 export interface TrackGetResult {
-    color: string;
+    clipCount?: number;
+    color?: string;
     defaultArticulation?: string;
     defaultLanguage?: string;
-    mixer: {
+    isProtected?: boolean;
+    mixer?: {
         gain: number;
-        mute: boolean;
-        pan: number;
-        solo: boolean;
+        mute?: boolean;
+        pan?: number;
+        solo?: boolean;
     };
-    rawName: string;
-    recordInput: {
+    protectedRole?: string;
+    rawName?: string;
+    recordInput?: {
         inputChannelIndex?: number;
         listen: boolean;
         midiInput?: {
@@ -7391,6 +8057,7 @@ export interface TrackGetResult {
         record: boolean;
         recordMode?: 'monophonic' | 'polyphonic';
     };
+    region?: string;
     soundSourceInfo?: {
         category?: string;
         hasSource?: boolean;
@@ -7402,6 +8069,8 @@ export interface TrackGetResult {
             mute: boolean;
             name: string;
             nativeLanguage?: string;
+            saveState?: 'unmixed' | 'unsaved' | 'saved' | 'changed';
+            seedCount?: number;
             supportedLanguages?: string[];
         }[];
         metadata?: {
@@ -7411,11 +8080,16 @@ export interface TrackGetResult {
         };
         name?: string;
         nativeLanguage?: string;
+        saveState?: 'unmixed' | 'unsaved' | 'saved' | 'changed';
+        seedCount?: number;
         supportedLanguages?: string[];
         type?: string;
     };
-    trackName: string;
+    soundSourceName?: string;
+    trackIndex?: number;
+    trackName?: string;
     trackType: string;
+    trackUuid?: string;
 }
 
 // @public
@@ -7428,15 +8102,15 @@ export interface TrackListParams {
 export interface TrackListResult {
     contentTrackCount: number;
     tracks: {
-        clipCount: number;
+        clipCount?: number;
         isProtected?: boolean;
         protectedRole?: string;
         region: string;
         soundSourceName?: string;
         trackIndex: number;
-        trackName: string;
+        trackName?: string;
         trackType: string;
-        trackUuid: string;
+        trackUuid?: string;
     }[];
 }
 
@@ -7445,24 +8119,28 @@ export interface TrackOperations {
     create(params?: TrackCreateParams, options?: MutatingCallOptions): Promise<TrackCreateResult>;
     delete(params?: TrackDeleteParams, options?: MutatingCallOptions): Promise<TrackDeleteResult>;
     duplicate(params?: TrackDuplicateParams, options?: MutatingCallOptions): Promise<TrackDuplicateResult>;
-    get(params: TrackGetParams, options?: CallOptions): Promise<TrackGetResult>;
+    get(params?: TrackGetParams, options?: CallOptions): Promise<TrackGetResult>;
     list(params?: TrackListParams, options?: CallOptions): Promise<TrackListResult>;
     onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
     rename(params: TrackRenameParams, options?: MutatingCallOptions): Promise<void>;
     reorder(params: TrackReorderParams, options?: MutatingCallOptions): Promise<TrackReorderResult>;
+    resolve(params?: TrackResolveParams, options?: CallOptions): Promise<TrackResolveResult>;
     set(params?: TrackSetParams, options?: MutatingCallOptions): Promise<void>;
-    setInput(params: TrackSetInputParams, options?: MutatingCallOptions): Promise<TrackSetInputResult>;
+    setInput(params?: TrackSetInputParams, options?: MutatingCallOptions): Promise<TrackSetInputResult>;
     setLanguage(params: TrackSetLanguageParams, options?: MutatingCallOptions): Promise<void>;
 }
 
 // @public
 export interface TrackRenameParams {
     newName: string;
-    trackIndex: number;
+    region?: string;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
 export interface TrackReorderParams {
+    region?: string;
     toIndex: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -7480,12 +8158,33 @@ export interface TrackReorderResult {
 }
 
 // @public
+export interface TrackResolveParams {
+    region?: string;
+    trackIndices?: number[];
+    trackUuids?: string[];
+}
+
+// @public
+export interface TrackResolveResult {
+    tracks: {
+        found: boolean;
+        region?: string;
+        trackIndex?: number;
+        trackName?: string;
+        trackType?: string;
+        trackUuid?: string;
+    }[];
+}
+
+// @public
 export interface TrackSetInputParams {
     inputChannel?: string;
     midiChannel?: string;
     midiDevice?: string;
     recordMode?: string;
-    trackIndex: number;
+    region?: string;
+    trackIndex?: number;
+    trackUuid?: string;
 }
 
 // @public
@@ -7497,12 +8196,15 @@ export interface TrackSetInputResult {
         sourceType?: 'none' | 'all' | 'keyboard' | 'custom';
     };
     recordMode?: 'monophonic' | 'polyphonic';
+    region: string;
     trackIndex: number;
+    trackUuid: string;
 }
 
 // @public
 export interface TrackSetLanguageParams {
     language: string;
+    region?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -7514,6 +8216,7 @@ export interface TrackSetParams {
     monitor?: boolean;
     mute?: boolean;
     pan?: number;
+    region?: string;
     solo?: boolean;
     trackIndex?: number;
     trackUuid?: string;

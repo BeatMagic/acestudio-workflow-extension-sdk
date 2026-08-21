@@ -101,3 +101,13 @@ readonly ungated: boolean;
 ```
 
 True for a registry-declared pure function: no token, no pre-wire check.
+
+***
+
+### wire
+
+```ts
+readonly wire: string;
+```
+
+The JSON-RPC method the host serves this operation as (ADR 0127 §1): each segment of `path` becomes a dotted segment, kebab lowered to camel, so path `'auth get-token'` is served as `auth.getToken`. Emitted rather than derived from `domain` and `method`, which coincide with it only while every path is two segments and none is a wildcard route; re-deriving the rule here is how the two ends drift apart. Send this, not `path`.

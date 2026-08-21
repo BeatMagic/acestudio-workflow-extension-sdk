@@ -64,10 +64,10 @@ Tick position the placed clip will end at (exclusive).
 
 ***
 
-### trackId
+### trackUuid
 
 ```ts
-trackId: string;
+trackUuid: string;
 ```
 
-The track the result will be placed on, resolved at launch. For a command that creates its own target track, this is the created track's id — it exists already, empty, and the clip lands in it when the job settles.
+The track the result will be placed on, resolved at launch, as a braced UUID. For a command that creates its own target track, this is the created track's handle — it exists already, empty, and the clip lands in it when the job settles.

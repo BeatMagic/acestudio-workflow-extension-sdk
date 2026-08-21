@@ -64,6 +64,16 @@ Ref of the source that landed, resolved from `source`.
 
 ***
 
+### region
+
+```ts
+region: string;
+```
+
+Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2).
+
+***
+
 ### trackIndex
 
 ```ts

@@ -50,10 +50,10 @@ The Voice Changer models being generated, in the order given. One job result per
 
 ***
 
-### trackIds
+### trackUuids
 
 ```ts
-trackIds: string[];
+trackUuids: string[];
 ```
 
-The tracks created to receive each converted take, index-aligned with `modelIds`.
+The tracks created to receive each converted take, index-aligned with `modelIds`, as braced UUIDs.

@@ -65,6 +65,7 @@ const PUBLIC_SURFACE: {
      path: "blend add";
      takesParams: true;
      ungated: false;
+     wire: "blend.add";
    }, {
      capability: "voice.write";
      domain: "blend";
@@ -74,6 +75,7 @@ const PUBLIC_SURFACE: {
      path: "blend create";
      takesParams: true;
      ungated: false;
+     wire: "blend.create";
    }, {
      capability: "voice.write";
      domain: "blend";
@@ -83,6 +85,7 @@ const PUBLIC_SURFACE: {
      path: "blend delete";
      takesParams: true;
      ungated: false;
+     wire: "blend.delete";
    }, {
      capability: "voice.read";
      domain: "blend";
@@ -92,6 +95,7 @@ const PUBLIC_SURFACE: {
      path: "blend get";
      takesParams: true;
      ungated: false;
+     wire: "blend.get";
    }, {
      capability: "voice.read";
      domain: "blend";
@@ -101,6 +105,17 @@ const PUBLIC_SURFACE: {
      path: "blend list";
      takesParams: true;
      ungated: false;
+     wire: "blend.list";
+   }, {
+     capability: "voice.write";
+     domain: "blend";
+     fingerprintPrecondition: false;
+     method: "promote";
+     mutating: true;
+     path: "blend promote";
+     takesParams: true;
+     ungated: false;
+     wire: "blend.promote";
    }, {
      capability: "voice.write";
      domain: "blend";
@@ -110,6 +125,7 @@ const PUBLIC_SURFACE: {
      path: "blend remove";
      takesParams: true;
      ungated: false;
+     wire: "blend.remove";
    }, {
      capability: "voice.write";
      domain: "blend";
@@ -119,6 +135,7 @@ const PUBLIC_SURFACE: {
      path: "blend reorder";
      takesParams: true;
      ungated: false;
+     wire: "blend.reorder";
    }, {
      capability: "voice.write";
      domain: "blend";
@@ -128,6 +145,7 @@ const PUBLIC_SURFACE: {
      path: "blend set";
      takesParams: true;
      ungated: false;
+     wire: "blend.set";
    }, {
      capability: "canvas.read";
      domain: "canvas";
@@ -137,6 +155,7 @@ const PUBLIC_SURFACE: {
      path: "canvas effective-size";
      takesParams: false;
      ungated: false;
+     wire: "canvas.effectiveSize";
    }, {
      capability: "canvas.read";
      domain: "canvas";
@@ -146,6 +165,7 @@ const PUBLIC_SURFACE: {
      path: "canvas info";
      takesParams: false;
      ungated: false;
+     wire: "canvas.info";
    }, {
      capability: "caret.read";
      domain: "caret";
@@ -155,6 +175,7 @@ const PUBLIC_SURFACE: {
      path: "caret get";
      takesParams: true;
      ungated: false;
+     wire: "caret.get";
    }, {
      capability: "caret.write";
      domain: "caret";
@@ -164,6 +185,7 @@ const PUBLIC_SURFACE: {
      path: "caret set";
      takesParams: true;
      ungated: false;
+     wire: "caret.set";
    }, {
      capability: "soundsource.write";
      domain: "choir";
@@ -173,6 +195,7 @@ const PUBLIC_SURFACE: {
      path: "choir add";
      takesParams: true;
      ungated: false;
+     wire: "choir.add";
    }, {
      capability: "soundsource.write";
      domain: "choir";
@@ -182,6 +205,7 @@ const PUBLIC_SURFACE: {
      path: "choir disable";
      takesParams: true;
      ungated: false;
+     wire: "choir.disable";
    }, {
      capability: "soundsource.write";
      domain: "choir";
@@ -191,6 +215,7 @@ const PUBLIC_SURFACE: {
      path: "choir enable";
      takesParams: true;
      ungated: false;
+     wire: "choir.enable";
    }, {
      capability: "soundsource.read";
      domain: "choir";
@@ -200,6 +225,7 @@ const PUBLIC_SURFACE: {
      path: "choir get";
      takesParams: true;
      ungated: false;
+     wire: "choir.get";
    }, {
      capability: "soundsource.write";
      domain: "choir";
@@ -209,6 +235,7 @@ const PUBLIC_SURFACE: {
      path: "choir remove";
      takesParams: true;
      ungated: false;
+     wire: "choir.remove";
    }, {
      capability: "soundsource.write";
      domain: "choir";
@@ -218,6 +245,7 @@ const PUBLIC_SURFACE: {
      path: "choir reorder";
      takesParams: true;
      ungated: false;
+     wire: "choir.reorder";
    }, {
      capability: "soundsource.write";
      domain: "choir";
@@ -227,6 +255,7 @@ const PUBLIC_SURFACE: {
      path: "choir set";
      takesParams: true;
      ungated: false;
+     wire: "choir.set";
    }, {
      capability: "clip.read";
      domain: "clip";
@@ -236,6 +265,7 @@ const PUBLIC_SURFACE: {
      path: "clip audio-content";
      takesParams: true;
      ungated: false;
+     wire: "clip.audioContent";
    }, {
      capability: "clip.write";
      domain: "clip";
@@ -245,6 +275,7 @@ const PUBLIC_SURFACE: {
      path: "clip consolidate";
      takesParams: true;
      ungated: false;
+     wire: "clip.consolidate";
    }, {
      capability: "clip.write";
      domain: "clip";
@@ -254,6 +285,7 @@ const PUBLIC_SURFACE: {
      path: "clip create";
      takesParams: true;
      ungated: false;
+     wire: "clip.create";
    }, {
      capability: "clip.write";
      domain: "clip";
@@ -263,6 +295,7 @@ const PUBLIC_SURFACE: {
      path: "clip delete";
      takesParams: true;
      ungated: false;
+     wire: "clip.delete";
    }, {
      capability: "clip.write";
      domain: "clip";
@@ -272,6 +305,7 @@ const PUBLIC_SURFACE: {
      path: "clip detach-audio";
      takesParams: true;
      ungated: false;
+     wire: "clip.detachAudio";
    }, {
      capability: "clip.write";
      domain: "clip";
@@ -281,6 +315,7 @@ const PUBLIC_SURFACE: {
      path: "clip duplicate";
      takesParams: true;
      ungated: false;
+     wire: "clip.duplicate";
    }, {
      capability: "clip.read";
      domain: "clip";
@@ -290,6 +325,7 @@ const PUBLIC_SURFACE: {
      path: "clip get";
      takesParams: true;
      ungated: false;
+     wire: "clip.get";
    }, {
      capability: "clip.read";
      domain: "clip";
@@ -299,6 +335,7 @@ const PUBLIC_SURFACE: {
      path: "clip list";
      takesParams: true;
      ungated: false;
+     wire: "clip.list";
    }, {
      capability: "clip.read";
      domain: "clip";
@@ -308,6 +345,7 @@ const PUBLIC_SURFACE: {
      path: "clip lyrics";
      takesParams: true;
      ungated: false;
+     wire: "clip.lyrics";
    }, {
      capability: "clip.write";
      domain: "clip";
@@ -317,6 +355,7 @@ const PUBLIC_SURFACE: {
      path: "clip move";
      takesParams: true;
      ungated: false;
+     wire: "clip.move";
    }, {
      capability: "clip.read";
      domain: "clip";
@@ -326,6 +365,7 @@ const PUBLIC_SURFACE: {
      path: "clip note-content";
      takesParams: true;
      ungated: false;
+     wire: "clip.noteContent";
    }, {
      capability: "clip.write";
      domain: "clip";
@@ -335,6 +375,7 @@ const PUBLIC_SURFACE: {
      path: "clip reattach-audio";
      takesParams: true;
      ungated: false;
+     wire: "clip.reattachAudio";
    }, {
      capability: "clip.write";
      domain: "clip";
@@ -344,6 +385,7 @@ const PUBLIC_SURFACE: {
      path: "clip replace-content";
      takesParams: true;
      ungated: false;
+     wire: "clip.replaceContent";
    }, {
      capability: "clip.write";
      domain: "clip";
@@ -353,6 +395,7 @@ const PUBLIC_SURFACE: {
      path: "clip resize";
      takesParams: true;
      ungated: false;
+     wire: "clip.resize";
    }, {
      capability: "clip.write";
      domain: "clip";
@@ -362,6 +405,7 @@ const PUBLIC_SURFACE: {
      path: "clip set";
      takesParams: true;
      ungated: false;
+     wire: "clip.set";
    }, {
      capability: "clip.write";
      domain: "clip";
@@ -371,6 +415,7 @@ const PUBLIC_SURFACE: {
      path: "clip set-enabled";
      takesParams: true;
      ungated: false;
+     wire: "clip.setEnabled";
    }, {
      capability: "clip.write";
      domain: "clip";
@@ -380,6 +425,7 @@ const PUBLIC_SURFACE: {
      path: "clip set-fades";
      takesParams: true;
      ungated: false;
+     wire: "clip.setFades";
    }, {
      capability: "clip.write";
      domain: "clip";
@@ -389,6 +435,7 @@ const PUBLIC_SURFACE: {
      path: "clip set-gain";
      takesParams: true;
      ungated: false;
+     wire: "clip.setGain";
    }, {
      capability: "clip.write";
      domain: "clip";
@@ -398,6 +445,7 @@ const PUBLIC_SURFACE: {
      path: "clip set-muted";
      takesParams: true;
      ungated: false;
+     wire: "clip.setMuted";
    }, {
      capability: "clip.write";
      domain: "clip";
@@ -407,6 +455,7 @@ const PUBLIC_SURFACE: {
      path: "clip split";
      takesParams: true;
      ungated: false;
+     wire: "clip.split";
    }, {
      capability: "convert.editor-to-global";
      domain: "convert";
@@ -416,6 +465,7 @@ const PUBLIC_SURFACE: {
      path: "convert editor-to-global";
      takesParams: true;
      ungated: true;
+     wire: "convert.editorToGlobal";
    }, {
      capability: "convert.global-to-editor";
      domain: "convert";
@@ -425,6 +475,7 @@ const PUBLIC_SURFACE: {
      path: "convert global-to-editor";
      takesParams: true;
      ungated: true;
+     wire: "convert.globalToEditor";
    }, {
      capability: "convert.measure-to-tick";
      domain: "convert";
@@ -434,6 +485,7 @@ const PUBLIC_SURFACE: {
      path: "convert measure-to-tick";
      takesParams: true;
      ungated: true;
+     wire: "convert.measureToTick";
    }, {
      capability: "convert.tick-to-measure";
      domain: "convert";
@@ -443,6 +495,7 @@ const PUBLIC_SURFACE: {
      path: "convert tick-to-measure";
      takesParams: true;
      ungated: true;
+     wire: "convert.tickToMeasure";
    }, {
      capability: "convert.tick-to-time";
      domain: "convert";
@@ -452,6 +505,7 @@ const PUBLIC_SURFACE: {
      path: "convert tick-to-time";
      takesParams: true;
      ungated: true;
+     wire: "convert.tickToTime";
    }, {
      capability: "convert.time-to-tick";
      domain: "convert";
@@ -461,6 +515,7 @@ const PUBLIC_SURFACE: {
      path: "convert time-to-tick";
      takesParams: true;
      ungated: true;
+     wire: "convert.timeToTick";
    }, {
      capability: "device.read";
      domain: "device";
@@ -470,6 +525,7 @@ const PUBLIC_SURFACE: {
      path: "device current";
      takesParams: false;
      ungated: false;
+     wire: "device.current";
    }, {
      capability: "device.read";
      domain: "device";
@@ -479,6 +535,7 @@ const PUBLIC_SURFACE: {
      path: "device list";
      takesParams: false;
      ungated: false;
+     wire: "device.list";
    }, {
      capability: "device.write";
      domain: "device";
@@ -488,6 +545,7 @@ const PUBLIC_SURFACE: {
      path: "device set-audio";
      takesParams: true;
      ungated: false;
+     wire: "device.setAudio";
    }, {
      capability: "editor.read";
      domain: "editor";
@@ -497,6 +555,7 @@ const PUBLIC_SURFACE: {
      path: "editor current-clip";
      takesParams: false;
      ungated: false;
+     wire: "editor.currentClip";
    }, {
      capability: "editor.write";
      domain: "editor";
@@ -506,6 +565,7 @@ const PUBLIC_SURFACE: {
      path: "editor open";
      takesParams: false;
      ungated: false;
+     wire: "editor.open";
    }, {
      capability: "editor.read";
      domain: "editor";
@@ -515,6 +575,7 @@ const PUBLIC_SURFACE: {
      path: "editor status";
      takesParams: false;
      ungated: false;
+     wire: "editor.status";
    }, {
      capability: "editor.read";
      domain: "editor";
@@ -524,6 +585,7 @@ const PUBLIC_SURFACE: {
      path: "editor tick-range";
      takesParams: false;
      ungated: false;
+     wire: "editor.tickRange";
    }, {
      capability: "soundsource.write";
      domain: "ensemble";
@@ -533,6 +595,7 @@ const PUBLIC_SURFACE: {
      path: "ensemble add";
      takesParams: true;
      ungated: false;
+     wire: "ensemble.add";
    }, {
      capability: "soundsource.write";
      domain: "ensemble";
@@ -542,6 +605,7 @@ const PUBLIC_SURFACE: {
      path: "ensemble disable";
      takesParams: true;
      ungated: false;
+     wire: "ensemble.disable";
    }, {
      capability: "soundsource.write";
      domain: "ensemble";
@@ -551,6 +615,7 @@ const PUBLIC_SURFACE: {
      path: "ensemble enable";
      takesParams: true;
      ungated: false;
+     wire: "ensemble.enable";
    }, {
      capability: "soundsource.read";
      domain: "ensemble";
@@ -560,6 +625,7 @@ const PUBLIC_SURFACE: {
      path: "ensemble get";
      takesParams: true;
      ungated: false;
+     wire: "ensemble.get";
    }, {
      capability: "soundsource.write";
      domain: "ensemble";
@@ -569,6 +635,7 @@ const PUBLIC_SURFACE: {
      path: "ensemble remove";
      takesParams: true;
      ungated: false;
+     wire: "ensemble.remove";
    }, {
      capability: "soundsource.write";
      domain: "ensemble";
@@ -578,6 +645,7 @@ const PUBLIC_SURFACE: {
      path: "ensemble reorder";
      takesParams: true;
      ungated: false;
+     wire: "ensemble.reorder";
    }, {
      capability: "soundsource.write";
      domain: "ensemble";
@@ -587,6 +655,7 @@ const PUBLIC_SURFACE: {
      path: "ensemble set";
      takesParams: true;
      ungated: false;
+     wire: "ensemble.set";
    }, {
      capability: "export.invoke";
      domain: "export";
@@ -596,6 +665,7 @@ const PUBLIC_SURFACE: {
      path: "export audio";
      takesParams: true;
      ungated: false;
+     wire: "export.audio";
    }, {
      capability: "export.invoke";
      domain: "export";
@@ -605,6 +675,7 @@ const PUBLIC_SURFACE: {
      path: "export fcpxml";
      takesParams: true;
      ungated: false;
+     wire: "export.fcpxml";
    }, {
      capability: "export.invoke";
      domain: "export";
@@ -614,6 +685,7 @@ const PUBLIC_SURFACE: {
      path: "export lrc";
      takesParams: true;
      ungated: false;
+     wire: "export.lrc";
    }, {
      capability: "export.invoke";
      domain: "export";
@@ -623,6 +695,7 @@ const PUBLIC_SURFACE: {
      path: "export midi";
      takesParams: true;
      ungated: false;
+     wire: "export.midi";
    }, {
      capability: "export.invoke";
      domain: "export";
@@ -633,6 +706,7 @@ const PUBLIC_SURFACE: {
      path: "export song-template";
      takesParams: true;
      ungated: false;
+     wire: "export.songTemplate";
    }, {
      capability: "export.invoke";
      domain: "export";
@@ -642,6 +716,7 @@ const PUBLIC_SURFACE: {
      path: "export video";
      takesParams: true;
      ungated: false;
+     wire: "export.video";
    }, {
      capability: "export.invoke";
      domain: "export";
@@ -652,6 +727,7 @@ const PUBLIC_SURFACE: {
      path: "export vocal-sample";
      takesParams: true;
      ungated: false;
+     wire: "export.vocalSample";
    }, {
      capability: "fx.write";
      domain: "fx";
@@ -661,6 +737,7 @@ const PUBLIC_SURFACE: {
      path: "fx add";
      takesParams: true;
      ungated: false;
+     wire: "fx.add";
    }, {
      capability: "fx.write";
      domain: "fx";
@@ -670,6 +747,7 @@ const PUBLIC_SURFACE: {
      path: "fx apply-preset";
      takesParams: true;
      ungated: false;
+     wire: "fx.applyPreset";
    }, {
      capability: "fx.read";
      domain: "fx";
@@ -679,6 +757,7 @@ const PUBLIC_SURFACE: {
      path: "fx get-params";
      takesParams: true;
      ungated: false;
+     wire: "fx.getParams";
    }, {
      capability: "fx.read";
      domain: "fx";
@@ -688,6 +767,7 @@ const PUBLIC_SURFACE: {
      path: "fx list";
      takesParams: true;
      ungated: false;
+     wire: "fx.list";
    }, {
      capability: "fx.read";
      domain: "fx";
@@ -697,6 +777,7 @@ const PUBLIC_SURFACE: {
      path: "fx list-available";
      takesParams: true;
      ungated: false;
+     wire: "fx.listAvailable";
    }, {
      capability: "fx.read";
      domain: "fx";
@@ -706,6 +787,7 @@ const PUBLIC_SURFACE: {
      path: "fx list-params";
      takesParams: true;
      ungated: false;
+     wire: "fx.listParams";
    }, {
      capability: "ui.control";
      domain: "fx";
@@ -715,6 +797,7 @@ const PUBLIC_SURFACE: {
      path: "fx open-editor";
      takesParams: true;
      ungated: false;
+     wire: "fx.openEditor";
    }, {
      capability: "fx.write";
      domain: "fx";
@@ -724,6 +807,7 @@ const PUBLIC_SURFACE: {
      path: "fx remove";
      takesParams: true;
      ungated: false;
+     wire: "fx.remove";
    }, {
      capability: "fx.write";
      domain: "fx";
@@ -733,6 +817,7 @@ const PUBLIC_SURFACE: {
      path: "fx reorder";
      takesParams: true;
      ungated: false;
+     wire: "fx.reorder";
    }, {
      capability: "fx.write";
      domain: "fx";
@@ -742,6 +827,7 @@ const PUBLIC_SURFACE: {
      path: "fx save-preset";
      takesParams: true;
      ungated: false;
+     wire: "fx.savePreset";
    }, {
      capability: "fx.write";
      domain: "fx";
@@ -751,6 +837,7 @@ const PUBLIC_SURFACE: {
      path: "fx scan";
      takesParams: true;
      ungated: false;
+     wire: "fx.scan";
    }, {
      capability: "fx.write";
      domain: "fx";
@@ -760,6 +847,7 @@ const PUBLIC_SURFACE: {
      path: "fx set";
      takesParams: true;
      ungated: false;
+     wire: "fx.set";
    }, {
      capability: "fx.write";
      domain: "fx";
@@ -769,6 +857,7 @@ const PUBLIC_SURFACE: {
      path: "fx set-param";
      takesParams: true;
      ungated: false;
+     wire: "fx.setParam";
    }, {
      capability: "fx.write";
      domain: "fx";
@@ -778,6 +867,7 @@ const PUBLIC_SURFACE: {
      path: "fx set-room";
      takesParams: true;
      ungated: false;
+     wire: "fx.setRoom";
    }, {
      capability: "generative.add-layer";
      domain: "generative";
@@ -788,6 +878,7 @@ const PUBLIC_SURFACE: {
      path: "generative add-layer";
      takesParams: true;
      ungated: false;
+     wire: "generative.addLayer";
    }, {
      capability: "generative.enhance";
      domain: "generative";
@@ -798,6 +889,7 @@ const PUBLIC_SURFACE: {
      path: "generative enhance";
      takesParams: true;
      ungated: false;
+     wire: "generative.enhance";
    }, {
      capability: "generative.seed-audio";
      domain: "generative";
@@ -808,6 +900,7 @@ const PUBLIC_SURFACE: {
      path: "generative seed-audio";
      takesParams: true;
      ungated: false;
+     wire: "generative.seedAudio";
    }, {
      capability: "generative.song";
      domain: "generative";
@@ -818,6 +911,7 @@ const PUBLIC_SURFACE: {
      path: "generative song";
      takesParams: true;
      ungated: false;
+     wire: "generative.song";
    }, {
      capability: "generative.sound-effects";
      domain: "generative";
@@ -828,6 +922,7 @@ const PUBLIC_SURFACE: {
      path: "generative sound-effects";
      takesParams: true;
      ungated: false;
+     wire: "generative.soundEffects";
    }, {
      capability: "generative.stem-split";
      domain: "generative";
@@ -838,6 +933,7 @@ const PUBLIC_SURFACE: {
      path: "generative stem-split";
      takesParams: true;
      ungated: false;
+     wire: "generative.stemSplit";
    }, {
      capability: "generative.text2sample";
      domain: "generative";
@@ -848,6 +944,7 @@ const PUBLIC_SURFACE: {
      path: "generative text2sample";
      takesParams: true;
      ungated: false;
+     wire: "generative.text2sample";
    }, {
      capability: "generative.vocal2midi";
      domain: "generative";
@@ -857,6 +954,7 @@ const PUBLIC_SURFACE: {
      path: "generative vocal2midi";
      takesParams: true;
      ungated: false;
+     wire: "generative.vocal2midi";
    }, {
      capability: "generative.voice-change";
      domain: "generative";
@@ -866,6 +964,7 @@ const PUBLIC_SURFACE: {
      path: "generative voice-change";
      takesParams: true;
      ungated: false;
+     wire: "generative.voiceChange";
    }, {
      capability: "history.read";
      domain: "history";
@@ -875,6 +974,7 @@ const PUBLIC_SURFACE: {
      path: "history list";
      takesParams: true;
      ungated: false;
+     wire: "history.list";
    }, {
      capability: "history.control";
      domain: "history";
@@ -884,6 +984,7 @@ const PUBLIC_SURFACE: {
      path: "history redo";
      takesParams: false;
      ungated: false;
+     wire: "history.redo";
    }, {
      capability: "history.control";
      domain: "history";
@@ -893,6 +994,7 @@ const PUBLIC_SURFACE: {
      path: "history undo";
      takesParams: false;
      ungated: false;
+     wire: "history.undo";
    }, {
      capability: "import.invoke";
      domain: "import";
@@ -902,6 +1004,7 @@ const PUBLIC_SURFACE: {
      path: "import file";
      takesParams: true;
      ungated: false;
+     wire: "import.file";
    }, {
      capability: "soundsource.write";
      domain: "instrument";
@@ -911,6 +1014,7 @@ const PUBLIC_SURFACE: {
      path: "instrument disable";
      takesParams: true;
      ungated: false;
+     wire: "instrument.disable";
    }, {
      capability: "soundsource.write";
      domain: "instrument";
@@ -920,6 +1024,7 @@ const PUBLIC_SURFACE: {
      path: "instrument enable";
      takesParams: true;
      ungated: false;
+     wire: "instrument.enable";
    }, {
      capability: "soundsource.write";
      domain: "instrument";
@@ -929,6 +1034,7 @@ const PUBLIC_SURFACE: {
      path: "instrument set";
      takesParams: true;
      ungated: false;
+     wire: "instrument.set";
    }, {
      capability: "job.control";
      domain: "job";
@@ -938,6 +1044,7 @@ const PUBLIC_SURFACE: {
      path: "job cancel";
      takesParams: true;
      ungated: false;
+     wire: "job.cancel";
    }, {
      capability: "job.control";
      domain: "job";
@@ -947,6 +1054,7 @@ const PUBLIC_SURFACE: {
      path: "job discard-result";
      takesParams: true;
      ungated: false;
+     wire: "job.discardResult";
    }, {
      capability: "job.read";
      domain: "job";
@@ -956,6 +1064,7 @@ const PUBLIC_SURFACE: {
      path: "job get";
      takesParams: true;
      ungated: false;
+     wire: "job.get";
    }, {
      capability: "job.read";
      domain: "job";
@@ -965,6 +1074,7 @@ const PUBLIC_SURFACE: {
      path: "job list";
      takesParams: true;
      ungated: false;
+     wire: "job.list";
    }, {
      capability: "clip.write";
      domain: "job";
@@ -974,6 +1084,7 @@ const PUBLIC_SURFACE: {
      path: "job place";
      takesParams: true;
      ungated: false;
+     wire: "job.place";
    }, {
      capability: "job.read";
      domain: "job";
@@ -983,6 +1094,7 @@ const PUBLIC_SURFACE: {
      path: "job results";
      takesParams: true;
      ungated: false;
+     wire: "job.results";
    }, {
      capability: "job.read";
      domain: "job";
@@ -992,6 +1104,7 @@ const PUBLIC_SURFACE: {
      path: "job wait";
      takesParams: true;
      ungated: false;
+     wire: "job.wait";
    }, {
      capability: "note.write";
      domain: "note";
@@ -1001,6 +1114,7 @@ const PUBLIC_SURFACE: {
      path: "note add";
      takesParams: true;
      ungated: false;
+     wire: "note.add";
    }, {
      capability: "note.write";
      domain: "note";
@@ -1010,6 +1124,7 @@ const PUBLIC_SURFACE: {
      path: "note delete";
      takesParams: true;
      ungated: false;
+     wire: "note.delete";
    }, {
      capability: "note.read";
      domain: "note";
@@ -1019,6 +1134,7 @@ const PUBLIC_SURFACE: {
      path: "note get";
      takesParams: true;
      ungated: false;
+     wire: "note.get";
    }, {
      capability: "note.write";
      domain: "note";
@@ -1028,6 +1144,7 @@ const PUBLIC_SURFACE: {
      path: "note move";
      takesParams: true;
      ungated: false;
+     wire: "note.move";
    }, {
      capability: "note.write";
      domain: "note";
@@ -1037,6 +1154,7 @@ const PUBLIC_SURFACE: {
      path: "note resize";
      takesParams: true;
      ungated: false;
+     wire: "note.resize";
    }, {
      capability: "note.write";
      domain: "note";
@@ -1046,6 +1164,7 @@ const PUBLIC_SURFACE: {
      path: "note set-articulation";
      takesParams: true;
      ungated: false;
+     wire: "note.setArticulation";
    }, {
      capability: "note.write";
      domain: "note";
@@ -1055,6 +1174,7 @@ const PUBLIC_SURFACE: {
      path: "note set-lyric";
      takesParams: true;
      ungated: false;
+     wire: "note.setLyric";
    }, {
      capability: "note.write";
      domain: "note";
@@ -1064,6 +1184,7 @@ const PUBLIC_SURFACE: {
      path: "note split";
      takesParams: true;
      ungated: false;
+     wire: "note.split";
    }, {
      capability: "project.lifecycle";
      domain: "project";
@@ -1073,6 +1194,7 @@ const PUBLIC_SURFACE: {
      path: "project collect-save";
      takesParams: true;
      ungated: false;
+     wire: "project.collectSave";
    }, {
      capability: "project.read";
      domain: "project";
@@ -1082,6 +1204,7 @@ const PUBLIC_SURFACE: {
      path: "project dirty";
      takesParams: false;
      ungated: false;
+     wire: "project.dirty";
    }, {
      capability: "project.read";
      domain: "project";
@@ -1091,6 +1214,7 @@ const PUBLIC_SURFACE: {
      path: "project info";
      takesParams: false;
      ungated: false;
+     wire: "project.info";
    }, {
      capability: "project.lifecycle";
      domain: "project";
@@ -1100,6 +1224,7 @@ const PUBLIC_SURFACE: {
      path: "project new";
      takesParams: true;
      ungated: false;
+     wire: "project.new";
    }, {
      capability: "project.lifecycle";
      domain: "project";
@@ -1109,6 +1234,7 @@ const PUBLIC_SURFACE: {
      path: "project open";
      takesParams: true;
      ungated: false;
+     wire: "project.open";
    }, {
      capability: "project.read";
      domain: "project";
@@ -1118,6 +1244,7 @@ const PUBLIC_SURFACE: {
      path: "project recent";
      takesParams: false;
      ungated: false;
+     wire: "project.recent";
    }, {
      capability: "project.lifecycle";
      domain: "project";
@@ -1127,6 +1254,7 @@ const PUBLIC_SURFACE: {
      path: "project recent-clear";
      takesParams: false;
      ungated: false;
+     wire: "project.recentClear";
    }, {
      capability: "project.lifecycle";
      domain: "project";
@@ -1136,6 +1264,7 @@ const PUBLIC_SURFACE: {
      path: "project save";
      takesParams: false;
      ungated: false;
+     wire: "project.save";
    }, {
      capability: "project.lifecycle";
      domain: "project";
@@ -1145,6 +1274,7 @@ const PUBLIC_SURFACE: {
      path: "project save-as";
      takesParams: true;
      ungated: false;
+     wire: "project.saveAs";
    }, {
      capability: "project.read";
      domain: "project";
@@ -1154,6 +1284,7 @@ const PUBLIC_SURFACE: {
      path: "project synthesis-status";
      takesParams: false;
      ungated: false;
+     wire: "project.synthesisStatus";
    }, {
      capability: "recording.control";
      domain: "recording";
@@ -1163,6 +1294,7 @@ const PUBLIC_SURFACE: {
      path: "recording start";
      takesParams: false;
      ungated: false;
+     wire: "recording.start";
    }, {
      capability: "recording.control";
      domain: "recording";
@@ -1172,6 +1304,7 @@ const PUBLIC_SURFACE: {
      path: "recording stop";
      takesParams: false;
      ungated: false;
+     wire: "recording.stop";
    }, {
      capability: "selection.read";
      domain: "selection";
@@ -1181,6 +1314,7 @@ const PUBLIC_SURFACE: {
      path: "selection get";
      takesParams: true;
      ungated: false;
+     wire: "selection.get";
    }, {
      capability: "selection.write";
      domain: "selection";
@@ -1190,6 +1324,7 @@ const PUBLIC_SURFACE: {
      path: "selection set";
      takesParams: true;
      ungated: false;
+     wire: "selection.set";
    }, {
      capability: "soundsource.read";
      domain: "sound-source";
@@ -1199,6 +1334,7 @@ const PUBLIC_SURFACE: {
      path: "sound-source get";
      takesParams: true;
      ungated: false;
+     wire: "soundSource.get";
    }, {
      capability: "soundsource.read";
      domain: "sound-source";
@@ -1208,6 +1344,7 @@ const PUBLIC_SURFACE: {
      path: "sound-source list";
      takesParams: true;
      ungated: false;
+     wire: "soundSource.list";
    }, {
      capability: "soundsource.write";
      domain: "sound-source";
@@ -1217,6 +1354,7 @@ const PUBLIC_SURFACE: {
      path: "sound-source load";
      takesParams: true;
      ungated: false;
+     wire: "soundSource.load";
    }, {
      capability: "soundsource.write";
      domain: "sound-source";
@@ -1226,6 +1364,7 @@ const PUBLIC_SURFACE: {
      path: "sound-source set";
      takesParams: true;
      ungated: false;
+     wire: "soundSource.set";
    }, {
      capability: "soundsource.read";
      domain: "sound-source";
@@ -1235,6 +1374,7 @@ const PUBLIC_SURFACE: {
      path: "sound-source tags";
      takesParams: true;
      ungated: false;
+     wire: "soundSource.tags";
    }, {
      capability: "soundsource.write";
      domain: "sound-source";
@@ -1244,6 +1384,7 @@ const PUBLIC_SURFACE: {
      path: "sound-source unload";
      takesParams: true;
      ungated: false;
+     wire: "soundSource.unload";
    }, {
      capability: "tempo.analyze";
      domain: "tempo";
@@ -1253,6 +1394,7 @@ const PUBLIC_SURFACE: {
      path: "tempo analyze";
      takesParams: true;
      ungated: false;
+     wire: "tempo.analyze";
    }, {
      capability: "tempo.applyV2";
      domain: "tempo";
@@ -1262,6 +1404,7 @@ const PUBLIC_SURFACE: {
      path: "tempo apply-beat-analysis";
      takesParams: true;
      ungated: false;
+     wire: "tempo.applyBeatAnalysis";
    }, {
      capability: "tempo.read";
      domain: "tempo";
@@ -1271,6 +1414,7 @@ const PUBLIC_SURFACE: {
      path: "tempo get";
      takesParams: false;
      ungated: false;
+     wire: "tempo.get";
    }, {
      capability: "tempo.read";
      domain: "tempo";
@@ -1280,6 +1424,7 @@ const PUBLIC_SURFACE: {
      path: "tempo points";
      takesParams: false;
      ungated: false;
+     wire: "tempo.points";
    }, {
      capability: "tempo.write";
      domain: "tempo";
@@ -1289,6 +1434,7 @@ const PUBLIC_SURFACE: {
      path: "tempo remove-point";
      takesParams: true;
      ungated: false;
+     wire: "tempo.removePoint";
    }, {
      capability: "tempo.write";
      domain: "tempo";
@@ -1298,6 +1444,7 @@ const PUBLIC_SURFACE: {
      path: "tempo set";
      takesParams: true;
      ungated: false;
+     wire: "tempo.set";
    }, {
      capability: "tempo.write";
      domain: "tempo";
@@ -1307,6 +1454,7 @@ const PUBLIC_SURFACE: {
      path: "tempo set-display-range";
      takesParams: true;
      ungated: false;
+     wire: "tempo.setDisplayRange";
    }, {
      capability: "tempo.write";
      domain: "tempo";
@@ -1316,6 +1464,7 @@ const PUBLIC_SURFACE: {
      path: "tempo set-point";
      takesParams: true;
      ungated: false;
+     wire: "tempo.setPoint";
    }, {
      capability: "timesig.read";
      domain: "timesig";
@@ -1325,6 +1474,7 @@ const PUBLIC_SURFACE: {
      path: "timesig get";
      takesParams: false;
      ungated: false;
+     wire: "timesig.get";
    }, {
      capability: "timesig.read";
      domain: "timesig";
@@ -1334,6 +1484,7 @@ const PUBLIC_SURFACE: {
      path: "timesig list";
      takesParams: false;
      ungated: false;
+     wire: "timesig.list";
    }, {
      capability: "timesig.write";
      domain: "timesig";
@@ -1343,6 +1494,7 @@ const PUBLIC_SURFACE: {
      path: "timesig remove-at";
      takesParams: true;
      ungated: false;
+     wire: "timesig.removeAt";
    }, {
      capability: "timesig.write";
      domain: "timesig";
@@ -1352,6 +1504,7 @@ const PUBLIC_SURFACE: {
      path: "timesig set";
      takesParams: true;
      ungated: false;
+     wire: "timesig.set";
    }, {
      capability: "timesig.write";
      domain: "timesig";
@@ -1361,6 +1514,7 @@ const PUBLIC_SURFACE: {
      path: "timesig set-at";
      takesParams: true;
      ungated: false;
+     wire: "timesig.setAt";
    }, {
      capability: "track.write";
      domain: "track";
@@ -1370,6 +1524,7 @@ const PUBLIC_SURFACE: {
      path: "track create";
      takesParams: true;
      ungated: false;
+     wire: "track.create";
    }, {
      capability: "track.write";
      domain: "track";
@@ -1379,6 +1534,7 @@ const PUBLIC_SURFACE: {
      path: "track delete";
      takesParams: true;
      ungated: false;
+     wire: "track.delete";
    }, {
      capability: "track.write";
      domain: "track";
@@ -1388,6 +1544,7 @@ const PUBLIC_SURFACE: {
      path: "track duplicate";
      takesParams: true;
      ungated: false;
+     wire: "track.duplicate";
    }, {
      capability: "track.read";
      domain: "track";
@@ -1397,6 +1554,7 @@ const PUBLIC_SURFACE: {
      path: "track get";
      takesParams: true;
      ungated: false;
+     wire: "track.get";
    }, {
      capability: "track.read";
      domain: "track";
@@ -1406,6 +1564,7 @@ const PUBLIC_SURFACE: {
      path: "track list";
      takesParams: true;
      ungated: false;
+     wire: "track.list";
    }, {
      capability: "track.write";
      domain: "track";
@@ -1415,6 +1574,7 @@ const PUBLIC_SURFACE: {
      path: "track rename";
      takesParams: true;
      ungated: false;
+     wire: "track.rename";
    }, {
      capability: "track.write";
      domain: "track";
@@ -1424,6 +1584,17 @@ const PUBLIC_SURFACE: {
      path: "track reorder";
      takesParams: true;
      ungated: false;
+     wire: "track.reorder";
+   }, {
+     capability: "track.read";
+     domain: "track";
+     fingerprintPrecondition: false;
+     method: "resolve";
+     mutating: false;
+     path: "track resolve";
+     takesParams: true;
+     ungated: false;
+     wire: "track.resolve";
    }, {
      capability: "track.write";
      domain: "track";
@@ -1433,6 +1604,7 @@ const PUBLIC_SURFACE: {
      path: "track set";
      takesParams: true;
      ungated: false;
+     wire: "track.set";
    }, {
      capability: "track.write";
      domain: "track";
@@ -1442,6 +1614,7 @@ const PUBLIC_SURFACE: {
      path: "track set-input";
      takesParams: true;
      ungated: false;
+     wire: "track.setInput";
    }, {
      capability: "track.write";
      domain: "track";
@@ -1451,6 +1624,7 @@ const PUBLIC_SURFACE: {
      path: "track set-language";
      takesParams: true;
      ungated: false;
+     wire: "track.setLanguage";
    }, {
      capability: "transport.state";
      domain: "transport";
@@ -1460,6 +1634,7 @@ const PUBLIC_SURFACE: {
      path: "transport loop";
      takesParams: false;
      ungated: false;
+     wire: "transport.loop";
    }, {
      capability: "transport.control";
      domain: "transport";
@@ -1469,6 +1644,7 @@ const PUBLIC_SURFACE: {
      path: "transport metronome";
      takesParams: true;
      ungated: false;
+     wire: "transport.metronome";
    }, {
      capability: "transport.control";
      domain: "transport";
@@ -1478,6 +1654,7 @@ const PUBLIC_SURFACE: {
      path: "transport play";
      takesParams: false;
      ungated: false;
+     wire: "transport.play";
    }, {
      capability: "transport.control";
      domain: "transport";
@@ -1487,6 +1664,7 @@ const PUBLIC_SURFACE: {
      path: "transport seek";
      takesParams: true;
      ungated: false;
+     wire: "transport.seek";
    }, {
      capability: "transport.control";
      domain: "transport";
@@ -1496,6 +1674,7 @@ const PUBLIC_SURFACE: {
      path: "transport set-loop";
      takesParams: true;
      ungated: false;
+     wire: "transport.setLoop";
    }, {
      capability: "transport.state";
      domain: "transport";
@@ -1505,6 +1684,7 @@ const PUBLIC_SURFACE: {
      path: "transport state";
      takesParams: false;
      ungated: false;
+     wire: "transport.state";
    }, {
      capability: "transport.control";
      domain: "transport";
@@ -1514,6 +1694,7 @@ const PUBLIC_SURFACE: {
      path: "transport stop";
      takesParams: false;
      ungated: false;
+     wire: "transport.stop";
    }, {
      capability: "transport.control";
      domain: "transport";
@@ -1523,6 +1704,7 @@ const PUBLIC_SURFACE: {
      path: "transport toggle";
      takesParams: false;
      ungated: false;
+     wire: "transport.toggle";
    }, {
      capability: "ui.state";
      domain: "ui";
@@ -1532,6 +1714,7 @@ const PUBLIC_SURFACE: {
      path: "ui get";
      takesParams: false;
      ungated: false;
+     wire: "ui.get";
    }, {
      capability: "ui.control";
      domain: "ui";
@@ -1541,6 +1724,7 @@ const PUBLIC_SURFACE: {
      path: "ui hide-panel";
      takesParams: true;
      ungated: false;
+     wire: "ui.hidePanel";
    }, {
      capability: "ui.control";
      domain: "ui";
@@ -1550,6 +1734,7 @@ const PUBLIC_SURFACE: {
      path: "ui hide-special-track";
      takesParams: true;
      ungated: false;
+     wire: "ui.hideSpecialTrack";
    }, {
      capability: "ui.control";
      domain: "ui";
@@ -1559,6 +1744,7 @@ const PUBLIC_SURFACE: {
      path: "ui hide-window";
      takesParams: true;
      ungated: false;
+     wire: "ui.hideWindow";
    }, {
      capability: "ui.control";
      domain: "ui";
@@ -1568,6 +1754,7 @@ const PUBLIC_SURFACE: {
      path: "ui show-panel";
      takesParams: true;
      ungated: false;
+     wire: "ui.showPanel";
    }, {
      capability: "ui.control";
      domain: "ui";
@@ -1577,6 +1764,7 @@ const PUBLIC_SURFACE: {
      path: "ui show-special-track";
      takesParams: true;
      ungated: false;
+     wire: "ui.showSpecialTrack";
    }, {
      capability: "ui.control";
      domain: "ui";
@@ -1586,6 +1774,7 @@ const PUBLIC_SURFACE: {
      path: "ui show-window";
      takesParams: true;
      ungated: false;
+     wire: "ui.showWindow";
    }, {
      capability: "vocalparam.read";
      domain: "vocalparam";
@@ -1595,6 +1784,7 @@ const PUBLIC_SURFACE: {
      path: "vocalparam layers";
      takesParams: true;
      ungated: false;
+     wire: "vocalparam.layers";
    }, {
      capability: "vocalparam.read";
      domain: "vocalparam";
@@ -1604,6 +1794,7 @@ const PUBLIC_SURFACE: {
      path: "vocalparam read";
      takesParams: true;
      ungated: false;
+     wire: "vocalparam.read";
    }, {
      capability: "vocalparam.write";
      domain: "vocalparam";
@@ -1613,6 +1804,7 @@ const PUBLIC_SURFACE: {
      path: "vocalparam write";
      takesParams: true;
      ungated: false;
+     wire: "vocalparam.write";
    }, {
      capability: "voice.write";
      domain: "voice";
@@ -1622,6 +1814,7 @@ const PUBLIC_SURFACE: {
      path: "voice collect";
      takesParams: true;
      ungated: false;
+     wire: "voice.collect";
    }, {
      capability: "voice.read";
      domain: "voice";
@@ -1631,6 +1824,7 @@ const PUBLIC_SURFACE: {
      path: "voice community";
      takesParams: true;
      ungated: false;
+     wire: "voice.community";
    }, {
      capability: "voice.read";
      domain: "voice";
@@ -1640,6 +1834,7 @@ const PUBLIC_SURFACE: {
      path: "voice seeds";
      takesParams: true;
      ungated: false;
+     wire: "voice.seeds";
    }, {
      capability: "voice.read";
      domain: "voice";
@@ -1649,6 +1844,7 @@ const PUBLIC_SURFACE: {
      path: "voice synth-models";
      takesParams: true;
      ungated: false;
+     wire: "voice.synthModels";
   }];
   requiredTokens: {
      blend add: "voice.write";
@@ -1656,6 +1852,7 @@ const PUBLIC_SURFACE: {
      blend delete: "voice.write";
      blend get: "voice.read";
      blend list: "voice.read";
+     blend promote: "voice.write";
      blend remove: "voice.write";
      blend reorder: "voice.write";
      blend set: "voice.write";
@@ -1796,6 +1993,7 @@ const PUBLIC_SURFACE: {
      track list: "track.read";
      track rename: "track.write";
      track reorder: "track.write";
+     track resolve: "track.read";
      track set: "track.write";
      track set-input: "track.write";
      track set-language: "track.write";
@@ -1925,6 +2123,7 @@ readonly operations: readonly [{
   path: "blend add";
   takesParams: true;
   ungated: false;
+  wire: "blend.add";
 }, {
   capability: "voice.write";
   domain: "blend";
@@ -1934,6 +2133,7 @@ readonly operations: readonly [{
   path: "blend create";
   takesParams: true;
   ungated: false;
+  wire: "blend.create";
 }, {
   capability: "voice.write";
   domain: "blend";
@@ -1943,6 +2143,7 @@ readonly operations: readonly [{
   path: "blend delete";
   takesParams: true;
   ungated: false;
+  wire: "blend.delete";
 }, {
   capability: "voice.read";
   domain: "blend";
@@ -1952,6 +2153,7 @@ readonly operations: readonly [{
   path: "blend get";
   takesParams: true;
   ungated: false;
+  wire: "blend.get";
 }, {
   capability: "voice.read";
   domain: "blend";
@@ -1961,6 +2163,17 @@ readonly operations: readonly [{
   path: "blend list";
   takesParams: true;
   ungated: false;
+  wire: "blend.list";
+}, {
+  capability: "voice.write";
+  domain: "blend";
+  fingerprintPrecondition: false;
+  method: "promote";
+  mutating: true;
+  path: "blend promote";
+  takesParams: true;
+  ungated: false;
+  wire: "blend.promote";
 }, {
   capability: "voice.write";
   domain: "blend";
@@ -1970,6 +2183,7 @@ readonly operations: readonly [{
   path: "blend remove";
   takesParams: true;
   ungated: false;
+  wire: "blend.remove";
 }, {
   capability: "voice.write";
   domain: "blend";
@@ -1979,6 +2193,7 @@ readonly operations: readonly [{
   path: "blend reorder";
   takesParams: true;
   ungated: false;
+  wire: "blend.reorder";
 }, {
   capability: "voice.write";
   domain: "blend";
@@ -1988,6 +2203,7 @@ readonly operations: readonly [{
   path: "blend set";
   takesParams: true;
   ungated: false;
+  wire: "blend.set";
 }, {
   capability: "canvas.read";
   domain: "canvas";
@@ -1997,6 +2213,7 @@ readonly operations: readonly [{
   path: "canvas effective-size";
   takesParams: false;
   ungated: false;
+  wire: "canvas.effectiveSize";
 }, {
   capability: "canvas.read";
   domain: "canvas";
@@ -2006,6 +2223,7 @@ readonly operations: readonly [{
   path: "canvas info";
   takesParams: false;
   ungated: false;
+  wire: "canvas.info";
 }, {
   capability: "caret.read";
   domain: "caret";
@@ -2015,6 +2233,7 @@ readonly operations: readonly [{
   path: "caret get";
   takesParams: true;
   ungated: false;
+  wire: "caret.get";
 }, {
   capability: "caret.write";
   domain: "caret";
@@ -2024,6 +2243,7 @@ readonly operations: readonly [{
   path: "caret set";
   takesParams: true;
   ungated: false;
+  wire: "caret.set";
 }, {
   capability: "soundsource.write";
   domain: "choir";
@@ -2033,6 +2253,7 @@ readonly operations: readonly [{
   path: "choir add";
   takesParams: true;
   ungated: false;
+  wire: "choir.add";
 }, {
   capability: "soundsource.write";
   domain: "choir";
@@ -2042,6 +2263,7 @@ readonly operations: readonly [{
   path: "choir disable";
   takesParams: true;
   ungated: false;
+  wire: "choir.disable";
 }, {
   capability: "soundsource.write";
   domain: "choir";
@@ -2051,6 +2273,7 @@ readonly operations: readonly [{
   path: "choir enable";
   takesParams: true;
   ungated: false;
+  wire: "choir.enable";
 }, {
   capability: "soundsource.read";
   domain: "choir";
@@ -2060,6 +2283,7 @@ readonly operations: readonly [{
   path: "choir get";
   takesParams: true;
   ungated: false;
+  wire: "choir.get";
 }, {
   capability: "soundsource.write";
   domain: "choir";
@@ -2069,6 +2293,7 @@ readonly operations: readonly [{
   path: "choir remove";
   takesParams: true;
   ungated: false;
+  wire: "choir.remove";
 }, {
   capability: "soundsource.write";
   domain: "choir";
@@ -2078,6 +2303,7 @@ readonly operations: readonly [{
   path: "choir reorder";
   takesParams: true;
   ungated: false;
+  wire: "choir.reorder";
 }, {
   capability: "soundsource.write";
   domain: "choir";
@@ -2087,6 +2313,7 @@ readonly operations: readonly [{
   path: "choir set";
   takesParams: true;
   ungated: false;
+  wire: "choir.set";
 }, {
   capability: "clip.read";
   domain: "clip";
@@ -2096,6 +2323,7 @@ readonly operations: readonly [{
   path: "clip audio-content";
   takesParams: true;
   ungated: false;
+  wire: "clip.audioContent";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -2105,6 +2333,7 @@ readonly operations: readonly [{
   path: "clip consolidate";
   takesParams: true;
   ungated: false;
+  wire: "clip.consolidate";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -2114,6 +2343,7 @@ readonly operations: readonly [{
   path: "clip create";
   takesParams: true;
   ungated: false;
+  wire: "clip.create";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -2123,6 +2353,7 @@ readonly operations: readonly [{
   path: "clip delete";
   takesParams: true;
   ungated: false;
+  wire: "clip.delete";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -2132,6 +2363,7 @@ readonly operations: readonly [{
   path: "clip detach-audio";
   takesParams: true;
   ungated: false;
+  wire: "clip.detachAudio";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -2141,6 +2373,7 @@ readonly operations: readonly [{
   path: "clip duplicate";
   takesParams: true;
   ungated: false;
+  wire: "clip.duplicate";
 }, {
   capability: "clip.read";
   domain: "clip";
@@ -2150,6 +2383,7 @@ readonly operations: readonly [{
   path: "clip get";
   takesParams: true;
   ungated: false;
+  wire: "clip.get";
 }, {
   capability: "clip.read";
   domain: "clip";
@@ -2159,6 +2393,7 @@ readonly operations: readonly [{
   path: "clip list";
   takesParams: true;
   ungated: false;
+  wire: "clip.list";
 }, {
   capability: "clip.read";
   domain: "clip";
@@ -2168,6 +2403,7 @@ readonly operations: readonly [{
   path: "clip lyrics";
   takesParams: true;
   ungated: false;
+  wire: "clip.lyrics";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -2177,6 +2413,7 @@ readonly operations: readonly [{
   path: "clip move";
   takesParams: true;
   ungated: false;
+  wire: "clip.move";
 }, {
   capability: "clip.read";
   domain: "clip";
@@ -2186,6 +2423,7 @@ readonly operations: readonly [{
   path: "clip note-content";
   takesParams: true;
   ungated: false;
+  wire: "clip.noteContent";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -2195,6 +2433,7 @@ readonly operations: readonly [{
   path: "clip reattach-audio";
   takesParams: true;
   ungated: false;
+  wire: "clip.reattachAudio";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -2204,6 +2443,7 @@ readonly operations: readonly [{
   path: "clip replace-content";
   takesParams: true;
   ungated: false;
+  wire: "clip.replaceContent";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -2213,6 +2453,7 @@ readonly operations: readonly [{
   path: "clip resize";
   takesParams: true;
   ungated: false;
+  wire: "clip.resize";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -2222,6 +2463,7 @@ readonly operations: readonly [{
   path: "clip set";
   takesParams: true;
   ungated: false;
+  wire: "clip.set";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -2231,6 +2473,7 @@ readonly operations: readonly [{
   path: "clip set-enabled";
   takesParams: true;
   ungated: false;
+  wire: "clip.setEnabled";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -2240,6 +2483,7 @@ readonly operations: readonly [{
   path: "clip set-fades";
   takesParams: true;
   ungated: false;
+  wire: "clip.setFades";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -2249,6 +2493,7 @@ readonly operations: readonly [{
   path: "clip set-gain";
   takesParams: true;
   ungated: false;
+  wire: "clip.setGain";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -2258,6 +2503,7 @@ readonly operations: readonly [{
   path: "clip set-muted";
   takesParams: true;
   ungated: false;
+  wire: "clip.setMuted";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -2267,6 +2513,7 @@ readonly operations: readonly [{
   path: "clip split";
   takesParams: true;
   ungated: false;
+  wire: "clip.split";
 }, {
   capability: "convert.editor-to-global";
   domain: "convert";
@@ -2276,6 +2523,7 @@ readonly operations: readonly [{
   path: "convert editor-to-global";
   takesParams: true;
   ungated: true;
+  wire: "convert.editorToGlobal";
 }, {
   capability: "convert.global-to-editor";
   domain: "convert";
@@ -2285,6 +2533,7 @@ readonly operations: readonly [{
   path: "convert global-to-editor";
   takesParams: true;
   ungated: true;
+  wire: "convert.globalToEditor";
 }, {
   capability: "convert.measure-to-tick";
   domain: "convert";
@@ -2294,6 +2543,7 @@ readonly operations: readonly [{
   path: "convert measure-to-tick";
   takesParams: true;
   ungated: true;
+  wire: "convert.measureToTick";
 }, {
   capability: "convert.tick-to-measure";
   domain: "convert";
@@ -2303,6 +2553,7 @@ readonly operations: readonly [{
   path: "convert tick-to-measure";
   takesParams: true;
   ungated: true;
+  wire: "convert.tickToMeasure";
 }, {
   capability: "convert.tick-to-time";
   domain: "convert";
@@ -2312,6 +2563,7 @@ readonly operations: readonly [{
   path: "convert tick-to-time";
   takesParams: true;
   ungated: true;
+  wire: "convert.tickToTime";
 }, {
   capability: "convert.time-to-tick";
   domain: "convert";
@@ -2321,6 +2573,7 @@ readonly operations: readonly [{
   path: "convert time-to-tick";
   takesParams: true;
   ungated: true;
+  wire: "convert.timeToTick";
 }, {
   capability: "device.read";
   domain: "device";
@@ -2330,6 +2583,7 @@ readonly operations: readonly [{
   path: "device current";
   takesParams: false;
   ungated: false;
+  wire: "device.current";
 }, {
   capability: "device.read";
   domain: "device";
@@ -2339,6 +2593,7 @@ readonly operations: readonly [{
   path: "device list";
   takesParams: false;
   ungated: false;
+  wire: "device.list";
 }, {
   capability: "device.write";
   domain: "device";
@@ -2348,6 +2603,7 @@ readonly operations: readonly [{
   path: "device set-audio";
   takesParams: true;
   ungated: false;
+  wire: "device.setAudio";
 }, {
   capability: "editor.read";
   domain: "editor";
@@ -2357,6 +2613,7 @@ readonly operations: readonly [{
   path: "editor current-clip";
   takesParams: false;
   ungated: false;
+  wire: "editor.currentClip";
 }, {
   capability: "editor.write";
   domain: "editor";
@@ -2366,6 +2623,7 @@ readonly operations: readonly [{
   path: "editor open";
   takesParams: false;
   ungated: false;
+  wire: "editor.open";
 }, {
   capability: "editor.read";
   domain: "editor";
@@ -2375,6 +2633,7 @@ readonly operations: readonly [{
   path: "editor status";
   takesParams: false;
   ungated: false;
+  wire: "editor.status";
 }, {
   capability: "editor.read";
   domain: "editor";
@@ -2384,6 +2643,7 @@ readonly operations: readonly [{
   path: "editor tick-range";
   takesParams: false;
   ungated: false;
+  wire: "editor.tickRange";
 }, {
   capability: "soundsource.write";
   domain: "ensemble";
@@ -2393,6 +2653,7 @@ readonly operations: readonly [{
   path: "ensemble add";
   takesParams: true;
   ungated: false;
+  wire: "ensemble.add";
 }, {
   capability: "soundsource.write";
   domain: "ensemble";
@@ -2402,6 +2663,7 @@ readonly operations: readonly [{
   path: "ensemble disable";
   takesParams: true;
   ungated: false;
+  wire: "ensemble.disable";
 }, {
   capability: "soundsource.write";
   domain: "ensemble";
@@ -2411,6 +2673,7 @@ readonly operations: readonly [{
   path: "ensemble enable";
   takesParams: true;
   ungated: false;
+  wire: "ensemble.enable";
 }, {
   capability: "soundsource.read";
   domain: "ensemble";
@@ -2420,6 +2683,7 @@ readonly operations: readonly [{
   path: "ensemble get";
   takesParams: true;
   ungated: false;
+  wire: "ensemble.get";
 }, {
   capability: "soundsource.write";
   domain: "ensemble";
@@ -2429,6 +2693,7 @@ readonly operations: readonly [{
   path: "ensemble remove";
   takesParams: true;
   ungated: false;
+  wire: "ensemble.remove";
 }, {
   capability: "soundsource.write";
   domain: "ensemble";
@@ -2438,6 +2703,7 @@ readonly operations: readonly [{
   path: "ensemble reorder";
   takesParams: true;
   ungated: false;
+  wire: "ensemble.reorder";
 }, {
   capability: "soundsource.write";
   domain: "ensemble";
@@ -2447,6 +2713,7 @@ readonly operations: readonly [{
   path: "ensemble set";
   takesParams: true;
   ungated: false;
+  wire: "ensemble.set";
 }, {
   capability: "export.invoke";
   domain: "export";
@@ -2456,6 +2723,7 @@ readonly operations: readonly [{
   path: "export audio";
   takesParams: true;
   ungated: false;
+  wire: "export.audio";
 }, {
   capability: "export.invoke";
   domain: "export";
@@ -2465,6 +2733,7 @@ readonly operations: readonly [{
   path: "export fcpxml";
   takesParams: true;
   ungated: false;
+  wire: "export.fcpxml";
 }, {
   capability: "export.invoke";
   domain: "export";
@@ -2474,6 +2743,7 @@ readonly operations: readonly [{
   path: "export lrc";
   takesParams: true;
   ungated: false;
+  wire: "export.lrc";
 }, {
   capability: "export.invoke";
   domain: "export";
@@ -2483,6 +2753,7 @@ readonly operations: readonly [{
   path: "export midi";
   takesParams: true;
   ungated: false;
+  wire: "export.midi";
 }, {
   capability: "export.invoke";
   domain: "export";
@@ -2493,6 +2764,7 @@ readonly operations: readonly [{
   path: "export song-template";
   takesParams: true;
   ungated: false;
+  wire: "export.songTemplate";
 }, {
   capability: "export.invoke";
   domain: "export";
@@ -2502,6 +2774,7 @@ readonly operations: readonly [{
   path: "export video";
   takesParams: true;
   ungated: false;
+  wire: "export.video";
 }, {
   capability: "export.invoke";
   domain: "export";
@@ -2512,6 +2785,7 @@ readonly operations: readonly [{
   path: "export vocal-sample";
   takesParams: true;
   ungated: false;
+  wire: "export.vocalSample";
 }, {
   capability: "fx.write";
   domain: "fx";
@@ -2521,6 +2795,7 @@ readonly operations: readonly [{
   path: "fx add";
   takesParams: true;
   ungated: false;
+  wire: "fx.add";
 }, {
   capability: "fx.write";
   domain: "fx";
@@ -2530,6 +2805,7 @@ readonly operations: readonly [{
   path: "fx apply-preset";
   takesParams: true;
   ungated: false;
+  wire: "fx.applyPreset";
 }, {
   capability: "fx.read";
   domain: "fx";
@@ -2539,6 +2815,7 @@ readonly operations: readonly [{
   path: "fx get-params";
   takesParams: true;
   ungated: false;
+  wire: "fx.getParams";
 }, {
   capability: "fx.read";
   domain: "fx";
@@ -2548,6 +2825,7 @@ readonly operations: readonly [{
   path: "fx list";
   takesParams: true;
   ungated: false;
+  wire: "fx.list";
 }, {
   capability: "fx.read";
   domain: "fx";
@@ -2557,6 +2835,7 @@ readonly operations: readonly [{
   path: "fx list-available";
   takesParams: true;
   ungated: false;
+  wire: "fx.listAvailable";
 }, {
   capability: "fx.read";
   domain: "fx";
@@ -2566,6 +2845,7 @@ readonly operations: readonly [{
   path: "fx list-params";
   takesParams: true;
   ungated: false;
+  wire: "fx.listParams";
 }, {
   capability: "ui.control";
   domain: "fx";
@@ -2575,6 +2855,7 @@ readonly operations: readonly [{
   path: "fx open-editor";
   takesParams: true;
   ungated: false;
+  wire: "fx.openEditor";
 }, {
   capability: "fx.write";
   domain: "fx";
@@ -2584,6 +2865,7 @@ readonly operations: readonly [{
   path: "fx remove";
   takesParams: true;
   ungated: false;
+  wire: "fx.remove";
 }, {
   capability: "fx.write";
   domain: "fx";
@@ -2593,6 +2875,7 @@ readonly operations: readonly [{
   path: "fx reorder";
   takesParams: true;
   ungated: false;
+  wire: "fx.reorder";
 }, {
   capability: "fx.write";
   domain: "fx";
@@ -2602,6 +2885,7 @@ readonly operations: readonly [{
   path: "fx save-preset";
   takesParams: true;
   ungated: false;
+  wire: "fx.savePreset";
 }, {
   capability: "fx.write";
   domain: "fx";
@@ -2611,6 +2895,7 @@ readonly operations: readonly [{
   path: "fx scan";
   takesParams: true;
   ungated: false;
+  wire: "fx.scan";
 }, {
   capability: "fx.write";
   domain: "fx";
@@ -2620,6 +2905,7 @@ readonly operations: readonly [{
   path: "fx set";
   takesParams: true;
   ungated: false;
+  wire: "fx.set";
 }, {
   capability: "fx.write";
   domain: "fx";
@@ -2629,6 +2915,7 @@ readonly operations: readonly [{
   path: "fx set-param";
   takesParams: true;
   ungated: false;
+  wire: "fx.setParam";
 }, {
   capability: "fx.write";
   domain: "fx";
@@ -2638,6 +2925,7 @@ readonly operations: readonly [{
   path: "fx set-room";
   takesParams: true;
   ungated: false;
+  wire: "fx.setRoom";
 }, {
   capability: "generative.add-layer";
   domain: "generative";
@@ -2648,6 +2936,7 @@ readonly operations: readonly [{
   path: "generative add-layer";
   takesParams: true;
   ungated: false;
+  wire: "generative.addLayer";
 }, {
   capability: "generative.enhance";
   domain: "generative";
@@ -2658,6 +2947,7 @@ readonly operations: readonly [{
   path: "generative enhance";
   takesParams: true;
   ungated: false;
+  wire: "generative.enhance";
 }, {
   capability: "generative.seed-audio";
   domain: "generative";
@@ -2668,6 +2958,7 @@ readonly operations: readonly [{
   path: "generative seed-audio";
   takesParams: true;
   ungated: false;
+  wire: "generative.seedAudio";
 }, {
   capability: "generative.song";
   domain: "generative";
@@ -2678,6 +2969,7 @@ readonly operations: readonly [{
   path: "generative song";
   takesParams: true;
   ungated: false;
+  wire: "generative.song";
 }, {
   capability: "generative.sound-effects";
   domain: "generative";
@@ -2688,6 +2980,7 @@ readonly operations: readonly [{
   path: "generative sound-effects";
   takesParams: true;
   ungated: false;
+  wire: "generative.soundEffects";
 }, {
   capability: "generative.stem-split";
   domain: "generative";
@@ -2698,6 +2991,7 @@ readonly operations: readonly [{
   path: "generative stem-split";
   takesParams: true;
   ungated: false;
+  wire: "generative.stemSplit";
 }, {
   capability: "generative.text2sample";
   domain: "generative";
@@ -2708,6 +3002,7 @@ readonly operations: readonly [{
   path: "generative text2sample";
   takesParams: true;
   ungated: false;
+  wire: "generative.text2sample";
 }, {
   capability: "generative.vocal2midi";
   domain: "generative";
@@ -2717,6 +3012,7 @@ readonly operations: readonly [{
   path: "generative vocal2midi";
   takesParams: true;
   ungated: false;
+  wire: "generative.vocal2midi";
 }, {
   capability: "generative.voice-change";
   domain: "generative";
@@ -2726,6 +3022,7 @@ readonly operations: readonly [{
   path: "generative voice-change";
   takesParams: true;
   ungated: false;
+  wire: "generative.voiceChange";
 }, {
   capability: "history.read";
   domain: "history";
@@ -2735,6 +3032,7 @@ readonly operations: readonly [{
   path: "history list";
   takesParams: true;
   ungated: false;
+  wire: "history.list";
 }, {
   capability: "history.control";
   domain: "history";
@@ -2744,6 +3042,7 @@ readonly operations: readonly [{
   path: "history redo";
   takesParams: false;
   ungated: false;
+  wire: "history.redo";
 }, {
   capability: "history.control";
   domain: "history";
@@ -2753,6 +3052,7 @@ readonly operations: readonly [{
   path: "history undo";
   takesParams: false;
   ungated: false;
+  wire: "history.undo";
 }, {
   capability: "import.invoke";
   domain: "import";
@@ -2762,6 +3062,7 @@ readonly operations: readonly [{
   path: "import file";
   takesParams: true;
   ungated: false;
+  wire: "import.file";
 }, {
   capability: "soundsource.write";
   domain: "instrument";
@@ -2771,6 +3072,7 @@ readonly operations: readonly [{
   path: "instrument disable";
   takesParams: true;
   ungated: false;
+  wire: "instrument.disable";
 }, {
   capability: "soundsource.write";
   domain: "instrument";
@@ -2780,6 +3082,7 @@ readonly operations: readonly [{
   path: "instrument enable";
   takesParams: true;
   ungated: false;
+  wire: "instrument.enable";
 }, {
   capability: "soundsource.write";
   domain: "instrument";
@@ -2789,6 +3092,7 @@ readonly operations: readonly [{
   path: "instrument set";
   takesParams: true;
   ungated: false;
+  wire: "instrument.set";
 }, {
   capability: "job.control";
   domain: "job";
@@ -2798,6 +3102,7 @@ readonly operations: readonly [{
   path: "job cancel";
   takesParams: true;
   ungated: false;
+  wire: "job.cancel";
 }, {
   capability: "job.control";
   domain: "job";
@@ -2807,6 +3112,7 @@ readonly operations: readonly [{
   path: "job discard-result";
   takesParams: true;
   ungated: false;
+  wire: "job.discardResult";
 }, {
   capability: "job.read";
   domain: "job";
@@ -2816,6 +3122,7 @@ readonly operations: readonly [{
   path: "job get";
   takesParams: true;
   ungated: false;
+  wire: "job.get";
 }, {
   capability: "job.read";
   domain: "job";
@@ -2825,6 +3132,7 @@ readonly operations: readonly [{
   path: "job list";
   takesParams: true;
   ungated: false;
+  wire: "job.list";
 }, {
   capability: "clip.write";
   domain: "job";
@@ -2834,6 +3142,7 @@ readonly operations: readonly [{
   path: "job place";
   takesParams: true;
   ungated: false;
+  wire: "job.place";
 }, {
   capability: "job.read";
   domain: "job";
@@ -2843,6 +3152,7 @@ readonly operations: readonly [{
   path: "job results";
   takesParams: true;
   ungated: false;
+  wire: "job.results";
 }, {
   capability: "job.read";
   domain: "job";
@@ -2852,6 +3162,7 @@ readonly operations: readonly [{
   path: "job wait";
   takesParams: true;
   ungated: false;
+  wire: "job.wait";
 }, {
   capability: "note.write";
   domain: "note";
@@ -2861,6 +3172,7 @@ readonly operations: readonly [{
   path: "note add";
   takesParams: true;
   ungated: false;
+  wire: "note.add";
 }, {
   capability: "note.write";
   domain: "note";
@@ -2870,6 +3182,7 @@ readonly operations: readonly [{
   path: "note delete";
   takesParams: true;
   ungated: false;
+  wire: "note.delete";
 }, {
   capability: "note.read";
   domain: "note";
@@ -2879,6 +3192,7 @@ readonly operations: readonly [{
   path: "note get";
   takesParams: true;
   ungated: false;
+  wire: "note.get";
 }, {
   capability: "note.write";
   domain: "note";
@@ -2888,6 +3202,7 @@ readonly operations: readonly [{
   path: "note move";
   takesParams: true;
   ungated: false;
+  wire: "note.move";
 }, {
   capability: "note.write";
   domain: "note";
@@ -2897,6 +3212,7 @@ readonly operations: readonly [{
   path: "note resize";
   takesParams: true;
   ungated: false;
+  wire: "note.resize";
 }, {
   capability: "note.write";
   domain: "note";
@@ -2906,6 +3222,7 @@ readonly operations: readonly [{
   path: "note set-articulation";
   takesParams: true;
   ungated: false;
+  wire: "note.setArticulation";
 }, {
   capability: "note.write";
   domain: "note";
@@ -2915,6 +3232,7 @@ readonly operations: readonly [{
   path: "note set-lyric";
   takesParams: true;
   ungated: false;
+  wire: "note.setLyric";
 }, {
   capability: "note.write";
   domain: "note";
@@ -2924,6 +3242,7 @@ readonly operations: readonly [{
   path: "note split";
   takesParams: true;
   ungated: false;
+  wire: "note.split";
 }, {
   capability: "project.lifecycle";
   domain: "project";
@@ -2933,6 +3252,7 @@ readonly operations: readonly [{
   path: "project collect-save";
   takesParams: true;
   ungated: false;
+  wire: "project.collectSave";
 }, {
   capability: "project.read";
   domain: "project";
@@ -2942,6 +3262,7 @@ readonly operations: readonly [{
   path: "project dirty";
   takesParams: false;
   ungated: false;
+  wire: "project.dirty";
 }, {
   capability: "project.read";
   domain: "project";
@@ -2951,6 +3272,7 @@ readonly operations: readonly [{
   path: "project info";
   takesParams: false;
   ungated: false;
+  wire: "project.info";
 }, {
   capability: "project.lifecycle";
   domain: "project";
@@ -2960,6 +3282,7 @@ readonly operations: readonly [{
   path: "project new";
   takesParams: true;
   ungated: false;
+  wire: "project.new";
 }, {
   capability: "project.lifecycle";
   domain: "project";
@@ -2969,6 +3292,7 @@ readonly operations: readonly [{
   path: "project open";
   takesParams: true;
   ungated: false;
+  wire: "project.open";
 }, {
   capability: "project.read";
   domain: "project";
@@ -2978,6 +3302,7 @@ readonly operations: readonly [{
   path: "project recent";
   takesParams: false;
   ungated: false;
+  wire: "project.recent";
 }, {
   capability: "project.lifecycle";
   domain: "project";
@@ -2987,6 +3312,7 @@ readonly operations: readonly [{
   path: "project recent-clear";
   takesParams: false;
   ungated: false;
+  wire: "project.recentClear";
 }, {
   capability: "project.lifecycle";
   domain: "project";
@@ -2996,6 +3322,7 @@ readonly operations: readonly [{
   path: "project save";
   takesParams: false;
   ungated: false;
+  wire: "project.save";
 }, {
   capability: "project.lifecycle";
   domain: "project";
@@ -3005,6 +3332,7 @@ readonly operations: readonly [{
   path: "project save-as";
   takesParams: true;
   ungated: false;
+  wire: "project.saveAs";
 }, {
   capability: "project.read";
   domain: "project";
@@ -3014,6 +3342,7 @@ readonly operations: readonly [{
   path: "project synthesis-status";
   takesParams: false;
   ungated: false;
+  wire: "project.synthesisStatus";
 }, {
   capability: "recording.control";
   domain: "recording";
@@ -3023,6 +3352,7 @@ readonly operations: readonly [{
   path: "recording start";
   takesParams: false;
   ungated: false;
+  wire: "recording.start";
 }, {
   capability: "recording.control";
   domain: "recording";
@@ -3032,6 +3362,7 @@ readonly operations: readonly [{
   path: "recording stop";
   takesParams: false;
   ungated: false;
+  wire: "recording.stop";
 }, {
   capability: "selection.read";
   domain: "selection";
@@ -3041,6 +3372,7 @@ readonly operations: readonly [{
   path: "selection get";
   takesParams: true;
   ungated: false;
+  wire: "selection.get";
 }, {
   capability: "selection.write";
   domain: "selection";
@@ -3050,6 +3382,7 @@ readonly operations: readonly [{
   path: "selection set";
   takesParams: true;
   ungated: false;
+  wire: "selection.set";
 }, {
   capability: "soundsource.read";
   domain: "sound-source";
@@ -3059,6 +3392,7 @@ readonly operations: readonly [{
   path: "sound-source get";
   takesParams: true;
   ungated: false;
+  wire: "soundSource.get";
 }, {
   capability: "soundsource.read";
   domain: "sound-source";
@@ -3068,6 +3402,7 @@ readonly operations: readonly [{
   path: "sound-source list";
   takesParams: true;
   ungated: false;
+  wire: "soundSource.list";
 }, {
   capability: "soundsource.write";
   domain: "sound-source";
@@ -3077,6 +3412,7 @@ readonly operations: readonly [{
   path: "sound-source load";
   takesParams: true;
   ungated: false;
+  wire: "soundSource.load";
 }, {
   capability: "soundsource.write";
   domain: "sound-source";
@@ -3086,6 +3422,7 @@ readonly operations: readonly [{
   path: "sound-source set";
   takesParams: true;
   ungated: false;
+  wire: "soundSource.set";
 }, {
   capability: "soundsource.read";
   domain: "sound-source";
@@ -3095,6 +3432,7 @@ readonly operations: readonly [{
   path: "sound-source tags";
   takesParams: true;
   ungated: false;
+  wire: "soundSource.tags";
 }, {
   capability: "soundsource.write";
   domain: "sound-source";
@@ -3104,6 +3442,7 @@ readonly operations: readonly [{
   path: "sound-source unload";
   takesParams: true;
   ungated: false;
+  wire: "soundSource.unload";
 }, {
   capability: "tempo.analyze";
   domain: "tempo";
@@ -3113,6 +3452,7 @@ readonly operations: readonly [{
   path: "tempo analyze";
   takesParams: true;
   ungated: false;
+  wire: "tempo.analyze";
 }, {
   capability: "tempo.applyV2";
   domain: "tempo";
@@ -3122,6 +3462,7 @@ readonly operations: readonly [{
   path: "tempo apply-beat-analysis";
   takesParams: true;
   ungated: false;
+  wire: "tempo.applyBeatAnalysis";
 }, {
   capability: "tempo.read";
   domain: "tempo";
@@ -3131,6 +3472,7 @@ readonly operations: readonly [{
   path: "tempo get";
   takesParams: false;
   ungated: false;
+  wire: "tempo.get";
 }, {
   capability: "tempo.read";
   domain: "tempo";
@@ -3140,6 +3482,7 @@ readonly operations: readonly [{
   path: "tempo points";
   takesParams: false;
   ungated: false;
+  wire: "tempo.points";
 }, {
   capability: "tempo.write";
   domain: "tempo";
@@ -3149,6 +3492,7 @@ readonly operations: readonly [{
   path: "tempo remove-point";
   takesParams: true;
   ungated: false;
+  wire: "tempo.removePoint";
 }, {
   capability: "tempo.write";
   domain: "tempo";
@@ -3158,6 +3502,7 @@ readonly operations: readonly [{
   path: "tempo set";
   takesParams: true;
   ungated: false;
+  wire: "tempo.set";
 }, {
   capability: "tempo.write";
   domain: "tempo";
@@ -3167,6 +3512,7 @@ readonly operations: readonly [{
   path: "tempo set-display-range";
   takesParams: true;
   ungated: false;
+  wire: "tempo.setDisplayRange";
 }, {
   capability: "tempo.write";
   domain: "tempo";
@@ -3176,6 +3522,7 @@ readonly operations: readonly [{
   path: "tempo set-point";
   takesParams: true;
   ungated: false;
+  wire: "tempo.setPoint";
 }, {
   capability: "timesig.read";
   domain: "timesig";
@@ -3185,6 +3532,7 @@ readonly operations: readonly [{
   path: "timesig get";
   takesParams: false;
   ungated: false;
+  wire: "timesig.get";
 }, {
   capability: "timesig.read";
   domain: "timesig";
@@ -3194,6 +3542,7 @@ readonly operations: readonly [{
   path: "timesig list";
   takesParams: false;
   ungated: false;
+  wire: "timesig.list";
 }, {
   capability: "timesig.write";
   domain: "timesig";
@@ -3203,6 +3552,7 @@ readonly operations: readonly [{
   path: "timesig remove-at";
   takesParams: true;
   ungated: false;
+  wire: "timesig.removeAt";
 }, {
   capability: "timesig.write";
   domain: "timesig";
@@ -3212,6 +3562,7 @@ readonly operations: readonly [{
   path: "timesig set";
   takesParams: true;
   ungated: false;
+  wire: "timesig.set";
 }, {
   capability: "timesig.write";
   domain: "timesig";
@@ -3221,6 +3572,7 @@ readonly operations: readonly [{
   path: "timesig set-at";
   takesParams: true;
   ungated: false;
+  wire: "timesig.setAt";
 }, {
   capability: "track.write";
   domain: "track";
@@ -3230,6 +3582,7 @@ readonly operations: readonly [{
   path: "track create";
   takesParams: true;
   ungated: false;
+  wire: "track.create";
 }, {
   capability: "track.write";
   domain: "track";
@@ -3239,6 +3592,7 @@ readonly operations: readonly [{
   path: "track delete";
   takesParams: true;
   ungated: false;
+  wire: "track.delete";
 }, {
   capability: "track.write";
   domain: "track";
@@ -3248,6 +3602,7 @@ readonly operations: readonly [{
   path: "track duplicate";
   takesParams: true;
   ungated: false;
+  wire: "track.duplicate";
 }, {
   capability: "track.read";
   domain: "track";
@@ -3257,6 +3612,7 @@ readonly operations: readonly [{
   path: "track get";
   takesParams: true;
   ungated: false;
+  wire: "track.get";
 }, {
   capability: "track.read";
   domain: "track";
@@ -3266,6 +3622,7 @@ readonly operations: readonly [{
   path: "track list";
   takesParams: true;
   ungated: false;
+  wire: "track.list";
 }, {
   capability: "track.write";
   domain: "track";
@@ -3275,6 +3632,7 @@ readonly operations: readonly [{
   path: "track rename";
   takesParams: true;
   ungated: false;
+  wire: "track.rename";
 }, {
   capability: "track.write";
   domain: "track";
@@ -3284,6 +3642,17 @@ readonly operations: readonly [{
   path: "track reorder";
   takesParams: true;
   ungated: false;
+  wire: "track.reorder";
+}, {
+  capability: "track.read";
+  domain: "track";
+  fingerprintPrecondition: false;
+  method: "resolve";
+  mutating: false;
+  path: "track resolve";
+  takesParams: true;
+  ungated: false;
+  wire: "track.resolve";
 }, {
   capability: "track.write";
   domain: "track";
@@ -3293,6 +3662,7 @@ readonly operations: readonly [{
   path: "track set";
   takesParams: true;
   ungated: false;
+  wire: "track.set";
 }, {
   capability: "track.write";
   domain: "track";
@@ -3302,6 +3672,7 @@ readonly operations: readonly [{
   path: "track set-input";
   takesParams: true;
   ungated: false;
+  wire: "track.setInput";
 }, {
   capability: "track.write";
   domain: "track";
@@ -3311,6 +3682,7 @@ readonly operations: readonly [{
   path: "track set-language";
   takesParams: true;
   ungated: false;
+  wire: "track.setLanguage";
 }, {
   capability: "transport.state";
   domain: "transport";
@@ -3320,6 +3692,7 @@ readonly operations: readonly [{
   path: "transport loop";
   takesParams: false;
   ungated: false;
+  wire: "transport.loop";
 }, {
   capability: "transport.control";
   domain: "transport";
@@ -3329,6 +3702,7 @@ readonly operations: readonly [{
   path: "transport metronome";
   takesParams: true;
   ungated: false;
+  wire: "transport.metronome";
 }, {
   capability: "transport.control";
   domain: "transport";
@@ -3338,6 +3712,7 @@ readonly operations: readonly [{
   path: "transport play";
   takesParams: false;
   ungated: false;
+  wire: "transport.play";
 }, {
   capability: "transport.control";
   domain: "transport";
@@ -3347,6 +3722,7 @@ readonly operations: readonly [{
   path: "transport seek";
   takesParams: true;
   ungated: false;
+  wire: "transport.seek";
 }, {
   capability: "transport.control";
   domain: "transport";
@@ -3356,6 +3732,7 @@ readonly operations: readonly [{
   path: "transport set-loop";
   takesParams: true;
   ungated: false;
+  wire: "transport.setLoop";
 }, {
   capability: "transport.state";
   domain: "transport";
@@ -3365,6 +3742,7 @@ readonly operations: readonly [{
   path: "transport state";
   takesParams: false;
   ungated: false;
+  wire: "transport.state";
 }, {
   capability: "transport.control";
   domain: "transport";
@@ -3374,6 +3752,7 @@ readonly operations: readonly [{
   path: "transport stop";
   takesParams: false;
   ungated: false;
+  wire: "transport.stop";
 }, {
   capability: "transport.control";
   domain: "transport";
@@ -3383,6 +3762,7 @@ readonly operations: readonly [{
   path: "transport toggle";
   takesParams: false;
   ungated: false;
+  wire: "transport.toggle";
 }, {
   capability: "ui.state";
   domain: "ui";
@@ -3392,6 +3772,7 @@ readonly operations: readonly [{
   path: "ui get";
   takesParams: false;
   ungated: false;
+  wire: "ui.get";
 }, {
   capability: "ui.control";
   domain: "ui";
@@ -3401,6 +3782,7 @@ readonly operations: readonly [{
   path: "ui hide-panel";
   takesParams: true;
   ungated: false;
+  wire: "ui.hidePanel";
 }, {
   capability: "ui.control";
   domain: "ui";
@@ -3410,6 +3792,7 @@ readonly operations: readonly [{
   path: "ui hide-special-track";
   takesParams: true;
   ungated: false;
+  wire: "ui.hideSpecialTrack";
 }, {
   capability: "ui.control";
   domain: "ui";
@@ -3419,6 +3802,7 @@ readonly operations: readonly [{
   path: "ui hide-window";
   takesParams: true;
   ungated: false;
+  wire: "ui.hideWindow";
 }, {
   capability: "ui.control";
   domain: "ui";
@@ -3428,6 +3812,7 @@ readonly operations: readonly [{
   path: "ui show-panel";
   takesParams: true;
   ungated: false;
+  wire: "ui.showPanel";
 }, {
   capability: "ui.control";
   domain: "ui";
@@ -3437,6 +3822,7 @@ readonly operations: readonly [{
   path: "ui show-special-track";
   takesParams: true;
   ungated: false;
+  wire: "ui.showSpecialTrack";
 }, {
   capability: "ui.control";
   domain: "ui";
@@ -3446,6 +3832,7 @@ readonly operations: readonly [{
   path: "ui show-window";
   takesParams: true;
   ungated: false;
+  wire: "ui.showWindow";
 }, {
   capability: "vocalparam.read";
   domain: "vocalparam";
@@ -3455,6 +3842,7 @@ readonly operations: readonly [{
   path: "vocalparam layers";
   takesParams: true;
   ungated: false;
+  wire: "vocalparam.layers";
 }, {
   capability: "vocalparam.read";
   domain: "vocalparam";
@@ -3464,6 +3852,7 @@ readonly operations: readonly [{
   path: "vocalparam read";
   takesParams: true;
   ungated: false;
+  wire: "vocalparam.read";
 }, {
   capability: "vocalparam.write";
   domain: "vocalparam";
@@ -3473,6 +3862,7 @@ readonly operations: readonly [{
   path: "vocalparam write";
   takesParams: true;
   ungated: false;
+  wire: "vocalparam.write";
 }, {
   capability: "voice.write";
   domain: "voice";
@@ -3482,6 +3872,7 @@ readonly operations: readonly [{
   path: "voice collect";
   takesParams: true;
   ungated: false;
+  wire: "voice.collect";
 }, {
   capability: "voice.read";
   domain: "voice";
@@ -3491,6 +3882,7 @@ readonly operations: readonly [{
   path: "voice community";
   takesParams: true;
   ungated: false;
+  wire: "voice.community";
 }, {
   capability: "voice.read";
   domain: "voice";
@@ -3500,6 +3892,7 @@ readonly operations: readonly [{
   path: "voice seeds";
   takesParams: true;
   ungated: false;
+  wire: "voice.seeds";
 }, {
   capability: "voice.read";
   domain: "voice";
@@ -3509,6 +3902,7 @@ readonly operations: readonly [{
   path: "voice synth-models";
   takesParams: true;
   ungated: false;
+  wire: "voice.synthModels";
 }] = OPERATIONS;
 ```
 
@@ -3521,6 +3915,7 @@ readonly requiredTokens: {
   blend delete: "voice.write";
   blend get: "voice.read";
   blend list: "voice.read";
+  blend promote: "voice.write";
   blend remove: "voice.write";
   blend reorder: "voice.write";
   blend set: "voice.write";
@@ -3661,6 +4056,7 @@ readonly requiredTokens: {
   track list: "track.read";
   track rename: "track.write";
   track reorder: "track.write";
+  track resolve: "track.read";
   track set: "track.write";
   track set-input: "track.write";
   track set-language: "track.write";
@@ -3717,6 +4113,12 @@ readonly blend get: "voice.read" = 'voice.read';
 
 ```ts
 readonly blend list: "voice.read" = 'voice.read';
+```
+
+#### requiredTokens.blend promote
+
+```ts
+readonly blend promote: "voice.write" = 'voice.write';
 ```
 
 #### requiredTokens.blend remove
@@ -4557,6 +4959,12 @@ readonly track rename: "track.write" = 'track.write';
 
 ```ts
 readonly track reorder: "track.write" = 'track.write';
+```
+
+#### requiredTokens.track resolve
+
+```ts
+readonly track resolve: "track.read" = 'track.read';
 ```
 
 #### requiredTokens.track set

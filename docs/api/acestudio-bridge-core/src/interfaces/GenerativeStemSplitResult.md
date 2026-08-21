@@ -60,10 +60,10 @@ Which stem set a split produces — the Stem Splitter panel's four choices. `bas
 
 ***
 
-### trackIds
+### trackUuids
 
 ```ts
-trackIds: string[];
+trackUuids: string[];
 ```
 
-The tracks created to receive the stems, in stem order, inserted below the source clip's track. They exist already and are empty; each stem lands in its own track as the job settles.
+The tracks created to receive the stems, in stem order, inserted below the source clip's track, as braced UUIDs. They exist already and are empty; each stem lands in its own track as the job settles.

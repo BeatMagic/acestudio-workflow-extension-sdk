@@ -1,6 +1,6 @@
-# Interface: BlendCreateResult
+# Interface: BlendPromoteResult
 
-Success payload of `blend create`.
+Success payload of `blend promote`.
 
 ## Properties
 

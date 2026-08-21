@@ -44,10 +44,20 @@ Coordinate system for `rangeBegin`/`rangeEnd`: `project` (default) = global time
 
 ***
 
+### region?
+
+```ts
+optional region?: string;
+```
+
+Which index space `trackIndex` counts in: `arrangement` (the default), `video`, `marker`, or `chord`. The regions are isolated index spaces (ADR 0104), so an index read against the wrong one names an unrelated track (ADR 0129 §1).
+
+***
+
 ### trackIndex
 
 ```ts
 trackIndex: number;
 ```
 
-Track index (0-based).
+Track position (0-based) in `region`.

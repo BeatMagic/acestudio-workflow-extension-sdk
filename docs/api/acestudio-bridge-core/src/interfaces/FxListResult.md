@@ -134,13 +134,23 @@ Which master rack a result came from. Present on every master-addressed result a
 
 ***
 
+### region?
+
+```ts
+optional region?: string;
+```
+
+Which index space `trackIndex` counts in: `arrangement`, `video` or `marker`. Absent for the master alongside `trackIndex`, and present with it everywhere else (ADR 0129 §2). A chain hangs off every track type, video included, and a pinned band counts its own index space (ADR 0104) — so this is what stops a caller reading a video track's region-local index as an arrangement position and acting on an unrelated track.
+
+***
+
 ### trackIndex?
 
 ```ts
 optional trackIndex?: number;
 ```
 
-0-based index of the addressed track; absent for the master.
+0-based position of the addressed track in `region`; absent for the master, which has a position in none.
 
 ***
 

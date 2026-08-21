@@ -91,6 +91,16 @@ True when the model carries no Style axis, so a blend on it has Timbre only.
 
 ***
 
+### region
+
+```ts
+region: string;
+```
+
+Which index space `trackIndex` counts in: `arrangement`, the only region whose tracks this group reaches. Written out rather than implied, so a caller reading a track index anywhere on this surface reads it the same way and needs no table of which groups omit it (ADR 0129 §2).
+
+***
+
 ### soundSource?
 
 ```ts
@@ -110,6 +120,7 @@ optional soundSource?: {
   nativeLanguage?: string;
   origin?: "premade" | "cloned" | "community" | "blended";
   ref?: string;
+  saveState?: "unmixed" | "unsaved" | "saved" | "changed";
   seedCount?: number;
   supportedLanguages?: string[];
   tags?: string[];
@@ -238,7 +249,15 @@ Where a sound source comes from: the Voice Library's tabs, which is how a user t
 optional ref?: string;
 ```
 
-Precise handle for this source. Absent when the mounted source has no library id to resolve one from.
+Precise handle for this source. Absent when the mounted source has no library id to resolve one from. On a Sing track this names the voice the mix was loaded from, which is the singer it started as while `saveState` is `unmixed` or `unsaved`, and the blended voice it was saved as once that reads `saved` or `changed`. A blend is spelled `singer:\<library\>/\<id\>` either way, so the ref round-trips through `sound-source load --source` rather than resolving to an official singer numbered the same.
+
+#### saveState?
+
+```ts
+optional saveState?: "unmixed" | "unsaved" | "saved" | "changed";
+```
+
+How far a track's voice mix has travelled from the stock voice it was mounted as. This is what Studio captions a Sing track with — the singer's own name, the literal "Unsaved VoiceMix", or a saved blend's name — and what tells a caller whether there is a recipe worth saving. Declared here rather than in one group because `sound-source get`, `choir get` and `track get` all describe the same track's mix. Three groups spelling one roster themselves is three rosters that can drift. There is no value for "the project could not say". A mix whose state is unreadable reports the field absent, the way a track with no position omits its index rather than sending a sentinel a caller would read as a position (ADR 0129 §6).
 
 #### seedCount?
 
@@ -246,7 +265,7 @@ Precise handle for this source. Absent when the mounted source has no library id
 optional seedCount?: number;
 ```
 
-How many voice seeds the recipe holds. Blended voices only.
+How many voice seeds the mounted mix's recipe holds. Every voice is a recipe of seeds and an ordinary one is a recipe of exactly one, so a stock voice that has never been adjusted reports `1` rather than `0`. That is exactly why a count cannot answer "is this a blend" — `saveState` does, and this is the size.
 
 #### supportedLanguages?
 

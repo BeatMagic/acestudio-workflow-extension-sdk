@@ -59,12 +59,27 @@ Whether the clip is enabled. The clip's own switch: a disabled clip is skipped a
 ```ts
 geometry: {
   clipBegin: number;
+  clipBeginSec: number;
+  clipBeginTick: number;
   clipDur: number;
+  clipDurSec: number;
+  clipDurTick: number;
   clipEnd: number;
+  clipEndSec: number;
+  clipEndTick: number;
   clipPos: number;
+  clipPosSec: number;
+  clipPosTick: number;
   dur: number;
+  durSec: number;
+  durTick: number;
   end: number;
+  endSec: number;
+  endTick: number;
+  nativeUnit: "second" | "tick";
   pos: number;
+  posSec: number;
+  posTick: number;
 };
 ```
 
@@ -76,7 +91,23 @@ A clip's geometry in the *entity* vocabulary, as `clip get` reports it, in which
 clipBegin: number;
 ```
 
-Visible region start on the global timeline.
+Visible region start on the global timeline, in the unit `usedTimeUnit` names. DEPRECATED — see `pos`.
+
+#### clipBeginSec
+
+```ts
+clipBeginSec: number;
+```
+
+Visible region start on the global timeline, in seconds.
+
+#### clipBeginTick
+
+```ts
+clipBeginTick: number;
+```
+
+Visible region start on the global timeline, in ticks.
 
 #### clipDur
 
@@ -84,7 +115,23 @@ Visible region start on the global timeline.
 clipDur: number;
 ```
 
-Duration of the visible (clipped) region.
+Duration of the visible (clipped) region, in the unit `usedTimeUnit` names. DEPRECATED — see `pos`.
+
+#### clipDurSec
+
+```ts
+clipDurSec: number;
+```
+
+Duration of the visible region, in seconds.
+
+#### clipDurTick
+
+```ts
+clipDurTick: number;
+```
+
+Duration of the visible region, in ticks.
 
 #### clipEnd
 
@@ -92,7 +139,23 @@ Duration of the visible (clipped) region.
 clipEnd: number;
 ```
 
-Visible region end on the global timeline.
+Visible region end on the global timeline, in the unit `usedTimeUnit` names. DEPRECATED — see `pos`.
+
+#### clipEndSec
+
+```ts
+clipEndSec: number;
+```
+
+Visible region end on the global timeline, in seconds.
+
+#### clipEndTick
+
+```ts
+clipEndTick: number;
+```
+
+Visible region end on the global timeline, in ticks.
 
 #### clipPos
 
@@ -100,7 +163,23 @@ Visible region end on the global timeline.
 clipPos: number;
 ```
 
-Start of the visible (clipped) region, pattern-local.
+Start of the visible (clipped) region, pattern-local, in the unit `usedTimeUnit` names. DEPRECATED — see `pos`.
+
+#### clipPosSec
+
+```ts
+clipPosSec: number;
+```
+
+Start of the visible region, pattern-local, in seconds.
+
+#### clipPosTick
+
+```ts
+clipPosTick: number;
+```
+
+Start of the visible region, pattern-local, in ticks.
 
 #### dur
 
@@ -108,7 +187,23 @@ Start of the visible (clipped) region, pattern-local.
 dur: number;
 ```
 
-Full pattern duration, including trimmed-away regions.
+Full pattern duration, including trimmed-away regions, in the unit `usedTimeUnit` names. DEPRECATED — see `pos`.
+
+#### durSec
+
+```ts
+durSec: number;
+```
+
+Full pattern duration including trimmed-away regions, in seconds.
+
+#### durTick
+
+```ts
+durTick: number;
+```
+
+Full pattern duration including trimmed-away regions, in ticks.
 
 #### end
 
@@ -116,7 +211,31 @@ Full pattern duration, including trimmed-away regions.
 end: number;
 ```
 
-Pattern end on the global timeline (pos + dur).
+Pattern end on the global timeline (pos + dur), in the unit `usedTimeUnit` names. DEPRECATED — see `pos`.
+
+#### endSec
+
+```ts
+endSec: number;
+```
+
+Pattern end on the global timeline, in seconds.
+
+#### endTick
+
+```ts
+endTick: number;
+```
+
+Pattern end on the global timeline, in ticks.
+
+#### nativeUnit
+
+```ts
+nativeUnit: "second" | "tick";
+```
+
+Which unit an entity's geometry is stored in — the one value that is exact, with the other reported beside it as a conversion under the current tempo curve (ADR 0032 §2-4). Declared here because every group that reports geometry names it. It follows the entity's own anchoring, which `PatternFactory::preferredGeometryTimeUnit` is the source of truth for: media that plays at wall-clock speed is second-native, content written against the grid is tick-native.
 
 #### pos
 
@@ -124,7 +243,23 @@ Pattern end on the global timeline (pos + dur).
 pos: number;
 ```
 
-Pattern start on the global timeline.
+Pattern start on the global timeline, in the unit `usedTimeUnit` names. DEPRECATED in favour of `posTick` / `posSec`, which say what they are. A caller reading this has to consult `usedTimeUnit` to know what it got, and a caller that forgets reads seconds as ticks. Kept because removing it is a breaking change; every field below is unambiguous.
+
+#### posSec
+
+```ts
+posSec: number;
+```
+
+Pattern start on the global timeline, in seconds. Always seconds, whatever `usedTimeUnit` says.
+
+#### posTick
+
+```ts
+posTick: number;
+```
+
+Pattern start on the global timeline, in ticks. Always ticks, whatever `usedTimeUnit` says.
 
 ***
 
@@ -154,7 +289,7 @@ User-supplied name; empty string when the display name is auto-generated.
 usedTimeUnit: string;
 ```
 
-Time unit of the geometry values: `tick`, `second`, `tick (not native)`, or `second (not native)`.
+Which unit the DEPRECATED `geometry.pos`/`dur`/... fields are denominated in for this call: `tick`, `second`, `tick (not native)`, or `second (not native)`. DEPRECATED with them. `geometry.nativeUnit` answers "which value is exact" as a typed field, and the `*Tick` / `*Sec` pairs are unambiguous without consulting anything, so neither this nor `preferredTimeUnit` has a job left. The `(not native)` suffix is still emitted, deliberately: dropping it would change the value of a field callers already parse. Read `geometry.nativeUnit` for that fact instead; the suffix goes when this field does.
 
 ***
 

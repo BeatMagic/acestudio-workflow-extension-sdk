@@ -10,7 +10,7 @@ Success payload of `track list`.
 contentTrackCount: number;
 ```
 
-The length of `tracks` — the arrangement's content (non-empty-slot) track count when no `type` filter narrows it.
+How many of the reported tracks are content tracks — everything except the empty arrangement slots `includeEmpty` adds. It coincides with the length of `tracks` until `includeEmpty` puts empty slots in the array. A caller that wants the array's length reads the array.
 
 ***
 
@@ -18,27 +18,27 @@ The length of `tracks` — the arrangement's content (non-empty-slot) track coun
 
 ```ts
 tracks: {
-  clipCount: number;
+  clipCount?: number;
   isProtected?: boolean;
   protectedRole?: string;
   region: string;
   soundSourceName?: string;
   trackIndex: number;
-  trackName: string;
+  trackName?: string;
   trackType: string;
-  trackUuid: string;
+  trackUuid?: string;
 }[];
 ```
 
 The matching tracks: the arrangement in its own order, then the video band, then the marker band, then the chord track.
 
-#### clipCount
+#### clipCount?
 
 ```ts
-clipCount: number;
+optional clipCount?: number;
 ```
 
-Number of clips (patterns) on the track.
+Number of clips (patterns) on the track. Omitted for an empty slot, which is a position rather than a track and so holds none.
 
 #### isProtected?
 
@@ -80,13 +80,13 @@ trackIndex: number;
 
 0-based position, in the index space of `region`.
 
-#### trackName
+#### trackName?
 
 ```ts
-trackName: string;
+optional trackName?: string;
 ```
 
-Current display name.
+Current display name. Omitted for an empty slot, which nobody named.
 
 #### trackType
 
@@ -94,12 +94,12 @@ Current display name.
 trackType: string;
 ```
 
-One of: Sing, Instrument, GenericMidi, Audio, Video, Marker, Chord.
+One of: Sing, Instrument, GenericMidi, Audio, Video, Marker, Chord, or Empty for a slot `includeEmpty` added. An `Empty` row carries this, `trackIndex` and `region` and nothing else: a slot is a position that holds no track, so every other field here is a property of a track it does not have. It is the same shape `track get` answers with for that slot, so the two verbs never describe one position two ways.
 
-#### trackUuid
+#### trackUuid?
 
 ```ts
-trackUuid: string;
+optional trackUuid?: string;
 ```
 
-Track UUID in braces format. The definitive handle: it works in every region, where an index needs `region` to be read.
+Track UUID in braces format. The definitive handle: it works in every region, where an index needs `region` to be read. Omitted for an empty arrangement slot, which `includeEmpty` adds and which has no handle to hand out. Absence is the honest answer there — the alternative is a value that names padding the arrangement replaces the moment someone creates a track.

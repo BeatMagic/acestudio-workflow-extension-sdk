@@ -1,6 +1,6 @@
 {
   "name": "@timedomain/create-acestudio-workflow-extension",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "type": "module",
   "description": "Scaffold a new ACE Studio workflow extension.",
   "license": "MIT",

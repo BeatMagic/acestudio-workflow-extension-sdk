@@ -4969,7 +4969,7 @@ export const PROFILES: {
     readonly 'surface.extension-sdk': readonly ["canvas.read", "session.handshake", "session.move", "session.ping", "session.shutdown", "workflow.dev", "workflow.ui"];
     readonly 'transport.v1': readonly ["transport.control"];
     readonly 'ui.v1': readonly ["workflow.ui"];
-    readonly 'timeline.tempo.v1': readonly ["tempo.applyV2"];
+    readonly 'timeline.tempo.v1': readonly ["tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write"];
     readonly 'generative.all.v1': readonly ["generative.add-layer", "generative.enhance", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change"];
 };
 

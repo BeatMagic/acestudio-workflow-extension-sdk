@@ -13,6 +13,21 @@ Entries from 0.3.2 down were reconstructed from git history rather than written 
 the time, so read them as a summary of each release's headline change and the PR as
 the record.
 
+## [0.5.1] — 2026-08-22
+
+### Changed
+
+- **`PROFILES['timeline.tempo.v1']` now expands to all four tempo tokens** —
+  `tempo.analyze`, `tempo.applyV2`, `tempo.read` and `tempo.write`, where it carried
+  `tempo.applyV2` alone. The profile named the tempo surface and covered one verb of
+  it, so a caller asking for the feature by name got an apply it could not feed and
+  could not read the result of.
+
+  Not breaking, and not a change of authority. This table reports what the host's
+  capability registry grants; the widening happened there, so a consumer on 0.5.0
+  talking to a current Studio already receives the wider grant. Reading `PROFILES`
+  is how you find out.
+
 ## [0.5.0] — 2026-08-21
 
 Regenerated against surface **9.0**, two majors on from the 7.2 this artifact was

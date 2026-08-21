@@ -5,7 +5,7 @@ const PROFILES: {
   generative.all.v1: readonly ["generative.add-layer", "generative.enhance", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change"];
   surface.cli-mcp: readonly ["canvas.read", "caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "fx.read", "fx.write", "generative.add-layer", "generative.enhance", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "soundsource.read", "soundsource.write", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.read", "track.write", "transport.control", "transport.state", "ui.control", "ui.state", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write"];
   surface.extension-sdk: readonly ["canvas.read", "session.handshake", "session.move", "session.ping", "session.shutdown", "workflow.dev", "workflow.ui"];
-  timeline.tempo.v1: readonly ["tempo.applyV2"];
+  timeline.tempo.v1: readonly ["tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write"];
   transport.v1: readonly ["transport.control"];
   ui.v1: readonly ["workflow.ui"];
 };
@@ -36,7 +36,7 @@ readonly surface.extension-sdk: readonly ["canvas.read", "session.handshake", "s
 #### timeline.tempo.v1
 
 ```ts
-readonly timeline.tempo.v1: readonly ["tempo.applyV2"];
+readonly timeline.tempo.v1: readonly ["tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write"];
 ```
 
 #### transport.v1

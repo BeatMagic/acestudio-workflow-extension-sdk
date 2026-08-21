@@ -13,6 +13,26 @@ Entries from 0.3.2 down were reconstructed from git history rather than written 
 the time, so read them as a summary of each release's headline change and the PR as
 the record.
 
+## [0.6.0] — 2026-08-22
+
+### Breaking
+
+- **`PROTOCOL_VERSION` is 2.** Studio moved the core seam to protocol 2 (ACE Studio
+  #2585) and this side never followed, so every peer built on 0.5.x sends 1 and is
+  refused at the handshake with `incompatible protocol version: runtime 1, studio 2`
+  — before capability negotiation, so the failure carries no capability detail and
+  reads as a bare disconnect.
+
+  **Migration: take this version.** Nothing in your code changes. The constant is a
+  major with no minor for a host to tolerate, so it has to equal Studio's
+  `kCoreSessionProtocolVersion` exactly, and `WorkflowExtensionHandshake::kProtocolVersion`
+  is an alias of that same constant — one integer for the whole core seam.
+
+  Marked breaking because a peer on this version can no longer complete a handshake
+  with a host on protocol 1. No released Studio is such a host: the seam is
+  post-convergence, and a fielded 2.1.x Studio is reached over the separate legacy MV
+  handshake, which carries no protocol integer.
+
 ## [0.5.1] — 2026-08-22
 
 ### Changed

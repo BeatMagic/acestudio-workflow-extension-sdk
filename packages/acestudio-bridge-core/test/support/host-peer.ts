@@ -2,13 +2,22 @@
  * A scripted stand-in for the ACE Studio side of the bridge.
  *
  * Plays the host half of the generated surfaces: serves `session.handshake` and
- * `operation.invoke`, calls `session.ping`, and emits `session.shutdown` and
+ * one method per operation, calls `session.ping`, and emits `session.shutdown` and
  * `state.changed`. The payload types come from the generated modules, so a schema
  * change breaks this peer at compile time rather than letting the tests drift
- * away from the wire. The method names are literals — the host spells them, and
- * `HOST_METHODS` is asserted against the generated maps in connect.test.ts. A surface
- * that only a layer above core speaks is scripted through `methods`, by that layer's
- * own suite.
+ * away from the wire. A surface that only a layer above core speaks is scripted
+ * through `methods`, by that layer's own suite.
+ *
+ * **The served operation names are derived, never authored.** They are exactly the
+ * `wire` column of the surface table the SDK itself calls from, and anything else
+ * is refused with `-32601` the way the real dispatcher refuses an unregistered
+ * method. This is the one property that matters about this file: a hand-written
+ * list of method names is a second copy of the host's contract, and a copy drifts.
+ * It drifted once — the host retired the `operation.invoke` envelope and served
+ * each operation under its own name, and because this peer named the retired verb
+ * as a literal, every test kept passing against a fake that shared the client's
+ * mistake. Derive, so the tests cannot agree with the client about a name the host
+ * does not serve.
  *
  * Its two capability gates are transcriptions of the host's own. The inbound one
  * is `CommandRegistry::capabilityDenial`, reading the same generated
@@ -22,13 +31,12 @@
 import {
   NOTIFICATION_CHANNELS,
   PROTOCOL_VERSION,
+  PUBLIC_SURFACE,
   REQUIRED_TOKENS,
   type ChangeEvent,
+  type DriverSurface,
   type HandshakeParams,
   type HandshakeResult,
-  type InvokeParams,
-  type InvokeResult,
-  type InvokeWarning,
   type JsonRpcFault,
   type JsonRpcMessage,
   type PingParams,
@@ -48,16 +56,33 @@ export const HOST_METHODS = {
   shutdown: "session.shutdown",
 } as const;
 
-/** The operation-invocation verb, the one wire name every operation rides. */
-export const HOST_INVOKE = "operation.invoke";
+/**
+ * One call as it reached the host: the canonical path the wire name resolved to,
+ * and the params object as sent. Protocol 2 has no envelope, so the arguments are
+ * the params — reserved keys (`fingerprint`, `waitTimeoutMs`) included, since the
+ * host reads those off the same object.
+ */
+export interface Invocation {
+  /** The canonical operation path, recovered from the wire name that was called. */
+  readonly path: string;
+  /** The JSON-RPC method the SDK actually sent. */
+  readonly wire: string;
+  /** The params as they arrived. */
+  readonly arguments: Record<string, unknown>;
+}
 
 /** The JSON-RPC envelope code the extension bridge refuses a capability with. */
 export const CAPABILITY_DENIED_RPC_CODE = -32003;
 
-/** How the host answers one scripted operation. */
-export type ScriptedOperation =
-  | { data: unknown; warnings?: readonly InvokeWarning[] }
-  | { fault: JsonRpcFault };
+/**
+ * How the host answers one scripted operation.
+ *
+ * `data` is the whole answer, because protocol 2 returns the operation's result
+ * and nothing wrapped around it. An operation that raises advisories declares
+ * `warnings` on its own result type, so a test that wants them puts them inside
+ * `data` — which is where a real host puts them too.
+ */
+export type ScriptedOperation = { data: unknown } | { fault: JsonRpcFault };
 
 /**
  * A scripted answer computed from the invocation rather than fixed in advance —
@@ -65,7 +90,7 @@ export type ScriptedOperation =
  * get` has to answer differently once the job has moved on, and a fixed answer
  * would let a wait loop "finish" against a reply that was already written.
  */
-export type ScriptedOperationHandler = (params: InvokeParams) => ScriptedOperation | Promise<ScriptedOperation>;
+export type ScriptedOperationHandler = (invocation: Invocation) => ScriptedOperation | Promise<ScriptedOperation>;
 
 /** Everything the script can decide about how the host behaves. */
 export interface ScriptedHostOptions {
@@ -94,6 +119,12 @@ export interface ScriptedHostOptions {
    * types are what the script is written against.
    */
   methods?: Readonly<Record<string, (params: unknown) => unknown>>;
+  /**
+   * The surface whose `wire` column decides which operation methods this host
+   * serves. Defaults to the public one; a suite exercising a driver that carries
+   * the privileged artifact passes that surface so the host serves its names too.
+   */
+  surface?: DriverSurface;
 }
 
 /** The host end of a scripted session. */
@@ -101,12 +132,18 @@ export class ScriptedHostPeer {
   /** Resolves with the handshake request the peer sent. */
   readonly handshake: Promise<HandshakeParams>;
   /** Every invocation that reached the host, in order — including refused ones. */
-  readonly invocations: InvokeParams[] = [];
+  readonly invocations: Invocation[] = [];
 
   private readonly transport: Transport;
   private readonly options: ScriptedHostOptions;
   private readonly pending = new Map<number, { resolve: (value: unknown) => void; reject: (reason: unknown) => void }>();
   private readonly grantedTokens: ReadonlySet<string>;
+  /**
+   * The served operation methods, derived from the surface table: wire name to
+   * canonical path. Nothing outside this map is an operation, so a call to a name
+   * the table does not carry falls through to `-32601`.
+   */
+  private readonly servedOperations: ReadonlyMap<string, string>;
   private announceHandshake!: (params: HandshakeParams) => void;
   private nextId = 1;
   /** The session revision counter the change envelope stamps. */
@@ -118,6 +155,9 @@ export class ScriptedHostPeer {
     this.transport = transport;
     this.options = options;
     this.grantedTokens = new Set(options.grantedTokens ?? []);
+    this.servedOperations = new Map(
+      (options.surface ?? PUBLIC_SURFACE).operations.map((operation) => [operation.wire, operation.path]),
+    );
     this.handshake = new Promise<HandshakeParams>((resolve) => {
       this.announceHandshake = resolve;
     });
@@ -248,8 +288,13 @@ export class ScriptedHostPeer {
     if (target === HOST_METHODS.handshake) {
       return this.handleHandshake(params as HandshakeParams);
     }
-    if (target === HOST_INVOKE) {
-      return this.handleInvoke(params as InvokeParams);
+    const path = this.servedOperations.get(target);
+    if (path !== undefined) {
+      return this.handleInvoke({
+        path,
+        wire: target,
+        arguments: (params ?? {}) as Record<string, unknown>,
+      });
     }
     const scripted = this.options.methods?.[target];
     if (scripted !== undefined) {
@@ -270,8 +315,8 @@ export class ScriptedHostPeer {
    * from the script: session valid, then capability granted. A well-behaved SDK
    * never reaches the second one — that is what `invocations` is recorded for.
    */
-  private async handleInvoke(params: InvokeParams): Promise<InvokeResult> {
-    this.invocations.push(params);
+  private async handleInvoke(invocation: Invocation): Promise<unknown> {
+    this.invocations.push(invocation);
     if (!this.granted) {
       throw {
         code: -32001,
@@ -280,29 +325,26 @@ export class ScriptedHostPeer {
       } satisfies JsonRpcFault;
     }
 
-    const denial = this.capabilityDenial(params.path);
+    const denial = this.capabilityDenial(invocation.path);
     if (denial !== undefined) {
       throw denial;
     }
 
-    const entry = this.options.operations?.[params.path];
+    const entry = this.options.operations?.[invocation.path];
     // Awaited, so a handler may hold its answer — which is what `job wait` does
     // on the real wire when it long-polls (ADR 0092 §5).
-    const scripted = typeof entry === "function" ? await entry(params) : entry;
+    const scripted = typeof entry === "function" ? await entry(invocation) : entry;
     if (scripted === undefined) {
       throw {
         code: -32004,
-        message: `unknown command: ${params.path}`,
+        message: `unknown command: ${invocation.path}`,
         data: { code: "UNKNOWN_COMMAND" },
       } satisfies JsonRpcFault;
     }
     if ("fault" in scripted) {
       throw scripted.fault;
     }
-    return {
-      data: scripted.data,
-      ...(scripted.warnings === undefined ? {} : { warnings: [...scripted.warnings] }),
-    };
+    return scripted.data;
   }
 
   /**

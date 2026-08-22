@@ -13,6 +13,48 @@ Entries from 0.3.2 down were reconstructed from git history rather than written 
 the time, so read them as a summary of each release's headline change and the PR as
 the record.
 
+## [0.7.0] — 2026-08-22
+
+### Breaking
+
+- **Every operation is called as its own JSON-RPC method.** The client sent all 151
+  of them through a single `operation.invoke`, carrying the canonical path in the
+  payload. The host retired that verb — it now serves each operation under its own
+  name, `track list` as `track.list` — so every call this package made was answered
+  `-32601 Method 'operation.invoke' not found`. The runtime now sends
+  `OperationDescriptor.wire`, the name the generated table has carried since 0.5.0
+  and nothing consumed.
+
+  **Migration: take this version.** Nothing in the typed client changes — the same
+  `client.track.list()` reaches the same operation. What changes is the method name
+  on the wire, so 0.6.x cannot call a current Studio at all and this can.
+
+- **The invocation envelope is gone from the public API.** `Operation.acerpc.ts` was
+  generated from an IDL file the host deleted, so `OperationClient`, `InvokeParams`,
+  `InvokeResult` and `InvokeWarning` are no longer exported. Only code that built a
+  raw invocation by hand named them; a caller of the typed client did not.
+
+  The reserved keys `fingerprint` and `waitTimeoutMs` now ride inside the params
+  object, which is where the host reads them from (ADR 0088 §4, §5) — there is no
+  envelope left to put them beside the payload.
+
+### Changed
+
+- **Advisory warnings arrive from the result rather than the envelope.** An
+  operation that raises them declares `warnings` on its own result type, so it can
+  be read typed. {@link BridgeConnection.onWarning} is unchanged and still sees
+  every warning from every call — a caller that does not care about advisories
+  still never has to branch to stay correct.
+
+### Fixed
+
+- **The tests can no longer agree with the client about a name the host does not
+  serve.** The scripted host peer named the invocation verb as a literal, so it
+  shared the client's mistake and stayed green through all of it. It now derives
+  the methods it serves from the surface table's `wire` column and refuses anything
+  else with `-32601`, the way the real dispatcher does. A new conformance suite
+  drives all 151 operations and asserts each one goes out under its declared name.
+
 ## [0.6.0] — 2026-08-22
 
 ### Breaking

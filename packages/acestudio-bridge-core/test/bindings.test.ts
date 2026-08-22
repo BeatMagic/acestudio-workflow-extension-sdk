@@ -19,7 +19,6 @@ import {
   type BridgeConnection,
   type CapabilityToken,
   type ChangeEvent,
-  type InvokeParams,
   type OperationWarning,
   type ProjectInfoResult,
   type TrackListResult,
@@ -27,7 +26,7 @@ import {
 // Reached by path, not through the package entry: these are @internal helpers,
 // and the pre-wire guard has a half the generated table cannot exercise yet.
 import { domainKey, guardCall } from "../src/bindings.js";
-import { HOST_INVOKE, ScriptedHostPeer, type ScriptedHostOptions } from "./support/host-peer.js";
+import { ScriptedHostPeer, type Invocation, type ScriptedHostOptions } from "./support/host-peer.js";
 
 async function connectToScriptedHost(
   options: ScriptedHostOptions = {},
@@ -86,7 +85,7 @@ describe("the operation surface", () => {
 
     expect(result).toEqual(TRACKS);
     expect(host.invocations).toEqual([
-      { path: "track list", arguments: { type: ["video"] }, waitTimeoutMs: undefined },
+      { path: "track list", wire: "track.list", arguments: { type: ["video"] } },
     ]);
     connection.close();
   });
@@ -103,7 +102,7 @@ describe("the operation surface", () => {
     const result = await connection.client.project.info({ timeoutMs: 1_000 });
 
     expect(result).toEqual(PROJECT);
-    expect(host.invocations).toEqual([{ path: "project info", arguments: {}, waitTimeoutMs: undefined }]);
+    expect(host.invocations).toEqual([{ path: "project info", wire: "project.info", arguments: {} }]);
     connection.close();
   });
 
@@ -122,14 +121,15 @@ describe("the operation surface", () => {
       { waitBusy: 2_500, ifMatch: "fp-1" as never },
     );
 
-    // The busy wait rides the envelope; the fingerprint rides inside `arguments`
-    // under the reserved key (ADR 0088 §5). Getting these two the wrong way round
-    // is exactly the mistake a scripted caller cannot see.
+    // Both ride inside the params under their reserved keys (ADR 0088 §4, §5):
+    // there is no envelope beside the payload to put either on, and the host reads
+    // each off the object it is handed. Sending one at the top level instead is
+    // exactly the mistake a scripted caller cannot see.
     expect(host.invocations[0]).toEqual({
       path: "transport set-loop",
-      arguments: { startTick: 0, endTick: 3_840, fingerprint: "fp-1" },
-      waitTimeoutMs: 2_500,
-    } satisfies InvokeParams);
+      wire: "transport.setLoop",
+      arguments: { startTick: 0, endTick: 3_840, fingerprint: "fp-1", waitTimeoutMs: 2_500 },
+    } satisfies Invocation);
     connection.close();
   });
 
@@ -154,7 +154,9 @@ describe("an operation's advisory warnings", () => {
   async function connectWithAWarningToRaise() {
     return connectToScriptedHost({
       grantedTokens: ["track.write"],
-      operations: { "track rename": { data: {}, warnings: [TRUNCATED] } },
+      // Declared on the result, which is where a real host puts it: protocol 2
+      // returns the operation's own result and nothing wrapped around it.
+      operations: { "track rename": { data: { warnings: [TRUNCATED] } } },
     });
   }
 
@@ -241,7 +243,7 @@ describe("the pre-wire guard", () => {
     // The same call again, this time around the guard, so the *host's* gate is
     // what refuses it and the SDK maps its answer back.
     const remote = await connection.peer
-      .request(HOST_INVOKE, { path: "track rename", arguments: {} } satisfies InvokeParams)
+      .request("track.rename", {})
       .catch((e: unknown) => e);
     expect(host.invocations).toHaveLength(1);
 

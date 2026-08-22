@@ -269,7 +269,7 @@ describe("the pass inside a binding", () => {
     const points = new Float64Array([0.5]);
     const sites = at("points", "f64le");
 
-    expect(invocation(declared, { points }, {}, sites).arguments).toEqual({
+    expect(invocation(declared, { points }, {}, sites)).toEqual({
       points: blob("f64le", new Uint8Array(points.buffer), 1),
       // The one argument the caller did not supply: the SDK always speaks
       // base64, so the choice is never theirs to make.
@@ -277,7 +277,7 @@ describe("the pass inside a binding", () => {
     });
 
     const { bulkEncoding: _omitted, ...undeclared } = declared;
-    expect(invocation(undeclared, { points }, {}, sites).arguments).toEqual({
+    expect(invocation(undeclared, { points }, {}, sites)).toEqual({
       points: blob("f64le", new Uint8Array(points.buffer), 1),
     });
   });

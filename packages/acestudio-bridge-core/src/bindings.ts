@@ -6,10 +6,14 @@
  * canonical operation tree, and what each operation requires. This is the small
  * amount of hand-written code that turns those tables into an object — one
  * async method per operation, each of which checks the session's grant before it
- * spends a round trip, then invokes the operation over the one core-owned wire
- * verb (`operation.invoke`, declared in `Operation.acerpc`) — plus one
- * subscription per observable channel, over the one core-owned notification
- * (`state.changed`, declared in `Change.acerpc`).
+ * spends a round trip, then calls the operation as its own JSON-RPC method — the
+ * name the generated table carries as `wire` — plus one subscription per
+ * observable channel, over the one core-owned notification (`state.changed`,
+ * declared in `Change.acerpc`).
+ *
+ * There is no invocation envelope. The host serves each operation under its own
+ * name, so the path is the method rather than an argument, and the answer is the
+ * operation's result rather than a wrapper around one.
  *
  * Nothing here is per-operation or per-channel. Adding either to the catalog
  * changes the generated tables and this file not at all — which is the point: a
@@ -31,16 +35,32 @@ import {
   type PreconditionCallOptions,
   type Unsubscribe,
 } from "./generated/bindings.js";
-import { OperationClient, type InvokeParams, type InvokeWarning } from "./generated/Operation.acerpc.js";
 import { acceptedJobId, createJobHandle, JOB_CLASS_OPERATIONS, type JobClassTable } from "./jobs.js";
 import type { BridgePeer } from "./peer.js";
 
 /**
- * The reserved `arguments` key a content fingerprint rides under — the host's
- * `capfp::kFingerprintArgKey`. Inside the arguments rather than on the envelope
- * is the canonical placement (ADR 0088 §5), not an accident of this file.
+ * The reserved params key a content fingerprint rides under — the host's
+ * `capfp::kFingerprintArgKey`, which its `guardFingerprint` reads off the params
+ * object. Inside the params is the canonical placement (ADR 0088 §5), not an
+ * accident of this file.
  */
 const FINGERPRINT_ARG_KEY = "fingerprint";
+
+/**
+ * The reserved params key carrying how long the host may wait for a busy source
+ * before refusing, which its `guardBusy` reads off the params object (ADR 0088
+ * §4). Absent means fail fast.
+ */
+const WAIT_TIMEOUT_ARG_KEY = "waitTimeoutMs";
+
+/**
+ * The reserved result key an operation's advisories arrive under. Declared on
+ * each result that raises any, rather than merged into an envelope beside it —
+ * "a result the declared type does not describe is the type ADR 0121 §3 calls one
+ * that lies". The runtime reads it generically so the sink sees warnings from
+ * every operation without knowing which ones declare them.
+ */
+const WARNINGS_RESULT_KEY = "warnings";
 
 /**
  * The `arguments` key selecting a bulk payload's wire encoding (spec 1501 §8).
@@ -68,15 +88,40 @@ type BoundMethod = (...args: readonly unknown[]) => Promise<unknown>;
  * It never means the work failed. A refusal is a {@link BridgeError}; this is the
  * host mentioning something worth knowing on the way past.
  *
+ * The operations that raise warnings declare them on their own result types, so a
+ * caller that wants them typed can read `result.warnings`. This channel exists so
+ * that one that does not care never has to branch to stay correct: the sink sees
+ * every warning from every call, whatever the result shape.
+ *
  * @public
  */
-export interface OperationWarning extends InvokeWarning {
+export interface OperationWarning {
+  /** Stable SCREAMING_SNAKE identifier from the canonical registry. */
+  readonly code: string;
+  /** Optional recovery advice, composed where the warning was raised. */
+  readonly hint?: string;
   /** The canonical operation path whose call raised it. */
   readonly path: string;
 }
 
 /** Where a binding hands the warnings a call came back with. */
 export type WarningSink = (warning: OperationWarning) => void;
+
+/**
+ * The advisories on one answer, or nothing if it declared none.
+ *
+ * Read structurally rather than from the descriptor: whether an operation carries
+ * warnings is a property of its generated result type, and there is no column in
+ * the table that says so. A result that is not an object, or whose `warnings` is
+ * not an array, simply has none — this never throws on a shape it did not expect.
+ */
+function warningsOf(answer: unknown): readonly { code: string; hint?: string }[] {
+  if (answer === null || typeof answer !== "object") {
+    return [];
+  }
+  const carried = (answer as Record<string, unknown>)[WARNINGS_RESULT_KEY];
+  return Array.isArray(carried) ? (carried as { code: string; hint?: string }[]) : [];
+}
 
 /**
  * One table of bulk-field sites, keyed by operation path. Most operations carry
@@ -123,7 +168,6 @@ export function buildBindings(
   jobs: JobClassTable = JOB_CLASS_OPERATIONS,
 ): Record<string, unknown> {
   const bulk: BulkTables = surface.bulk;
-  const client = new OperationClient(peer);
   const root: Record<string, unknown> = {};
   // Read when a launch answers, never while building: the `job` group is one of
   // the methods this loop is still assembling.
@@ -143,7 +187,7 @@ export function buildBindings(
       debug(`call ${operation.path}`);
       const answer = await peer
         .withDeadline({ timeoutMs: options.timeoutMs, signal: options.signal }, () =>
-          client.operationInvoke(invocation(operation, params, options, bulk.params[operation.path])),
+          peer.request<unknown>(operation.wire, invocation(operation, params, options, bulk.params[operation.path])),
         )
         .catch((cause: unknown) => {
           // Named and re-thrown, never absorbed: what a failing call needs to look
@@ -151,11 +195,11 @@ export function buildBindings(
           debug(`call ${operation.path}: failed, ${failureName(cause)}`);
           throw cause;
         });
-      for (const warning of answer.warnings ?? []) {
+      for (const warning of warningsOf(answer)) {
         warn({ ...warning, path: operation.path });
       }
       debug(`call ${operation.path}: answered`);
-      const data = decodeBulkFields(bulk.result[operation.path], answer.data);
+      const data = decodeBulkFields(bulk.result[operation.path], answer);
       // An operation that launches a job answers on acceptance, so what it has
       // to hand back is the job, not a result that does not exist yet (ADR 0094
       // §6). The handle is sugar over the same `job` group built here, which is
@@ -321,17 +365,18 @@ function fieldDenial(
  * @internal
  *
  * Which those are: `waitBusy` and `ifMatch` ask the host to behave differently
- * (ADR 0088), so they go — the wait on the envelope, the fingerprint inside the
- * arguments. `timeoutMs` and `signal` bound the local wait and stay here. The
- * bulk `encoding` also goes, and is the one argument the caller did not supply:
- * the binding pins it because it speaks typed arrays.
+ * (ADR 0088), so they go, both as reserved keys among the arguments — there is no
+ * envelope left to carry them beside the payload, and the host reads each off the
+ * params object it is handed. `timeoutMs` and `signal` bound the local wait and
+ * stay here. The bulk `encoding` also goes, and is the one argument the caller did
+ * not supply: the binding pins it because it speaks typed arrays.
  */
 export function invocation(
   operation: OperationDescriptor,
   params: unknown,
   options: PreconditionCallOptions,
   bulkParams: BulkSites,
-): InvokeParams {
+): Record<string, unknown> {
   let args = (encodeBulkFields(bulkParams, params) ?? {}) as Record<string, unknown>;
   if (operation.bulkEncoding !== undefined) {
     args = { ...args, [BULK_ENCODING_ARG_KEY]: operation.bulkEncoding };
@@ -339,7 +384,10 @@ export function invocation(
   if (options.ifMatch !== undefined) {
     args = { ...args, [FINGERPRINT_ARG_KEY]: checkedFingerprint(operation, options.ifMatch) };
   }
-  return { path: operation.path, arguments: args, waitTimeoutMs: options.waitBusy };
+  if (options.waitBusy !== undefined) {
+    args = { ...args, [WAIT_TIMEOUT_ARG_KEY]: options.waitBusy };
+  }
+  return args;
 }
 
 /**

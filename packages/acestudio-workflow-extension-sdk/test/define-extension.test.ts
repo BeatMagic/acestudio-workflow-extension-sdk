@@ -5,7 +5,7 @@
  */
 
 import { describe, expect, it, vi } from "vitest";
-import { isCode, type ClipListResult, type InvokeParams } from "@timedomain/acestudio-bridge-core";
+import { isCode, type ClipListResult } from "@timedomain/acestudio-bridge-core";
 import {
   BRIDGE_SOCKET_ENV,
   BRIDGE_TOKEN_ENV,
@@ -52,7 +52,7 @@ describe("a one-shot run", () => {
 
     await expect(exitCode).resolves.toBe(0);
     expect(ran).toEqual(["activate:1"]);
-    expect(host.invocations.map((invocation: InvokeParams) => invocation.path)).toEqual(["clip list"]);
+    expect(host.invocations.map((invocation) => invocation.path)).toEqual(["clip list"]);
   });
 
   it("runs deactivate before it exits", async () => {

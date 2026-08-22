@@ -68,11 +68,6 @@ export type { Transport, TransportPair } from "./transport.js";
 // edit it here.
 export * from "./generated/Session.acerpc.js";
 
-// The generated operation-invocation surface (Operation.acerpc): the one wire
-// verb every operation rides, and its envelope. Same provenance as the session
-// surface above — regenerated in the Studio repo, committed here. Do not edit.
-export * from "./generated/Operation.acerpc.js";
-
 // The generated change-notification surface (Change.acerpc): the one wire
 // notification every observable channel rides, and its envelope. Same provenance
 // as the surfaces above — regenerated in the Studio repo, committed here.

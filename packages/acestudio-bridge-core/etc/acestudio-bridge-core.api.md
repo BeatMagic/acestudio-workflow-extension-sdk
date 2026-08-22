@@ -2618,25 +2618,6 @@ export interface InstrumentSetResult {
 }
 
 // @public
-export interface InvokeParams {
-    arguments: unknown;
-    path: string;
-    waitTimeoutMs?: number;
-}
-
-// @public
-export interface InvokeResult {
-    data: unknown;
-    warnings?: InvokeWarning[];
-}
-
-// @public
-export interface InvokeWarning {
-    code: string;
-    hint?: string;
-}
-
-// @public
 export function isBridgeError(value: unknown): value is BridgeError;
 
 // @public
@@ -3101,21 +3082,6 @@ export const NOTIFICATION_CHANNELS: readonly [{
     readonly capability: "ui.state";
 }];
 
-// @public (undocumented)
-export const OPERATION_CAPABILITY_TOKENS: readonly OperationCapability[];
-
-// @public (undocumented)
-export const OPERATION_METHOD_CAPABILITIES: Readonly<Record<string, OperationCapability>>;
-
-// @public
-export type OperationCapability = never;
-
-// @public (undocumented)
-export class OperationClient {
-    constructor(peer: OperationPeer);
-    operationInvoke(params: InvokeParams): Promise<InvokeResult>;
-}
-
 // @public
 export interface OperationDescriptor {
     readonly bulkEncoding?: 'base64';
@@ -3129,18 +3095,6 @@ export interface OperationDescriptor {
     readonly takesParams: boolean;
     readonly ungated: boolean;
     readonly wire: string;
-}
-
-// @public (undocumented)
-export interface OperationPeer {
-    // (undocumented)
-    notify(method: string, params?: unknown): void;
-    // (undocumented)
-    request<T>(method: string, params?: unknown): Promise<T>;
-    // (undocumented)
-    setRequestHandler<P, R>(method: string, handler: (params: P) => Promise<R> | R): void;
-    // (undocumented)
-    subscribe<T>(method: string, callback: (event: T) => void): Unsubscribe;
 }
 
 // @public
@@ -4936,7 +4890,9 @@ export const OPERATIONS: readonly [{
 }];
 
 // @public
-export interface OperationWarning extends InvokeWarning {
+export interface OperationWarning {
+    readonly code: string;
+    readonly hint?: string;
     readonly path: string;
 }
 

@@ -1,0 +1,7 @@
+# Written by gen_sdk_bundle. Every file listed here is generated.
+# The directory is regenerated as a whole, never a file at a time:
+#   cargo run -p ace-operation-catalog --bin gen_sdk_bundle -- bridge-core --out <dir>
+bundle bridge-core
+file Change.acerpc.ts
+file Session.acerpc.ts
+file bindings.ts

@@ -9,7 +9,7 @@ import { FileCredentialStore } from "../src/credentials/store";
 import { ExitCode } from "../src/exit-codes";
 
 /**
- * The real end-to-end driver (AC 4 of #1675): CLI → live signing service →
+ * The real end-to-end driver (AC 4 of BeatMagic/ACE-Studio#1675): CLI → live signing service →
  * signed bundle → reference verifier. Everything else in this suite mocks the
  * service, so this is the only place the wire is actually exercised — and the
  * only place a client/service disagreement can surface before a developer hits

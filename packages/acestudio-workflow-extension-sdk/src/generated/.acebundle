@@ -1,0 +1,5 @@
+# Written by gen_sdk_bundle. Every file listed here is generated.
+# The directory is regenerated as a whole, never a file at a time:
+#   cargo run -p ace-operation-catalog --bin gen_sdk_bundle -- workflow-extension-sdk --out <dir>
+bundle workflow-extension-sdk
+file WorkflowUi.acerpc.ts

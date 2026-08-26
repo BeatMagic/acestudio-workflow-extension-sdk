@@ -5,6 +5,7 @@ export interface CliOptions {
   out?: string;
   roots?: string;
   token?: string;
+  developerId?: string;
   json: boolean;
   quiet: boolean;
   yes: boolean;
@@ -80,6 +81,9 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
         break;
       case "--token":
         options.token = takeValue();
+        break;
+      case "--developer-id":
+        options.developerId = takeValue();
         break;
       case "--json":
         noValue();

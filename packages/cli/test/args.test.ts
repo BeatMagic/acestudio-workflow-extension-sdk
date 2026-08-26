@@ -80,8 +80,27 @@ describe("exitForServiceCode", () => {
     expect(exitForServiceCode("invalid-version")).toBe(ExitCode.ManifestInvalid);
   });
 
+  it("maps every way the service refuses an identity to IdentityRefused", () => {
+    // A script branching on the exit code needs "not your identity" to be one
+    // answer, however the service phrased the refusal.
+    for (const code of [
+      "identity-refused",
+      "namespace-violation",
+      "reserved-slug",
+      "elevated-tier-conflict",
+      "privilege-not-official",
+      "update-continuity",
+    ]) {
+      expect(exitForServiceCode(code), code).toBe(ExitCode.IdentityRefused);
+    }
+  });
+
+  it("maps a refused developer-id shape with the other id-validation failures", () => {
+    expect(exitForServiceCode("bad-slug")).toBe(ExitCode.ManifestInvalid);
+  });
+
   it("collapses unmapped codes to Generic", () => {
-    expect(exitForServiceCode("namespace-violation")).toBe(ExitCode.Generic);
+    expect(exitForServiceCode("signing-self-check-failed")).toBe(ExitCode.Generic);
     expect(exitForServiceCode("network-error")).toBe(ExitCode.Generic);
   });
 });

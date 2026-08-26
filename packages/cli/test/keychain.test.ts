@@ -51,11 +51,32 @@ describe("keychainAvailable", () => {
 });
 
 describe("KeychainCredentialStore", () => {
+  it("round-trips the developer id alongside the bearer", async () => {
+    const store = new KeychainCredentialStore(new FakeKeyring());
+    await store.set(ORIGIN, { bearer: "wxsa_secret", developerId: "acme" });
+    expect(await store.get(ORIGIN)).toEqual({ bearer: "wxsa_secret", developerId: "acme" });
+  });
+
+  it("reads a bare bearer written by an older build", async () => {
+    // A keychain entry holds one string, and builds before the developer id
+    // wrote the bearer straight in. Upgrading must not log anyone out.
+    const keyring = new FakeKeyring();
+    keyring.store.set(ORIGIN, "wxsa_legacy");
+    const store = new KeychainCredentialStore(keyring);
+    expect(await store.get(ORIGIN)).toEqual({ bearer: "wxsa_legacy" });
+  });
+
+  it("keeps a bearer with no developer id stored as a bare string", async () => {
+    const keyring = new FakeKeyring();
+    await new KeychainCredentialStore(keyring).set(ORIGIN, { bearer: "wxst_token" });
+    expect(keyring.store.get(ORIGIN)).toBe("wxst_token");
+  });
+
   it("round-trips a bearer keyed by origin", async () => {
     const store = new KeychainCredentialStore(new FakeKeyring());
     expect(await store.get(ORIGIN)).toBeNull();
-    await store.set(ORIGIN, "wxsa_secret");
-    expect(await store.get(ORIGIN)).toBe("wxsa_secret");
+    await store.set(ORIGIN, { bearer: "wxsa_secret" });
+    expect((await store.get(ORIGIN))?.bearer).toBe("wxsa_secret");
     expect(await store.remove(ORIGIN)).toBe(true);
     expect(await store.get(ORIGIN)).toBeNull();
   });
@@ -73,7 +94,7 @@ describe("KeychainOrFileStore", () => {
     const keyring = new FakeKeyring();
     const fileStore = new FileCredentialStore(dir);
     const store = new KeychainOrFileStore(keyring, fileStore);
-    await store.set(ORIGIN, "wxsa_x");
+    await store.set(ORIGIN, { bearer: "wxsa_x" });
     expect(keyring.store.get(ORIGIN)).toBe("wxsa_x");
     expect(await fileStore.get(ORIGIN)).toBeNull();
   });
@@ -83,8 +104,8 @@ describe("KeychainOrFileStore", () => {
     keyring.available = false;
     const fileStore = new FileCredentialStore(dir);
     const store = new KeychainOrFileStore(keyring, fileStore);
-    await store.set(ORIGIN, "wxsa_x");
-    expect(await fileStore.get(ORIGIN)).toBe("wxsa_x");
+    await store.set(ORIGIN, { bearer: "wxsa_x" });
+    expect((await fileStore.get(ORIGIN))?.bearer).toBe("wxsa_x");
     expect(keyring.store.size).toBe(0);
   });
 });
@@ -105,8 +126,8 @@ describe.skipIf(process.env.ACEWORKFLOW_KEYCHAIN_TEST !== "1")("real keychain", 
     const store = new KeychainCredentialStore(napiKeyring);
     const origin = "https://aceworkflow-keychain-test.invalid";
     try {
-      await store.set(origin, "wxsa_throwaway");
-      expect(await store.get(origin)).toBe("wxsa_throwaway");
+      await store.set(origin, { bearer: "wxsa_throwaway" });
+      expect((await store.get(origin))?.bearer).toBe("wxsa_throwaway");
     } finally {
       await store.remove(origin);
     }

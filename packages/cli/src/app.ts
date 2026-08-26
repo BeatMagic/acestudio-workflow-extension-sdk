@@ -41,13 +41,16 @@ Bundles:
   aceworkflow sign   <dir|bundle> [-o <out>] [--ad-hoc] [--no-verify] [--roots <file>]
 
 Credentials:
-  aceworkflow login  [--token <bearer> | --ad-hoc]
+  aceworkflow login  [--token <bearer> | --ad-hoc [--developer-id <slug>]]
   aceworkflow logout
   aceworkflow whoami
 
 Global options:
   --service <url>   target a specific signing service (default: production)
   --token <bearer>  use this credential for one command, without storing it
+  --developer-id <slug>
+                    the developer id to mint an ad-hoc identity under; it
+                    prefixes every extension id you sign under it
   --roots <file>    trust anchor for verify and sign self-verify (default: embedded)
   --json            emit a machine-readable result object on stdout
   --quiet           print only the final result or error

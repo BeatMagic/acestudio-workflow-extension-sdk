@@ -3,14 +3,30 @@ import { homedir, platform } from "node:os";
 import { join } from "node:path";
 
 /**
+ * A stored credential: the bearer, plus the developer id it belongs to when
+ * this CLI is in a position to know it.
+ *
+ * Only an ad-hoc identity minted here carries an id, and that asymmetry is the
+ * service's, not a gap in this store: the submission API resolves a bearer to a
+ * developer id server-side and exposes no endpoint to ask it, so a pasted API
+ * token is opaque to us. What we minted, we remember; everything else stays
+ * unknown until the service answers.
+ */
+export interface StoredCredential {
+  bearer: string;
+  /** The ad-hoc slug this bearer was minted under, when this CLI minted it. */
+  developerId?: string;
+}
+
+/**
  * Where cached bearers live. This build stores them in a `0600` file under
  * the OS app-data directory — the fallback layer of the credential model
  * (the OS keychain layer slots in behind this same interface later). Keyed by
  * service origin so a prod bearer and a dev bearer never collide.
  */
 export interface CredentialStore {
-  get(origin: string): Promise<string | null>;
-  set(origin: string, bearer: string): Promise<void>;
+  get(origin: string): Promise<StoredCredential | null>;
+  set(origin: string, credential: StoredCredential): Promise<void>;
   remove(origin: string): Promise<boolean>;
 }
 
@@ -28,7 +44,7 @@ export function appDataDir(): string {
 
 interface StoreFile {
   version: 1;
-  services: Record<string, { bearer: string }>;
+  services: Record<string, StoredCredential>;
 }
 
 export class FileCredentialStore implements CredentialStore {
@@ -40,14 +56,23 @@ export class FileCredentialStore implements CredentialStore {
     this.path = join(dir, "credentials.json");
   }
 
-  async get(origin: string): Promise<string | null> {
+  async get(origin: string): Promise<StoredCredential | null> {
     const file = await this.read();
-    return file.services[origin]?.bearer ?? null;
+    const entry = file.services[origin];
+    if (entry === undefined || typeof entry.bearer !== "string") return null;
+    return entry.developerId !== undefined
+      ? { bearer: entry.bearer, developerId: entry.developerId }
+      : { bearer: entry.bearer };
   }
 
-  async set(origin: string, bearer: string): Promise<void> {
+  async set(origin: string, credential: StoredCredential): Promise<void> {
     const file = await this.read();
-    file.services[origin] = { bearer };
+    // An absent developerId is written as an absent key, not `undefined`, so a
+    // file round-trip never turns "unknown" into a literal null.
+    file.services[origin] =
+      credential.developerId !== undefined
+        ? { bearer: credential.bearer, developerId: credential.developerId }
+        : { bearer: credential.bearer };
     await this.write(file);
   }
 

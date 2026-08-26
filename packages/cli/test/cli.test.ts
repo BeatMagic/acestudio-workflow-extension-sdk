@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { run, type RunDeps } from "../src/app";
 import { ExitCode } from "../src/exit-codes";
-import type { CredentialStore } from "../src/credentials/store";
+import type { CredentialStore, StoredCredential } from "../src/credentials/store";
 import { packDir } from "../src/bundle/pack";
 import { writeZip } from "../src/bundle/zip";
 import { verifyBundleBytes } from "../src/verify/verify";
@@ -14,12 +14,12 @@ import { makeTestSigner, rootsOf, rootsFileContent, signFiles, FIXTURE_SIGNED_AT
 const SERVICE = "https://svc.example";
 
 class MemoryStore implements CredentialStore {
-  readonly map = new Map<string, string>();
-  async get(origin: string): Promise<string | null> {
+  readonly map = new Map<string, StoredCredential>();
+  async get(origin: string): Promise<StoredCredential | null> {
     return this.map.get(origin) ?? null;
   }
-  async set(origin: string, bearer: string): Promise<void> {
-    this.map.set(origin, bearer);
+  async set(origin: string, credential: StoredCredential): Promise<void> {
+    this.map.set(origin, credential);
   }
   async remove(origin: string): Promise<boolean> {
     return this.map.delete(origin);
@@ -48,7 +48,7 @@ function deps(argv: string[], overrides: Partial<RunDeps> = {}): RunDeps {
 async function makeExtensionDir(): Promise<string> {
   const ext = join(dir, "ext");
   await mkdir(join(ext, "dist"), { recursive: true });
-  await writeFile(join(ext, "manifest.json"), '{"id":"team.demo","version":"1.2.0","displayName":"Demo"}');
+  await writeFile(join(ext, "manifest.json"), '{"id":"team.demo","version":"1.2.0","name":"Demo"}');
   await writeFile(join(ext, "dist", "index.js"), "export const x = 1;\n");
   return ext;
 }
@@ -207,7 +207,143 @@ describe("submit credential handling", () => {
     expect(asked).toBe(true);
     expect(code).toBe(ExitCode.Success);
     // The pasted token is stored for continuity.
-    expect(store.map.get(SERVICE)).toBe("wxst_pasted");
+    expect(store.map.get(SERVICE)?.bearer).toBe("wxst_pasted");
+  });
+});
+
+describe("ad-hoc identity", () => {
+  /** A mint endpoint that records the body it was called with. */
+  function mockMint(): { calls: unknown[] } {
+    const calls: unknown[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((url: string, init?: RequestInit) => {
+        if (String(url).endsWith("/ad-hoc/identities")) {
+          const body = JSON.parse(String(init?.body)) as { developerId: string };
+          calls.push(body);
+          return Promise.resolve(
+            new Response(JSON.stringify({ developerId: body.developerId, secret: "wxsa_minted" }), { status: 201 }),
+          );
+        }
+        return Promise.resolve(new Response("unexpected", { status: 500 }));
+      }),
+    );
+    return { calls };
+  }
+
+  it("mints under the id --developer-id names, and caches the id with the secret", async () => {
+    const mint = mockMint();
+    const code = await run(deps(["login", "--ad-hoc", "--developer-id", "acme", "--service", SERVICE]));
+    expect(code).toBe(ExitCode.Success);
+    expect(mint.calls).toEqual([{ developerId: "acme" }]);
+    expect(store.map.get(SERVICE)).toEqual({ bearer: "wxsa_minted", developerId: "acme" });
+  });
+
+  it("treats --developer-id as implying --ad-hoc", async () => {
+    const mint = mockMint();
+    expect(await run(deps(["login", "--developer-id", "acme", "--service", SERVICE]))).toBe(ExitCode.Success);
+    expect(mint.calls).toEqual([{ developerId: "acme" }]);
+  });
+
+  it("refuses a reserved slug locally, without reaching the service", async () => {
+    const mint = mockMint();
+    const code = await run(deps(["login", "--ad-hoc", "--developer-id", "acestudio", "--service", SERVICE]));
+    expect(code).toBe(ExitCode.Usage);
+    expect(mint.calls).toEqual([]);
+    expect(err.join("")).toContain("reserved for ACE");
+  });
+
+  it("refuses a malformed slug locally", async () => {
+    const mint = mockMint();
+    expect(await run(deps(["login", "--ad-hoc", "--developer-id", "Not A Slug", "--service", SERVICE]))).toBe(
+      ExitCode.Usage,
+    );
+    expect(mint.calls).toEqual([]);
+  });
+
+  it("will not invent an identity in a non-interactive session", async () => {
+    const mint = mockMint();
+    const code = await run(deps(["login", "--ad-hoc", "--service", SERVICE]));
+    expect(code).toBe(ExitCode.Usage);
+    expect(mint.calls).toEqual([]);
+    expect(err.join("")).toContain("--developer-id");
+  });
+
+  it("asks on a TTY, and re-asks until the answer passes the local rules", async () => {
+    const mint = mockMint();
+    const answers = ["acestudio", "Bad Slug", "acme"];
+    const prompter = {
+      async line(): Promise<string> {
+        return answers.shift() ?? "";
+      },
+      async choice(): Promise<string> {
+        return "ad-hoc";
+      },
+    };
+    const code = await run(
+      deps(["login", "--service", SERVICE], { stdinIsTTY: true, stdoutIsTTY: true, prompter }),
+    );
+    expect(code).toBe(ExitCode.Success);
+    // Only the third answer ever reached the service.
+    expect(mint.calls).toEqual([{ developerId: "acme" }]);
+  });
+
+  it("signs under a cached ad-hoc identity without minting a second one", async () => {
+    await store.set(SERVICE, { bearer: "wxsa_cached", developerId: "team" });
+    const mint = mockMint();
+    const ext = await makeExtensionDir();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(new Uint8Array([1]), {
+            status: 200,
+            headers: {
+              "x-extension-id": "team.demo",
+              "x-developer-id": "team",
+              "x-version": "1.2.0",
+              "x-signed-at": "1752710400",
+              "x-bundle-sha256": "abc123",
+            },
+          }),
+        ),
+      ),
+    );
+    const code = await run(
+      deps(["sign", ext, "--service", SERVICE, "--no-verify", "-o", join(dir, "out.aceworkflow")]),
+    );
+    expect(code).toBe(ExitCode.Success);
+    expect(mint.calls).toEqual([]);
+  });
+
+  it("warns when the manifest's developer id disagrees with the cached identity", async () => {
+    await store.set(SERVICE, { bearer: "wxsa_cached", developerId: "someone-else" });
+    const ext = await makeExtensionDir();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(new Uint8Array([1]), {
+            status: 200,
+            headers: {
+              "x-extension-id": "team.demo",
+              "x-developer-id": "team",
+              "x-version": "1.2.0",
+              "x-signed-at": "1752710400",
+              "x-bundle-sha256": "abc123",
+            },
+          }),
+        ),
+      ),
+    );
+    const code = await run(
+      deps(["sign", ext, "--service", SERVICE, "--no-verify", "-o", join(dir, "out.aceworkflow")]),
+    );
+    // A warning, not a refusal: the service is the authority, and a stale
+    // cached id must not be able to block a submission the service would take.
+    expect(code).toBe(ExitCode.Success);
+    expect(err.join("")).toContain('manifest declares developer id "team"');
+    expect(err.join("")).toContain('signs as "someone-else"');
   });
 });
 
@@ -399,7 +535,7 @@ describe("verify", () => {
 describe("login / whoami / logout", () => {
   it("stores a token, reports it, then clears it", async () => {
     expect(await run(deps(["login", "--token", "wxst_stored", "--service", SERVICE]))).toBe(ExitCode.Success);
-    expect(store.map.get(SERVICE)).toBe("wxst_stored");
+    expect(store.map.get(SERVICE)?.bearer).toBe("wxst_stored");
 
     out = [];
     expect(await run(deps(["whoami", "--service", SERVICE, "--json"]))).toBe(ExitCode.Success);
@@ -430,7 +566,7 @@ describe("login / whoami / logout", () => {
   it("stores a --token trimmed of surrounding whitespace", async () => {
     const code = await run(deps(["login", "--token", "  wxst_padded  ", "--service", SERVICE]));
     expect(code).toBe(ExitCode.Success);
-    expect(store.map.get(SERVICE)).toBe("wxst_padded");
+    expect(store.map.get(SERVICE)?.bearer).toBe("wxst_padded");
   });
 
   it("treats a truthy CI value as non-interactive even on a TTY", async () => {

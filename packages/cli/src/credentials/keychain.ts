@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
 import type { Entry as KeyringEntry } from "@napi-rs/keyring";
-import { FileCredentialStore, type CredentialStore } from "./store";
+import { FileCredentialStore, type CredentialStore, type StoredCredential } from "./store";
 
 /** The service name every entry is filed under in the OS store. */
 export const KEYCHAIN_SERVICE = "aceworkflow";
@@ -67,16 +67,45 @@ export function keychainAvailable(keyring: KeyringPort = napiKeyring): boolean {
   }
 }
 
+/**
+ * A keychain entry holds one string, so a credential that carries a developer
+ * id is stored as JSON. Reading tolerates both shapes: anything that is not a
+ * JSON object with a string `bearer` is a bare bearer written by an older
+ * build (or by hand), which keeps upgrades from silently logging people out.
+ */
+export function parseKeychainSecret(secret: string): StoredCredential {
+  try {
+    const value: unknown = JSON.parse(secret);
+    if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+      const record = value as Record<string, unknown>;
+      if (typeof record.bearer === "string") {
+        return typeof record.developerId === "string"
+          ? { bearer: record.bearer, developerId: record.developerId }
+          : { bearer: record.bearer };
+      }
+    }
+  } catch {
+    // Not JSON — a bare bearer.
+  }
+  return { bearer: secret };
+}
+
+/** The inverse: a bare string while there is nothing else to carry. */
+export function formatKeychainSecret(credential: StoredCredential): string {
+  return credential.developerId === undefined ? credential.bearer : JSON.stringify(credential);
+}
+
 /** A CredentialStore backed by the OS keychain, keyed by service origin. */
 export class KeychainCredentialStore implements CredentialStore {
   constructor(private readonly keyring: KeyringPort = napiKeyring) {}
 
-  async get(origin: string): Promise<string | null> {
-    return this.keyring.get(origin);
+  async get(origin: string): Promise<StoredCredential | null> {
+    const secret = this.keyring.get(origin);
+    return secret === null ? null : parseKeychainSecret(secret);
   }
 
-  async set(origin: string, bearer: string): Promise<void> {
-    this.keyring.set(origin, bearer);
+  async set(origin: string, credential: StoredCredential): Promise<void> {
+    this.keyring.set(origin, formatKeychainSecret(credential));
   }
 
   async remove(origin: string): Promise<boolean> {
@@ -111,11 +140,11 @@ export class KeychainOrFileStore implements CredentialStore {
     return this.backend;
   }
 
-  async get(origin: string): Promise<string | null> {
+  async get(origin: string): Promise<StoredCredential | null> {
     return this.pick().get(origin);
   }
-  async set(origin: string, bearer: string): Promise<void> {
-    return this.pick().set(origin, bearer);
+  async set(origin: string, credential: StoredCredential): Promise<void> {
+    return this.pick().set(origin, credential);
   }
   async remove(origin: string): Promise<boolean> {
     return this.pick().remove(origin);

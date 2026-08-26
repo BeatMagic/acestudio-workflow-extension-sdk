@@ -1,6 +1,6 @@
 {
   "name": "@timedomain/aceworkflow",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "type": "module",
   "description": "Package, sign, and verify your ACE Studio extension before publishing it.",
   "license": "MIT",
@@ -31,7 +31,11 @@
     "@timedomain/workflowext-verifier": "*",
     "@timedomain/workflowext-wire-schemas": "*"
   },
-  "files": ["LICENSE", "dist", "src"],
+  "files": [
+    "LICENSE",
+    "dist",
+    "src"
+  ],
   "scripts": {
     "prepack": "node ../../scripts/build.mjs"
   },

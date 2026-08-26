@@ -391,6 +391,29 @@ describe("ad-hoc identity", () => {
     expect(store.map.get(`${SERVICE}#team`)?.bearer).toBe("wxsa_minted");
     expect(store.map.get(`${SERVICE}#team-labs`)?.bearer).toBe("wxsa_minted");
   });
+
+  it("signs ad-hoc after `login --ad-hoc`, even with a token stored before it", async () => {
+    // "from now on" has to outrank a credential already on disk, or the mode
+    // switch is silently a no-op for anyone who had signed in with a token.
+    const svc = mockService();
+    await run(deps(["login", "--token", "wxst_stored", "--service", SERVICE], { configDir: dir }));
+    await run(deps(["login", "--ad-hoc", "--service", SERVICE], { configDir: dir }));
+
+    expect(await run(deps(signArgs(await makeExtensionDir()), { configDir: dir }))).toBe(ExitCode.Success);
+    expect(svc.mints).toEqual([{ developerId: "team" }]);
+    // Switching modes does not destroy the token; it is just not what ad-hoc
+    // mode signs with, so switching back needs no re-paste.
+    expect(store.map.get(SERVICE)?.bearer).toBe("wxst_stored");
+  });
+
+  it("goes back to the token when `login --token` follows ad-hoc mode", async () => {
+    const svc = mockService();
+    await run(deps(["login", "--ad-hoc", "--service", SERVICE], { configDir: dir }));
+    await run(deps(["login", "--token", "wxst_stored", "--service", SERVICE], { configDir: dir }));
+
+    expect(await run(deps(signArgs(await makeExtensionDir()), { configDir: dir }))).toBe(ExitCode.Success);
+    expect(svc.mints).toEqual([]);
+  });
 });
 
 describe("sign end-to-end (mocked service)", () => {

@@ -68,6 +68,11 @@ type Acquired = { ok: true; bearer: string; developerId?: string } | { ok: false
  * only ways to check that claim before the service does.
  */
 async function acquireBearer(ctx: Ctx, declared: string | null): Promise<Acquired> {
+  // Either said now, or said once at `login --ad-hoc` and remembered. The
+  // stored answer is an explicit choice recorded, not a silent fallback: with
+  // neither, a missing credential is still an error rather than a quiet mint.
+  const adHoc = ctx.options.adHoc || (await prefersAdHoc(ctx.service.url.origin, ctx.appDataDir));
+
   const resolved = await resolveCredential({
     explicitToken: ctx.options.token,
     env: ctx.env,
@@ -76,18 +81,22 @@ async function acquireBearer(ctx: Ctx, declared: string | null): Promise<Acquire
     ...(declared !== null ? { developerId: declared } : {}),
   });
 
-  if (resolved !== null) {
+  // An unscoped *stored* credential does not answer an ad-hoc request. It is a
+  // registered token someone pasted (or a legacy entry from before credentials
+  // were filed per identity), and signing with it would quietly ignore the mode
+  // that was asked for — which `--ad-hoc` and `login --ad-hoc`'s "from now on"
+  // both promise not to do. `--token` and `ACEWORKFLOW_TOKEN` still win: those
+  // are said at the call, and the second is the CI path.
+  const supersededByAdHoc =
+    resolved !== null && adHoc && resolved.source === "store" && resolved.developerId === undefined;
+
+  if (resolved !== null && !supersededByAdHoc) {
     const refusal = await checkClaimedIdentity(ctx, declared, classifyCredential(resolved.bearer));
     if (refusal !== null) return refusal;
     return resolved.developerId !== undefined
       ? { ok: true, bearer: resolved.bearer, developerId: resolved.developerId }
       : { ok: true, bearer: resolved.bearer };
   }
-
-  // Either said now, or said once at `login --ad-hoc` and remembered. The
-  // stored answer is an explicit choice recorded, not a silent fallback: with
-  // neither, a missing credential is still an error rather than a quiet mint.
-  const adHoc = ctx.options.adHoc || (await prefersAdHoc(ctx.service.url.origin, ctx.appDataDir));
 
   if (adHoc) {
     if (declared === null) {
@@ -452,6 +461,10 @@ export async function cmdLogin(ctx: Ctx): Promise<number> {
       return ExitCode.Usage;
     }
     await ctx.store.set(origin, { bearer: token });
+    // Signing in with a token is the other half of `login --ad-hoc`'s "from now
+    // on": leaving the ad-hoc mode set would let it keep shadowing the token
+    // just stored, and the two modes are a choice between, not a stack.
+    await setPrefersAdHoc(origin, false, ctx.appDataDir);
     return reportLogin(ctx, origin, token, undefined);
   }
 
@@ -476,6 +489,7 @@ export async function cmdLogin(ctx: Ctx): Promise<number> {
     return ExitCode.Usage;
   }
   await ctx.store.set(origin, { bearer: token });
+  await setPrefersAdHoc(origin, false, ctx.appDataDir);
   return reportLogin(ctx, origin, token, undefined);
 }
 

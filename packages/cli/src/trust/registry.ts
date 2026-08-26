@@ -33,11 +33,29 @@ export function registryCachePath(dir: string = appDataDir()): string {
   return join(dir, "trust-registry.json");
 }
 
+/**
+ * A cached record is only usable if its sequence is a real number and its
+ * entries are indexable. The sequence carries the rollback ratchet, and a
+ * non-numeric one would make the `<` comparison below answer false and wave an
+ * older registry through; missing entries would throw on the first lookup. Both
+ * are cheaper to drop here than to reason about at every use.
+ */
+function usableRecord(value: unknown): value is CachedRegistry {
+  if (value === null || typeof value !== "object") return false;
+  const record = value as Partial<CachedRegistry>;
+  if (typeof record.sequence !== "number" || !Number.isFinite(record.sequence)) return false;
+  return record.entries !== null && typeof record.entries === "object" && !Array.isArray(record.entries);
+}
+
 async function readCache(path: string): Promise<CacheFile> {
   try {
     const value = JSON.parse(await readFile(path, "utf-8")) as Partial<CacheFile>;
     if (value.services !== null && typeof value.services === "object" && !Array.isArray(value.services)) {
-      return { version: 1, services: value.services as CacheFile["services"] };
+      const services: CacheFile["services"] = {};
+      for (const [origin, record] of Object.entries(value.services)) {
+        if (usableRecord(record)) services[origin] = record;
+      }
+      return { version: 1, services };
     }
   } catch {
     // Missing or corrupt reads as empty; the next fetch rewrites it.

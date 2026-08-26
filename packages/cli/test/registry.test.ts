@@ -1,8 +1,8 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { lookupDeveloper } from "../src/trust/registry";
+import { lookupDeveloper, registryCachePath } from "../src/trust/registry";
 import { makeTestSigner, rootsOf, signedTrustRegistry } from "./fixtures";
 
 const SERVICE = new URL("https://svc.example");
@@ -82,6 +82,45 @@ describe("lookupDeveloper", () => {
       fetchBytes: rolledBack.fetchBytes,
     });
     expect(standing).toMatchObject({ known: true, registered: true, tier: "verified-partner" });
+  });
+
+  it("drops a cached record whose sequence is not a number, rather than ratcheting on it", async () => {
+    // A sequence that is not a number makes `payload.sequence < cached.sequence`
+    // answer false whatever arrives, which would wave a rolled-back registry
+    // through the one check that exists to stop it. Such a record is discarded
+    // on read, so the fetched file is judged on its own.
+    const signer = await makeTestSigner();
+    await writeFile(
+      registryCachePath(dir),
+      JSON.stringify({
+        version: 1,
+        services: { [SERVICE.origin]: { sequence: "9999", entries: { partnerco: { displayName: "P", tier: "official" } } } },
+      }),
+    );
+
+    const fresh = server(await signedTrustRegistry(signer, { partnerco: "verified-partner" }, 3));
+    const standing = await lookupDeveloper(SERVICE, "partnerco", {
+      roots: rootsOf(signer),
+      dir,
+      fetchBytes: fresh.fetchBytes,
+    });
+    expect(standing).toMatchObject({ known: true, registered: true, tier: "verified-partner" });
+  });
+
+  it("survives a cached record with no entries at all", async () => {
+    const signer = await makeTestSigner();
+    await writeFile(
+      registryCachePath(dir),
+      JSON.stringify({ version: 1, services: { [SERVICE.origin]: { sequence: 4 } } }),
+    );
+
+    const fresh = server(await signedTrustRegistry(signer, { partnerco: "official" }, 5));
+    const standing = await lookupDeveloper(SERVICE, "partnerco", {
+      roots: rootsOf(signer),
+      dir,
+      fetchBytes: fresh.fetchBytes,
+    });
+    expect(standing).toMatchObject({ known: true, registered: true, tier: "official" });
   });
 
   it("says it does not know when the registry cannot be reached", async () => {

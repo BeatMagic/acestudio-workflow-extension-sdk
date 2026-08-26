@@ -1,6 +1,12 @@
 import { createRequire } from "node:module";
 import type { Entry as KeyringEntry } from "@napi-rs/keyring";
-import { FileCredentialStore, type CredentialStore } from "./store";
+import {
+  credentialKey,
+  FileCredentialStore,
+  pickCredential,
+  type CredentialStore,
+  type StoredCredential,
+} from "./store";
 
 /** The service name every entry is filed under in the OS store. */
 export const KEYCHAIN_SERVICE = "aceworkflow";
@@ -67,27 +73,101 @@ export function keychainAvailable(keyring: KeyringPort = napiKeyring): boolean {
   }
 }
 
+/**
+ * A keychain entry holds one string, so a credential that carries a developer
+ * id is stored as JSON. Reading tolerates both shapes: anything that is not a
+ * JSON object with a string `bearer` is a bare bearer written by an older
+ * build (or by hand), which keeps upgrades from silently logging people out.
+ */
+export function parseKeychainSecret(secret: string): StoredCredential {
+  try {
+    const value: unknown = JSON.parse(secret);
+    if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+      const record = value as Record<string, unknown>;
+      if (typeof record.bearer === "string") {
+        return typeof record.developerId === "string"
+          ? { bearer: record.bearer, developerId: record.developerId }
+          : { bearer: record.bearer };
+      }
+    }
+  } catch {
+    // Not JSON — a bare bearer.
+  }
+  return { bearer: secret };
+}
+
+/** The inverse: a bare string while there is nothing else to carry. */
+export function formatKeychainSecret(credential: StoredCredential): string {
+  return credential.developerId === undefined ? credential.bearer : JSON.stringify(credential);
+}
+
 /** A CredentialStore backed by the OS keychain, keyed by service origin. */
 export class KeychainCredentialStore implements CredentialStore {
   constructor(private readonly keyring: KeyringPort = napiKeyring) {}
 
-  async get(origin: string): Promise<string | null> {
-    return this.keyring.get(origin);
+  async get(origin: string, developerId?: string): Promise<StoredCredential | null> {
+    return pickCredential(
+      (key) => {
+        const secret = this.keyring.get(key);
+        return secret === null ? null : parseKeychainSecret(secret);
+      },
+      origin,
+      developerId,
+    );
   }
 
-  async set(origin: string, bearer: string): Promise<void> {
-    this.keyring.set(origin, bearer);
+  async set(origin: string, credential: StoredCredential): Promise<void> {
+    this.keyring.set(credentialKey(origin, credential.developerId), formatKeychainSecret(credential));
+    if (credential.developerId !== undefined) this.remember(origin, credential.developerId);
   }
 
   async remove(origin: string): Promise<boolean> {
+    // An OS secret store has no prefix scan, so the identities a service holds
+    // are tracked in one index entry — without it, `logout` would leave every
+    // identity-scoped secret behind with no way to name it again.
+    let removed = this.forget(origin);
+    for (const developerId of this.index(origin)) {
+      if (this.forget(credentialKey(origin, developerId))) removed = true;
+    }
+    if (this.forget(indexKey(origin))) removed = true;
+    return removed;
+  }
+
+  private forget(key: string): boolean {
     // deleteCredential throws when there is nothing to delete; that is a
     // successful "nothing removed", not an error worth surfacing.
     try {
-      return this.keyring.remove(origin);
+      return this.keyring.remove(key);
     } catch {
       return false;
     }
   }
+
+  private index(origin: string): string[] {
+    try {
+      const raw = this.keyring.get(indexKey(origin));
+      if (raw === null) return [];
+      const value: unknown = JSON.parse(raw);
+      return Array.isArray(value) ? value.filter((id): id is string => typeof id === "string") : [];
+    } catch {
+      return [];
+    }
+  }
+
+  private remember(origin: string, developerId: string): void {
+    const known = this.index(origin);
+    if (known.includes(developerId)) return;
+    try {
+      this.keyring.set(indexKey(origin), JSON.stringify([...known, developerId]));
+    } catch {
+      // A missing index costs a stale secret at logout, not a failed login.
+    }
+  }
+}
+
+/** Where the list of identity-scoped accounts for a service is kept. */
+function indexKey(origin: string): string {
+  return `${origin}#identities`;
 }
 
 /**
@@ -111,11 +191,11 @@ export class KeychainOrFileStore implements CredentialStore {
     return this.backend;
   }
 
-  async get(origin: string): Promise<string | null> {
-    return this.pick().get(origin);
+  async get(origin: string, developerId?: string): Promise<StoredCredential | null> {
+    return this.pick().get(origin, developerId);
   }
-  async set(origin: string, bearer: string): Promise<void> {
-    return this.pick().set(origin, bearer);
+  async set(origin: string, credential: StoredCredential): Promise<void> {
+    return this.pick().set(origin, credential);
   }
   async remove(origin: string): Promise<boolean> {
     return this.pick().remove(origin);

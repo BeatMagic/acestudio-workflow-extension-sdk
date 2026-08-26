@@ -1,6 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
 import { isValidArchivePath } from "@timedomain/workflowext-verifier";
+import { developerIdOf } from "../credentials/developer-id";
 import { BUNDLE_EXTENSION } from "./constants";
 import type { ZipFile } from "./zip";
 
@@ -59,6 +60,32 @@ async function walk(root: string, dir: string, out: ZipFile[]): Promise<void> {
 export function extensionSlug(extensionId: string): string {
   const parts = extensionId.split(".");
   return parts.length >= 2 && parts[1]!.length > 0 ? parts[1]! : extensionId;
+}
+
+/**
+ * The developer id a bundle's manifest declares — the first segment of its
+ * `id`. The service requires this to equal the developer id its credential
+ * resolves to, so reading it lets the CLI say *which* namespaces disagree
+ * instead of relaying a bare 403. A tolerant read, like `deriveBundleName`:
+ * an unreadable manifest yields null and the check is simply skipped.
+ */
+export function deriveDeveloperId(files: readonly ZipFile[]): string | null {
+  const id = manifestField(files, "id");
+  return id === null ? null : developerIdOf(id);
+}
+
+function manifestField(files: readonly ZipFile[], key: string): string | null {
+  const manifest = files.find((file) => file.path === MANIFEST_PATH);
+  if (manifest === undefined) return null;
+  let value: unknown;
+  try {
+    value = JSON.parse(new TextDecoder().decode(manifest.bytes));
+  } catch {
+    return null;
+  }
+  if (typeof value !== "object" || value === null) return null;
+  const field = (value as Record<string, unknown>)[key];
+  return typeof field === "string" ? field : null;
 }
 
 /**

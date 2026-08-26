@@ -7,6 +7,13 @@ export type CredentialSource = "flag" | "env" | "store";
 export interface ResolvedCredential {
   bearer: string;
   source: CredentialSource;
+  /**
+   * The developer id this bearer signs under, when it is knowable locally —
+   * only for an ad-hoc identity this CLI minted and cached. A `--token` or an
+   * injected `ACEWORKFLOW_TOKEN` is opaque, so this is undefined for both, and
+   * the service remains the authority in every case.
+   */
+  developerId?: string;
 }
 
 /**
@@ -24,8 +31,10 @@ export async function resolveCredential(options: {
   env: NodeJS.ProcessEnv;
   store: CredentialStore;
   origin: string;
+  /** The identity the bundle claims, so the right cached credential is found. */
+  developerId?: string | undefined;
 }): Promise<ResolvedCredential | null> {
-  const { explicitToken, env, store, origin } = options;
+  const { explicitToken, env, store, origin, developerId } = options;
   const flag = explicitToken?.trim();
   if (flag !== undefined && flag.length > 0) {
     return { bearer: flag, source: "flag" };
@@ -34,9 +43,12 @@ export async function resolveCredential(options: {
   if (fromEnv !== undefined && fromEnv.length > 0) {
     return { bearer: fromEnv, source: "env" };
   }
-  const stored = (await store.get(origin))?.trim();
-  if (stored !== undefined && stored.length > 0) {
-    return { bearer: stored, source: "store" };
+  const stored = await store.get(origin, developerId);
+  const storedBearer = stored?.bearer.trim();
+  if (stored !== null && storedBearer !== undefined && storedBearer.length > 0) {
+    return stored.developerId !== undefined
+      ? { bearer: storedBearer, source: "store", developerId: stored.developerId }
+      : { bearer: storedBearer, source: "store" };
   }
   return null;
 }

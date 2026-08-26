@@ -112,10 +112,20 @@ export async function submitBundle(
   };
 }
 
-export async function mintAdhocIdentity(service: URL): Promise<MintResult> {
+/**
+ * Mints an ad-hoc identity under a developer-chosen slug (ADR 0098 §3). The
+ * slug is the caller's to pick and the service's to refuse: it re-checks shape,
+ * the reserved list, registered ownership, and the §4 anti-impersonation
+ * perimeter, and answers with its own `code` on any of them.
+ */
+export async function mintAdhocIdentity(service: URL, developerId: string): Promise<MintResult> {
   let response: Response;
   try {
-    response = await fetch(endpoint(service, "ad-hoc/identities"), { method: "POST" });
+    response = await fetch(endpoint(service, "ad-hoc/identities"), {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ developerId }),
+    });
   } catch (error) {
     return { ok: false, error: { status: 0, code: NETWORK_ERROR_CODE, message: describeNetworkError(error, service) } };
   }

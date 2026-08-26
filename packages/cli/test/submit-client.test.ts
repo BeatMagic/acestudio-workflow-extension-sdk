@@ -87,21 +87,23 @@ describe("submitBundle", () => {
 
 describe("mintAdhocIdentity", () => {
   it("returns the minted identity on 201", async () => {
-    mockFetch((url) => {
+    mockFetch(async (url, init) => {
       expect(url).toBe("https://workflowext-signing.timedomain.dev/ad-hoc/identities");
-      return new Response(JSON.stringify({ developerId: "adhoc-abc123def456", secret: "wxsa_feedface" }), {
-        status: 201,
-      });
+      // The service requires the chosen slug in the body (ADR 0098 §3); a
+      // bodiless POST is answered `bad-body`, so this assertion is the guard
+      // against regressing to one.
+      expect(JSON.parse(String(init?.body))).toEqual({ developerId: "acme" });
+      return new Response(JSON.stringify({ developerId: "acme", secret: "wxsa_feedface" }), { status: 201 });
     });
-    const result = await mintAdhocIdentity(SERVICE);
+    const result = await mintAdhocIdentity(SERVICE, "acme");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.value).toEqual({ developerId: "adhoc-abc123def456", secret: "wxsa_feedface" });
+    expect(result.value).toEqual({ developerId: "acme", secret: "wxsa_feedface" });
   });
 
   it("flags a malformed mint body", async () => {
     mockFetch(() => new Response(JSON.stringify({ nope: true }), { status: 201 }));
-    const result = await mintAdhocIdentity(SERVICE);
+    const result = await mintAdhocIdentity(SERVICE, "acme");
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.error.code).toBe("malformed-response");

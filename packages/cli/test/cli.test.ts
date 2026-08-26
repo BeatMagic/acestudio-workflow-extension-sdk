@@ -5,24 +5,34 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { run, type RunDeps } from "../src/app";
 import { ExitCode } from "../src/exit-codes";
-import type { CredentialStore } from "../src/credentials/store";
+import { credentialKey, pickCredential } from "../src/credentials/store";
+import type { CredentialStore, StoredCredential } from "../src/credentials/store";
 import { packDir } from "../src/bundle/pack";
 import { writeZip } from "../src/bundle/zip";
 import { verifyBundleBytes } from "../src/verify/verify";
-import { makeTestSigner, rootsOf, rootsFileContent, signFiles, FIXTURE_SIGNED_AT } from "./fixtures";
+import {
+  makeTestSigner,
+  rootsOf,
+  rootsFileContent,
+  signedTrustRegistry,
+  signFiles,
+  FIXTURE_SIGNED_AT,
+} from "./fixtures";
 
 const SERVICE = "https://svc.example";
 
 class MemoryStore implements CredentialStore {
-  readonly map = new Map<string, string>();
-  async get(origin: string): Promise<string | null> {
-    return this.map.get(origin) ?? null;
+  readonly map = new Map<string, StoredCredential>();
+  async get(origin: string, developerId?: string): Promise<StoredCredential | null> {
+    return pickCredential((key) => this.map.get(key), origin, developerId);
   }
-  async set(origin: string, bearer: string): Promise<void> {
-    this.map.set(origin, bearer);
+  async set(origin: string, credential: StoredCredential): Promise<void> {
+    this.map.set(credentialKey(origin, credential.developerId), credential);
   }
   async remove(origin: string): Promise<boolean> {
-    return this.map.delete(origin);
+    const keys = [...this.map.keys()].filter((key) => key === origin || key.startsWith(`${origin}#`));
+    for (const key of keys) this.map.delete(key);
+    return keys.length > 0;
   }
 }
 
@@ -48,7 +58,7 @@ function deps(argv: string[], overrides: Partial<RunDeps> = {}): RunDeps {
 async function makeExtensionDir(): Promise<string> {
   const ext = join(dir, "ext");
   await mkdir(join(ext, "dist"), { recursive: true });
-  await writeFile(join(ext, "manifest.json"), '{"id":"team.demo","version":"1.2.0","displayName":"Demo"}');
+  await writeFile(join(ext, "manifest.json"), '{"id":"team.demo","version":"1.2.0","name":"Demo"}');
   await writeFile(join(ext, "dist", "index.js"), "export const x = 1;\n");
   return ext;
 }
@@ -207,7 +217,225 @@ describe("submit credential handling", () => {
     expect(asked).toBe(true);
     expect(code).toBe(ExitCode.Success);
     // The pasted token is stored for continuity.
-    expect(store.map.get(SERVICE)).toBe("wxst_pasted");
+    expect(store.map.get(SERVICE)?.bearer).toBe("wxst_pasted");
+  });
+});
+
+describe("ad-hoc identity", () => {
+  /**
+   * The trust registry is checked against the same anchor as a bundle, so a
+   * test that wants it believed has to sign it with the fixture root and point
+   * the CLI at that root — which is what `--roots` is for.
+   */
+  async function trustedRootsFile(): Promise<string> {
+    const signer = await makeTestSigner();
+    const path = join(dir, "roots.json");
+    await writeFile(path, rootsFileContent(signer));
+    return path;
+  }
+
+  /** A service that mints, signs, and serves a trust registry naming `partnerco`. */
+  function mockService(options: { registry?: boolean } = {}): { mints: unknown[] } {
+    const mints: unknown[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        const href = String(url);
+        if (href.endsWith("/ad-hoc/identities")) {
+          const body = JSON.parse(String(init?.body)) as { developerId: string };
+          mints.push(body);
+          return new Response(JSON.stringify({ developerId: body.developerId, secret: "wxsa_minted" }), {
+            status: 201,
+          });
+        }
+        if (href.endsWith("/trust/trust-registry.json")) {
+          if (options.registry !== true) return new Response("nope", { status: 404 });
+          const signer = await makeTestSigner();
+          const registry = await signedTrustRegistry(signer, { partnerco: "verified-partner" });
+          return new Response(new TextDecoder().decode(registry), { status: 200 });
+        }
+        return new Response(new Uint8Array([1]), {
+          status: 200,
+          headers: {
+            "x-extension-id": "team.demo",
+            "x-developer-id": "team",
+            "x-version": "1.2.0",
+            "x-signed-at": "1752710400",
+            "x-bundle-sha256": "abc123",
+          },
+        });
+      }),
+    );
+    return { mints };
+  }
+
+  const signArgs = (ext: string) => ["sign", ext, "--service", SERVICE, "--no-verify", "-o", join(dir, "o.aceworkflow")];
+
+  it("mints under the developer id the manifest declares, asking nothing", async () => {
+    const svc = mockService();
+    const ext = await makeExtensionDir(); // manifest id is `team.demo`
+    expect(await run(deps([...signArgs(ext), "--ad-hoc"], { configDir: dir }))).toBe(ExitCode.Success);
+    expect(svc.mints).toEqual([{ developerId: "team" }]);
+    expect(store.map.get(credentialKey(SERVICE, "team"))).toEqual({ bearer: "wxsa_minted", developerId: "team" });
+  });
+
+  it("refuses to mint under a reserved slug, without reaching the service", async () => {
+    const svc = mockService();
+    const ext = join(dir, "reserved");
+    await mkdir(ext, { recursive: true });
+    await writeFile(join(ext, "manifest.json"), '{"id":"acestudio.demo","version":"1.0.0","name":"Demo"}');
+    expect(await run(deps([...signArgs(ext), "--ad-hoc"], { configDir: dir }))).toBe(ExitCode.Usage);
+    expect(svc.mints).toEqual([]);
+    expect(err.join("")).toContain("reserved for ACE");
+  });
+
+  it("refuses to mint under an identity the trust registry says is registered", async () => {
+    const roots = await trustedRootsFile();
+    const svc = mockService({ registry: true });
+    const ext = join(dir, "partner");
+    await mkdir(ext, { recursive: true });
+    await writeFile(join(ext, "manifest.json"), '{"id":"partnerco.demo","version":"1.0.0","name":"Demo"}');
+    // The service would refuse this with elevated-tier-conflict; catching it
+    // here also means no useless identity is left behind.
+    const code = await run(deps([...signArgs(ext), "--ad-hoc", "--roots", roots], { configDir: dir }));
+    expect(code, err.join("")).toBe(ExitCode.IdentityRefused);
+    expect(svc.mints).toEqual([]);
+    expect(err.join("")).toContain("verified-partner");
+  });
+
+  it("refuses a cached ad-hoc credential against a registered identity too", async () => {
+    const roots = await trustedRootsFile();
+    await store.set(SERVICE, { bearer: "wxsa_cached", developerId: "partnerco" });
+    mockService({ registry: true });
+    const ext = join(dir, "partner2");
+    await mkdir(ext, { recursive: true });
+    await writeFile(join(ext, "manifest.json"), '{"id":"partnerco.demo","version":"1.0.0","name":"Demo"}');
+    const code = await run(deps([...signArgs(ext), "--roots", roots], { configDir: dir }));
+    expect(code, err.join("")).toBe(ExitCode.IdentityRefused);
+  });
+
+  it("signs under a cached ad-hoc identity without minting a second one", async () => {
+    await store.set(SERVICE, { bearer: "wxsa_cached", developerId: "team" });
+    const svc = mockService({ registry: true });
+    const ext = await makeExtensionDir();
+    expect(await run(deps(signArgs(ext), { configDir: dir }))).toBe(ExitCode.Success);
+    expect(svc.mints).toEqual([]);
+  });
+
+  it("leaves another identity's ad-hoc credential alone rather than signing with it", async () => {
+    await store.set(SERVICE, { bearer: "wxsa_cached", developerId: "someone-else" });
+    const svc = mockService({ registry: true });
+    const ext = await makeExtensionDir(); // manifest id is `team.demo`
+    // An ad-hoc secret is bound to the id it was minted under, so it is no more
+    // usable for `team` than no credential at all. Nothing is warned about and
+    // nothing is minted: `--ad-hoc` was not asked for, so this is the ordinary
+    // missing-credential path.
+    expect(await run(deps(signArgs(ext), { configDir: dir }))).toBe(ExitCode.MissingCredential);
+    expect(svc.mints).toEqual([]);
+    expect(store.map.get(credentialKey(SERVICE, "someone-else"))).toEqual({
+      bearer: "wxsa_cached",
+      developerId: "someone-else",
+    });
+  });
+
+  it("rejects --developer-id, which no longer exists", async () => {
+    const ext = await makeExtensionDir();
+    expect(await run(deps([...signArgs(ext), "--developer-id", "acme"]))).toBe(ExitCode.Usage);
+  });
+
+  it("records ad-hoc at login without minting anything, and needs no terminal", async () => {
+    // There is nothing to mint at login: the identity lives in a manifest, and
+    // which one is needed is not knowable until there is a bundle.
+    const svc = mockService();
+    expect(await run(deps(["login", "--ad-hoc", "--service", SERVICE], { configDir: dir }))).toBe(ExitCode.Success);
+    expect(svc.mints).toEqual([]);
+  });
+
+  it("mints without --ad-hoc once login recorded it", async () => {
+    const svc = mockService();
+    await run(deps(["login", "--ad-hoc", "--service", SERVICE], { configDir: dir }));
+    const ext = await makeExtensionDir();
+    expect(await run(deps(signArgs(ext), { configDir: dir }))).toBe(ExitCode.Success);
+    expect(svc.mints).toEqual([{ developerId: "team" }]);
+  });
+
+  it("still refuses to mint when nothing said ad-hoc", async () => {
+    const svc = mockService();
+    const ext = await makeExtensionDir();
+    expect(await run(deps(signArgs(ext), { configDir: dir }))).toBe(ExitCode.MissingCredential);
+    expect(svc.mints).toEqual([]);
+  });
+
+  it("forgets the recorded mode at logout, so signing stops minting", async () => {
+    const svc = mockService();
+    await run(deps(["login", "--ad-hoc", "--service", SERVICE], { configDir: dir }));
+    expect(await run(deps(["logout", "--service", SERVICE], { configDir: dir }))).toBe(ExitCode.Success);
+    const ext = await makeExtensionDir();
+    expect(await run(deps(signArgs(ext), { configDir: dir }))).toBe(ExitCode.MissingCredential);
+    expect(svc.mints).toEqual([]);
+  });
+
+  it("mints a second identity rather than reusing the first one's credential", async () => {
+    // One developer, two identities, one service. Keying credentials by origin
+    // alone made the second unsignable.
+    const svc = mockService();
+    await run(deps(["login", "--ad-hoc", "--service", SERVICE], { configDir: dir }));
+    await run(deps(signArgs(await makeExtensionDir()), { configDir: dir }));
+
+    const other = join(dir, "other");
+    await mkdir(other, { recursive: true });
+    await writeFile(join(other, "manifest.json"), '{"id":"team-labs.demo","version":"1.0.0","name":"Demo"}');
+    expect(await run(deps(signArgs(other), { configDir: dir }))).toBe(ExitCode.Success);
+
+    expect(svc.mints).toEqual([{ developerId: "team" }, { developerId: "team-labs" }]);
+    expect(store.map.get(`${SERVICE}#team`)?.bearer).toBe("wxsa_minted");
+    expect(store.map.get(`${SERVICE}#team-labs`)?.bearer).toBe("wxsa_minted");
+  });
+
+  it("replaces a stored token when `login --ad-hoc` follows it, and says so", async () => {
+    // `login` sets what a service signs with. Leaving the token behind would
+    // let it go on being resolved first, making the switch a silent no-op.
+    const svc = mockService();
+    await run(deps(["login", "--token", "wxst_stored", "--service", SERVICE], { configDir: dir }));
+    err = [];
+    await run(deps(["login", "--ad-hoc", "--service", SERVICE], { configDir: dir }));
+    expect(store.map.get(SERVICE)).toBeUndefined();
+    expect(err.join("")).toContain("discarded the credential stored for");
+
+    expect(await run(deps(signArgs(await makeExtensionDir()), { configDir: dir }))).toBe(ExitCode.Success);
+    expect(svc.mints).toEqual([{ developerId: "team" }]);
+  });
+
+  it("says nothing about discarding when there was no credential to discard", async () => {
+    await run(deps(["login", "--ad-hoc", "--service", SERVICE], { configDir: dir }));
+    expect(err.join("")).not.toContain("discarded");
+  });
+
+  it("warns when --token signs instead of the stored credential", async () => {
+    mockService();
+    await run(deps(["login", "--token", "wxst_stored", "--service", SERVICE], { configDir: dir }));
+    err = [];
+    await run(deps([...signArgs(await makeExtensionDir()), "--token", "wxst_passed"], { configDir: dir }));
+    expect(err.join("")).toContain("--token is signing instead of the credential stored for");
+  });
+
+  it("stays quiet when an injected token has no stored credential to shadow", async () => {
+    // The ordinary CI run: a token in the environment and an empty store. A
+    // warning here would fire on every pipeline and mean nothing.
+    mockService();
+    await run(
+      deps(signArgs(await makeExtensionDir()), { configDir: dir, env: { ACEWORKFLOW_TOKEN: "wxst_ci" } }),
+    );
+    expect(err.join("")).not.toContain("is signing instead of");
+  });
+
+  it("goes back to the token when `login --token` follows ad-hoc mode", async () => {
+    const svc = mockService();
+    await run(deps(["login", "--ad-hoc", "--service", SERVICE], { configDir: dir }));
+    await run(deps(["login", "--token", "wxst_stored", "--service", SERVICE], { configDir: dir }));
+
+    expect(await run(deps(signArgs(await makeExtensionDir()), { configDir: dir }))).toBe(ExitCode.Success);
+    expect(svc.mints).toEqual([]);
   });
 });
 
@@ -399,7 +627,7 @@ describe("verify", () => {
 describe("login / whoami / logout", () => {
   it("stores a token, reports it, then clears it", async () => {
     expect(await run(deps(["login", "--token", "wxst_stored", "--service", SERVICE]))).toBe(ExitCode.Success);
-    expect(store.map.get(SERVICE)).toBe("wxst_stored");
+    expect(store.map.get(SERVICE)?.bearer).toBe("wxst_stored");
 
     out = [];
     expect(await run(deps(["whoami", "--service", SERVICE, "--json"]))).toBe(ExitCode.Success);
@@ -430,7 +658,7 @@ describe("login / whoami / logout", () => {
   it("stores a --token trimmed of surrounding whitespace", async () => {
     const code = await run(deps(["login", "--token", "  wxst_padded  ", "--service", SERVICE]));
     expect(code).toBe(ExitCode.Success);
-    expect(store.map.get(SERVICE)).toBe("wxst_padded");
+    expect(store.map.get(SERVICE)?.bearer).toBe("wxst_padded");
   });
 
   it("treats a truthy CI value as non-interactive even on a TTY", async () => {

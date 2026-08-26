@@ -28,7 +28,7 @@ export interface RunDeps {
   prompter?: Prompter;
   stdinIsTTY?: boolean;
   stdoutIsTTY?: boolean;
-  /** Overrides where service-alias config is read from (tests). */
+  /** Overrides where service-alias config and the trust-registry cache live (tests). */
   configDir?: string;
 }
 
@@ -40,8 +40,13 @@ Bundles:
   aceworkflow verify <bundle.aceworkflow> [--roots <file>]
   aceworkflow sign   <dir|bundle> [-o <out>] [--ad-hoc] [--no-verify] [--roots <file>]
 
+Ad-hoc signing needs no account: the developer id comes from the manifest, and
+the credential is minted on first use. Running login --ad-hoc once makes it the
+default for a service, so --ad-hoc need not be repeated.
+
 Credentials:
-  aceworkflow login  [--token <bearer> | --ad-hoc]
+  aceworkflow login  --token <bearer>   store an API token for this service
+  aceworkflow login  --ad-hoc           sign this service ad-hoc from now on
   aceworkflow logout
   aceworkflow whoami
 
@@ -54,6 +59,10 @@ Global options:
   -y, --yes         never prompt (assume non-interactive)
   -h, --help        show this help
   --version         print the version
+
+Starting a new extension is a separate tool, so that it works before anything is
+installed:
+  npm create @timedomain/acestudio-workflow-extension@latest my-extension
 `;
 
 /** True in a CI environment. Any non-falsey CI value counts — not just "true". */
@@ -150,6 +159,7 @@ export async function run(deps: RunDeps): Promise<number> {
     cwd: deps.cwd,
     interactive,
     prompter: deps.prompter ?? stdioPrompter(),
+    ...(deps.configDir !== undefined ? { appDataDir: deps.configDir } : {}),
   };
 
   try {

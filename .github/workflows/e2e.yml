@@ -8,15 +8,23 @@
 # release tags and runs entirely offline, and a release must not become hostage
 # to whether a backend happens to be up.
 #
+# Run on request, not on push. What this catches is a *service* changing out
+# from under the client, which happens on a service deploy rather than on a
+# commit here — so gating pushes would only notice by coincidence, whenever
+# someone next landed something, while making this repo's main branch red every
+# time a backend was down. The same test runs locally against any environment:
+#
+#   ACEWORKFLOW_E2E=1 ACEWORKFLOW_E2E_SERVICE=<url> \
+#     npx vitest run packages/cli/test/sign.e2e.test.ts
+#
 # No credential is involved. Ad-hoc signing is anonymous by design, so this
-# needs only the target URL — a repository *variable*, because no non-production
-# host is named in this public source. Unset (a fork, or before it is
-# configured) means the job reports skipped rather than red.
+# needs only the target URL — passed as an input, or defaulted from the
+# ACEWORKFLOW_E2E_SERVICE repository variable, because no non-production host is
+# named in this public source. Unconfigured is an error: a job that reports
+# success without having signed anything is worse than no job.
 name: e2e
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
     inputs:
       service:
@@ -48,14 +56,13 @@ jobs:
         run: |
           service="${FROM_INPUT:-$FROM_VARIABLE}"
           if [ -z "$service" ]; then
-            echo "No ACEWORKFLOW_E2E_SERVICE configured — skipping the live signing check." >> "$GITHUB_STEP_SUMMARY"
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "service=$service" >> "$GITHUB_OUTPUT"
+            echo "::error::No service to sign against. Pass one as the workflow input, or set the ACEWORKFLOW_E2E_SERVICE repository variable."
+            exit 1
           fi
+          echo "service=$service" >> "$GITHUB_OUTPUT"
+          echo "Signing against $service" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Sign against the live service
-        if: steps.target.outputs.skip != 'true'
         env:
           ACEWORKFLOW_E2E: "1"
           ACEWORKFLOW_E2E_SERVICE: ${{ steps.target.outputs.service }}

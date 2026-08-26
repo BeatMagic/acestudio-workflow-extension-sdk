@@ -239,10 +239,23 @@ describe("ad-hoc identity", () => {
     expect(store.map.get(SERVICE)).toEqual({ bearer: "wxsa_minted", developerId: "acme" });
   });
 
-  it("treats --developer-id as implying --ad-hoc", async () => {
+  it("refuses a developer id with no --ad-hoc, rather than minting one anyway", async () => {
+    // A registered developer has a slug too, so a bare --developer-id must not
+    // be read as "mint me an anonymous identity" — that is the silent fallback
+    // ADR 0113 rules out, and it would hand the opposite of what was asked.
     const mint = mockMint();
-    expect(await run(deps(["login", "--developer-id", "acme", "--service", SERVICE]))).toBe(ExitCode.Success);
-    expect(mint.calls).toEqual([{ developerId: "acme" }]);
+    expect(await run(deps(["login", "--developer-id", "acme", "--service", SERVICE]))).toBe(ExitCode.Usage);
+    expect(mint.calls).toEqual([]);
+    expect(err.join("")).toContain("--ad-hoc");
+  });
+
+  it("refuses a developer id on sign with no --ad-hoc, instead of ignoring it", async () => {
+    const mint = mockMint();
+    const ext = await makeExtensionDir();
+    expect(
+      await run(deps(["sign", ext, "--developer-id", "acme", "--service", SERVICE, "--token", "wxst_t"])),
+    ).toBe(ExitCode.Usage);
+    expect(mint.calls).toEqual([]);
   });
 
   it("refuses a reserved slug locally, without reaching the service", async () => {

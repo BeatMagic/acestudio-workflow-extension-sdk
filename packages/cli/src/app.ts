@@ -49,8 +49,8 @@ Global options:
   --service <url>   target a specific signing service (default: production)
   --token <bearer>  use this credential for one command, without storing it
   --developer-id <slug>
-                    the developer id to mint an ad-hoc identity under; it
-                    prefixes every extension id you sign under it
+                    with --ad-hoc, the developer id to mint under; it prefixes
+                    every extension id you sign with that credential
   --roots <file>    trust anchor for verify and sign self-verify (default: embedded)
   --json            emit a machine-readable result object on stdout
   --quiet           print only the final result or error
@@ -120,6 +120,21 @@ export async function run(deps: RunDeps): Promise<number> {
   }
 
   const reporter = new Reporter({ json: options.json, quiet: options.quiet }, { out: deps.out, err: deps.err });
+
+  // --developer-id names *which* identity to mint under; it never decides
+  // *whether* to mint one. Minting an anonymous identity is what --ad-hoc is
+  // for, and ADR 0113 makes that explicit and never a silent fallback — so a
+  // slug on its own is a usage error rather than an implied --ad-hoc. It has to
+  // be: a registered developer has a slug too, so reading one as "mint me an
+  // anonymous identity" would hand exactly the wrong thing to someone who meant
+  // the opposite.
+  if (options.developerId !== undefined && !options.adHoc) {
+    reporter.failure(
+      "--developer-id names the identity to mint an ad-hoc credential under; pass --ad-hoc to mint one",
+      "usage",
+    );
+    return ExitCode.Usage;
+  }
 
   // Only read the config file when there is an override to resolve — the
   // default (production) path touches no disk.

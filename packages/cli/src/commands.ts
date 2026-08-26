@@ -430,9 +430,7 @@ export async function cmdLogin(ctx: Ctx): Promise<number> {
     return reportLogin(ctx, origin, token, undefined);
   }
 
-  // --developer-id only ever means "ad-hoc, under this id", so it implies the
-  // branch rather than making the caller say both.
-  if (ctx.options.adHoc || ctx.options.developerId !== undefined) {
+  if (ctx.options.adHoc) {
     return loginAdhoc(ctx, origin);
   }
 

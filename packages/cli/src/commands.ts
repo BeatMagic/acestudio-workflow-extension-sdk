@@ -4,8 +4,9 @@ import { PACK_MODIFIED_AT } from "./bundle/constants";
 import { deriveBundleName, deriveDeveloperId, extensionSlug, packDir, PackError } from "./bundle/pack";
 import { writeZip } from "./bundle/zip";
 import type { Ctx } from "./context";
-import { classifyCredential } from "./credentials/classify";
+import { classifyCredential, type CredentialKind } from "./credentials/classify";
 import { checkDeveloperSlug } from "./credentials/developer-id";
+import { lookupDeveloper } from "./trust/registry";
 import { resolveCredential } from "./credentials/resolve";
 import { readZip, ZipError } from "./bundle/zip";
 import { ExitCode, exitForServiceCode } from "./exit-codes";
@@ -56,36 +57,52 @@ async function writeOutput(path: string, bytes: Uint8Array): Promise<void> {
 type Acquired = { ok: true; bearer: string; developerId?: string } | { ok: false; exit: ExitCode };
 
 /**
- * Resolves the bearer for the target service, or — with `--ad-hoc` — mints and
- * caches a fresh one under a developer id the caller chose. Emits the failure
- * itself and hands back the exit code, so callers just `return acquired.exit`.
+ * Resolves the bearer for the target service, or — with `--ad-hoc` — mints one
+ * under the identity the bundle declares. Emits the failure itself and hands
+ * back the exit code, so callers just `return acquired.exit`.
  *
- * A minted identity's developer id comes from `--developer-id` or, on a TTY,
- * from the same question `login` asks. It is deliberately *not* read out of the
- * bundle's manifest: the service resolves a submission's developer id from the
- * credential and only checks the manifest against it, so sourcing it from the
- * manifest would invert that — and would make an id typo silently mint a second
- * identity instead of failing.
+ * `declared` is the developer id from the manifest, which is where an ad-hoc
+ * developer chooses it (ADR 0098 §3). It is the authority on *which* identity
+ * this submission is for; the stored credential and the trust registry are
+ * only ways to check that claim before the service does.
  */
-async function acquireBearer(ctx: Ctx): Promise<Acquired> {
+async function acquireBearer(ctx: Ctx, declared: string | null): Promise<Acquired> {
   const resolved = await resolveCredential({
     explicitToken: ctx.options.token,
     env: ctx.env,
     store: ctx.store,
     origin: ctx.service.url.origin,
   });
+
   if (resolved !== null) {
+    const refusal = await checkClaimedIdentity(ctx, declared, classifyCredential(resolved.bearer), resolved.developerId);
+    if (refusal !== null) return refusal;
     return resolved.developerId !== undefined
       ? { ok: true, bearer: resolved.bearer, developerId: resolved.developerId }
       : { ok: true, bearer: resolved.bearer };
   }
 
   if (ctx.options.adHoc) {
-    const chosen = await chooseDeveloperId(ctx);
-    if (chosen === null) return { ok: false, exit: ExitCode.Usage };
-    const minted = await mintAndStore(ctx, chosen);
+    if (declared === null) {
+      ctx.reporter.failure(
+        "cannot tell which developer id to mint under: this bundle declares no readable manifest id",
+        "usage",
+      );
+      return { ok: false, exit: ExitCode.Usage };
+    }
+    const local = checkDeveloperSlug(declared);
+    if (!local.ok) {
+      ctx.reporter.failure(local.message, "bad-slug");
+      return { ok: false, exit: ExitCode.Usage };
+    }
+    // A mint under a registered identity is refused by the service anyway
+    // (`elevated-tier-conflict`); catching it here means not leaving a useless
+    // identity behind on the way to finding out.
+    const refusal = await checkClaimedIdentity(ctx, declared, "ad-hoc", undefined);
+    if (refusal !== null) return refusal;
+    const minted = await mintAndStore(ctx, declared);
     if (!minted.ok) return minted;
-    ctx.reporter.step(`✓ minted ad-hoc identity  ${minted.developerId ?? chosen}`);
+    ctx.reporter.step(`✓ minted ad-hoc identity  ${minted.developerId ?? declared}`);
     return minted;
   }
 
@@ -110,45 +127,68 @@ async function acquireBearer(ctx: Ctx): Promise<Acquired> {
 }
 
 /**
- * The one place the ad-hoc developer id is chosen: `--developer-id`, else the
- * question `login` asks, else a usage failure. Both `login --ad-hoc` and
- * `sign --ad-hoc` route through here, so there is exactly one way an identity
- * comes into being and one prompt to keep honest.
+ * Everything this client can say about the identity a bundle claims, before
+ * the service says it. The manifest is the claim; this is the check.
  *
- * Returns null after reporting; the caller exits Usage.
+ * Two outcomes, and the difference is whether the answer is knowable here:
+ *
+ * - **Error** when the bundle claims a *registered* identity while the
+ *   credential in hand is an ad-hoc secret. Registered identities are granted
+ *   in the web portal and published in the signed trust registry, so this is a
+ *   fact the client can read rather than guess, and the service would refuse it
+ *   (`elevated-tier-conflict`). Stopping here costs nothing and — on the mint
+ *   path — avoids leaving an identity behind that could never sign.
+ * - **Warn** when the bundle's id disagrees with the ad-hoc identity this CLI
+ *   cached. That cache is a local convenience, not authority: it can be stale
+ *   in ways that must not block a submission the service would accept.
+ *
+ * A registered *token* is opaque — the submission API resolves a bearer to a
+ * developer id server-side and offers no way to ask — so a tiered credential's
+ * own mismatch stays the service's `namespace-violation`, which exits
+ * IdentityRefused.
+ *
+ * Returns a failure to hand straight back, or null to carry on.
  */
-async function chooseDeveloperId(ctx: Ctx): Promise<string | null> {
-  const flag = ctx.options.developerId?.trim();
-  if (flag !== undefined && flag.length > 0) {
-    const check = checkDeveloperSlug(flag);
-    if (!check.ok) {
-      ctx.reporter.failure(check.message, "bad-slug");
-      return null;
+async function checkClaimedIdentity(
+  ctx: Ctx,
+  declared: string | null,
+  kind: CredentialKind,
+  cachedId: string | undefined,
+): Promise<Acquired | null> {
+  if (declared === null) return null;
+
+  if (kind === "ad-hoc") {
+    const standing = await lookupDeveloper(ctx.service.url, declared, {
+      roots: await registryRoots(ctx),
+      dir: ctx.appDataDir,
+    });
+    if (standing.known && standing.registered) {
+      ctx.reporter.failure(
+        `"${declared}" is a registered ${standing.tier} identity (${standing.displayName}); ` +
+          "an ad-hoc credential cannot sign under it — sign in with that identity's API token",
+        "elevated-tier-conflict",
+      );
+      return { ok: false, exit: ExitCode.IdentityRefused };
     }
-    return flag;
   }
 
-  if (!ctx.interactive) {
-    ctx.reporter.failure(
-      "an ad-hoc identity needs a developer id; pass --developer-id <slug>",
-      "usage",
+  if (cachedId !== undefined && cachedId !== declared) {
+    ctx.reporter.step(
+      `! this bundle declares developer id "${declared}", but the cached ad-hoc credential signs as ` +
+        `"${cachedId}" — the service will refuse it unless one of them changes`,
     );
-    return null;
   }
+  return null;
+}
 
-  // Re-ask rather than exit: the local rules are cheap to restate, and a
-  // mistyped slug on a TTY is a typo, not a failed run.
-  for (;;) {
-    const answer = await ctx.prompter.line(
-      "Choose a developer id — it prefixes every extension id you sign (e.g. `acme` in `acme.stem-tools`): ",
-    );
-    if (answer.length === 0) {
-      ctx.reporter.failure("no developer id entered", "usage");
-      return null;
-    }
-    const check = checkDeveloperSlug(answer);
-    if (check.ok) return answer;
-    ctx.reporter.step(`! ${check.message}`);
+/** The trust anchor the registry is checked against — the same one verify uses. */
+async function registryRoots(ctx: Ctx): Promise<TrustedRoot[]> {
+  try {
+    return await resolveRoots(ctx);
+  } catch {
+    // No anchor means no verifiable registry, which lookupDeveloper reports as
+    // unknown; an empty list gets there without a second error path.
+    return [];
   }
 }
 
@@ -181,27 +221,6 @@ async function mintAndStore(ctx: Ctx, developerId: string): Promise<Acquired> {
     developerId: mint.value.developerId,
   });
   return { ok: true, bearer: mint.value.secret, developerId: mint.value.developerId };
-}
-
-/**
- * Compares the developer id a bundle declares against the one the credential
- * signs under. The service enforces this (`namespace-violation`, 403); saying
- * it here turns a round trip into a local message that names both sides.
- *
- * Only an ad-hoc identity this CLI minted is knowable locally, so this warns
- * and lets the submission proceed — the service is still the authority, and a
- * cached id can be stale in ways a warning should not turn into a hard stop.
- * A pasted API token is opaque, so a tiered identity's mismatch stays the
- * service's `namespace-violation` refusal, which exits IdentityRefused.
- */
-function warnOnNamespaceMismatch(ctx: Ctx, files: readonly { path: string; bytes: Uint8Array }[], credentialId: string | undefined): void {
-  if (credentialId === undefined) return;
-  const declared = deriveDeveloperId(files);
-  if (declared === null || declared === credentialId) return;
-  ctx.reporter.step(
-    `! manifest declares developer id "${declared}", but this credential signs as "${credentialId}" — ` +
-      "the service will refuse it unless one of them changes",
-  );
 }
 
 export async function cmdPack(ctx: Ctx): Promise<number> {
@@ -294,9 +313,8 @@ export async function cmdSubmit(ctx: Ctx): Promise<number> {
     return ExitCode.Generic;
   }
 
-  const acquired = await acquireBearer(ctx);
+  const acquired = await acquireBearer(ctx, deriveDeveloperId(await entriesOf(bytes)));
   if (!acquired.ok) return acquired.exit;
-  warnOnNamespaceMismatch(ctx, await entriesOf(bytes), acquired.developerId);
 
   const res = await submitBundle(ctx.service.url, acquired.bearer, bytes);
   if (!res.ok) {
@@ -360,9 +378,8 @@ export async function cmdSign(ctx: Ctx): Promise<number> {
     entries = await entriesOf(unsigned);
   }
 
-  const acquired = await acquireBearer(ctx);
+  const acquired = await acquireBearer(ctx, deriveDeveloperId(entries));
   if (!acquired.ok) return acquired.exit;
-  warnOnNamespaceMismatch(ctx, entries, acquired.developerId);
 
   const res = await submitBundle(ctx.service.url, acquired.bearer, unsigned);
   if (!res.ok) {
@@ -436,7 +453,7 @@ export async function cmdLogin(ctx: Ctx): Promise<number> {
 
   if (!ctx.interactive) {
     ctx.reporter.failure(
-      "login needs --token, or --ad-hoc with --developer-id <slug>, in a non-interactive session",
+      "login needs --token in a non-interactive session; to sign anonymously, `aceworkflow sign --ad-hoc` mints under the id the manifest declares",
       "usage",
     );
     return ExitCode.Usage;
@@ -455,12 +472,41 @@ export async function cmdLogin(ctx: Ctx): Promise<number> {
   return reportLogin(ctx, origin, token, undefined);
 }
 
+/**
+ * The one path with no bundle to read an identity from, so the one path that
+ * has to ask. Everyday signing never gets here: `sign --ad-hoc` mints under
+ * the id the manifest already declares.
+ */
 async function loginAdhoc(ctx: Ctx, origin: string): Promise<number> {
-  const chosen = await chooseDeveloperId(ctx);
-  if (chosen === null) return ExitCode.Usage;
-  const minted = await mintAndStore(ctx, chosen);
-  if (!minted.ok) return minted.exit;
-  return reportLogin(ctx, origin, minted.bearer, minted.developerId);
+  if (!ctx.interactive) {
+    ctx.reporter.failure(
+      "`login --ad-hoc` needs a terminal to ask which developer id to mint under; " +
+        "in a script, `aceworkflow sign --ad-hoc` mints under the id the manifest declares",
+      "usage",
+    );
+    return ExitCode.Usage;
+  }
+
+  // Re-ask rather than exit: a mistyped slug on a TTY is a typo, not a failed run.
+  for (;;) {
+    const answer = await ctx.prompter.line(
+      "Choose a developer id — it prefixes every extension id you sign (e.g. `acme` in `acme.stem-tools`): ",
+    );
+    if (answer.length === 0) {
+      ctx.reporter.failure("no developer id entered", "usage");
+      return ExitCode.Usage;
+    }
+    const local = checkDeveloperSlug(answer);
+    if (!local.ok) {
+      ctx.reporter.step(`! ${local.message}`);
+      continue;
+    }
+    const refusal = await checkClaimedIdentity(ctx, answer, "ad-hoc", undefined);
+    if (refusal !== null) return refusal.ok ? ExitCode.Generic : refusal.exit;
+    const minted = await mintAndStore(ctx, answer);
+    if (!minted.ok) return minted.exit;
+    return reportLogin(ctx, origin, minted.bearer, minted.developerId);
+  }
 }
 
 function reportLogin(ctx: Ctx, origin: string, bearer: string, developerId: string | undefined): number {

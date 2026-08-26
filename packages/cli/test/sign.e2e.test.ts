@@ -29,8 +29,9 @@ import { ExitCode } from "../src/exit-codes";
  *
  * Skipped unless `ACEWORKFLOW_E2E=1`. Point it at an environment with
  * `ACEWORKFLOW_E2E_SERVICE`. It signs anonymously by default — an ad-hoc mint
- * needs no credential — under `ACEWORKFLOW_E2E_DEVELOPER_ID`; set
- * `ACEWORKFLOW_TOKEN` instead to exercise the registered path.
+ * needs no credential — under the developer id `ACEWORKFLOW_E2E_DEVELOPER_ID`
+ * puts in the manifest; set `ACEWORKFLOW_TOKEN` instead to exercise the
+ * registered path.
  */
 const ENABLED = process.env.ACEWORKFLOW_E2E === "1";
 
@@ -66,10 +67,9 @@ describe.skipIf(!ENABLED)("sign against a live service", () => {
       const outPath = join(dir, "signed.aceworkflow");
       const argv = ["sign", bundleRoot, "--service", service!, "-o", outPath, "-y"];
       // No token in the environment means the anonymous path, which is the one
-      // every developer meets first.
-      if (process.env.ACEWORKFLOW_TOKEN === undefined) {
-        argv.push("--ad-hoc", "--developer-id", DEVELOPER_ID);
-      }
+      // every developer meets first. The identity comes from the manifest above
+      // (ADR 0098 §3), so there is nothing further to pass.
+      if (process.env.ACEWORKFLOW_TOKEN === undefined) argv.push("--ad-hoc");
       if (process.env.ACEWORKFLOW_E2E_ROOTS !== undefined) {
         argv.push("--roots", process.env.ACEWORKFLOW_E2E_ROOTS);
       }
@@ -82,9 +82,10 @@ describe.skipIf(!ENABLED)("sign against a live service", () => {
         cwd: dir,
         out: (t) => out.push(t),
         err: (t) => err.push(t),
-        // A private store, so a CI run never reads or writes the developer
-        // keychain this machine happens to have.
+        // A private store and cache dir, so a CI run never reads or writes the
+        // credentials or trust-registry cache this machine happens to have.
         store: new FileCredentialStore(join(dir, "credentials")),
+        configDir: join(dir, "config"),
         stdinIsTTY: false,
         stdoutIsTTY: false,
       });

@@ -15,5 +15,7 @@ export interface Ctx {
   cwd: string;
   /** A real interactive TTY where prompting is allowed (not `-y`, not CI). */
   interactive: boolean;
+  /** Overrides where the trust-registry cache is kept (tests). */
+  appDataDir?: string;
   prompter: Prompter;
 }

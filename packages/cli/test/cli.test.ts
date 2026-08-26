@@ -9,7 +9,14 @@ import type { CredentialStore, StoredCredential } from "../src/credentials/store
 import { packDir } from "../src/bundle/pack";
 import { writeZip } from "../src/bundle/zip";
 import { verifyBundleBytes } from "../src/verify/verify";
-import { makeTestSigner, rootsOf, rootsFileContent, signFiles, FIXTURE_SIGNED_AT } from "./fixtures";
+import {
+  makeTestSigner,
+  rootsOf,
+  rootsFileContent,
+  signedTrustRegistry,
+  signFiles,
+  FIXTURE_SIGNED_AT,
+} from "./fixtures";
 
 const SERVICE = "https://svc.example";
 
@@ -212,78 +219,131 @@ describe("submit credential handling", () => {
 });
 
 describe("ad-hoc identity", () => {
-  /** A mint endpoint that records the body it was called with. */
-  function mockMint(): { calls: unknown[] } {
-    const calls: unknown[] = [];
-    vi.stubGlobal(
-      "fetch",
-      vi.fn((url: string, init?: RequestInit) => {
-        if (String(url).endsWith("/ad-hoc/identities")) {
-          const body = JSON.parse(String(init?.body)) as { developerId: string };
-          calls.push(body);
-          return Promise.resolve(
-            new Response(JSON.stringify({ developerId: body.developerId, secret: "wxsa_minted" }), { status: 201 }),
-          );
-        }
-        return Promise.resolve(new Response("unexpected", { status: 500 }));
-      }),
-    );
-    return { calls };
+  /**
+   * The trust registry is checked against the same anchor as a bundle, so a
+   * test that wants it believed has to sign it with the fixture root and point
+   * the CLI at that root — which is what `--roots` is for.
+   */
+  async function trustedRootsFile(): Promise<string> {
+    const signer = await makeTestSigner();
+    const path = join(dir, "roots.json");
+    await writeFile(path, rootsFileContent(signer));
+    return path;
   }
 
-  it("mints under the id --developer-id names, and caches the id with the secret", async () => {
-    const mint = mockMint();
-    const code = await run(deps(["login", "--ad-hoc", "--developer-id", "acme", "--service", SERVICE]));
-    expect(code).toBe(ExitCode.Success);
-    expect(mint.calls).toEqual([{ developerId: "acme" }]);
-    expect(store.map.get(SERVICE)).toEqual({ bearer: "wxsa_minted", developerId: "acme" });
+  /** A service that mints, signs, and serves a trust registry naming `partnerco`. */
+  function mockService(options: { registry?: boolean } = {}): { mints: unknown[] } {
+    const mints: unknown[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        const href = String(url);
+        if (href.endsWith("/ad-hoc/identities")) {
+          const body = JSON.parse(String(init?.body)) as { developerId: string };
+          mints.push(body);
+          return new Response(JSON.stringify({ developerId: body.developerId, secret: "wxsa_minted" }), {
+            status: 201,
+          });
+        }
+        if (href.endsWith("/trust/trust-registry.json")) {
+          if (options.registry !== true) return new Response("nope", { status: 404 });
+          const signer = await makeTestSigner();
+          const registry = await signedTrustRegistry(signer, { partnerco: "verified-partner" });
+          return new Response(new TextDecoder().decode(registry), { status: 200 });
+        }
+        return new Response(new Uint8Array([1]), {
+          status: 200,
+          headers: {
+            "x-extension-id": "team.demo",
+            "x-developer-id": "team",
+            "x-version": "1.2.0",
+            "x-signed-at": "1752710400",
+            "x-bundle-sha256": "abc123",
+          },
+        });
+      }),
+    );
+    return { mints };
+  }
+
+  const signArgs = (ext: string) => ["sign", ext, "--service", SERVICE, "--no-verify", "-o", join(dir, "o.aceworkflow")];
+
+  it("mints under the developer id the manifest declares, asking nothing", async () => {
+    const svc = mockService();
+    const ext = await makeExtensionDir(); // manifest id is `team.demo`
+    expect(await run(deps([...signArgs(ext), "--ad-hoc"], { configDir: dir }))).toBe(ExitCode.Success);
+    expect(svc.mints).toEqual([{ developerId: "team" }]);
+    expect(store.map.get(SERVICE)).toEqual({ bearer: "wxsa_minted", developerId: "team" });
   });
 
-  it("refuses a developer id with no --ad-hoc, rather than minting one anyway", async () => {
-    // A registered developer has a slug too, so a bare --developer-id must not
-    // be read as "mint me an anonymous identity" — that is the silent fallback
-    // ADR 0113 rules out, and it would hand the opposite of what was asked.
-    const mint = mockMint();
-    expect(await run(deps(["login", "--developer-id", "acme", "--service", SERVICE]))).toBe(ExitCode.Usage);
-    expect(mint.calls).toEqual([]);
-    expect(err.join("")).toContain("--ad-hoc");
-  });
-
-  it("refuses a developer id on sign with no --ad-hoc, instead of ignoring it", async () => {
-    const mint = mockMint();
-    const ext = await makeExtensionDir();
-    expect(
-      await run(deps(["sign", ext, "--developer-id", "acme", "--service", SERVICE, "--token", "wxst_t"])),
-    ).toBe(ExitCode.Usage);
-    expect(mint.calls).toEqual([]);
-  });
-
-  it("refuses a reserved slug locally, without reaching the service", async () => {
-    const mint = mockMint();
-    const code = await run(deps(["login", "--ad-hoc", "--developer-id", "acestudio", "--service", SERVICE]));
-    expect(code).toBe(ExitCode.Usage);
-    expect(mint.calls).toEqual([]);
+  it("refuses to mint under a reserved slug, without reaching the service", async () => {
+    const svc = mockService();
+    const ext = join(dir, "reserved");
+    await mkdir(ext, { recursive: true });
+    await writeFile(join(ext, "manifest.json"), '{"id":"acestudio.demo","version":"1.0.0","name":"Demo"}');
+    expect(await run(deps([...signArgs(ext), "--ad-hoc"], { configDir: dir }))).toBe(ExitCode.Usage);
+    expect(svc.mints).toEqual([]);
     expect(err.join("")).toContain("reserved for ACE");
   });
 
-  it("refuses a malformed slug locally", async () => {
-    const mint = mockMint();
-    expect(await run(deps(["login", "--ad-hoc", "--developer-id", "Not A Slug", "--service", SERVICE]))).toBe(
-      ExitCode.Usage,
-    );
-    expect(mint.calls).toEqual([]);
+  it("refuses to mint under an identity the trust registry says is registered", async () => {
+    const roots = await trustedRootsFile();
+    const svc = mockService({ registry: true });
+    const ext = join(dir, "partner");
+    await mkdir(ext, { recursive: true });
+    await writeFile(join(ext, "manifest.json"), '{"id":"partnerco.demo","version":"1.0.0","name":"Demo"}');
+    // The service would refuse this with elevated-tier-conflict; catching it
+    // here also means no useless identity is left behind.
+    const code = await run(deps([...signArgs(ext), "--ad-hoc", "--roots", roots], { configDir: dir }));
+    expect(code, err.join("")).toBe(ExitCode.IdentityRefused);
+    expect(svc.mints).toEqual([]);
+    expect(err.join("")).toContain("verified-partner");
   });
 
-  it("will not invent an identity in a non-interactive session", async () => {
-    const mint = mockMint();
-    const code = await run(deps(["login", "--ad-hoc", "--service", SERVICE]));
-    expect(code).toBe(ExitCode.Usage);
-    expect(mint.calls).toEqual([]);
-    expect(err.join("")).toContain("--developer-id");
+  it("refuses a cached ad-hoc credential against a registered identity too", async () => {
+    const roots = await trustedRootsFile();
+    await store.set(SERVICE, { bearer: "wxsa_cached", developerId: "partnerco" });
+    mockService({ registry: true });
+    const ext = join(dir, "partner2");
+    await mkdir(ext, { recursive: true });
+    await writeFile(join(ext, "manifest.json"), '{"id":"partnerco.demo","version":"1.0.0","name":"Demo"}');
+    const code = await run(deps([...signArgs(ext), "--roots", roots], { configDir: dir }));
+    expect(code, err.join("")).toBe(ExitCode.IdentityRefused);
   });
 
-  it("asks on a TTY, and re-asks until the answer passes the local rules", async () => {
-    const mint = mockMint();
+  it("signs under a cached ad-hoc identity without minting a second one", async () => {
+    await store.set(SERVICE, { bearer: "wxsa_cached", developerId: "team" });
+    const svc = mockService({ registry: true });
+    const ext = await makeExtensionDir();
+    expect(await run(deps(signArgs(ext), { configDir: dir }))).toBe(ExitCode.Success);
+    expect(svc.mints).toEqual([]);
+  });
+
+  it("warns, but proceeds, when the cached identity disagrees with the manifest", async () => {
+    await store.set(SERVICE, { bearer: "wxsa_cached", developerId: "someone-else" });
+    mockService({ registry: true });
+    const ext = await makeExtensionDir();
+    // A warning, not a refusal: the cache is a convenience and can be stale,
+    // and must not block a submission the service would accept.
+    expect(await run(deps(signArgs(ext), { configDir: dir }))).toBe(ExitCode.Success);
+    expect(err.join("")).toContain('declares developer id "team"');
+    expect(err.join("")).toContain('signs as "someone-else"');
+  });
+
+  it("rejects --developer-id, which no longer exists", async () => {
+    const ext = await makeExtensionDir();
+    expect(await run(deps([...signArgs(ext), "--developer-id", "acme"]))).toBe(ExitCode.Usage);
+  });
+
+  it("sends login --ad-hoc to sign --ad-hoc when there is no terminal to ask in", async () => {
+    const svc = mockService();
+    expect(await run(deps(["login", "--ad-hoc", "--service", SERVICE]))).toBe(ExitCode.Usage);
+    expect(svc.mints).toEqual([]);
+    expect(err.join("")).toContain("sign --ad-hoc");
+  });
+
+  it("asks on a TTY, re-asking until the answer passes the local rules", async () => {
+    const svc = mockService();
     const answers = ["acestudio", "Bad Slug", "acme"];
     const prompter = {
       async line(): Promise<string> {
@@ -294,69 +354,10 @@ describe("ad-hoc identity", () => {
       },
     };
     const code = await run(
-      deps(["login", "--service", SERVICE], { stdinIsTTY: true, stdoutIsTTY: true, prompter }),
+      deps(["login", "--service", SERVICE], { stdinIsTTY: true, stdoutIsTTY: true, prompter, configDir: dir }),
     );
     expect(code).toBe(ExitCode.Success);
-    // Only the third answer ever reached the service.
-    expect(mint.calls).toEqual([{ developerId: "acme" }]);
-  });
-
-  it("signs under a cached ad-hoc identity without minting a second one", async () => {
-    await store.set(SERVICE, { bearer: "wxsa_cached", developerId: "team" });
-    const mint = mockMint();
-    const ext = await makeExtensionDir();
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(() =>
-        Promise.resolve(
-          new Response(new Uint8Array([1]), {
-            status: 200,
-            headers: {
-              "x-extension-id": "team.demo",
-              "x-developer-id": "team",
-              "x-version": "1.2.0",
-              "x-signed-at": "1752710400",
-              "x-bundle-sha256": "abc123",
-            },
-          }),
-        ),
-      ),
-    );
-    const code = await run(
-      deps(["sign", ext, "--service", SERVICE, "--no-verify", "-o", join(dir, "out.aceworkflow")]),
-    );
-    expect(code).toBe(ExitCode.Success);
-    expect(mint.calls).toEqual([]);
-  });
-
-  it("warns when the manifest's developer id disagrees with the cached identity", async () => {
-    await store.set(SERVICE, { bearer: "wxsa_cached", developerId: "someone-else" });
-    const ext = await makeExtensionDir();
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(() =>
-        Promise.resolve(
-          new Response(new Uint8Array([1]), {
-            status: 200,
-            headers: {
-              "x-extension-id": "team.demo",
-              "x-developer-id": "team",
-              "x-version": "1.2.0",
-              "x-signed-at": "1752710400",
-              "x-bundle-sha256": "abc123",
-            },
-          }),
-        ),
-      ),
-    );
-    const code = await run(
-      deps(["sign", ext, "--service", SERVICE, "--no-verify", "-o", join(dir, "out.aceworkflow")]),
-    );
-    // A warning, not a refusal: the service is the authority, and a stale
-    // cached id must not be able to block a submission the service would take.
-    expect(code).toBe(ExitCode.Success);
-    expect(err.join("")).toContain('manifest declares developer id "team"');
-    expect(err.join("")).toContain('signs as "someone-else"');
+    expect(svc.mints).toEqual([{ developerId: "acme" }]);
   });
 });
 

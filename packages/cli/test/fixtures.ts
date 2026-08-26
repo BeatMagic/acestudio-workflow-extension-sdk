@@ -8,7 +8,13 @@ import {
   utf8Encode,
   type SigningKey,
 } from "@timedomain/workflowext-signed-json";
-import { SIGNATURE_BLOCK_FORMAT, type SignatureBlockPayload } from "@timedomain/workflowext-wire-schemas";
+import {
+  SIGNATURE_BLOCK_FORMAT,
+  TRUST_REGISTRY_FORMAT,
+  type SignatureBlockPayload,
+  type TrustRegistryPayload,
+  type TrustTier,
+} from "@timedomain/workflowext-wire-schemas";
 import type { TrustedRoot } from "@timedomain/workflowext-verifier";
 import type { ZipFile } from "../src/bundle/zip";
 
@@ -74,4 +80,30 @@ export async function signFiles(
 
 export function rootsFileContent(signer: TestSigner): string {
   return JSON.stringify([{ keyId: "root-1", publicKey: toBase64(signer.root.publicKey) }]);
+}
+
+/**
+ * A trust registry signed the way the service signs one: the intermediate
+ * signs the payload, and the certificate rides along so a client can resolve
+ * the chain to the same embedded root it verifies bundles against.
+ */
+export async function signedTrustRegistry(
+  signer: TestSigner,
+  entries: Record<string, TrustTier>,
+  sequence = 1,
+): Promise<Uint8Array> {
+  const payload: TrustRegistryPayload = {
+    format: TRUST_REGISTRY_FORMAT,
+    formatVersion: 1,
+    sequence,
+    issuedAt: FIXTURE_SIGNED_AT,
+    signedBy: "intermediate-1",
+    entries: Object.fromEntries(
+      Object.entries(entries).map(([slug, tier]) => [slug, { displayName: `${slug} Ltd`, tier }]),
+    ),
+  };
+  const envelope = await createSignedEnvelope(signer.intermediate.privateKey, utf8Encode(JSON.stringify(payload)), [
+    signer.intermediateCertificate,
+  ]);
+  return utf8Encode(JSON.stringify(envelope));
 }

@@ -7,6 +7,7 @@ import type { Ctx } from "./context";
 import { classifyCredential, type CredentialKind } from "./credentials/classify";
 import { checkDeveloperSlug } from "./credentials/developer-id";
 import { lookupDeveloper } from "./trust/registry";
+import { prefersAdHoc, setPrefersAdHoc } from "./settings";
 import { resolveCredential } from "./credentials/resolve";
 import { readZip, ZipError } from "./bundle/zip";
 import { ExitCode, exitForServiceCode } from "./exit-codes";
@@ -72,17 +73,23 @@ async function acquireBearer(ctx: Ctx, declared: string | null): Promise<Acquire
     env: ctx.env,
     store: ctx.store,
     origin: ctx.service.url.origin,
+    ...(declared !== null ? { developerId: declared } : {}),
   });
 
   if (resolved !== null) {
-    const refusal = await checkClaimedIdentity(ctx, declared, classifyCredential(resolved.bearer), resolved.developerId);
+    const refusal = await checkClaimedIdentity(ctx, declared, classifyCredential(resolved.bearer));
     if (refusal !== null) return refusal;
     return resolved.developerId !== undefined
       ? { ok: true, bearer: resolved.bearer, developerId: resolved.developerId }
       : { ok: true, bearer: resolved.bearer };
   }
 
-  if (ctx.options.adHoc) {
+  // Either said now, or said once at `login --ad-hoc` and remembered. The
+  // stored answer is an explicit choice recorded, not a silent fallback: with
+  // neither, a missing credential is still an error rather than a quiet mint.
+  const adHoc = ctx.options.adHoc || (await prefersAdHoc(ctx.service.url.origin, ctx.appDataDir));
+
+  if (adHoc) {
     if (declared === null) {
       ctx.reporter.failure(
         "cannot tell which developer id to mint under: this bundle declares no readable manifest id",
@@ -98,7 +105,7 @@ async function acquireBearer(ctx: Ctx, declared: string | null): Promise<Acquire
     // A mint under a registered identity is refused by the service anyway
     // (`elevated-tier-conflict`); catching it here means not leaving a useless
     // identity behind on the way to finding out.
-    const refusal = await checkClaimedIdentity(ctx, declared, "ad-hoc", undefined);
+    const refusal = await checkClaimedIdentity(ctx, declared, "ad-hoc");
     if (refusal !== null) return refusal;
     const minted = await mintAndStore(ctx, declared);
     if (!minted.ok) return minted;
@@ -127,56 +134,38 @@ async function acquireBearer(ctx: Ctx, declared: string | null): Promise<Acquire
 }
 
 /**
- * Everything this client can say about the identity a bundle claims, before
- * the service says it. The manifest is the claim; this is the check.
+ * The one thing this client can settle about the identity a bundle claims
+ * before the service does: whether the bundle claims a *registered* identity
+ * while the credential in hand is an ad-hoc secret. Registered identities are
+ * granted in the web portal and published in the signed trust registry, so it
+ * is a fact to read rather than guess, and the service would refuse it
+ * (`elevated-tier-conflict`). Stopping here also avoids minting an identity
+ * that could never sign.
  *
- * Two outcomes, and the difference is whether the answer is knowable here:
- *
- * - **Error** when the bundle claims a *registered* identity while the
- *   credential in hand is an ad-hoc secret. Registered identities are granted
- *   in the web portal and published in the signed trust registry, so this is a
- *   fact the client can read rather than guess, and the service would refuse it
- *   (`elevated-tier-conflict`). Stopping here costs nothing and — on the mint
- *   path — avoids leaving an identity behind that could never sign.
- * - **Warn** when the bundle's id disagrees with the ad-hoc identity this CLI
- *   cached. That cache is a local convenience, not authority: it can be stale
- *   in ways that must not block a submission the service would accept.
- *
- * A registered *token* is opaque — the submission API resolves a bearer to a
- * developer id server-side and offers no way to ask — so a tiered credential's
- * own mismatch stays the service's `namespace-violation`, which exits
+ * There is no mismatch warning to give any more. Credentials are filed per
+ * identity, so a bundle is never handed one belonging to a different developer
+ * id — it is handed the right one, or none, and ad-hoc mode mints the right one
+ * on the spot. A registered *token* stays opaque (the submission API resolves a
+ * bearer server-side and offers no way to ask), so a tiered credential's own
+ * mismatch remains the service's `namespace-violation`, which exits
  * IdentityRefused.
  *
  * Returns a failure to hand straight back, or null to carry on.
  */
-async function checkClaimedIdentity(
-  ctx: Ctx,
-  declared: string | null,
-  kind: CredentialKind,
-  cachedId: string | undefined,
-): Promise<Acquired | null> {
-  if (declared === null) return null;
+async function checkClaimedIdentity(ctx: Ctx, declared: string | null, kind: CredentialKind): Promise<Acquired | null> {
+  if (declared === null || kind !== "ad-hoc") return null;
 
-  if (kind === "ad-hoc") {
-    const standing = await lookupDeveloper(ctx.service.url, declared, {
-      roots: await registryRoots(ctx),
-      dir: ctx.appDataDir,
-    });
-    if (standing.known && standing.registered) {
-      ctx.reporter.failure(
-        `"${declared}" is a registered ${standing.tier} identity (${standing.displayName}); ` +
-          "an ad-hoc credential cannot sign under it — sign in with that identity's API token",
-        "elevated-tier-conflict",
-      );
-      return { ok: false, exit: ExitCode.IdentityRefused };
-    }
-  }
-
-  if (cachedId !== undefined && cachedId !== declared) {
-    ctx.reporter.step(
-      `! this bundle declares developer id "${declared}", but the cached ad-hoc credential signs as ` +
-        `"${cachedId}" — the service will refuse it unless one of them changes`,
+  const standing = await lookupDeveloper(ctx.service.url, declared, {
+    roots: await registryRoots(ctx),
+    ...(ctx.appDataDir !== undefined ? { dir: ctx.appDataDir } : {}),
+  });
+  if (standing.known && standing.registered) {
+    ctx.reporter.failure(
+      `"${declared}" is a registered ${standing.tier} identity (${standing.displayName}); ` +
+        "an ad-hoc credential cannot sign under it — sign in with that identity's API token",
+      "elevated-tier-conflict",
     );
+    return { ok: false, exit: ExitCode.IdentityRefused };
   }
   return null;
 }
@@ -437,6 +426,25 @@ export async function cmdSign(ctx: Ctx): Promise<number> {
 export async function cmdLogin(ctx: Ctx): Promise<number> {
   const origin = ctx.service.url.origin;
 
+  // `login --ad-hoc` records how you sign this service; it does not mint
+  // anything. There is nothing to mint yet: an ad-hoc identity is chosen in the
+  // manifest (ADR 0098 §3), a developer may hold several, and which one a given
+  // bundle needs is not knowable until there is a bundle. So the useful thing
+  // to remember is the *mode*, and `sign` mints the right identity on demand.
+  if (ctx.options.adHoc) {
+    if (ctx.options.token !== undefined) {
+      ctx.reporter.failure("--ad-hoc and --token are different ways to sign; pass one", "usage");
+      return ExitCode.Usage;
+    }
+    await setPrefersAdHoc(origin, true, ctx.appDataDir);
+    ctx.reporter.result(`signing ${origin} ad-hoc; identities come from each bundle's manifest`, {
+      command: "login",
+      origin,
+      kind: "ad-hoc",
+    });
+    return ExitCode.Success;
+  }
+
   if (ctx.options.token !== undefined) {
     const token = ctx.options.token.trim();
     if (token.length === 0) {
@@ -447,21 +455,20 @@ export async function cmdLogin(ctx: Ctx): Promise<number> {
     return reportLogin(ctx, origin, token, undefined);
   }
 
-  if (ctx.options.adHoc) {
-    return loginAdhoc(ctx, origin);
-  }
-
   if (!ctx.interactive) {
-    ctx.reporter.failure(
-      "login needs --token in a non-interactive session; to sign anonymously, `aceworkflow sign --ad-hoc` mints under the id the manifest declares",
-      "usage",
-    );
+    ctx.reporter.failure("login needs --token or --ad-hoc in a non-interactive session", "usage");
     return ExitCode.Usage;
   }
 
   const kind = await ctx.prompter.choice("Sign in as", ["registered", "ad-hoc"]);
   if (kind === "ad-hoc") {
-    return loginAdhoc(ctx, origin);
+    await setPrefersAdHoc(origin, true, ctx.appDataDir);
+    ctx.reporter.result(`signing ${origin} ad-hoc; identities come from each bundle's manifest`, {
+      command: "login",
+      origin,
+      kind: "ad-hoc",
+    });
+    return ExitCode.Success;
   }
   const token = await ctx.prompter.line("Paste your API token: ");
   if (token.length === 0) {
@@ -470,43 +477,6 @@ export async function cmdLogin(ctx: Ctx): Promise<number> {
   }
   await ctx.store.set(origin, { bearer: token });
   return reportLogin(ctx, origin, token, undefined);
-}
-
-/**
- * The one path with no bundle to read an identity from, so the one path that
- * has to ask. Everyday signing never gets here: `sign --ad-hoc` mints under
- * the id the manifest already declares.
- */
-async function loginAdhoc(ctx: Ctx, origin: string): Promise<number> {
-  if (!ctx.interactive) {
-    ctx.reporter.failure(
-      "`login --ad-hoc` needs a terminal to ask which developer id to mint under; " +
-        "in a script, `aceworkflow sign --ad-hoc` mints under the id the manifest declares",
-      "usage",
-    );
-    return ExitCode.Usage;
-  }
-
-  // Re-ask rather than exit: a mistyped slug on a TTY is a typo, not a failed run.
-  for (;;) {
-    const answer = await ctx.prompter.line(
-      "Choose a developer id — it prefixes every extension id you sign (e.g. `acme` in `acme.stem-tools`): ",
-    );
-    if (answer.length === 0) {
-      ctx.reporter.failure("no developer id entered", "usage");
-      return ExitCode.Usage;
-    }
-    const local = checkDeveloperSlug(answer);
-    if (!local.ok) {
-      ctx.reporter.step(`! ${local.message}`);
-      continue;
-    }
-    const refusal = await checkClaimedIdentity(ctx, answer, "ad-hoc", undefined);
-    if (refusal !== null) return refusal.ok ? ExitCode.Generic : refusal.exit;
-    const minted = await mintAndStore(ctx, answer);
-    if (!minted.ok) return minted.exit;
-    return reportLogin(ctx, origin, minted.bearer, minted.developerId);
-  }
 }
 
 function reportLogin(ctx: Ctx, origin: string, bearer: string, developerId: string | undefined): number {
@@ -521,11 +491,16 @@ function reportLogin(ctx: Ctx, origin: string, bearer: string, developerId: stri
 
 export async function cmdLogout(ctx: Ctx): Promise<number> {
   const origin = ctx.service.url.origin;
+  // Every identity's credential, and the mode itself: logging out of a service
+  // and still silently minting against it on the next sign would be a surprise.
   const removed = await ctx.store.remove(origin);
-  ctx.reporter.result(removed ? `logged out of ${origin}` : `no stored credential for ${origin}`, {
+  const wasAdHoc = await prefersAdHoc(origin, ctx.appDataDir);
+  if (wasAdHoc) await setPrefersAdHoc(origin, false, ctx.appDataDir);
+  const forgot = removed || wasAdHoc;
+  ctx.reporter.result(forgot ? `logged out of ${origin}` : `no stored credential for ${origin}`, {
     command: "logout",
     origin,
-    removed,
+    removed: forgot,
   });
   return ExitCode.Success;
 }
@@ -539,6 +514,17 @@ export async function cmdWhoami(ctx: Ctx): Promise<number> {
     origin,
   });
   if (resolved === null) {
+    // Ad-hoc mode is a real answer to "who am I here", not an absence: there is
+    // no credential yet because none is minted until a bundle names an identity.
+    if (await prefersAdHoc(origin, ctx.appDataDir)) {
+      ctx.reporter.result(`${origin}: ad-hoc, identities come from each bundle's manifest`, {
+        command: "whoami",
+        origin,
+        kind: "ad-hoc",
+        source: "settings",
+      });
+      return ExitCode.Success;
+    }
     ctx.reporter.failure(`no credential for ${origin}`, "missing-credential");
     return ExitCode.MissingCredential;
   }

@@ -31,8 +31,10 @@ export async function resolveCredential(options: {
   env: NodeJS.ProcessEnv;
   store: CredentialStore;
   origin: string;
+  /** The identity the bundle claims, so the right cached credential is found. */
+  developerId?: string | undefined;
 }): Promise<ResolvedCredential | null> {
-  const { explicitToken, env, store, origin } = options;
+  const { explicitToken, env, store, origin, developerId } = options;
   const flag = explicitToken?.trim();
   if (flag !== undefined && flag.length > 0) {
     return { bearer: flag, source: "flag" };
@@ -41,7 +43,7 @@ export async function resolveCredential(options: {
   if (fromEnv !== undefined && fromEnv.length > 0) {
     return { bearer: fromEnv, source: "env" };
   }
-  const stored = await store.get(origin);
+  const stored = await store.get(origin, developerId);
   const storedBearer = stored?.bearer.trim();
   if (stored !== null && storedBearer !== undefined && storedBearer.length > 0) {
     return stored.developerId !== undefined

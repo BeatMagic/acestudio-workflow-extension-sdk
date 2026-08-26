@@ -40,8 +40,13 @@ Bundles:
   aceworkflow verify <bundle.aceworkflow> [--roots <file>]
   aceworkflow sign   <dir|bundle> [-o <out>] [--ad-hoc] [--no-verify] [--roots <file>]
 
+Ad-hoc signing needs no account: the developer id comes from the manifest, and
+the credential is minted on first use. Running login --ad-hoc once makes it the
+default for a service, so --ad-hoc need not be repeated.
+
 Credentials:
-  aceworkflow login  [--token <bearer> | --ad-hoc]
+  aceworkflow login  --token <bearer>   store an API token for this service
+  aceworkflow login  --ad-hoc           sign this service ad-hoc from now on
   aceworkflow logout
   aceworkflow whoami
 

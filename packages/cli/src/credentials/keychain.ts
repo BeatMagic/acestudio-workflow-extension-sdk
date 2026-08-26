@@ -1,6 +1,12 @@
 import { createRequire } from "node:module";
 import type { Entry as KeyringEntry } from "@napi-rs/keyring";
-import { FileCredentialStore, type CredentialStore, type StoredCredential } from "./store";
+import {
+  credentialKey,
+  FileCredentialStore,
+  pickCredential,
+  type CredentialStore,
+  type StoredCredential,
+} from "./store";
 
 /** The service name every entry is filed under in the OS store. */
 export const KEYCHAIN_SERVICE = "aceworkflow";
@@ -99,24 +105,69 @@ export function formatKeychainSecret(credential: StoredCredential): string {
 export class KeychainCredentialStore implements CredentialStore {
   constructor(private readonly keyring: KeyringPort = napiKeyring) {}
 
-  async get(origin: string): Promise<StoredCredential | null> {
-    const secret = this.keyring.get(origin);
-    return secret === null ? null : parseKeychainSecret(secret);
+  async get(origin: string, developerId?: string): Promise<StoredCredential | null> {
+    return pickCredential(
+      (key) => {
+        const secret = this.keyring.get(key);
+        return secret === null ? null : parseKeychainSecret(secret);
+      },
+      origin,
+      developerId,
+    );
   }
 
   async set(origin: string, credential: StoredCredential): Promise<void> {
-    this.keyring.set(origin, formatKeychainSecret(credential));
+    this.keyring.set(credentialKey(origin, credential.developerId), formatKeychainSecret(credential));
+    if (credential.developerId !== undefined) this.remember(origin, credential.developerId);
   }
 
   async remove(origin: string): Promise<boolean> {
+    // An OS secret store has no prefix scan, so the identities a service holds
+    // are tracked in one index entry — without it, `logout` would leave every
+    // identity-scoped secret behind with no way to name it again.
+    let removed = this.forget(origin);
+    for (const developerId of this.index(origin)) {
+      if (this.forget(credentialKey(origin, developerId))) removed = true;
+    }
+    if (this.forget(indexKey(origin))) removed = true;
+    return removed;
+  }
+
+  private forget(key: string): boolean {
     // deleteCredential throws when there is nothing to delete; that is a
     // successful "nothing removed", not an error worth surfacing.
     try {
-      return this.keyring.remove(origin);
+      return this.keyring.remove(key);
     } catch {
       return false;
     }
   }
+
+  private index(origin: string): string[] {
+    try {
+      const raw = this.keyring.get(indexKey(origin));
+      if (raw === null) return [];
+      const value: unknown = JSON.parse(raw);
+      return Array.isArray(value) ? value.filter((id): id is string => typeof id === "string") : [];
+    } catch {
+      return [];
+    }
+  }
+
+  private remember(origin: string, developerId: string): void {
+    const known = this.index(origin);
+    if (known.includes(developerId)) return;
+    try {
+      this.keyring.set(indexKey(origin), JSON.stringify([...known, developerId]));
+    } catch {
+      // A missing index costs a stale secret at logout, not a failed login.
+    }
+  }
+}
+
+/** Where the list of identity-scoped accounts for a service is kept. */
+function indexKey(origin: string): string {
+  return `${origin}#identities`;
 }
 
 /**
@@ -140,8 +191,8 @@ export class KeychainOrFileStore implements CredentialStore {
     return this.backend;
   }
 
-  async get(origin: string): Promise<StoredCredential | null> {
-    return this.pick().get(origin);
+  async get(origin: string, developerId?: string): Promise<StoredCredential | null> {
+    return this.pick().get(origin, developerId);
   }
   async set(origin: string, credential: StoredCredential): Promise<void> {
     return this.pick().set(origin, credential);

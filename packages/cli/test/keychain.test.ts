@@ -51,10 +51,25 @@ describe("keychainAvailable", () => {
 });
 
 describe("KeychainCredentialStore", () => {
-  it("round-trips the developer id alongside the bearer", async () => {
+  it("files an ad-hoc credential under its own identity", async () => {
     const store = new KeychainCredentialStore(new FakeKeyring());
     await store.set(ORIGIN, { bearer: "wxsa_secret", developerId: "acme" });
-    expect(await store.get(ORIGIN)).toEqual({ bearer: "wxsa_secret", developerId: "acme" });
+    expect(await store.get(ORIGIN, "acme")).toEqual({ bearer: "wxsa_secret", developerId: "acme" });
+    // Not the service default: it belongs to one identity, not to the service.
+    expect(await store.get(ORIGIN)).toBeNull();
+  });
+
+  it("keeps two identities on one service apart, and forgets both at logout", async () => {
+    const keyring = new FakeKeyring();
+    const store = new KeychainCredentialStore(keyring);
+    await store.set(ORIGIN, { bearer: "wxsa_one", developerId: "acme" });
+    await store.set(ORIGIN, { bearer: "wxsa_two", developerId: "acme-labs" });
+    expect((await store.get(ORIGIN, "acme"))?.bearer).toBe("wxsa_one");
+    expect((await store.get(ORIGIN, "acme-labs"))?.bearer).toBe("wxsa_two");
+    expect(await store.remove(ORIGIN)).toBe(true);
+    expect(await store.get(ORIGIN, "acme")).toBeNull();
+    expect(await store.get(ORIGIN, "acme-labs")).toBeNull();
+    expect(keyring.store.size).toBe(0);
   });
 
   it("reads a bare bearer written by an older build", async () => {

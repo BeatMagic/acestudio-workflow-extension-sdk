@@ -392,18 +392,41 @@ describe("ad-hoc identity", () => {
     expect(store.map.get(`${SERVICE}#team-labs`)?.bearer).toBe("wxsa_minted");
   });
 
-  it("signs ad-hoc after `login --ad-hoc`, even with a token stored before it", async () => {
-    // "from now on" has to outrank a credential already on disk, or the mode
-    // switch is silently a no-op for anyone who had signed in with a token.
+  it("replaces a stored token when `login --ad-hoc` follows it, and says so", async () => {
+    // `login` sets what a service signs with. Leaving the token behind would
+    // let it go on being resolved first, making the switch a silent no-op.
     const svc = mockService();
     await run(deps(["login", "--token", "wxst_stored", "--service", SERVICE], { configDir: dir }));
+    err = [];
     await run(deps(["login", "--ad-hoc", "--service", SERVICE], { configDir: dir }));
+    expect(store.map.get(SERVICE)).toBeUndefined();
+    expect(err.join("")).toContain("discarded the credential stored for");
 
     expect(await run(deps(signArgs(await makeExtensionDir()), { configDir: dir }))).toBe(ExitCode.Success);
     expect(svc.mints).toEqual([{ developerId: "team" }]);
-    // Switching modes does not destroy the token; it is just not what ad-hoc
-    // mode signs with, so switching back needs no re-paste.
-    expect(store.map.get(SERVICE)?.bearer).toBe("wxst_stored");
+  });
+
+  it("says nothing about discarding when there was no credential to discard", async () => {
+    await run(deps(["login", "--ad-hoc", "--service", SERVICE], { configDir: dir }));
+    expect(err.join("")).not.toContain("discarded");
+  });
+
+  it("warns when --token signs instead of the stored credential", async () => {
+    mockService();
+    await run(deps(["login", "--token", "wxst_stored", "--service", SERVICE], { configDir: dir }));
+    err = [];
+    await run(deps([...signArgs(await makeExtensionDir()), "--token", "wxst_passed"], { configDir: dir }));
+    expect(err.join("")).toContain("--token is signing instead of the credential stored for");
+  });
+
+  it("stays quiet when an injected token has no stored credential to shadow", async () => {
+    // The ordinary CI run: a token in the environment and an empty store. A
+    // warning here would fire on every pipeline and mean nothing.
+    mockService();
+    await run(
+      deps(signArgs(await makeExtensionDir()), { configDir: dir, env: { ACEWORKFLOW_TOKEN: "wxst_ci" } }),
+    );
+    expect(err.join("")).not.toContain("is signing instead of");
   });
 
   it("goes back to the token when `login --token` follows ad-hoc mode", async () => {

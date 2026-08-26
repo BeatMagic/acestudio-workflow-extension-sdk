@@ -8,7 +8,7 @@ import { classifyCredential, type CredentialKind } from "./credentials/classify"
 import { checkDeveloperSlug } from "./credentials/developer-id";
 import { lookupDeveloper } from "./trust/registry";
 import { prefersAdHoc, setPrefersAdHoc } from "./settings";
-import { resolveCredential } from "./credentials/resolve";
+import { resolveCredential, TOKEN_ENV_VAR } from "./credentials/resolve";
 import { readZip, ZipError } from "./bundle/zip";
 import { ExitCode, exitForServiceCode } from "./exit-codes";
 import { mintAdhocIdentity, submitBundle, type SignedResult } from "./submit/client";
@@ -58,6 +58,21 @@ async function writeOutput(path: string, bytes: Uint8Array): Promise<void> {
 type Acquired = { ok: true; bearer: string; developerId?: string } | { ok: false; exit: ExitCode };
 
 /**
+ * `--token` and `ACEWORKFLOW_TOKEN` outrank whatever `login` stored, which is
+ * right — they are said at the call — but silently is wrong: a forgotten export
+ * in a shell then signs as something other than the identity the user set up,
+ * and the first sign that says so is the one the service refuses. Warns only
+ * when a stored credential *would* have been used, so the ordinary CI run —
+ * injected token, empty store — stays quiet.
+ */
+async function warnIfShadowingStored(ctx: Ctx, source: "flag" | "env", declared: string | null): Promise<void> {
+  const shadowed = await ctx.store.get(ctx.service.url.origin, declared ?? undefined);
+  if (shadowed === null) return;
+  const named = source === "flag" ? "--token" : TOKEN_ENV_VAR;
+  ctx.reporter.warn(`${named} is signing instead of the credential stored for ${ctx.service.url.origin}`);
+}
+
+/**
  * Resolves the bearer for the target service, or — with `--ad-hoc` — mints one
  * under the identity the bundle declares. Emits the failure itself and hands
  * back the exit code, so callers just `return acquired.exit`.
@@ -68,11 +83,6 @@ type Acquired = { ok: true; bearer: string; developerId?: string } | { ok: false
  * only ways to check that claim before the service does.
  */
 async function acquireBearer(ctx: Ctx, declared: string | null): Promise<Acquired> {
-  // Either said now, or said once at `login --ad-hoc` and remembered. The
-  // stored answer is an explicit choice recorded, not a silent fallback: with
-  // neither, a missing credential is still an error rather than a quiet mint.
-  const adHoc = ctx.options.adHoc || (await prefersAdHoc(ctx.service.url.origin, ctx.appDataDir));
-
   const resolved = await resolveCredential({
     explicitToken: ctx.options.token,
     env: ctx.env,
@@ -81,22 +91,19 @@ async function acquireBearer(ctx: Ctx, declared: string | null): Promise<Acquire
     ...(declared !== null ? { developerId: declared } : {}),
   });
 
-  // An unscoped *stored* credential does not answer an ad-hoc request. It is a
-  // registered token someone pasted (or a legacy entry from before credentials
-  // were filed per identity), and signing with it would quietly ignore the mode
-  // that was asked for — which `--ad-hoc` and `login --ad-hoc`'s "from now on"
-  // both promise not to do. `--token` and `ACEWORKFLOW_TOKEN` still win: those
-  // are said at the call, and the second is the CI path.
-  const supersededByAdHoc =
-    resolved !== null && adHoc && resolved.source === "store" && resolved.developerId === undefined;
-
-  if (resolved !== null && !supersededByAdHoc) {
+  if (resolved !== null) {
+    if (resolved.source !== "store") await warnIfShadowingStored(ctx, resolved.source, declared);
     const refusal = await checkClaimedIdentity(ctx, declared, classifyCredential(resolved.bearer));
     if (refusal !== null) return refusal;
     return resolved.developerId !== undefined
       ? { ok: true, bearer: resolved.bearer, developerId: resolved.developerId }
       : { ok: true, bearer: resolved.bearer };
   }
+
+  // Either said now, or said once at `login --ad-hoc` and remembered. The
+  // stored answer is an explicit choice recorded, not a silent fallback: with
+  // neither, a missing credential is still an error rather than a quiet mint.
+  const adHoc = ctx.options.adHoc || (await prefersAdHoc(ctx.service.url.origin, ctx.appDataDir));
 
   if (adHoc) {
     if (declared === null) {
@@ -432,6 +439,31 @@ export async function cmdSign(ctx: Ctx): Promise<number> {
   return ExitCode.Success;
 }
 
+/**
+ * Switches a service to ad-hoc signing. `login` sets the credential a service
+ * signs with, so this replaces what was stored rather than layering over it: a
+ * token left behind would go on being resolved first and the switch would do
+ * nothing. Clearing the whole service is the point — the mode belongs to the
+ * service, not to one credential within it.
+ *
+ * Discarding is announced rather than guarded. Nothing here is unrecoverable
+ * (an ad-hoc secret is re-minted on the next sign, a token re-pasted by
+ * `login --token`), so a prompt would only stand between the user and what
+ * they just asked for.
+ */
+async function enterAdHocMode(ctx: Ctx, origin: string): Promise<ExitCode> {
+  if (await ctx.store.remove(origin)) {
+    ctx.reporter.warn(`discarded the credential stored for ${origin}; ad-hoc identities are minted on the next sign`);
+  }
+  await setPrefersAdHoc(origin, true, ctx.appDataDir);
+  ctx.reporter.result(`signing ${origin} ad-hoc; identities come from each bundle's manifest`, {
+    command: "login",
+    origin,
+    kind: "ad-hoc",
+  });
+  return ExitCode.Success;
+}
+
 export async function cmdLogin(ctx: Ctx): Promise<number> {
   const origin = ctx.service.url.origin;
 
@@ -445,13 +477,7 @@ export async function cmdLogin(ctx: Ctx): Promise<number> {
       ctx.reporter.failure("--ad-hoc and --token are different ways to sign; pass one", "usage");
       return ExitCode.Usage;
     }
-    await setPrefersAdHoc(origin, true, ctx.appDataDir);
-    ctx.reporter.result(`signing ${origin} ad-hoc; identities come from each bundle's manifest`, {
-      command: "login",
-      origin,
-      kind: "ad-hoc",
-    });
-    return ExitCode.Success;
+    return enterAdHocMode(ctx, origin);
   }
 
   if (ctx.options.token !== undefined) {
@@ -461,9 +487,6 @@ export async function cmdLogin(ctx: Ctx): Promise<number> {
       return ExitCode.Usage;
     }
     await ctx.store.set(origin, { bearer: token });
-    // Signing in with a token is the other half of `login --ad-hoc`'s "from now
-    // on": leaving the ad-hoc mode set would let it keep shadowing the token
-    // just stored, and the two modes are a choice between, not a stack.
     await setPrefersAdHoc(origin, false, ctx.appDataDir);
     return reportLogin(ctx, origin, token, undefined);
   }
@@ -475,13 +498,7 @@ export async function cmdLogin(ctx: Ctx): Promise<number> {
 
   const kind = await ctx.prompter.choice("Sign in as", ["registered", "ad-hoc"]);
   if (kind === "ad-hoc") {
-    await setPrefersAdHoc(origin, true, ctx.appDataDir);
-    ctx.reporter.result(`signing ${origin} ad-hoc; identities come from each bundle's manifest`, {
-      command: "login",
-      origin,
-      kind: "ad-hoc",
-    });
-    return ExitCode.Success;
+    return enterAdHocMode(ctx, origin);
   }
   const token = await ctx.prompter.line("Paste your API token: ");
   if (token.length === 0) {

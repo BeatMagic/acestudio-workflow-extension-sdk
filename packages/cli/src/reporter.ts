@@ -21,6 +21,15 @@ export class Reporter {
     if (!this.opts.json && !this.opts.quiet) this.streams.err(`${text}\n`);
   }
 
+  /**
+   * Something the user should know happened but that is not an error. Always
+   * stderr, and never suppressed: a caution nobody sees under `--quiet` is not
+   * worth emitting, and stderr keeps `--json`'s one-object stdout contract.
+   */
+  warn(text: string): void {
+    this.streams.err(`warning: ${text}\n`);
+  }
+
   result(human: string, data: Record<string, unknown>): void {
     if (this.opts.json) this.streams.out(`${JSON.stringify(data)}\n`);
     else this.streams.out(`${human}\n`);

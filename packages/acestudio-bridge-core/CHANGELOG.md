@@ -71,6 +71,31 @@ package is hand-written: the numbers below are what the host now serves.
 - **`export.fcpxml` is now `export.timeline`**, and writes AAF as well as FCPXML —
   the output path's extension picks the format.
 
+- **A result child no longer carries `payload`.** `job get`, `job list`,
+  `job results` and `job wait` all reported an open `payload` map on each result
+  child. The field is now `@unpresented` — withdrawn from the published surface,
+  not deleted — because it was never the delivery contract: a data class's answer
+  is read through the retrieval its launch declares. Each child gained
+  `errorCode?` and `errorMessage?` in its place, so a failed result says why.
+
+  **Migration:** read the product through the class's own retrieval. For a beat
+  analysis that is the new `tempo.getAnalysis`, which takes the `analysisId`
+  that `tempo.analyzeContextAudio` answered and works whenever the caller asks —
+  not only while someone was watching the job settle. It needs `tempo.read`, so
+  a caller holding only `audio.context` must ask for that token too.
+
+- **An FX slot is an *instance*, not an *insert*.** `fx.remove` and `fx.reorder`
+  take `instance` where they took `insert`, and answer `instanceId` where they
+  answered `insertId`; `fx.add`'s `insert.insertId` is now `insert.instanceId`.
+  `fx.add` also reports `insert.editorState` (`open`, `parked`).
+
+- **`vocalparam` addresses a *param*, not a *category*.** `vocalparam.read`,
+  `vocalparam.write` and `vocalparam.layers` take `param` where they took
+  `category`, and report it back under that name. `vocalparam.layers` renames
+  the collection to match — `categories` → `params`, `categoryCount` →
+  `paramCount` — and each entry gains `displayName` and `shape`, with
+  `vocalControlRoute` on the result.
+
 - **Removed with no replacement on this surface:** `generative.seedAudio`,
   `generative.soundEffects`, `generative.text2sample`, `instrument.enable` and
   `instrument.disable`. A call to any of these was already answered `-32601` by a

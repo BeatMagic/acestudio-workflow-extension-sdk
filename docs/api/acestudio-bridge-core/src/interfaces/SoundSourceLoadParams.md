@@ -20,7 +20,7 @@ Plugin format for an external instrument. One plugin commonly ships in several; 
 optional model?: string;
 ```
 
-Which vocal synth model to sing through, by model name or by generation (`v1`, `v2`). Omit to take what the app would have picked.
+Which model to play through, by model name — for a voice, also by generation (`v1`, `v2`). Omit to take what the app would have picked. Consumed by the kinds that carry a model: a voice picks among its vocal synth models, and an AI instrument checks the name against the one model it ships with — a mismatch is an error, not a switch. A kind with no single model at load time (choir, ensemble, external instrument) refuses the flag rather than ignoring it.
 
 ***
 

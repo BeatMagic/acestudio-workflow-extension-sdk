@@ -42,7 +42,7 @@ optional languages?: {
 }[];
 ```
 
-Every language the installed voices can sing.
+Every language name the `language` filter accepts. The whole roster the app knows, not the native languages actually present in the library -- so a name from this list can still match nothing.
 
 #### code
 

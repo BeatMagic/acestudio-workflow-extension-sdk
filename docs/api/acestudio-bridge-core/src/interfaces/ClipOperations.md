@@ -30,6 +30,32 @@ Requires the `clip.read` capability.
 
 ***
 
+### beatContent()
+
+```ts
+beatContent(params, options?): Promise<ClipBeatContentResult>;
+```
+
+Get the clip's own beat analysis for an Audio clip.
+
+Requires the `clip.read` capability.
+
+#### Parameters
+
+##### params
+
+[`ClipBeatContentParams`](ClipBeatContentParams.md)
+
+##### options?
+
+[`CallOptions`](CallOptions.md)
+
+#### Returns
+
+`Promise`\<[`ClipBeatContentResult`](ClipBeatContentResult.md)\>
+
+***
+
 ### consolidate()
 
 ```ts
@@ -479,7 +505,7 @@ Requires the `clip.write` capability.
 setGain(params, options?): Promise<ClipSetGainResult>;
 ```
 
-Set the gain of an Audio or Video clip, in decibels.
+Set the gain of an Audio or Video clip, in decibels, within the audio-clip gain range.
 
 Requires the `clip.write` capability.
 

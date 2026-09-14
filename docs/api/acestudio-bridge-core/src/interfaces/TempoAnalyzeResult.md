@@ -10,7 +10,7 @@ Success payload of `tempo analyze`.
 analysisId: string;
 ```
 
-The id the finished analysis will be filed under — known up front, so a caller can line up its `tempo apply-beat-analysis` before the job settles. Valid only once the job reaches `succeeded`; a failed or cancelled run files nothing and `tempo apply-beat-analysis` answers NOT_FOUND.
+The id the finished analysis will be filed under — known up front, so a caller can line up its `tempo apply-beat-analysis` before the job settles. Valid only once the job reaches `succeeded`; a failed or cancelled run files nothing and `tempo apply-beat-analysis` answers NOT_FOUND. Read what it found with `tempo get-analysis`.
 
 ***
 

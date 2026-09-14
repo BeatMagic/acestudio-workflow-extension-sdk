@@ -2,6 +2,296 @@
 
 ```ts
 const OPERATIONS: readonly [{
+  capability: "audioplugin.write";
+  domain: "audio-plugin";
+  fingerprintPrecondition: true;
+  method: "applyPreset";
+  mutating: true;
+  path: "audio-plugin apply-preset";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.applyPreset";
+}, {
+  capability: "audioplugin.read";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "editorCapture";
+  mutating: false;
+  path: "audio-plugin editor capture";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.editor.capture";
+}, {
+  capability: "audioplugin.control";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "editorClick";
+  mutating: true;
+  path: "audio-plugin editor click";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.editor.click";
+}, {
+  capability: "ui.control";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "editorClose";
+  mutating: true;
+  path: "audio-plugin editor close";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.editor.close";
+}, {
+  capability: "audioplugin.control";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "editorDblclick";
+  mutating: true;
+  path: "audio-plugin editor dblclick";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.editor.dblclick";
+}, {
+  capability: "audioplugin.control";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "editorDrag";
+  mutating: true;
+  path: "audio-plugin editor drag";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.editor.drag";
+}, {
+  capability: "audioplugin.control";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "editorHover";
+  mutating: true;
+  path: "audio-plugin editor hover";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.editor.hover";
+}, {
+  capability: "audioplugin.read";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "editorInfo";
+  mutating: false;
+  path: "audio-plugin editor info";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.editor.info";
+}, {
+  capability: "audioplugin.control";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "editorKey";
+  mutating: true;
+  path: "audio-plugin editor key";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.editor.key";
+}, {
+  capability: "ui.control";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "editorOpen";
+  mutating: true;
+  path: "audio-plugin editor open";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.editor.open";
+}, {
+  capability: "audioplugin.control";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "editorResize";
+  mutating: true;
+  path: "audio-plugin editor resize";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.editor.resize";
+}, {
+  capability: "audioplugin.control";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "editorType";
+  mutating: true;
+  path: "audio-plugin editor type";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.editor.type";
+}, {
+  capability: "audioplugin.control";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "editorWheel";
+  mutating: true;
+  path: "audio-plugin editor wheel";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.editor.wheel";
+}, {
+  capability: "audioplugin.read";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "exportPreset";
+  mutating: false;
+  path: "audio-plugin export-preset";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.exportPreset";
+}, {
+  capability: "audioplugin.read";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "findPresets";
+  mutating: false;
+  path: "audio-plugin find-presets";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.findPresets";
+}, {
+  capability: "audioplugin.read";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "getParams";
+  mutating: false;
+  path: "audio-plugin get-params";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.getParams";
+}, {
+  capability: "audioplugin.read";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "getState";
+  mutating: false;
+  path: "audio-plugin get-state";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.getState";
+}, {
+  capability: "audioplugin.write";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "importPreset";
+  mutating: true;
+  path: "audio-plugin import-preset";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.importPreset";
+}, {
+  capability: "audioplugin.read";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "listAvailable";
+  mutating: false;
+  path: "audio-plugin list-available";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.listAvailable";
+}, {
+  capability: "audioplugin.read";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "listParams";
+  mutating: false;
+  path: "audio-plugin list-params";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.listParams";
+}, {
+  capability: "audioplugin.read";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "listPresets";
+  mutating: false;
+  path: "audio-plugin list-presets";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.listPresets";
+}, {
+  capability: "audioplugin.write";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "movePreset";
+  mutating: true;
+  path: "audio-plugin move-preset";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.movePreset";
+}, {
+  capability: "audioplugin.write";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "removePreset";
+  mutating: true;
+  path: "audio-plugin remove-preset";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.removePreset";
+}, {
+  capability: "audioplugin.write";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "savePreset";
+  mutating: true;
+  path: "audio-plugin save-preset";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.savePreset";
+}, {
+  capability: "audioplugin.write";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "scan";
+  mutating: true;
+  path: "audio-plugin scan";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.scan";
+}, {
+  capability: "audioplugin.write";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "set";
+  mutating: true;
+  path: "audio-plugin set";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.set";
+}, {
+  capability: "audioplugin.write";
+  domain: "audio-plugin";
+  fingerprintPrecondition: true;
+  method: "setParam";
+  mutating: true;
+  path: "audio-plugin set-param";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.setParam";
+}, {
+  capability: "audioplugin.write";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "setState";
+  mutating: true;
+  path: "audio-plugin set-state";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.setState";
+}, {
+  capability: "audioplugin.read";
+  domain: "audio-plugin";
+  fingerprintPrecondition: false;
+  method: "slots";
+  mutating: false;
+  path: "audio-plugin slots";
+  takesParams: true;
+  ungated: false;
+  wire: "audioPlugin.slots";
+}, {
   capability: "voice.write";
   domain: "blend";
   fingerprintPrecondition: false;
@@ -91,6 +381,36 @@ const OPERATIONS: readonly [{
   takesParams: true;
   ungated: false;
   wire: "blend.set";
+}, {
+  capability: "vocalparam.read";
+  domain: "breath";
+  fingerprintPrecondition: false;
+  method: "list";
+  mutating: false;
+  path: "breath list";
+  takesParams: true;
+  ungated: false;
+  wire: "breath.list";
+}, {
+  capability: "vocalparam.write";
+  domain: "breath";
+  fingerprintPrecondition: true;
+  method: "remove";
+  mutating: true;
+  path: "breath remove";
+  takesParams: true;
+  ungated: false;
+  wire: "breath.remove";
+}, {
+  capability: "vocalparam.write";
+  domain: "breath";
+  fingerprintPrecondition: true;
+  method: "set";
+  mutating: true;
+  path: "breath set";
+  takesParams: true;
+  ungated: false;
+  wire: "breath.set";
 }, {
   capability: "canvas.read";
   domain: "canvas";
@@ -202,6 +522,46 @@ const OPERATIONS: readonly [{
   ungated: false;
   wire: "choir.set";
 }, {
+  capability: "chord.write";
+  domain: "chord";
+  fingerprintPrecondition: true;
+  method: "delete";
+  mutating: true;
+  path: "chord delete";
+  takesParams: true;
+  ungated: false;
+  wire: "chord.delete";
+}, {
+  capability: "chord.write";
+  domain: "chord";
+  fingerprintPrecondition: true;
+  method: "insert";
+  mutating: true;
+  path: "chord insert";
+  takesParams: true;
+  ungated: false;
+  wire: "chord.insert";
+}, {
+  capability: "chord.read";
+  domain: "chord";
+  fingerprintPrecondition: false;
+  method: "list";
+  mutating: false;
+  path: "chord list";
+  takesParams: true;
+  ungated: false;
+  wire: "chord.list";
+}, {
+  capability: "chord.write";
+  domain: "chord";
+  fingerprintPrecondition: true;
+  method: "set";
+  mutating: true;
+  path: "chord set";
+  takesParams: true;
+  ungated: false;
+  wire: "chord.set";
+}, {
   capability: "clip.read";
   domain: "clip";
   fingerprintPrecondition: false;
@@ -211,6 +571,16 @@ const OPERATIONS: readonly [{
   takesParams: true;
   ungated: false;
   wire: "clip.audioContent";
+}, {
+  capability: "clip.read";
+  domain: "clip";
+  fingerprintPrecondition: false;
+  method: "beatContent";
+  mutating: false;
+  path: "clip beat-content";
+  takesParams: true;
+  ungated: false;
+  wire: "clip.beatContent";
 }, {
   capability: "clip.write";
   domain: "clip";
@@ -615,16 +985,6 @@ const OPERATIONS: readonly [{
   capability: "export.invoke";
   domain: "export";
   fingerprintPrecondition: false;
-  method: "fcpxml";
-  mutating: true;
-  path: "export fcpxml";
-  takesParams: true;
-  ungated: false;
-  wire: "export.fcpxml";
-}, {
-  capability: "export.invoke";
-  domain: "export";
-  fingerprintPrecondition: false;
   method: "lrc";
   mutating: true;
   path: "export lrc";
@@ -656,6 +1016,16 @@ const OPERATIONS: readonly [{
   capability: "export.invoke";
   domain: "export";
   fingerprintPrecondition: false;
+  method: "timeline";
+  mutating: true;
+  path: "export timeline";
+  takesParams: true;
+  ungated: false;
+  wire: "export.timeline";
+}, {
+  capability: "export.invoke";
+  domain: "export";
+  fingerprintPrecondition: false;
   method: "video";
   mutating: true;
   path: "export video";
@@ -674,7 +1044,7 @@ const OPERATIONS: readonly [{
   ungated: false;
   wire: "export.vocalSample";
 }, {
-  capability: "fx.write";
+  capability: "audioplugin.write";
   domain: "fx";
   fingerprintPrecondition: false;
   method: "add";
@@ -684,67 +1054,77 @@ const OPERATIONS: readonly [{
   ungated: false;
   wire: "fx.add";
 }, {
-  capability: "fx.write";
+  capability: "audioplugin.write";
   domain: "fx";
-  fingerprintPrecondition: true;
-  method: "applyPreset";
+  fingerprintPrecondition: false;
+  method: "applyChain";
   mutating: true;
-  path: "fx apply-preset";
+  path: "fx apply-chain";
   takesParams: true;
   ungated: false;
-  wire: "fx.applyPreset";
+  wire: "fx.applyChain";
 }, {
-  capability: "fx.read";
+  capability: "audioplugin.read";
   domain: "fx";
   fingerprintPrecondition: false;
-  method: "getParams";
+  method: "exportChain";
   mutating: false;
-  path: "fx get-params";
+  path: "fx export-chain";
   takesParams: true;
   ungated: false;
-  wire: "fx.getParams";
+  wire: "fx.exportChain";
 }, {
-  capability: "fx.read";
+  capability: "audioplugin.read";
   domain: "fx";
   fingerprintPrecondition: false;
-  method: "list";
+  method: "findChains";
   mutating: false;
-  path: "fx list";
+  path: "fx find-chains";
   takesParams: true;
   ungated: false;
-  wire: "fx.list";
+  wire: "fx.findChains";
 }, {
-  capability: "fx.read";
+  capability: "audioplugin.write";
   domain: "fx";
   fingerprintPrecondition: false;
-  method: "listAvailable";
-  mutating: false;
-  path: "fx list-available";
-  takesParams: true;
-  ungated: false;
-  wire: "fx.listAvailable";
-}, {
-  capability: "fx.read";
-  domain: "fx";
-  fingerprintPrecondition: false;
-  method: "listParams";
-  mutating: false;
-  path: "fx list-params";
-  takesParams: true;
-  ungated: false;
-  wire: "fx.listParams";
-}, {
-  capability: "ui.control";
-  domain: "fx";
-  fingerprintPrecondition: false;
-  method: "openEditor";
+  method: "importChain";
   mutating: true;
-  path: "fx open-editor";
+  path: "fx import-chain";
   takesParams: true;
   ungated: false;
-  wire: "fx.openEditor";
+  wire: "fx.importChain";
 }, {
-  capability: "fx.write";
+  capability: "audioplugin.write";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "insertChain";
+  mutating: true;
+  path: "fx insert-chain";
+  takesParams: true;
+  ungated: false;
+  wire: "fx.insertChain";
+}, {
+  capability: "audioplugin.read";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "listChains";
+  mutating: false;
+  path: "fx list-chains";
+  takesParams: true;
+  ungated: false;
+  wire: "fx.listChains";
+}, {
+  capability: "audioplugin.write";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "moveChain";
+  mutating: true;
+  path: "fx move-chain";
+  takesParams: true;
+  ungated: false;
+  wire: "fx.moveChain";
+}, {
+  capability: "audioplugin.write";
   domain: "fx";
   fingerprintPrecondition: false;
   method: "remove";
@@ -754,7 +1134,17 @@ const OPERATIONS: readonly [{
   ungated: false;
   wire: "fx.remove";
 }, {
-  capability: "fx.write";
+  capability: "audioplugin.write";
+  domain: "fx";
+  fingerprintPrecondition: false;
+  method: "removeChain";
+  mutating: true;
+  path: "fx remove-chain";
+  takesParams: true;
+  ungated: false;
+  wire: "fx.removeChain";
+}, {
+  capability: "audioplugin.write";
   domain: "fx";
   fingerprintPrecondition: false;
   method: "reorder";
@@ -764,47 +1154,17 @@ const OPERATIONS: readonly [{
   ungated: false;
   wire: "fx.reorder";
 }, {
-  capability: "fx.write";
+  capability: "audioplugin.write";
   domain: "fx";
   fingerprintPrecondition: false;
-  method: "savePreset";
+  method: "saveChain";
   mutating: true;
-  path: "fx save-preset";
+  path: "fx save-chain";
   takesParams: true;
   ungated: false;
-  wire: "fx.savePreset";
+  wire: "fx.saveChain";
 }, {
-  capability: "fx.write";
-  domain: "fx";
-  fingerprintPrecondition: false;
-  method: "scan";
-  mutating: true;
-  path: "fx scan";
-  takesParams: true;
-  ungated: false;
-  wire: "fx.scan";
-}, {
-  capability: "fx.write";
-  domain: "fx";
-  fingerprintPrecondition: false;
-  method: "set";
-  mutating: true;
-  path: "fx set";
-  takesParams: true;
-  ungated: false;
-  wire: "fx.set";
-}, {
-  capability: "fx.write";
-  domain: "fx";
-  fingerprintPrecondition: true;
-  method: "setParam";
-  mutating: true;
-  path: "fx set-param";
-  takesParams: true;
-  ungated: false;
-  wire: "fx.setParam";
-}, {
-  capability: "fx.write";
+  capability: "audioplugin.write";
   domain: "fx";
   fingerprintPrecondition: false;
   method: "setRoom";
@@ -814,102 +1174,119 @@ const OPERATIONS: readonly [{
   ungated: false;
   wire: "fx.setRoom";
 }, {
-  capability: "generative.add-layer";
+  capability: "generative.add-a-layer";
   domain: "generative";
   entitlement: "credits(add-a-layer)";
   fingerprintPrecondition: false;
-  method: "addLayer";
+  method: "addALayer";
   mutating: true;
-  path: "generative add-layer";
+  path: "generative add-a-layer";
   takesParams: true;
   ungated: false;
-  wire: "generative.addLayer";
+  wire: "generative.addALayer";
 }, {
-  capability: "generative.enhance";
-  domain: "generative";
-  entitlement: "credits(music-enhancer)";
-  fingerprintPrecondition: false;
-  method: "enhance";
-  mutating: true;
-  path: "generative enhance";
-  takesParams: true;
-  ungated: false;
-  wire: "generative.enhance";
-}, {
-  capability: "generative.seed-audio";
-  domain: "generative";
-  entitlement: "credits(seed-audio)";
-  fingerprintPrecondition: false;
-  method: "seedAudio";
-  mutating: true;
-  path: "generative seed-audio";
-  takesParams: true;
-  ungated: false;
-  wire: "generative.seedAudio";
-}, {
-  capability: "generative.song";
+  capability: "generative.inspire-me";
   domain: "generative";
   entitlement: "credits(song-generator)";
   fingerprintPrecondition: false;
-  method: "song";
+  method: "inspireMe";
   mutating: true;
-  path: "generative song";
+  path: "generative inspire-me";
   takesParams: true;
   ungated: false;
-  wire: "generative.song";
+  wire: "generative.inspireMe";
 }, {
-  capability: "generative.sound-effects";
+  capability: "generative-history.read";
   domain: "generative";
-  entitlement: "credits(sound-effects)";
   fingerprintPrecondition: false;
-  method: "soundEffects";
-  mutating: true;
-  path: "generative sound-effects";
+  method: "inspireMeHistoryGet";
+  mutating: false;
+  path: "generative inspire-me history get";
   takesParams: true;
   ungated: false;
-  wire: "generative.soundEffects";
+  wire: "generative.inspireMe.history.get";
 }, {
-  capability: "generative.stem-split";
+  capability: "generative-history.read";
+  domain: "generative";
+  fingerprintPrecondition: false;
+  method: "inspireMeHistoryList";
+  mutating: false;
+  path: "generative inspire-me history list";
+  takesParams: true;
+  ungated: false;
+  wire: "generative.inspireMe.history.list";
+}, {
+  capability: "generative.music-enhancer";
+  domain: "generative";
+  entitlement: "credits(music-enhancer)";
+  fingerprintPrecondition: false;
+  method: "musicEnhancer";
+  mutating: true;
+  path: "generative music-enhancer";
+  takesParams: true;
+  ungated: false;
+  wire: "generative.musicEnhancer";
+}, {
+  capability: "generative-history.read";
+  domain: "generative";
+  fingerprintPrecondition: false;
+  method: "musicEnhancerHistoryGet";
+  mutating: false;
+  path: "generative music-enhancer history get";
+  takesParams: true;
+  ungated: false;
+  wire: "generative.musicEnhancer.history.get";
+}, {
+  capability: "generative-history.read";
+  domain: "generative";
+  fingerprintPrecondition: false;
+  method: "musicEnhancerHistoryList";
+  mutating: false;
+  path: "generative music-enhancer history list";
+  takesParams: true;
+  ungated: false;
+  wire: "generative.musicEnhancer.history.list";
+}, {
+  capability: "generative.stem-splitter";
   domain: "generative";
   entitlement: "credits(stem-splitter)";
   fingerprintPrecondition: false;
-  method: "stemSplit";
+  method: "stemSplitter";
   mutating: true;
-  path: "generative stem-split";
+  path: "generative stem-splitter";
   takesParams: true;
   ungated: false;
-  wire: "generative.stemSplit";
+  wire: "generative.stemSplitter";
 }, {
-  capability: "generative.text2sample";
-  domain: "generative";
-  entitlement: "credits(text2sample)";
-  fingerprintPrecondition: false;
-  method: "text2sample";
-  mutating: true;
-  path: "generative text2sample";
-  takesParams: true;
-  ungated: false;
-  wire: "generative.text2sample";
-}, {
-  capability: "generative.vocal2midi";
+  capability: "generative.vocal-to-midi";
   domain: "generative";
   fingerprintPrecondition: false;
-  method: "vocal2midi";
+  method: "vocalToMidi";
   mutating: true;
-  path: "generative vocal2midi";
+  path: "generative vocal-to-midi";
   takesParams: true;
   ungated: false;
-  wire: "generative.vocal2midi";
+  wire: "generative.vocalToMidi";
 }, {
-  capability: "generative.voice-change";
+  capability: "generative.voice-changer";
   domain: "generative";
   fingerprintPrecondition: false;
-  method: "voiceChange";
+  method: "voiceChangerConvert";
   mutating: true;
-  path: "generative voice-change";
+  path: "generative voice-changer convert";
   takesParams: true;
   ungated: false;
-  wire: "generative.voiceChange";
+  wire: "generative.voiceChanger.convert";
+}, {
+  capability: "generative.voice-changer";
+  domain: "generative";
+  fingerprintPrecondition: false;
+  method: "voiceChangerModels";
+  mutating: true;
+  path: "generative voice-changer models";
+  takesParams: true;
+  ungated: false;
+  wire: "generative.voiceChanger.models";
 }, {
   capability: "history.read";
   domain: "history";
@@ -954,26 +1331,6 @@ const OPERATIONS: readonly [{
   capability: "soundsource.write";
   domain: "instrument";
   fingerprintPrecondition: false;
-  method: "disable";
-  mutating: true;
-  path: "instrument disable";
-  takesParams: true;
-  ungated: false;
-  wire: "instrument.disable";
-}, {
-  capability: "soundsource.write";
-  domain: "instrument";
-  fingerprintPrecondition: false;
-  method: "enable";
-  mutating: true;
-  path: "instrument enable";
-  takesParams: true;
-  ungated: false;
-  wire: "instrument.enable";
-}, {
-  capability: "soundsource.write";
-  domain: "instrument";
-  fingerprintPrecondition: false;
   method: "set";
   mutating: true;
   path: "instrument set";
@@ -1000,6 +1357,16 @@ const OPERATIONS: readonly [{
   takesParams: true;
   ungated: false;
   wire: "job.discardResult";
+}, {
+  capability: "job.control";
+  domain: "job";
+  fingerprintPrecondition: false;
+  method: "download";
+  mutating: true;
+  path: "job download";
+  takesParams: true;
+  ungated: false;
+  wire: "job.download";
 }, {
   capability: "job.read";
   domain: "job";
@@ -1050,6 +1417,96 @@ const OPERATIONS: readonly [{
   takesParams: true;
   ungated: false;
   wire: "job.wait";
+}, {
+  capability: "lyric.write";
+  domain: "lyric";
+  fingerprintPrecondition: true;
+  method: "fill";
+  mutating: true;
+  path: "lyric fill";
+  takesParams: true;
+  ungated: false;
+  wire: "lyric.fill";
+}, {
+  capability: "midiparam.write";
+  domain: "midiparam";
+  fingerprintPrecondition: true;
+  method: "clear";
+  mutating: true;
+  path: "midiparam clear";
+  takesParams: true;
+  ungated: false;
+  wire: "midiparam.clear";
+}, {
+  capability: "midiparam.read";
+  domain: "midiparam";
+  fingerprintPrecondition: false;
+  method: "listLanes";
+  mutating: false;
+  path: "midiparam list-lanes";
+  takesParams: true;
+  ungated: false;
+  wire: "midiparam.listLanes";
+}, {
+  capability: "midiparam.read";
+  domain: "midiparam";
+  fingerprintPrecondition: false;
+  method: "read";
+  mutating: false;
+  path: "midiparam read";
+  takesParams: true;
+  ungated: false;
+  wire: "midiparam.read";
+}, {
+  capability: "midiparam.write";
+  domain: "midiparam";
+  fingerprintPrecondition: true;
+  method: "removePoint";
+  mutating: true;
+  path: "midiparam remove-point";
+  takesParams: true;
+  ungated: false;
+  wire: "midiparam.removePoint";
+}, {
+  capability: "midiparam.write";
+  domain: "midiparam";
+  fingerprintPrecondition: true;
+  method: "setPoint";
+  mutating: true;
+  path: "midiparam set-point";
+  takesParams: true;
+  ungated: false;
+  wire: "midiparam.setPoint";
+}, {
+  capability: "midiparam.write";
+  domain: "midiparam";
+  fingerprintPrecondition: true;
+  method: "setVelocity";
+  mutating: true;
+  path: "midiparam set-velocity";
+  takesParams: true;
+  ungated: false;
+  wire: "midiparam.setVelocity";
+}, {
+  capability: "midiparam.read";
+  domain: "midiparam";
+  fingerprintPrecondition: false;
+  method: "velocity";
+  mutating: false;
+  path: "midiparam velocity";
+  takesParams: true;
+  ungated: false;
+  wire: "midiparam.velocity";
+}, {
+  capability: "midiparam.write";
+  domain: "midiparam";
+  fingerprintPrecondition: true;
+  method: "write";
+  mutating: true;
+  path: "midiparam write";
+  takesParams: true;
+  ungated: false;
+  wire: "midiparam.write";
 }, {
   capability: "note.write";
   domain: "note";
@@ -1114,12 +1571,22 @@ const OPERATIONS: readonly [{
   capability: "note.write";
   domain: "note";
   fingerprintPrecondition: true;
-  method: "setLyric";
+  method: "setGrapheme";
   mutating: true;
-  path: "note set-lyric";
+  path: "note set-grapheme";
   takesParams: true;
   ungated: false;
-  wire: "note.setLyric";
+  wire: "note.setGrapheme";
+}, {
+  capability: "note.write";
+  domain: "note";
+  fingerprintPrecondition: true;
+  method: "setLanguage";
+  mutating: true;
+  path: "note set-language";
+  takesParams: true;
+  ungated: false;
+  wire: "note.setLanguage";
 }, {
   capability: "note.write";
   domain: "note";
@@ -1130,6 +1597,96 @@ const OPERATIONS: readonly [{
   takesParams: true;
   ungated: false;
   wire: "note.split";
+}, {
+  capability: "lyric.read";
+  domain: "phoneme";
+  fingerprintPrecondition: false;
+  method: "g2p";
+  mutating: false;
+  path: "phoneme g2p";
+  takesParams: true;
+  ungated: false;
+  wire: "phoneme.g2p";
+}, {
+  capability: "lyric.read";
+  domain: "phoneme";
+  fingerprintPrecondition: false;
+  method: "inventory";
+  mutating: false;
+  path: "phoneme inventory";
+  takesParams: true;
+  ungated: false;
+  wire: "phoneme.inventory";
+}, {
+  capability: "lyric.read";
+  domain: "phoneme";
+  fingerprintPrecondition: false;
+  method: "list";
+  mutating: false;
+  path: "phoneme list";
+  takesParams: true;
+  ungated: false;
+  wire: "phoneme.list";
+}, {
+  capability: "lyric.write";
+  domain: "phoneme";
+  fingerprintPrecondition: true;
+  method: "moveBoundary";
+  mutating: true;
+  path: "phoneme move-boundary";
+  takesParams: true;
+  ungated: false;
+  wire: "phoneme.moveBoundary";
+}, {
+  capability: "lyric.write";
+  domain: "phoneme";
+  fingerprintPrecondition: true;
+  method: "reset";
+  mutating: true;
+  path: "phoneme reset";
+  takesParams: true;
+  ungated: false;
+  wire: "phoneme.reset";
+}, {
+  capability: "lyric.write";
+  domain: "phoneme";
+  fingerprintPrecondition: true;
+  method: "resetOverride";
+  mutating: true;
+  path: "phoneme reset-override";
+  takesParams: true;
+  ungated: false;
+  wire: "phoneme.resetOverride";
+}, {
+  capability: "lyric.write";
+  domain: "phoneme";
+  fingerprintPrecondition: true;
+  method: "resetTiming";
+  mutating: true;
+  path: "phoneme reset-timing";
+  takesParams: true;
+  ungated: false;
+  wire: "phoneme.resetTiming";
+}, {
+  capability: "lyric.write";
+  domain: "phoneme";
+  fingerprintPrecondition: true;
+  method: "set";
+  mutating: true;
+  path: "phoneme set";
+  takesParams: true;
+  ungated: false;
+  wire: "phoneme.set";
+}, {
+  capability: "lyric.write";
+  domain: "phoneme";
+  fingerprintPrecondition: true;
+  method: "setConsonantTiming";
+  mutating: true;
+  path: "phoneme set-consonant-timing";
+  takesParams: true;
+  ungated: false;
+  wire: "phoneme.setConsonantTiming";
 }, {
   capability: "project.lifecycle";
   domain: "project";
@@ -1364,6 +1921,16 @@ const OPERATIONS: readonly [{
   capability: "tempo.read";
   domain: "tempo";
   fingerprintPrecondition: false;
+  method: "getAnalysis";
+  mutating: false;
+  path: "tempo get-analysis";
+  takesParams: true;
+  ungated: false;
+  wire: "tempo.getAnalysis";
+}, {
+  capability: "tempo.read";
+  domain: "tempo";
+  fingerprintPrecondition: false;
   method: "points";
   mutating: false;
   path: "tempo points";
@@ -1460,6 +2027,46 @@ const OPERATIONS: readonly [{
   takesParams: true;
   ungated: false;
   wire: "timesig.setAt";
+}, {
+  capability: "track.audition";
+  domain: "track";
+  fingerprintPrecondition: false;
+  method: "auditionNote";
+  mutating: true;
+  path: "track audition note";
+  takesParams: true;
+  ungated: false;
+  wire: "track.audition.note";
+}, {
+  capability: "track.audition";
+  domain: "track";
+  fingerprintPrecondition: false;
+  method: "auditionNoteClear";
+  mutating: true;
+  path: "track audition note-clear";
+  takesParams: true;
+  ungated: false;
+  wire: "track.audition.noteClear";
+}, {
+  capability: "track.audition";
+  domain: "track";
+  fingerprintPrecondition: false;
+  method: "auditionNoteOff";
+  mutating: true;
+  path: "track audition note-off";
+  takesParams: true;
+  ungated: false;
+  wire: "track.audition.noteOff";
+}, {
+  capability: "track.audition";
+  domain: "track";
+  fingerprintPrecondition: false;
+  method: "auditionNoteOn";
+  mutating: true;
+  path: "track audition note-on";
+  takesParams: true;
+  ungated: false;
+  wire: "track.audition.noteOn";
 }, {
   capability: "track.write";
   domain: "track";
@@ -1740,6 +2347,26 @@ const OPERATIONS: readonly [{
   takesParams: true;
   ungated: false;
   wire: "vocalparam.read";
+}, {
+  capability: "vocalparam.write";
+  domain: "vocalparam";
+  fingerprintPrecondition: true;
+  method: "setVoicing";
+  mutating: true;
+  path: "vocalparam set-voicing";
+  takesParams: true;
+  ungated: false;
+  wire: "vocalparam.setVoicing";
+}, {
+  capability: "vocalparam.read";
+  domain: "vocalparam";
+  fingerprintPrecondition: false;
+  method: "voicing";
+  mutating: false;
+  path: "vocalparam voicing";
+  takesParams: true;
+  ungated: false;
+  wire: "vocalparam.voicing";
 }, {
   capability: "vocalparam.write";
   domain: "vocalparam";

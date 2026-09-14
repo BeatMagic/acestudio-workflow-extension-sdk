@@ -2,6 +2,35 @@
 
 ```ts
 const REQUIRED_TOKENS: {
+  audio-plugin apply-preset: "audioplugin.write";
+  audio-plugin editor capture: "audioplugin.read";
+  audio-plugin editor click: "audioplugin.control";
+  audio-plugin editor close: "ui.control";
+  audio-plugin editor dblclick: "audioplugin.control";
+  audio-plugin editor drag: "audioplugin.control";
+  audio-plugin editor hover: "audioplugin.control";
+  audio-plugin editor info: "audioplugin.read";
+  audio-plugin editor key: "audioplugin.control";
+  audio-plugin editor open: "ui.control";
+  audio-plugin editor resize: "audioplugin.control";
+  audio-plugin editor type: "audioplugin.control";
+  audio-plugin editor wheel: "audioplugin.control";
+  audio-plugin export-preset: "audioplugin.read";
+  audio-plugin find-presets: "audioplugin.read";
+  audio-plugin get-params: "audioplugin.read";
+  audio-plugin get-state: "audioplugin.read";
+  audio-plugin import-preset: "audioplugin.write";
+  audio-plugin list-available: "audioplugin.read";
+  audio-plugin list-params: "audioplugin.read";
+  audio-plugin list-presets: "audioplugin.read";
+  audio-plugin move-preset: "audioplugin.write";
+  audio-plugin remove-preset: "audioplugin.write";
+  audio-plugin save-preset: "audioplugin.write";
+  audio-plugin scan: "audioplugin.write";
+  audio-plugin set: "audioplugin.write";
+  audio-plugin set-param: "audioplugin.write";
+  audio-plugin set-state: "audioplugin.write";
+  audio-plugin slots: "audioplugin.read";
   blend add: "voice.write";
   blend create: "voice.write";
   blend delete: "voice.write";
@@ -11,6 +40,9 @@ const REQUIRED_TOKENS: {
   blend remove: "voice.write";
   blend reorder: "voice.write";
   blend set: "voice.write";
+  breath list: "vocalparam.read";
+  breath remove: "vocalparam.write";
+  breath set: "vocalparam.write";
   canvas effective-size: "canvas.read";
   canvas info: "canvas.read";
   caret get: "caret.read";
@@ -22,7 +54,12 @@ const REQUIRED_TOKENS: {
   choir remove: "soundsource.write";
   choir reorder: "soundsource.write";
   choir set: "soundsource.write";
+  chord delete: "chord.write";
+  chord insert: "chord.write";
+  chord list: "chord.read";
+  chord set: "chord.write";
   clip audio-content: "clip.read";
+  clip beat-content: "clip.read";
   clip consolidate: "clip.write";
   clip create: "clip.write";
   clip delete: "clip.write";
@@ -57,57 +94,76 @@ const REQUIRED_TOKENS: {
   ensemble reorder: "soundsource.write";
   ensemble set: "soundsource.write";
   export audio: "export.invoke";
-  export fcpxml: "export.invoke";
   export lrc: "export.invoke";
   export midi: "export.invoke";
   export song-template: "export.invoke";
+  export timeline: "export.invoke";
   export video: "export.invoke";
   export vocal-sample: "export.invoke";
-  fx add: "fx.write";
-  fx apply-preset: "fx.write";
-  fx get-params: "fx.read";
-  fx list: "fx.read";
-  fx list-available: "fx.read";
-  fx list-params: "fx.read";
-  fx open-editor: "ui.control";
-  fx remove: "fx.write";
-  fx reorder: "fx.write";
-  fx save-preset: "fx.write";
-  fx scan: "fx.write";
-  fx set: "fx.write";
-  fx set-param: "fx.write";
-  fx set-room: "fx.write";
-  generative add-layer: "generative.add-layer";
-  generative enhance: "generative.enhance";
-  generative seed-audio: "generative.seed-audio";
-  generative song: "generative.song";
-  generative sound-effects: "generative.sound-effects";
-  generative stem-split: "generative.stem-split";
-  generative text2sample: "generative.text2sample";
-  generative vocal2midi: "generative.vocal2midi";
-  generative voice-change: "generative.voice-change";
+  fx add: "audioplugin.write";
+  fx apply-chain: "audioplugin.write";
+  fx export-chain: "audioplugin.read";
+  fx find-chains: "audioplugin.read";
+  fx import-chain: "audioplugin.write";
+  fx insert-chain: "audioplugin.write";
+  fx list-chains: "audioplugin.read";
+  fx move-chain: "audioplugin.write";
+  fx remove: "audioplugin.write";
+  fx remove-chain: "audioplugin.write";
+  fx reorder: "audioplugin.write";
+  fx save-chain: "audioplugin.write";
+  fx set-room: "audioplugin.write";
+  generative add-a-layer: "generative.add-a-layer";
+  generative inspire-me: "generative.inspire-me";
+  generative inspire-me history get: "generative-history.read";
+  generative inspire-me history list: "generative-history.read";
+  generative music-enhancer: "generative.music-enhancer";
+  generative music-enhancer history get: "generative-history.read";
+  generative music-enhancer history list: "generative-history.read";
+  generative stem-splitter: "generative.stem-splitter";
+  generative vocal-to-midi: "generative.vocal-to-midi";
+  generative voice-changer convert: "generative.voice-changer";
+  generative voice-changer models: "generative.voice-changer";
   history list: "history.read";
   history redo: "history.control";
   history undo: "history.control";
   import file: "import.invoke";
-  instrument disable: "soundsource.write";
-  instrument enable: "soundsource.write";
   instrument set: "soundsource.write";
   job cancel: "job.control";
   job discard-result: "job.control";
+  job download: "job.control";
   job get: "job.read";
   job list: "job.read";
   job place: "clip.write";
   job results: "job.read";
   job wait: "job.read";
+  lyric fill: "lyric.write";
+  midiparam clear: "midiparam.write";
+  midiparam list-lanes: "midiparam.read";
+  midiparam read: "midiparam.read";
+  midiparam remove-point: "midiparam.write";
+  midiparam set-point: "midiparam.write";
+  midiparam set-velocity: "midiparam.write";
+  midiparam velocity: "midiparam.read";
+  midiparam write: "midiparam.write";
   note add: "note.write";
   note delete: "note.write";
   note get: "note.read";
   note move: "note.write";
   note resize: "note.write";
   note set-articulation: "note.write";
-  note set-lyric: "note.write";
+  note set-grapheme: "note.write";
+  note set-language: "note.write";
   note split: "note.write";
+  phoneme g2p: "lyric.read";
+  phoneme inventory: "lyric.read";
+  phoneme list: "lyric.read";
+  phoneme move-boundary: "lyric.write";
+  phoneme reset: "lyric.write";
+  phoneme reset-override: "lyric.write";
+  phoneme reset-timing: "lyric.write";
+  phoneme set: "lyric.write";
+  phoneme set-consonant-timing: "lyric.write";
   project collect-save: "project.lifecycle";
   project dirty: "project.read";
   project info: "project.read";
@@ -131,6 +187,7 @@ const REQUIRED_TOKENS: {
   tempo analyze: "tempo.analyze";
   tempo apply-beat-analysis: "tempo.applyV2";
   tempo get: "tempo.read";
+  tempo get-analysis: "tempo.read";
   tempo points: "tempo.read";
   tempo remove-point: "tempo.write";
   tempo set: "tempo.write";
@@ -141,6 +198,10 @@ const REQUIRED_TOKENS: {
   timesig remove-at: "timesig.write";
   timesig set: "timesig.write";
   timesig set-at: "timesig.write";
+  track audition note: "track.audition";
+  track audition note-clear: "track.audition";
+  track audition note-off: "track.audition";
+  track audition note-on: "track.audition";
   track create: "track.write";
   track delete: "track.write";
   track duplicate: "track.write";
@@ -169,6 +230,8 @@ const REQUIRED_TOKENS: {
   ui show-window: "ui.control";
   vocalparam layers: "vocalparam.read";
   vocalparam read: "vocalparam.read";
+  vocalparam set-voicing: "vocalparam.write";
+  vocalparam voicing: "vocalparam.read";
   vocalparam write: "vocalparam.write";
   voice collect: "voice.write";
   voice community: "voice.read";
@@ -180,6 +243,180 @@ const REQUIRED_TOKENS: {
 The token each operation requires, for the pre-wire guard: a call the session's grant cannot reach fails locally with the identical typed `CAPABILITY_DENIED` the host would have returned. Ungated operations are absent — they need no token.
 
 ## Type Declaration
+
+### audio-plugin apply-preset
+
+```ts
+readonly audio-plugin apply-preset: "audioplugin.write" = 'audioplugin.write';
+```
+
+### audio-plugin editor capture
+
+```ts
+readonly audio-plugin editor capture: "audioplugin.read" = 'audioplugin.read';
+```
+
+### audio-plugin editor click
+
+```ts
+readonly audio-plugin editor click: "audioplugin.control" = 'audioplugin.control';
+```
+
+### audio-plugin editor close
+
+```ts
+readonly audio-plugin editor close: "ui.control" = 'ui.control';
+```
+
+### audio-plugin editor dblclick
+
+```ts
+readonly audio-plugin editor dblclick: "audioplugin.control" = 'audioplugin.control';
+```
+
+### audio-plugin editor drag
+
+```ts
+readonly audio-plugin editor drag: "audioplugin.control" = 'audioplugin.control';
+```
+
+### audio-plugin editor hover
+
+```ts
+readonly audio-plugin editor hover: "audioplugin.control" = 'audioplugin.control';
+```
+
+### audio-plugin editor info
+
+```ts
+readonly audio-plugin editor info: "audioplugin.read" = 'audioplugin.read';
+```
+
+### audio-plugin editor key
+
+```ts
+readonly audio-plugin editor key: "audioplugin.control" = 'audioplugin.control';
+```
+
+### audio-plugin editor open
+
+```ts
+readonly audio-plugin editor open: "ui.control" = 'ui.control';
+```
+
+### audio-plugin editor resize
+
+```ts
+readonly audio-plugin editor resize: "audioplugin.control" = 'audioplugin.control';
+```
+
+### audio-plugin editor type
+
+```ts
+readonly audio-plugin editor type: "audioplugin.control" = 'audioplugin.control';
+```
+
+### audio-plugin editor wheel
+
+```ts
+readonly audio-plugin editor wheel: "audioplugin.control" = 'audioplugin.control';
+```
+
+### audio-plugin export-preset
+
+```ts
+readonly audio-plugin export-preset: "audioplugin.read" = 'audioplugin.read';
+```
+
+### audio-plugin find-presets
+
+```ts
+readonly audio-plugin find-presets: "audioplugin.read" = 'audioplugin.read';
+```
+
+### audio-plugin get-params
+
+```ts
+readonly audio-plugin get-params: "audioplugin.read" = 'audioplugin.read';
+```
+
+### audio-plugin get-state
+
+```ts
+readonly audio-plugin get-state: "audioplugin.read" = 'audioplugin.read';
+```
+
+### audio-plugin import-preset
+
+```ts
+readonly audio-plugin import-preset: "audioplugin.write" = 'audioplugin.write';
+```
+
+### audio-plugin list-available
+
+```ts
+readonly audio-plugin list-available: "audioplugin.read" = 'audioplugin.read';
+```
+
+### audio-plugin list-params
+
+```ts
+readonly audio-plugin list-params: "audioplugin.read" = 'audioplugin.read';
+```
+
+### audio-plugin list-presets
+
+```ts
+readonly audio-plugin list-presets: "audioplugin.read" = 'audioplugin.read';
+```
+
+### audio-plugin move-preset
+
+```ts
+readonly audio-plugin move-preset: "audioplugin.write" = 'audioplugin.write';
+```
+
+### audio-plugin remove-preset
+
+```ts
+readonly audio-plugin remove-preset: "audioplugin.write" = 'audioplugin.write';
+```
+
+### audio-plugin save-preset
+
+```ts
+readonly audio-plugin save-preset: "audioplugin.write" = 'audioplugin.write';
+```
+
+### audio-plugin scan
+
+```ts
+readonly audio-plugin scan: "audioplugin.write" = 'audioplugin.write';
+```
+
+### audio-plugin set
+
+```ts
+readonly audio-plugin set: "audioplugin.write" = 'audioplugin.write';
+```
+
+### audio-plugin set-param
+
+```ts
+readonly audio-plugin set-param: "audioplugin.write" = 'audioplugin.write';
+```
+
+### audio-plugin set-state
+
+```ts
+readonly audio-plugin set-state: "audioplugin.write" = 'audioplugin.write';
+```
+
+### audio-plugin slots
+
+```ts
+readonly audio-plugin slots: "audioplugin.read" = 'audioplugin.read';
+```
 
 ### blend add
 
@@ -233,6 +470,24 @@ readonly blend reorder: "voice.write" = 'voice.write';
 
 ```ts
 readonly blend set: "voice.write" = 'voice.write';
+```
+
+### breath list
+
+```ts
+readonly breath list: "vocalparam.read" = 'vocalparam.read';
+```
+
+### breath remove
+
+```ts
+readonly breath remove: "vocalparam.write" = 'vocalparam.write';
+```
+
+### breath set
+
+```ts
+readonly breath set: "vocalparam.write" = 'vocalparam.write';
 ```
 
 ### canvas effective-size
@@ -301,10 +556,40 @@ readonly choir reorder: "soundsource.write" = 'soundsource.write';
 readonly choir set: "soundsource.write" = 'soundsource.write';
 ```
 
+### chord delete
+
+```ts
+readonly chord delete: "chord.write" = 'chord.write';
+```
+
+### chord insert
+
+```ts
+readonly chord insert: "chord.write" = 'chord.write';
+```
+
+### chord list
+
+```ts
+readonly chord list: "chord.read" = 'chord.read';
+```
+
+### chord set
+
+```ts
+readonly chord set: "chord.write" = 'chord.write';
+```
+
 ### clip audio-content
 
 ```ts
 readonly clip audio-content: "clip.read" = 'clip.read';
+```
+
+### clip beat-content
+
+```ts
+readonly clip beat-content: "clip.read" = 'clip.read';
 ```
 
 ### clip consolidate
@@ -511,12 +796,6 @@ readonly ensemble set: "soundsource.write" = 'soundsource.write';
 readonly export audio: "export.invoke" = 'export.invoke';
 ```
 
-### export fcpxml
-
-```ts
-readonly export fcpxml: "export.invoke" = 'export.invoke';
-```
-
 ### export lrc
 
 ```ts
@@ -535,6 +814,12 @@ readonly export midi: "export.invoke" = 'export.invoke';
 readonly export song-template: "export.invoke" = 'export.invoke';
 ```
 
+### export timeline
+
+```ts
+readonly export timeline: "export.invoke" = 'export.invoke';
+```
+
 ### export video
 
 ```ts
@@ -550,139 +835,145 @@ readonly export vocal-sample: "export.invoke" = 'export.invoke';
 ### fx add
 
 ```ts
-readonly fx add: "fx.write" = 'fx.write';
+readonly fx add: "audioplugin.write" = 'audioplugin.write';
 ```
 
-### fx apply-preset
+### fx apply-chain
 
 ```ts
-readonly fx apply-preset: "fx.write" = 'fx.write';
+readonly fx apply-chain: "audioplugin.write" = 'audioplugin.write';
 ```
 
-### fx get-params
+### fx export-chain
 
 ```ts
-readonly fx get-params: "fx.read" = 'fx.read';
+readonly fx export-chain: "audioplugin.read" = 'audioplugin.read';
 ```
 
-### fx list
+### fx find-chains
 
 ```ts
-readonly fx list: "fx.read" = 'fx.read';
+readonly fx find-chains: "audioplugin.read" = 'audioplugin.read';
 ```
 
-### fx list-available
+### fx import-chain
 
 ```ts
-readonly fx list-available: "fx.read" = 'fx.read';
+readonly fx import-chain: "audioplugin.write" = 'audioplugin.write';
 ```
 
-### fx list-params
+### fx insert-chain
 
 ```ts
-readonly fx list-params: "fx.read" = 'fx.read';
+readonly fx insert-chain: "audioplugin.write" = 'audioplugin.write';
 ```
 
-### fx open-editor
+### fx list-chains
 
 ```ts
-readonly fx open-editor: "ui.control" = 'ui.control';
+readonly fx list-chains: "audioplugin.read" = 'audioplugin.read';
+```
+
+### fx move-chain
+
+```ts
+readonly fx move-chain: "audioplugin.write" = 'audioplugin.write';
 ```
 
 ### fx remove
 
 ```ts
-readonly fx remove: "fx.write" = 'fx.write';
+readonly fx remove: "audioplugin.write" = 'audioplugin.write';
+```
+
+### fx remove-chain
+
+```ts
+readonly fx remove-chain: "audioplugin.write" = 'audioplugin.write';
 ```
 
 ### fx reorder
 
 ```ts
-readonly fx reorder: "fx.write" = 'fx.write';
+readonly fx reorder: "audioplugin.write" = 'audioplugin.write';
 ```
 
-### fx save-preset
+### fx save-chain
 
 ```ts
-readonly fx save-preset: "fx.write" = 'fx.write';
-```
-
-### fx scan
-
-```ts
-readonly fx scan: "fx.write" = 'fx.write';
-```
-
-### fx set
-
-```ts
-readonly fx set: "fx.write" = 'fx.write';
-```
-
-### fx set-param
-
-```ts
-readonly fx set-param: "fx.write" = 'fx.write';
+readonly fx save-chain: "audioplugin.write" = 'audioplugin.write';
 ```
 
 ### fx set-room
 
 ```ts
-readonly fx set-room: "fx.write" = 'fx.write';
+readonly fx set-room: "audioplugin.write" = 'audioplugin.write';
 ```
 
-### generative add-layer
+### generative add-a-layer
 
 ```ts
-readonly generative add-layer: "generative.add-layer" = 'generative.add-layer';
+readonly generative add-a-layer: "generative.add-a-layer" = 'generative.add-a-layer';
 ```
 
-### generative enhance
+### generative inspire-me
 
 ```ts
-readonly generative enhance: "generative.enhance" = 'generative.enhance';
+readonly generative inspire-me: "generative.inspire-me" = 'generative.inspire-me';
 ```
 
-### generative seed-audio
+### generative inspire-me history get
 
 ```ts
-readonly generative seed-audio: "generative.seed-audio" = 'generative.seed-audio';
+readonly generative inspire-me history get: "generative-history.read" = 'generative-history.read';
 ```
 
-### generative song
+### generative inspire-me history list
 
 ```ts
-readonly generative song: "generative.song" = 'generative.song';
+readonly generative inspire-me history list: "generative-history.read" = 'generative-history.read';
 ```
 
-### generative sound-effects
+### generative music-enhancer
 
 ```ts
-readonly generative sound-effects: "generative.sound-effects" = 'generative.sound-effects';
+readonly generative music-enhancer: "generative.music-enhancer" = 'generative.music-enhancer';
 ```
 
-### generative stem-split
+### generative music-enhancer history get
 
 ```ts
-readonly generative stem-split: "generative.stem-split" = 'generative.stem-split';
+readonly generative music-enhancer history get: "generative-history.read" = 'generative-history.read';
 ```
 
-### generative text2sample
+### generative music-enhancer history list
 
 ```ts
-readonly generative text2sample: "generative.text2sample" = 'generative.text2sample';
+readonly generative music-enhancer history list: "generative-history.read" = 'generative-history.read';
 ```
 
-### generative vocal2midi
+### generative stem-splitter
 
 ```ts
-readonly generative vocal2midi: "generative.vocal2midi" = 'generative.vocal2midi';
+readonly generative stem-splitter: "generative.stem-splitter" = 'generative.stem-splitter';
 ```
 
-### generative voice-change
+### generative vocal-to-midi
 
 ```ts
-readonly generative voice-change: "generative.voice-change" = 'generative.voice-change';
+readonly generative vocal-to-midi: "generative.vocal-to-midi" = 'generative.vocal-to-midi';
+```
+
+### generative voice-changer convert
+
+```ts
+readonly generative voice-changer convert: "generative.voice-changer" = 'generative.voice-changer';
+```
+
+### generative voice-changer models
+
+```ts
+readonly generative voice-changer models: "generative.voice-changer" = 'generative.voice-changer';
 ```
 
 ### history list
@@ -709,18 +1000,6 @@ readonly history undo: "history.control" = 'history.control';
 readonly import file: "import.invoke" = 'import.invoke';
 ```
 
-### instrument disable
-
-```ts
-readonly instrument disable: "soundsource.write" = 'soundsource.write';
-```
-
-### instrument enable
-
-```ts
-readonly instrument enable: "soundsource.write" = 'soundsource.write';
-```
-
 ### instrument set
 
 ```ts
@@ -737,6 +1016,12 @@ readonly job cancel: "job.control" = 'job.control';
 
 ```ts
 readonly job discard-result: "job.control" = 'job.control';
+```
+
+### job download
+
+```ts
+readonly job download: "job.control" = 'job.control';
 ```
 
 ### job get
@@ -767,6 +1052,60 @@ readonly job results: "job.read" = 'job.read';
 
 ```ts
 readonly job wait: "job.read" = 'job.read';
+```
+
+### lyric fill
+
+```ts
+readonly lyric fill: "lyric.write" = 'lyric.write';
+```
+
+### midiparam clear
+
+```ts
+readonly midiparam clear: "midiparam.write" = 'midiparam.write';
+```
+
+### midiparam list-lanes
+
+```ts
+readonly midiparam list-lanes: "midiparam.read" = 'midiparam.read';
+```
+
+### midiparam read
+
+```ts
+readonly midiparam read: "midiparam.read" = 'midiparam.read';
+```
+
+### midiparam remove-point
+
+```ts
+readonly midiparam remove-point: "midiparam.write" = 'midiparam.write';
+```
+
+### midiparam set-point
+
+```ts
+readonly midiparam set-point: "midiparam.write" = 'midiparam.write';
+```
+
+### midiparam set-velocity
+
+```ts
+readonly midiparam set-velocity: "midiparam.write" = 'midiparam.write';
+```
+
+### midiparam velocity
+
+```ts
+readonly midiparam velocity: "midiparam.read" = 'midiparam.read';
+```
+
+### midiparam write
+
+```ts
+readonly midiparam write: "midiparam.write" = 'midiparam.write';
 ```
 
 ### note add
@@ -805,16 +1144,76 @@ readonly note resize: "note.write" = 'note.write';
 readonly note set-articulation: "note.write" = 'note.write';
 ```
 
-### note set-lyric
+### note set-grapheme
 
 ```ts
-readonly note set-lyric: "note.write" = 'note.write';
+readonly note set-grapheme: "note.write" = 'note.write';
+```
+
+### note set-language
+
+```ts
+readonly note set-language: "note.write" = 'note.write';
 ```
 
 ### note split
 
 ```ts
 readonly note split: "note.write" = 'note.write';
+```
+
+### phoneme g2p
+
+```ts
+readonly phoneme g2p: "lyric.read" = 'lyric.read';
+```
+
+### phoneme inventory
+
+```ts
+readonly phoneme inventory: "lyric.read" = 'lyric.read';
+```
+
+### phoneme list
+
+```ts
+readonly phoneme list: "lyric.read" = 'lyric.read';
+```
+
+### phoneme move-boundary
+
+```ts
+readonly phoneme move-boundary: "lyric.write" = 'lyric.write';
+```
+
+### phoneme reset
+
+```ts
+readonly phoneme reset: "lyric.write" = 'lyric.write';
+```
+
+### phoneme reset-override
+
+```ts
+readonly phoneme reset-override: "lyric.write" = 'lyric.write';
+```
+
+### phoneme reset-timing
+
+```ts
+readonly phoneme reset-timing: "lyric.write" = 'lyric.write';
+```
+
+### phoneme set
+
+```ts
+readonly phoneme set: "lyric.write" = 'lyric.write';
+```
+
+### phoneme set-consonant-timing
+
+```ts
+readonly phoneme set-consonant-timing: "lyric.write" = 'lyric.write';
 ```
 
 ### project collect-save
@@ -955,6 +1354,12 @@ readonly tempo apply-beat-analysis: "tempo.applyV2" = 'tempo.applyV2';
 readonly tempo get: "tempo.read" = 'tempo.read';
 ```
 
+### tempo get-analysis
+
+```ts
+readonly tempo get-analysis: "tempo.read" = 'tempo.read';
+```
+
 ### tempo points
 
 ```ts
@@ -1013,6 +1418,30 @@ readonly timesig set: "timesig.write" = 'timesig.write';
 
 ```ts
 readonly timesig set-at: "timesig.write" = 'timesig.write';
+```
+
+### track audition note
+
+```ts
+readonly track audition note: "track.audition" = 'track.audition';
+```
+
+### track audition note-clear
+
+```ts
+readonly track audition note-clear: "track.audition" = 'track.audition';
+```
+
+### track audition note-off
+
+```ts
+readonly track audition note-off: "track.audition" = 'track.audition';
+```
+
+### track audition note-on
+
+```ts
+readonly track audition note-on: "track.audition" = 'track.audition';
 ```
 
 ### track create
@@ -1181,6 +1610,18 @@ readonly vocalparam layers: "vocalparam.read" = 'vocalparam.read';
 
 ```ts
 readonly vocalparam read: "vocalparam.read" = 'vocalparam.read';
+```
+
+### vocalparam set-voicing
+
+```ts
+readonly vocalparam set-voicing: "vocalparam.write" = 'vocalparam.write';
+```
+
+### vocalparam voicing
+
+```ts
+readonly vocalparam voicing: "vocalparam.read" = 'vocalparam.read';
 ```
 
 ### vocalparam write

@@ -9,10 +9,14 @@ Success payload of `fx add`.
 ```ts
 insert: {
   bypassed: boolean;
+  editorState?: {
+     open: boolean;
+     parked: boolean;
+  };
   enabled: boolean;
   format?: "native" | "vst3" | "vst2" | "au";
   hasEditor?: boolean;
-  insertId: string;
+  instanceId: string;
   missing: boolean;
   name: string;
   presetName?: string;
@@ -22,7 +26,7 @@ insert: {
 };
 ```
 
-One insert as every chain-shaped read and write reports it.
+One insert as every chain-shaped read and write reports it — `fx` results and the `audio-plugin slots` listing alike.
 
 #### bypassed
 
@@ -31,6 +35,33 @@ bypassed: boolean;
 ```
 
 Whether the insert is bypassed. Bypass and enable are separate switches on this surface because they are separate in the mixer.
+
+#### editorState?
+
+```ts
+optional editorState?: {
+  open: boolean;
+  parked: boolean;
+};
+```
+
+Where a mount left one plugin's editor, as the mount verbs — `fx add`, `fx insert-chain`, `fx apply-chain` — report it per plugin they mounted (ADR 0152 §5). The pair is `audio-plugin editor info`'s `open` / `parked` with the same meanings, read at the moment the mount completes.
+
+##### editorState.open
+
+```ts
+open: boolean;
+```
+
+True when the mount left the editor on screen: an external plugin's window coming up on the caret's chain, or a built-in's body expanded on the FX panel showing its chain. False for a missing or ghost plugin, which has nothing behind it to show.
+
+##### editorState.parked
+
+```ts
+parked: boolean;
+```
+
+True when the mount left the editor PARKED: an external plugin whose track now remembers it open while the caret is on another track, so nothing is on screen for it and `audio-plugin editor open` is what shows it (ADR 0152 §2). Never true for a built-in's inline body — only a window parks.
 
 #### enabled
 
@@ -46,7 +77,7 @@ Whether the insert is processing.
 optional format?: "native" | "vst3" | "vst2" | "au";
 ```
 
-The plugin formats an entry can be in. `native` is ACE's own built-in set; which of the others exist depends on the platform (no AU on Windows).
+The plugin formats an entry can be in. `native` is ACE's own built-in effect set; which of the others exist depends on the platform (no AU on Windows). An external instrument is always one of the third-party formats.
 
 #### hasEditor?
 
@@ -54,12 +85,12 @@ The plugin formats an entry can be in. `native` is ACE's own built-in set; which
 optional hasEditor?: boolean;
 ```
 
-Whether this insert answers `fx open-editor` — true only for a loaded third-party plugin.
+True for a loaded third-party plugin — not a built-in, not missing, not a ghost. The `fx` editor pair is not gated on this: a missing plugin reads false here and its window still opens, on the install page.
 
-#### insertId
+#### instanceId
 
 ```ts
-insertId: string;
+instanceId: string;
 ```
 
 Instance id addressing this entry. Session-scoped: the backend re-mints it on every re-insert, including project load.
@@ -94,7 +125,7 @@ Name of the last-applied library preset, absent for none.
 slot: number;
 ```
 
-0-based position in the chain.
+0-based position in the chain. An integer, and deliberately so: the instrument slot is never numbered among these, so a caller walking positions can only ever name a chain insert (ADR 0144 §2).
 
 #### typeId
 
@@ -102,7 +133,7 @@ slot: number;
 typeId: string;
 ```
 
-Which effect this is, in the `fx list-available` namespace.
+Which effect this is, in the `audio-plugin list-available` namespace.
 
 #### vendor?
 
@@ -130,7 +161,7 @@ How many inserts the chain holds afterwards.
 optional rack?: "pre";
 ```
 
-Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header.
+Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see `Fx.acerpc`.
 
 ***
 

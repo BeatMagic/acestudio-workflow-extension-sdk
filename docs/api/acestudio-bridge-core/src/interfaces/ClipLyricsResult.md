@@ -4,6 +4,16 @@ Success payload of `clip lyrics`.
 
 ## Properties
 
+### clipUuid
+
+```ts
+clipUuid: string;
+```
+
+UUID of the clip read, with braces — the `clipUuid` a sentence-indexed `lyric fill` takes.
+
+***
+
 ### filteredRange?
 
 ```ts
@@ -48,7 +58,7 @@ Coordinate system of `begin`/`end`: `project` or `clip-local`.
 fingerprint: Fingerprint;
 ```
 
-Content fingerprint of the whole clip's note content (ADR 0088 §5) — lyrics are note content, read at sentence granularity. Carry it back as the `fingerprint` argument on a `note` write or `clip replace-content` to fail STALE_WRITE instead of overwriting edits made since this read. Always covers the full clip, even when the read was range-filtered.
+Content fingerprint of the whole clip's note content (ADR 0088 §5) — lyrics are note content, read at sentence granularity. Carry it back as the `fingerprint` argument on a `note` write, `lyric fill`, or `clip replace-content` to fail STALE_WRITE instead of overwriting edits made since this read — including a fill addressed by `index`, whose sentence boundaries move only when note content does. Always covers the full clip, even when the read was range-filtered.
 
 ***
 
@@ -66,13 +76,23 @@ Number of sentences returned.
 
 ```ts
 sentences: {
+  index: number;
   lyric: string;
+  noteUuids: string[];
   sentenceBegin: number;
   sentenceEnd: number;
 }[];
 ```
 
 Lyric sentences overlapping the filter range.
+
+#### index
+
+```ts
+index: number;
+```
+
+The sentence's index in the clip's shipped split. NOT this row's position in `sentences`: a range filter skips sentences without renumbering the ones it keeps.
 
 #### lyric
 
@@ -81,6 +101,14 @@ lyric: string;
 ```
 
 Merged lyric text for the sentence.
+
+#### noteUuids
+
+```ts
+noteUuids: string[];
+```
+
+UUIDs of the notes the sentence is made of, in clip order, with braces. Address them with the `note` writes, or hand them to `lyric fill` as its `noteUuids`.
 
 #### sentenceBegin
 

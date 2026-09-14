@@ -7,7 +7,7 @@ The `selection` operations, mirroring the canonical operation tree 1:1, and the 
 ### get()
 
 ```ts
-get(params, options?): Promise<SelectionGetResult>;
+get(params?, options?): Promise<SelectionGetResult>;
 ```
 
 Read the current selection in the arrangement or editor scope.
@@ -16,7 +16,7 @@ Requires the `selection.read` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`SelectionGetParams`](SelectionGetParams.md)
 
@@ -58,7 +58,7 @@ Requires the `selection.read` capability — an ungranted subscription is refuse
 ### set()
 
 ```ts
-set(params, options?): Promise<SelectionSetResult>;
+set(params?, options?): Promise<SelectionSetResult>;
 ```
 
 Set the selection in the arrangement or editor scope.
@@ -67,7 +67,7 @@ Requires the `selection.write` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`SelectionSetParams`](SelectionSetParams.md)
 

@@ -30,7 +30,7 @@ Track color as a hex string, e.g. #ec4f44. Omitted for an empty slot and for the
 optional defaultArticulation?: string;
 ```
 
-Default articulation for new notes. Instrument tracks only.
+Default articulation for new notes, as an articulation display name — the one a note added without an `articulation` inherits. Instrument tracks only; a track left on the default articulation reads as its display name, currently "Smart".
 
 ***
 
@@ -73,7 +73,7 @@ Mixer settings, as `track get` reports them. Only `gain` is universal. The maste
 gain: number;
 ```
 
-Volume gain: 0.0 and above; 1.0 = unity. The one setting the master bus has.
+Volume gain in **decibels**: -70 (effectively silent) to +6, with 0 = unity and negative values attenuating. The one setting the master bus has. The same range a write accepts; a value reported here can be handed straight back to `track set`.
 
 #### mute?
 
@@ -89,7 +89,7 @@ Whether the track is muted. Omitted for the master.
 optional pan?: number;
 ```
 
-Stereo pan: -1.0 (left) to 1.0 (right). Omitted for the master.
+Stereo pan on the mixer's **±10 scale**: -10 (full left) to +10 (full right), 0 = center. This is the scale the mixer strip displays, NOT the normalized -1.0…1.0 pan convention some other DAWs use. Omitted for the master.
 
 #### solo?
 
@@ -130,7 +130,7 @@ optional recordInput?: {
   midiInput?: {
      channel?: number;
      deviceName?: string;
-     sourceType: "keyboard" | "custom" | "none" | "all";
+     sourceType: "none" | "keyboard" | "custom" | "all";
   };
   record: boolean;
   recordMode?: "monophonic" | "polyphonic";
@@ -161,7 +161,7 @@ Whether input monitoring is enabled.
 optional midiInput?: {
   channel?: number;
   deviceName?: string;
-  sourceType: "keyboard" | "custom" | "none" | "all";
+  sourceType: "none" | "keyboard" | "custom" | "all";
 };
 ```
 
@@ -186,7 +186,7 @@ Custom MIDI device name. Present only when `sourceType` is custom.
 ##### midiInput.sourceType
 
 ```ts
-sourceType: "keyboard" | "custom" | "none" | "all";
+sourceType: "none" | "keyboard" | "custom" | "all";
 ```
 
 Where a note track's MIDI takes its input from. `custom` is the only value that carries a device: it means one named device, reported in the sibling `deviceName`. `all` listens to every connected device at once and `none` listens to nothing, so neither names one. `keyboard` is the computer keyboard playing notes, not a MIDI device at all. The values are the same vocabulary `track set-input`'s `midiDevice` takes, so a value read here can be handed straight back to a write.
@@ -305,7 +305,7 @@ optional metadata?: {
 };
 ```
 
-Group-level settings for a choir/ensemble track, as `track get` reports it.
+Group-level settings for a choir/ensemble track, as `track get` reports it. The same values and domains `choir get` / `ensemble get` report.
 
 ##### metadata.memberCount?
 
@@ -321,7 +321,7 @@ Number of members in the group.
 optional offset?: number;
 ```
 
-Timing offset setting for the group.
+Timing offset setting: a proportion of the engine's maximum doubling offset, 0 to 0.3, default 0.08 (`EnsembleConfigInfo::kOffsetRange`). Not a time. The UI shows it as 0% to 30%.
 
 ##### metadata.spread?
 
@@ -329,7 +329,7 @@ Timing offset setting for the group.
 optional spread?: number;
 ```
 
-Stereo spread setting for the group.
+Stereo spread setting on the UI's Spread scale: 0 to 10, default 3 (`EnsembleConfigInfo::kSpreadRange`). Not a normalized 0 to 1 width.
 
 #### name?
 

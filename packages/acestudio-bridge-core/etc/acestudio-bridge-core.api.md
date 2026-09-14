@@ -19,6 +19,760 @@ export type AtRootOf<Rows extends SurfaceRow, T extends string> = Extract<Reacha
 }>;
 
 // @public
+export interface AudioPluginApplyPresetParams {
+    instance?: string;
+    preset: string;
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface AudioPluginApplyPresetResult {
+    instanceId: string;
+    preset: string;
+}
+
+// @public
+export interface AudioPluginEditorCaptureParams {
+    instance?: string;
+    maxWidth?: number;
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    timeoutMs?: number;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface AudioPluginEditorCaptureResult {
+    height: number;
+    instanceId: string;
+    name?: string;
+    png: TypedArrayFor<'u8'>;
+    scale: number;
+    width: number;
+}
+
+// @public
+export interface AudioPluginEditorClickParams {
+    button?: 'left' | 'right';
+    instance?: string;
+    modifiers?: ('shift' | 'ctrl' | 'alt' | 'meta')[];
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    timeoutMs?: number;
+    trackIndex?: number;
+    trackUuid?: string;
+    x: number;
+    y: number;
+}
+
+// @public
+export interface AudioPluginEditorClickResult {
+    instanceId: string;
+    name?: string;
+}
+
+// @public
+export interface AudioPluginEditorCloseParams {
+    force?: boolean;
+    instance?: string;
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface AudioPluginEditorCloseResult {
+    alreadyClosed: boolean;
+    instanceId: string;
+    name?: string;
+}
+
+// @public
+export interface AudioPluginEditorDblclickParams {
+    button?: 'left' | 'right';
+    instance?: string;
+    modifiers?: ('shift' | 'ctrl' | 'alt' | 'meta')[];
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    timeoutMs?: number;
+    trackIndex?: number;
+    trackUuid?: string;
+    x: number;
+    y: number;
+}
+
+// @public
+export interface AudioPluginEditorDblclickResult {
+    instanceId: string;
+    name?: string;
+}
+
+// @public
+export interface AudioPluginEditorDragParams {
+    button?: 'left' | 'right';
+    fromX: number;
+    fromY: number;
+    instance?: string;
+    modifiers?: ('shift' | 'ctrl' | 'alt' | 'meta')[];
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    timeoutMs?: number;
+    to: {
+        durationMs?: number;
+        x: number;
+        y: number;
+    }[];
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface AudioPluginEditorDragResult {
+    instanceId: string;
+    name?: string;
+}
+
+// @public
+export interface AudioPluginEditorHoverParams {
+    instance?: string;
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    timeoutMs?: number;
+    trackIndex?: number;
+    trackUuid?: string;
+    x: number;
+    y: number;
+}
+
+// @public
+export interface AudioPluginEditorHoverResult {
+    instanceId: string;
+    name?: string;
+}
+
+// @public
+export interface AudioPluginEditorInfoParams {
+    instance?: string;
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface AudioPluginEditorInfoResult {
+    instanceId: string;
+    kind: 'inline' | 'vendor' | 'generic' | 'unavailable';
+    name?: string;
+    open: boolean;
+    parked: boolean;
+    resizable?: boolean;
+    scale?: number;
+    size?: {
+        height: number;
+        width: number;
+    };
+    sizeConstraints?: {
+        aspectRatio?: number;
+        maxHeight: number;
+        maxWidth: number;
+        minHeight: number;
+        minWidth: number;
+    };
+}
+
+// @public
+export interface AudioPluginEditorKeyParams {
+    instance?: string;
+    key: string;
+    modifiers?: ('shift' | 'ctrl' | 'alt' | 'meta')[];
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    timeoutMs?: number;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface AudioPluginEditorKeyResult {
+    instanceId: string;
+    name?: string;
+}
+
+// @public
+export interface AudioPluginEditorOpenParams {
+    instance?: string;
+    noReveal?: boolean;
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface AudioPluginEditorOpenResult {
+    alreadyOpen: boolean;
+    instanceId: string;
+    name?: string;
+    revealed: boolean;
+}
+
+// @public
+export interface AudioPluginEditorResizeParams {
+    height: number;
+    instance?: string;
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    timeoutMs?: number;
+    trackIndex?: number;
+    trackUuid?: string;
+    width: number;
+}
+
+// @public
+export interface AudioPluginEditorResizeResult {
+    instanceId: string;
+    name?: string;
+    previousSize: {
+        height: number;
+        width: number;
+    };
+    size: {
+        height: number;
+        width: number;
+    };
+}
+
+// @public
+export interface AudioPluginEditorTypeParams {
+    charDelayMs?: number;
+    instance?: string;
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    text: string;
+    timeoutMs?: number;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface AudioPluginEditorTypeResult {
+    instanceId: string;
+    name?: string;
+}
+
+// @public
+export interface AudioPluginEditorWheelParams {
+    deltaX?: number;
+    deltaY?: number;
+    instance?: string;
+    modifiers?: ('shift' | 'ctrl' | 'alt' | 'meta')[];
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    timeoutMs?: number;
+    trackIndex?: number;
+    trackUuid?: string;
+    x: number;
+    y: number;
+}
+
+// @public
+export interface AudioPluginEditorWheelResult {
+    instanceId: string;
+    name?: string;
+}
+
+// @public
+export interface AudioPluginExportPresetParams {
+    format?: 'ace' | 'plugin-format';
+    instance?: string;
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface AudioPluginExportPresetResult {
+    blob: TypedArrayFor<'u8'>;
+    extension: string;
+    format: 'ace' | 'plugin-format';
+    instanceId: string;
+    presetName?: string;
+}
+
+// @public
+export interface AudioPluginFindPresetsParams {
+    instance?: string;
+    name: string;
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface AudioPluginFindPresetsResult {
+    instanceId: string;
+    name?: string;
+    presets: {
+        factory: boolean;
+        folder: string;
+        name: string;
+        path: string;
+        pluginDefault: boolean;
+        preset: string;
+        updatedAtMs: number;
+    }[];
+    query: string;
+    typeId?: string;
+}
+
+// @public
+export interface AudioPluginGetParamsParams {
+    filter?: string;
+    instance?: string;
+    rack?: 'pre';
+    regex?: boolean;
+    region?: string;
+    slot?: string;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface AudioPluginGetParamsResult {
+    filter?: string;
+    fingerprint: Fingerprint;
+    instanceId: string;
+    name?: string;
+    paramCount: number;
+    params: {
+        automatable: boolean;
+        choices?: string[];
+        defaultValue?: number;
+        group?: string;
+        index: number;
+        kind: 'continuous' | 'stepped' | 'boolean' | 'choice';
+        max?: number;
+        min?: number;
+        name: string;
+        paramId: string;
+        stepCount?: number;
+        unit?: string;
+        value: number;
+        valueText: string;
+    }[];
+    totalParamCount: number;
+    typeId?: string;
+}
+
+// @public
+export interface AudioPluginGetStateParams {
+    instance?: string;
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface AudioPluginGetStateResult {
+    blob: TypedArrayFor<'u8'>;
+    dirty: boolean;
+    instanceId: string;
+    presetName?: string;
+}
+
+// @public
+export interface AudioPluginImportPresetParams {
+    blob: TypedArrayFor<'u8'>;
+    instance?: string;
+    name?: string;
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface AudioPluginImportPresetResult {
+    format: 'ace' | 'plugin-format';
+    instanceId: string;
+    presetName?: string;
+}
+
+// @public
+export interface AudioPluginListAvailableParams {
+    category?: string;
+    format?: 'native' | 'vst3' | 'vst2' | 'au';
+    role?: 'effect' | 'instrument';
+    search?: string;
+    vendor?: string;
+}
+
+// @public
+export interface AudioPluginListAvailableResult {
+    pluginCount: number;
+    plugins: {
+        category?: string;
+        format: 'native' | 'vst3' | 'vst2' | 'au';
+        name: string;
+        role: 'effect' | 'instrument';
+        tags?: string[];
+        typeId: string;
+        vendor?: string;
+        version?: string;
+    }[];
+    scanning: boolean;
+    totalPluginCount: number;
+}
+
+// @public
+export interface AudioPluginListParamsParams {
+    detail?: boolean;
+    filter?: string;
+    instance?: string;
+    rack?: 'pre';
+    regex?: boolean;
+    region?: string;
+    slot?: string;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface AudioPluginListParamsResult {
+    filter?: string;
+    instanceId: string;
+    name?: string;
+    names?: string[];
+    paramCount: number;
+    params?: {
+        automatable: boolean;
+        choices?: string[];
+        group?: string;
+        index: number;
+        kind: 'continuous' | 'stepped' | 'boolean' | 'choice';
+        max?: number;
+        min?: number;
+        name: string;
+        paramId: string;
+        stepCount?: number;
+        unit?: string;
+    }[];
+    totalParamCount: number;
+    typeId?: string;
+}
+
+// @public
+export interface AudioPluginListPresetsParams {
+    folder?: string;
+    instance?: string;
+    rack?: 'pre';
+    recursive?: boolean;
+    region?: string;
+    slot?: string;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface AudioPluginListPresetsResult {
+    folder: string;
+    folders: {
+        factory: boolean;
+        folder: string;
+        path?: string;
+    }[];
+    instanceId: string;
+    name?: string;
+    presets: {
+        factory: boolean;
+        folder: string;
+        name: string;
+        path: string;
+        pluginDefault: boolean;
+        preset: string;
+        updatedAtMs: number;
+    }[];
+    typeId?: string;
+}
+
+// @public
+export interface AudioPluginMovePresetParams {
+    instance?: string;
+    preset: string;
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    to: string;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface AudioPluginMovePresetResult {
+    path: string;
+    preset: string;
+    previous: string;
+}
+
+// @public
+export interface AudioPluginOperations {
+    applyPreset(params: AudioPluginApplyPresetParams, options?: PreconditionCallOptions): Promise<AudioPluginApplyPresetResult>;
+    editorCapture(params?: AudioPluginEditorCaptureParams, options?: CallOptions): Promise<AudioPluginEditorCaptureResult>;
+    editorClick(params: AudioPluginEditorClickParams, options?: MutatingCallOptions): Promise<AudioPluginEditorClickResult>;
+    editorClose(params?: AudioPluginEditorCloseParams, options?: MutatingCallOptions): Promise<AudioPluginEditorCloseResult>;
+    editorDblclick(params: AudioPluginEditorDblclickParams, options?: MutatingCallOptions): Promise<AudioPluginEditorDblclickResult>;
+    editorDrag(params: AudioPluginEditorDragParams, options?: MutatingCallOptions): Promise<AudioPluginEditorDragResult>;
+    editorHover(params: AudioPluginEditorHoverParams, options?: MutatingCallOptions): Promise<AudioPluginEditorHoverResult>;
+    editorInfo(params?: AudioPluginEditorInfoParams, options?: CallOptions): Promise<AudioPluginEditorInfoResult>;
+    editorKey(params: AudioPluginEditorKeyParams, options?: MutatingCallOptions): Promise<AudioPluginEditorKeyResult>;
+    editorOpen(params?: AudioPluginEditorOpenParams, options?: MutatingCallOptions): Promise<AudioPluginEditorOpenResult>;
+    editorResize(params: AudioPluginEditorResizeParams, options?: MutatingCallOptions): Promise<AudioPluginEditorResizeResult>;
+    editorType(params: AudioPluginEditorTypeParams, options?: MutatingCallOptions): Promise<AudioPluginEditorTypeResult>;
+    editorWheel(params: AudioPluginEditorWheelParams, options?: MutatingCallOptions): Promise<AudioPluginEditorWheelResult>;
+    exportPreset(params?: AudioPluginExportPresetParams, options?: CallOptions): Promise<AudioPluginExportPresetResult>;
+    findPresets(params: AudioPluginFindPresetsParams, options?: CallOptions): Promise<AudioPluginFindPresetsResult>;
+    getParams(params?: AudioPluginGetParamsParams, options?: CallOptions): Promise<AudioPluginGetParamsResult>;
+    getState(params?: AudioPluginGetStateParams, options?: CallOptions): Promise<AudioPluginGetStateResult>;
+    importPreset(params: AudioPluginImportPresetParams, options?: MutatingCallOptions): Promise<AudioPluginImportPresetResult>;
+    listAvailable(params?: AudioPluginListAvailableParams, options?: CallOptions): Promise<AudioPluginListAvailableResult>;
+    listParams(params?: AudioPluginListParamsParams, options?: CallOptions): Promise<AudioPluginListParamsResult>;
+    listPresets(params?: AudioPluginListPresetsParams, options?: CallOptions): Promise<AudioPluginListPresetsResult>;
+    movePreset(params: AudioPluginMovePresetParams, options?: MutatingCallOptions): Promise<AudioPluginMovePresetResult>;
+    removePreset(params: AudioPluginRemovePresetParams, options?: MutatingCallOptions): Promise<AudioPluginRemovePresetResult>;
+    savePreset(params: AudioPluginSavePresetParams, options?: MutatingCallOptions): Promise<AudioPluginSavePresetResult>;
+    scan(params?: AudioPluginScanParams, options?: MutatingCallOptions): Promise<AudioPluginScanResult>;
+    set(params?: AudioPluginSetParams, options?: MutatingCallOptions): Promise<AudioPluginSetResult>;
+    setParam(params: AudioPluginSetParamParams, options?: PreconditionCallOptions): Promise<AudioPluginSetParamResult>;
+    setState(params: AudioPluginSetStateParams, options?: MutatingCallOptions): Promise<AudioPluginSetStateResult>;
+    slots(params?: AudioPluginSlotsParams, options?: CallOptions): Promise<AudioPluginSlotsResult>;
+}
+
+// @public
+export interface AudioPluginRemovePresetParams {
+    instance?: string;
+    preset: string;
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface AudioPluginRemovePresetResult {
+    path: string;
+    removed: 'preset' | 'folder';
+    target: string;
+}
+
+// @public
+export interface AudioPluginSavePresetParams {
+    instance?: string;
+    overwrite?: boolean;
+    preset: string;
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface AudioPluginSavePresetResult {
+    path: string;
+    preset: string;
+    replaced: boolean;
+}
+
+// @public
+export interface AudioPluginScanParams {
+    full?: boolean;
+}
+
+// @public
+export interface AudioPluginScanResult {
+    full: boolean;
+    jobClass: string;
+    jobId: string;
+}
+
+// @public
+export interface AudioPluginSetParamParams {
+    display?: string;
+    instance?: string;
+    param: string;
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    trackIndex?: number;
+    trackUuid?: string;
+    value?: number;
+}
+
+// @public
+export interface AudioPluginSetParamResult {
+    instanceId: string;
+    param: {
+        automatable: boolean;
+        choices?: string[];
+        defaultValue?: number;
+        group?: string;
+        index: number;
+        kind: 'continuous' | 'stepped' | 'boolean' | 'choice';
+        max?: number;
+        min?: number;
+        name: string;
+        paramId: string;
+        stepCount?: number;
+        unit?: string;
+        value: number;
+        valueText: string;
+    };
+}
+
+// @public
+export interface AudioPluginSetParams {
+    bypassed?: boolean;
+    enabled?: boolean;
+    instance?: string;
+    name?: string;
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface AudioPluginSetResult {
+    insert?: {
+        bypassed: boolean;
+        editorState?: {
+            open: boolean;
+            parked: boolean;
+        };
+        enabled: boolean;
+        format?: 'native' | 'vst3' | 'vst2' | 'au';
+        hasEditor?: boolean;
+        instanceId: string;
+        missing: boolean;
+        name: string;
+        presetName?: string;
+        slot: number;
+        typeId: string;
+        vendor?: string;
+    };
+    insertCount?: number;
+    instrument?: {
+        enabled?: boolean;
+        format?: 'native' | 'vst3' | 'vst2' | 'au';
+        hasEditor?: boolean;
+        midiChannel?: string;
+        missing?: boolean;
+        mounted: boolean;
+        name?: string;
+        slot: string;
+        typeId?: string;
+        vendor?: string;
+    };
+    rack?: 'pre';
+    region?: string;
+    trackIndex?: number;
+    trackUuid: string;
+}
+
+// @public
+export interface AudioPluginSetStateParams {
+    blob: TypedArrayFor<'u8'>;
+    instance?: string;
+    name?: string;
+    rack?: 'pre';
+    region?: string;
+    slot?: string;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface AudioPluginSetStateResult {
+    instanceId: string;
+    presetName?: string;
+}
+
+// @public
+export interface AudioPluginSlotsParams {
+    rack?: 'pre';
+    region?: string;
+    role?: 'effect' | 'instrument';
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface AudioPluginSlotsResult {
+    insertCount: number;
+    inserts: {
+        bypassed: boolean;
+        editorState?: {
+            open: boolean;
+            parked: boolean;
+        };
+        enabled: boolean;
+        format?: 'native' | 'vst3' | 'vst2' | 'au';
+        hasEditor?: boolean;
+        instanceId: string;
+        missing: boolean;
+        name: string;
+        presetName?: string;
+        slot: number;
+        typeId: string;
+        vendor?: string;
+    }[];
+    instrument?: {
+        enabled?: boolean;
+        format?: 'native' | 'vst3' | 'vst2' | 'au';
+        hasEditor?: boolean;
+        midiChannel?: string;
+        missing?: boolean;
+        mounted: boolean;
+        name?: string;
+        slot: string;
+        typeId?: string;
+        vendor?: string;
+    };
+    rack?: 'pre';
+    region?: string;
+    trackIndex?: number;
+    trackUuid: string;
+}
+
+// @public
 export interface BlendAddParams {
     at?: number;
     blend?: string;
@@ -338,6 +1092,79 @@ export interface BlendSetResult {
 }
 
 // @public
+export interface BreathListParams {
+    clipUuid: string;
+}
+
+// @public
+export interface BreathListResult {
+    breathCount: number;
+    clipUuid: string;
+    fingerprint: Fingerprint;
+    // (undocumented)
+    noteCount: number;
+    notes: {
+        drawnSec: number;
+        effectiveSec: number;
+        hasBreath: boolean;
+        insertableSpaceSec: number;
+        maxLenSec: number;
+        minLenSec: number;
+        noteStartSec: number;
+        noteUuid: string;
+        overlapSec: number;
+        pos: number;
+        requestedSec: number;
+        shown: boolean;
+    }[];
+    shownCount: number;
+}
+
+// @public
+export interface BreathOperations {
+    list(params: BreathListParams, options?: CallOptions): Promise<BreathListResult>;
+    remove(params: BreathRemoveParams, options?: PreconditionCallOptions): Promise<BreathRemoveResult>;
+    set(params: BreathSetParams, options?: PreconditionCallOptions): Promise<BreathSetResult>;
+}
+
+// @public
+export interface BreathRemoveParams {
+    noteUuids: string[];
+}
+
+// @public
+export interface BreathRemoveResult {
+    clipUuid: string;
+    removedCount: number;
+    removedNoteUuids: string[];
+    // (undocumented)
+    skippedCount: number;
+    skippedNoteUuids: string[];
+}
+
+// @public
+export interface BreathSetParams {
+    lenSec: number;
+    noteUuids: string[];
+}
+
+// @public
+export interface BreathSetResult {
+    clampedCount: number;
+    clipUuid: string;
+    notes: {
+        clampedBy: 'none' | 'min' | 'max' | 'wall';
+        drawnSec: number;
+        effectiveSec: number;
+        noteUuid: string;
+        overlapSec: number;
+        requestedSec: number;
+        shown: boolean;
+    }[];
+    updatedCount: number;
+}
+
+// @public
 export interface BridgeConnection<Bindings = PublicBindings> {
     readonly client: Bindings;
     close(): void;
@@ -365,7 +1192,7 @@ export class BridgeError<C extends AnyBridgeErrorCode = AnyBridgeErrorCode> exte
 }
 
 // @public
-export type BridgeErrorCode = 'ALREADY_RECORDING' | 'AMBIGUOUS_SOURCE' | 'ANALYSIS_UNUSABLE' | 'BAD_ARGS' | 'BRACKET_OPEN' | 'BRIDGE_UNREACHABLE' | 'CAPABILITY_DENIED' | 'CAPABILITY_OUT_OF_SURFACE' | 'CHAIN_NOT_GROWN' | 'CLIP_OVERLAP' | 'CLIP_RANGE' | 'COLLECT_FAILED' | 'CONFIRMATION_REQUIRED' | 'CREATE_TIMEOUT' | 'CREDIT_INSUFFICIENT' | 'EDITOR_NOT_READY' | 'EDIT_TIMEOUT' | 'EXPORT_IN_PROGRESS' | 'EXPORT_START_FAILED' | 'FILE_NOT_FOUND' | 'FINGERPRINT_SCOPE_MISMATCH' | 'FIXTURE_FAILED' | 'FLUSH_TIMEOUT' | 'FORMAT_UNAVAILABLE' | 'HANDLER_FAILED' | 'IMPORT_FAILED' | 'INSERT_FAILED' | 'INVALID_ARG' | 'IO_ERROR' | 'JOB_NOT_CANCELLABLE' | 'MEMBERSHIP_REQUIRED' | 'MISSING_ARG' | 'NEW_FAILED' | 'NOTE_OVERLAP' | 'NOT_FOUND' | 'NOT_READY' | 'NO_BRACKET' | 'NO_FIXTURE' | 'NO_MASTER_CHAIN' | 'NO_PATTERN_EDIT_OPEN' | 'NO_PROJECT' | 'NO_PROJECT_OPEN' | 'NO_STATE' | 'NO_TRACK_VIEW' | 'OPEN_FAILED' | 'PLAYBACK_START_FAILED' | 'PRESET_EXISTS' | 'RECORD_START_FAILED' | 'SAVE_FAILED' | 'SCAN_IN_PROGRESS' | 'SCENARIO_FAILED' | 'SESSION_INVALID' | 'STALE_WRITE' | 'TIMEOUT' | 'TIME_UNIT_REQUIRED' | 'TRACK_CREATE_FAILED' | 'TRACK_NOT_EMPTY' | 'TRACK_PROTECTED' | 'UNAVAILABLE' | 'UNKNOWN_CAPABILITY' | 'UNKNOWN_COMMAND' | 'UNKNOWN_SCENARIO' | 'UNSAVED_CHANGES' | 'USER_BUSY';
+export type BridgeErrorCode = 'ALREADY_APPLIED' | 'AMBIGUOUS_SOURCE' | 'ANALYSIS_UNUSABLE' | 'AUDITION_NOT_SUPPORTED' | 'BRIDGE_UNREACHABLE' | 'CAPABILITY_DENIED' | 'CAPABILITY_OUT_OF_SURFACE' | 'CHORD_CLIP_NOW_LOOPING' | 'CLIP_CLAMPED_TO_SOURCE' | 'CLIP_OVERLAP' | 'CLIP_RANGE' | 'COLLECT_FAILED' | 'CONFIRMATION_REQUIRED' | 'CREDIT_INSUFFICIENT' | 'EDITOR_NOT_OPEN' | 'EDITOR_PARKED' | 'FINGERPRINT_SCOPE_MISMATCH' | 'FOLDER_NOT_EMPTY' | 'FORMAT_UNAVAILABLE' | 'HANDLER_FAILED' | 'INVALID_ARG' | 'IO_ERROR' | 'JOB_NOT_CANCELLABLE' | 'MEMBERSHIP_REQUIRED' | 'MISSING_ARG' | 'NEW_FAILED' | 'NOTE_OVERLAP' | 'NOT_FOUND' | 'NOT_READY' | 'NOT_RESIZABLE' | 'NOT_SUPPORTED' | 'NO_EMBEDDED_VIEW' | 'NO_PATTERN_EDIT_OPEN' | 'NO_PROJECT_OPEN' | 'OPEN_FAILED' | 'PHONEME_SYLLABLE_SHAPE' | 'PHONEME_TIMINGS_UNAVAILABLE' | 'PHONEME_VOWEL_LIMIT' | 'PRESET_EXISTS' | 'PRESET_MISMATCH' | 'PRESET_READ_ONLY' | 'REVEAL_REQUIRED' | 'SAVE_FAILED' | 'SCAN_IN_PROGRESS' | 'SESSION_INVALID' | 'STALE_WRITE' | 'TIMEOUT' | 'TIME_UNIT_REQUIRED' | 'TRACK_NOT_EMPTY' | 'TRACK_PROTECTED' | 'UNAVAILABLE' | 'UNKNOWN_CAPABILITY' | 'UNKNOWN_COMMAND' | 'UNSAVED_CHANGES' | 'USER_BUSY';
 
 // @public
 export interface BridgeErrorDetails {
@@ -411,10 +1238,40 @@ export class BridgePeer {
 }
 
 // @public
-export const BULK_PARAM_FIELDS: {};
+export const BULK_PARAM_FIELDS: {
+    readonly 'audio-plugin import-preset': readonly [{
+        readonly field: "blob";
+        readonly dtype: "u8";
+    }];
+    readonly 'audio-plugin set-state': readonly [{
+        readonly field: "blob";
+        readonly dtype: "u8";
+    }];
+    readonly 'fx import-chain': readonly [{
+        readonly field: "blob";
+        readonly dtype: "u8";
+    }];
+};
 
 // @public
-export const BULK_RESULT_FIELDS: {};
+export const BULK_RESULT_FIELDS: {
+    readonly 'audio-plugin editor capture': readonly [{
+        readonly field: "png";
+        readonly dtype: "u8";
+    }];
+    readonly 'audio-plugin export-preset': readonly [{
+        readonly field: "blob";
+        readonly dtype: "u8";
+    }];
+    readonly 'audio-plugin get-state': readonly [{
+        readonly field: "blob";
+        readonly dtype: "u8";
+    }];
+    readonly 'fx export-chain': readonly [{
+        readonly field: "blob";
+        readonly dtype: "u8";
+    }];
+};
 
 // @public
 export interface BulkBlob<D extends Dtype = Dtype> {
@@ -464,10 +1321,10 @@ export interface CanvasOperations {
 }
 
 // @public
-export const CAPABILITY_TOKENS: readonly ["canvas.read", "caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "fx.read", "fx.write", "generative.add-layer", "generative.enhance", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "session.handshake", "session.move", "session.ping", "session.shutdown", "soundsource.read", "soundsource.write", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.read", "track.write", "transport.control", "transport.state", "ui.control", "ui.state", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write", "workflow.dev", "workflow.ui"];
+export const CAPABILITY_TOKENS: readonly ["audioplugin.control", "audioplugin.read", "audioplugin.write", "canvas.read", "caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "generative-history.read", "generative.add-a-layer", "generative.inspire-me", "generative.music-enhancer", "generative.stem-splitter", "generative.vocal-to-midi", "generative.voice-changer", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "midiparam.read", "midiparam.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "session.handshake", "session.move", "session.ping", "session.shutdown", "soundsource.read", "soundsource.write", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.audition", "track.read", "track.write", "transport.control", "transport.state", "ui.control", "ui.state", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write", "workflow.dev", "workflow.ui"];
 
 // @public
-export type CapabilityToken = 'canvas.read' | 'caret.read' | 'caret.write' | 'chord.read' | 'chord.write' | 'clip.read' | 'clip.write' | 'device.read' | 'device.write' | 'editor.read' | 'editor.write' | 'export.invoke' | 'fx.read' | 'fx.write' | 'generative.add-layer' | 'generative.enhance' | 'generative.seed-audio' | 'generative.song' | 'generative.sound-effects' | 'generative.stem-split' | 'generative.text2sample' | 'generative.vocal2midi' | 'generative.voice-change' | 'history.control' | 'history.read' | 'import.invoke' | 'job.control' | 'job.read' | 'lyric.read' | 'lyric.write' | 'note.read' | 'note.write' | 'project.lifecycle' | 'project.read' | 'recording.control' | 'selection.read' | 'selection.write' | 'session.handshake' | 'session.move' | 'session.ping' | 'session.shutdown' | 'soundsource.read' | 'soundsource.write' | 'tempo.analyze' | 'tempo.applyV2' | 'tempo.read' | 'tempo.write' | 'timesig.read' | 'timesig.write' | 'track.read' | 'track.write' | 'transport.control' | 'transport.state' | 'ui.control' | 'ui.state' | 'vocalparam.read' | 'vocalparam.write' | 'voice.read' | 'voice.write' | 'workflow.dev' | 'workflow.ui';
+export type CapabilityToken = 'audioplugin.control' | 'audioplugin.read' | 'audioplugin.write' | 'canvas.read' | 'caret.read' | 'caret.write' | 'chord.read' | 'chord.write' | 'clip.read' | 'clip.write' | 'device.read' | 'device.write' | 'editor.read' | 'editor.write' | 'export.invoke' | 'generative-history.read' | 'generative.add-a-layer' | 'generative.inspire-me' | 'generative.music-enhancer' | 'generative.stem-splitter' | 'generative.vocal-to-midi' | 'generative.voice-changer' | 'history.control' | 'history.read' | 'import.invoke' | 'job.control' | 'job.read' | 'lyric.read' | 'lyric.write' | 'midiparam.read' | 'midiparam.write' | 'note.read' | 'note.write' | 'project.lifecycle' | 'project.read' | 'recording.control' | 'selection.read' | 'selection.write' | 'session.handshake' | 'session.move' | 'session.ping' | 'session.shutdown' | 'soundsource.read' | 'soundsource.write' | 'tempo.analyze' | 'tempo.applyV2' | 'tempo.read' | 'tempo.write' | 'timesig.read' | 'timesig.write' | 'track.audition' | 'track.read' | 'track.write' | 'transport.control' | 'transport.state' | 'ui.control' | 'ui.state' | 'vocalparam.read' | 'vocalparam.write' | 'voice.read' | 'voice.write' | 'workflow.dev' | 'workflow.ui';
 
 // @public
 export interface CaretGetParams {
@@ -477,9 +1334,11 @@ export interface CaretGetParams {
 // @public
 export interface CaretGetResult {
     focus: string;
+    nativeUnit: 'tick';
     rawTrackRow: number;
     region?: string;
     scope: string;
+    sec: number;
     tick: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -488,7 +1347,7 @@ export interface CaretGetResult {
 // @public
 export interface CaretOperations {
     get(params?: CaretGetParams, options?: CallOptions): Promise<CaretGetResult>;
-    set(params: CaretSetParams, options?: MutatingCallOptions): Promise<void>;
+    set(params?: CaretSetParams, options?: MutatingCallOptions): Promise<void>;
 }
 
 // @public
@@ -498,8 +1357,9 @@ export interface CaretSetParams {
     rawTrackRow?: number;
     region?: string;
     scope?: string;
+    sec?: number;
     set_to_line_selection?: boolean;
-    tick: number;
+    tick?: number;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -713,6 +1573,145 @@ export interface ChoirSetParams {
 }
 
 // @public
+export interface ChordDeleteParams {
+    chordUuids: string[];
+}
+
+// @public
+export interface ChordDeleteResult {
+    chordCount: number;
+    chords: {
+        addeds: string[];
+        bass: number;
+        bassName?: string;
+        chordUuid: string;
+        displayName: string;
+        dur: number;
+        endPos: number;
+        index: number;
+        pos: number;
+        root: number;
+        rootName?: string;
+        type: string;
+    }[];
+    clipDur: number;
+    clipUuid: string;
+    contentLength: number;
+    fingerprint: Fingerprint;
+    loopCount: number;
+    loopLength: number;
+}
+
+// @public
+export interface ChordInsertParams {
+    addeds?: string[];
+    bass?: number;
+    clipUuid: string;
+    dur: number;
+    index: number;
+    root?: number;
+    type?: string;
+}
+
+// @public
+export interface ChordInsertResult {
+    chordCount: number;
+    chords: {
+        addeds: string[];
+        bass: number;
+        bassName?: string;
+        chordUuid: string;
+        displayName: string;
+        dur: number;
+        endPos: number;
+        index: number;
+        pos: number;
+        root: number;
+        rootName?: string;
+        type: string;
+    }[];
+    clipDur: number;
+    clipUuid: string;
+    contentLength: number;
+    fingerprint: Fingerprint;
+    loopCount: number;
+    loopLength: number;
+}
+
+// @public
+export interface ChordListParams {
+    clipUuid: string;
+}
+
+// @public
+export interface ChordListResult {
+    chordCount: number;
+    chords: {
+        addeds: string[];
+        bass: number;
+        bassName?: string;
+        chordUuid: string;
+        displayName: string;
+        dur: number;
+        endPos: number;
+        index: number;
+        pos: number;
+        root: number;
+        rootName?: string;
+        type: string;
+    }[];
+    clipDur: number;
+    clipUuid: string;
+    contentLength: number;
+    fingerprint: Fingerprint;
+    loopCount: number;
+    loopLength: number;
+}
+
+// @public
+export interface ChordOperations {
+    delete(params: ChordDeleteParams, options?: PreconditionCallOptions): Promise<ChordDeleteResult>;
+    insert(params: ChordInsertParams, options?: PreconditionCallOptions): Promise<ChordInsertResult>;
+    list(params: ChordListParams, options?: CallOptions): Promise<ChordListResult>;
+    set(params: ChordSetParams, options?: PreconditionCallOptions): Promise<ChordSetResult>;
+}
+
+// @public
+export interface ChordSetParams {
+    addeds?: string[];
+    bass?: number;
+    chordUuids: string[];
+    dur?: number;
+    root?: number;
+    type?: string;
+}
+
+// @public
+export interface ChordSetResult {
+    chordCount: number;
+    chords: {
+        addeds: string[];
+        bass: number;
+        bassName?: string;
+        chordUuid: string;
+        displayName: string;
+        dur: number;
+        endPos: number;
+        index: number;
+        pos: number;
+        root: number;
+        rootName?: string;
+        type: string;
+    }[];
+    clipDur: number;
+    clipUuid: string;
+    contentLength: number;
+    fingerprint: Fingerprint;
+    loopCount: number;
+    loopLength: number;
+}
+
+// @public
 export interface ClipAudioContentParams {
     clipIndex: number;
     region?: string;
@@ -724,6 +1723,30 @@ export interface ClipAudioContentResult {
     audioFileName: string;
     fingerprint: Fingerprint;
     loadingState: string;
+}
+
+// @public
+export interface ClipBeatContentParams {
+    clipIndex: number;
+    region?: string;
+    trackIndex: number;
+}
+
+// @public
+export interface ClipBeatContentResult {
+    analyzed: boolean;
+    beatCount: number;
+    beats: number[];
+    bpm?: number;
+    clipUuid: string;
+    downbeatCount: number;
+    downbeats: number[];
+    fingerprint: Fingerprint;
+    window?: {
+        endSec: number;
+        lengthSec: number;
+        offsetSec: number;
+    };
 }
 
 // @public
@@ -879,11 +1902,18 @@ export interface ClipGetParams {
 
 // @public
 export interface ClipGetResult {
+    audioMedia?: {
+        clipInSec: number;
+        loadingState: string;
+        sourceDurationSec: number;
+        sourcePath: string;
+    };
     clipName: string;
     clipType: string;
     clipUuid: string;
     color: string;
     enabled: boolean;
+    gain?: number;
     geometry: {
         clipBegin: number;
         clipBeginSec: number;
@@ -935,6 +1965,12 @@ export interface ClipListParams {
 export interface ClipListResult {
     clipCount: number;
     clips: {
+        audioMedia?: {
+            clipInSec: number;
+            loadingState: string;
+            sourceDurationSec: number;
+            sourcePath: string;
+        };
         clipBegin: number;
         clipBeginSec: number;
         clipColor: string;
@@ -972,6 +2008,7 @@ export interface ClipLyricsParams {
 
 // @public
 export interface ClipLyricsResult {
+    clipUuid: string;
     filteredRange?: {
         begin: number;
         end: number;
@@ -980,7 +2017,9 @@ export interface ClipLyricsResult {
     fingerprint: Fingerprint;
     sentenceCount: number;
     sentences: {
+        index: number;
         lyric: string;
+        noteUuids: string[];
         sentenceBegin: number;
         sentenceEnd: number;
     }[];
@@ -1019,6 +2058,7 @@ export interface ClipMoveResult {
     warnings?: {
         code: string;
         hint?: string;
+        message: string;
     }[];
 }
 
@@ -1059,6 +2099,7 @@ export interface ClipNoteContentResult {
 // @public
 export interface ClipOperations {
     audioContent(params: ClipAudioContentParams, options?: CallOptions): Promise<ClipAudioContentResult>;
+    beatContent(params: ClipBeatContentParams, options?: CallOptions): Promise<ClipBeatContentResult>;
     consolidate(params: ClipConsolidateParams, options?: MutatingCallOptions): Promise<ClipConsolidateResult>;
     create(params: ClipCreateParams, options?: MutatingCallOptions): Promise<ClipCreateResult>;
     delete(params: ClipDeleteParams, options?: MutatingCallOptions): Promise<ClipDeleteResult>;
@@ -1149,6 +2190,7 @@ export interface ClipResizeResult {
     warnings?: {
         code: string;
         hint?: string;
+        message: string;
     }[];
 }
 
@@ -1546,6 +2588,9 @@ export interface EditorStatusResult {
 
 // @public
 export interface EditorTickRangeResult {
+    beginSec: number;
+    endSec: number;
+    nativeUnit: 'tick';
     tickBegin: number;
     tickEnd: number;
 }
@@ -1721,18 +2766,6 @@ export interface ExportAudioResult {
 }
 
 // @public
-export interface ExportFcpxmlParams {
-    path: string;
-}
-
-// @public
-export interface ExportFcpxmlResult {
-    format?: string;
-    paths: string[];
-    trackCount?: number;
-}
-
-// @public
 export interface ExportLrcParams {
     path: string;
     trackUuid: string;
@@ -1767,10 +2800,10 @@ export interface ExportMidiResult {
 // @public
 export interface ExportOperations {
     audio(params: ExportAudioParams, options?: MutatingCallOptions): Promise<ExportAudioResult>;
-    fcpxml(params: ExportFcpxmlParams, options?: MutatingCallOptions): Promise<ExportFcpxmlResult>;
     lrc(params: ExportLrcParams, options?: MutatingCallOptions): Promise<ExportLrcResult>;
     midi(params: ExportMidiParams, options?: MutatingCallOptions): Promise<ExportMidiResult>;
     songTemplate(params: ExportSongTemplateParams, options?: MutatingCallOptions): Promise<ExportSongTemplateResult>;
+    timeline(params: ExportTimelineParams, options?: MutatingCallOptions): Promise<ExportTimelineResult>;
     video(params: ExportVideoParams, options?: MutatingCallOptions): Promise<ExportVideoResult>;
     vocalSample(params: ExportVocalSampleParams, options?: MutatingCallOptions): Promise<ExportVocalSampleResult>;
 }
@@ -1783,6 +2816,18 @@ export interface ExportSongTemplateParams {
 // @public
 export interface ExportSongTemplateResult {
     templatePath: string;
+}
+
+// @public
+export interface ExportTimelineParams {
+    path: string;
+}
+
+// @public
+export interface ExportTimelineResult {
+    format?: string;
+    paths: string[];
+    trackCount?: number;
 }
 
 // @public
@@ -1848,10 +2893,14 @@ export interface FxAddParams {
 export interface FxAddResult {
     insert: {
         bypassed: boolean;
+        editorState?: {
+            open: boolean;
+            parked: boolean;
+        };
         enabled: boolean;
         format?: 'native' | 'vst3' | 'vst2' | 'au';
         hasEditor?: boolean;
-        insertId: string;
+        instanceId: string;
         missing: boolean;
         name: string;
         presetName?: string;
@@ -1867,88 +2916,8 @@ export interface FxAddResult {
 }
 
 // @public
-export interface FxApplyPresetParams {
-    insert?: string;
-    preset?: string;
-    presetId?: number;
-    rack?: 'pre';
-    region?: string;
-    slot?: number;
-    trackIndex?: number;
-    trackUuid?: string;
-}
-
-// @public
-export interface FxApplyPresetResult {
-    insertId: string;
-    presetId?: number;
-    presetName: string;
-}
-
-// @public
-export interface FxGetParamsParams {
-    filter?: string;
-    insert?: string;
-    rack?: 'pre';
-    regex?: boolean;
-    region?: string;
-    slot?: number;
-    trackIndex?: number;
-    trackUuid?: string;
-}
-
-// @public
-export interface FxGetParamsResult {
-    filter?: string;
-    fingerprint: Fingerprint;
-    insertId: string;
-    name?: string;
-    paramCount: number;
-    params: {
-        automatable: boolean;
-        choices?: string[];
-        defaultValue?: number;
-        group?: string;
-        index: number;
-        kind: 'continuous' | 'stepped' | 'boolean' | 'choice';
-        max?: number;
-        min?: number;
-        name: string;
-        paramId: string;
-        stepCount?: number;
-        unit?: string;
-        value: number;
-        valueText: string;
-    }[];
-    totalParamCount: number;
-    typeId?: string;
-}
-
-// @public
-export interface FxListAvailableParams {
-    category?: string;
-    format?: 'native' | 'vst3' | 'vst2' | 'au';
-    search?: string;
-    vendor?: string;
-}
-
-// @public
-export interface FxListAvailableResult {
-    effectCount: number;
-    effects: {
-        category?: string;
-        format: 'native' | 'vst3' | 'vst2' | 'au';
-        name: string;
-        typeId: string;
-        vendor?: string;
-        version?: string;
-    }[];
-    scanning: boolean;
-    totalEffectCount: number;
-}
-
-// @public
-export interface FxListParams {
+export interface FxApplyChainParams {
+    preset: string;
     rack?: 'pre';
     region?: string;
     trackIndex?: number;
@@ -1956,51 +2925,18 @@ export interface FxListParams {
 }
 
 // @public
-export interface FxListParamsParams {
-    detail?: boolean;
-    filter?: string;
-    insert?: string;
-    rack?: 'pre';
-    regex?: boolean;
-    region?: string;
-    slot?: number;
-    trackIndex?: number;
-    trackUuid?: string;
-}
-
-// @public
-export interface FxListParamsResult {
-    filter?: string;
-    insertId: string;
-    name?: string;
-    names?: string[];
-    paramCount: number;
-    params?: {
-        automatable: boolean;
-        choices?: string[];
-        group?: string;
-        index: number;
-        kind: 'continuous' | 'stepped' | 'boolean' | 'choice';
-        max?: number;
-        min?: number;
-        name: string;
-        paramId: string;
-        stepCount?: number;
-        unit?: string;
-    }[];
-    totalParamCount: number;
-    typeId?: string;
-}
-
-// @public
-export interface FxListResult {
+export interface FxApplyChainResult {
     insertCount: number;
     inserts: {
         bypassed: boolean;
+        editorState?: {
+            open: boolean;
+            parked: boolean;
+        };
         enabled: boolean;
         format?: 'native' | 'vst3' | 'vst2' | 'au';
         hasEditor?: boolean;
-        insertId: string;
+        instanceId: string;
         missing: boolean;
         name: string;
         presetName?: string;
@@ -2008,6 +2944,7 @@ export interface FxListResult {
         typeId: string;
         vendor?: string;
     }[];
+    preset: string;
     rack?: 'pre';
     region?: string;
     trackIndex?: number;
@@ -2015,46 +2952,185 @@ export interface FxListResult {
 }
 
 // @public
-export interface FxOpenEditorParams {
-    insert?: string;
+export interface FxExportChainParams {
     rack?: 'pre';
     region?: string;
-    slot?: number;
     trackIndex?: number;
     trackUuid?: string;
 }
 
 // @public
-export interface FxOpenEditorResult {
-    alreadyOpen: boolean;
-    insertId: string;
-    name?: string;
+export interface FxExportChainResult {
+    blob: TypedArrayFor<'u8'>;
+    entryCount: number;
+    extension: string;
+    rack?: 'pre';
+    region?: string;
+    trackIndex?: number;
+    trackUuid: string;
+}
+
+// @public
+export interface FxFindChainsParams {
+    name: string;
+}
+
+// @public
+export interface FxFindChainsResult {
+    chains: {
+        factory: boolean;
+        folder: string;
+        inserts: {
+            format?: 'native' | 'vst3' | 'vst2' | 'au';
+            name: string;
+            typeId: string;
+        }[];
+        name: string;
+        path?: string;
+        preset: string;
+        updatedAtMs: number;
+    }[];
+    query: string;
+}
+
+// @public
+export interface FxImportChainParams {
+    at?: number;
+    blob: TypedArrayFor<'u8'>;
+    rack?: 'pre';
+    region?: string;
+    replace?: boolean;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface FxImportChainResult {
+    firstSlot: number;
+    importedCount: number;
+    insertCount: number;
+    missingCount: number;
+    rack?: 'pre';
+    region?: string;
+    trackIndex?: number;
+    trackUuid: string;
+}
+
+// @public
+export interface FxInsertChainParams {
+    at?: number;
+    preset: string;
+    rack?: 'pre';
+    region?: string;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface FxInsertChainResult {
+    at: number;
+    insertCount: number;
+    inserted: {
+        bypassed: boolean;
+        editorState?: {
+            open: boolean;
+            parked: boolean;
+        };
+        enabled: boolean;
+        format?: 'native' | 'vst3' | 'vst2' | 'au';
+        hasEditor?: boolean;
+        instanceId: string;
+        missing: boolean;
+        name: string;
+        presetName?: string;
+        slot: number;
+        typeId: string;
+        vendor?: string;
+    }[];
+    preset: string;
+    rack?: 'pre';
+    region?: string;
+    trackIndex?: number;
+    trackUuid: string;
+}
+
+// @public
+export interface FxListChainsParams {
+    folder?: string;
+    recursive?: boolean;
+}
+
+// @public
+export interface FxListChainsResult {
+    chains: {
+        factory: boolean;
+        folder: string;
+        inserts: {
+            format?: 'native' | 'vst3' | 'vst2' | 'au';
+            name: string;
+            typeId: string;
+        }[];
+        name: string;
+        path?: string;
+        preset: string;
+        updatedAtMs: number;
+    }[];
+    folder: string;
+    folders: {
+        factory: boolean;
+        folder: string;
+        path?: string;
+    }[];
+}
+
+// @public
+export interface FxMoveChainParams {
+    preset: string;
+    to: string;
+}
+
+// @public
+export interface FxMoveChainResult {
+    path: string;
+    preset: string;
+    previous: string;
 }
 
 // @public
 export interface FxOperations {
     add(params: FxAddParams, options?: MutatingCallOptions): Promise<FxAddResult>;
-    applyPreset(params?: FxApplyPresetParams, options?: PreconditionCallOptions): Promise<FxApplyPresetResult>;
-    getParams(params?: FxGetParamsParams, options?: CallOptions): Promise<FxGetParamsResult>;
-    list(params?: FxListParams, options?: CallOptions): Promise<FxListResult>;
-    listAvailable(params?: FxListAvailableParams, options?: CallOptions): Promise<FxListAvailableResult>;
-    listParams(params?: FxListParamsParams, options?: CallOptions): Promise<FxListParamsResult>;
-    openEditor(params?: FxOpenEditorParams, options?: MutatingCallOptions): Promise<FxOpenEditorResult>;
+    applyChain(params: FxApplyChainParams, options?: MutatingCallOptions): Promise<FxApplyChainResult>;
+    exportChain(params?: FxExportChainParams, options?: CallOptions): Promise<FxExportChainResult>;
+    findChains(params: FxFindChainsParams, options?: CallOptions): Promise<FxFindChainsResult>;
+    importChain(params: FxImportChainParams, options?: MutatingCallOptions): Promise<FxImportChainResult>;
+    insertChain(params: FxInsertChainParams, options?: MutatingCallOptions): Promise<FxInsertChainResult>;
+    listChains(params?: FxListChainsParams, options?: CallOptions): Promise<FxListChainsResult>;
+    moveChain(params: FxMoveChainParams, options?: MutatingCallOptions): Promise<FxMoveChainResult>;
     remove(params?: FxRemoveParams, options?: MutatingCallOptions): Promise<FxRemoveResult>;
+    removeChain(params: FxRemoveChainParams, options?: MutatingCallOptions): Promise<FxRemoveChainResult>;
     reorder(params: FxReorderParams, options?: MutatingCallOptions): Promise<FxReorderResult>;
-    savePreset(params: FxSavePresetParams, options?: MutatingCallOptions): Promise<FxSavePresetResult>;
-    scan(params?: FxScanParams, options?: MutatingCallOptions): Promise<FxScanResult>;
-    set(params?: FxSetParams, options?: MutatingCallOptions): Promise<FxSetResult>;
-    setParam(params: FxSetParamParams, options?: PreconditionCallOptions): Promise<FxSetParamResult>;
+    saveChain(params: FxSaveChainParams, options?: MutatingCallOptions): Promise<FxSaveChainResult>;
     setRoom(params?: FxSetRoomParams, options?: MutatingCallOptions): Promise<FxSetRoomResult>;
 }
 
 // @public
+export interface FxRemoveChainParams {
+    preset: string;
+}
+
+// @public
+export interface FxRemoveChainResult {
+    path: string;
+    removed: 'preset' | 'folder';
+    target: string;
+}
+
+// @public
 export interface FxRemoveParams {
-    insert?: string;
+    instance?: string;
     rack?: 'pre';
     region?: string;
-    slot?: number;
+    slot?: string;
     trackIndex?: number;
     trackUuid?: string;
 }
@@ -2062,7 +3138,7 @@ export interface FxRemoveParams {
 // @public
 export interface FxRemoveResult {
     insertCount: number;
-    insertId: string;
+    instanceId: string;
     rack?: 'pre';
     region?: string;
     slot: number;
@@ -2072,10 +3148,10 @@ export interface FxRemoveResult {
 
 // @public
 export interface FxReorderParams {
-    insert?: string;
+    instance?: string;
     rack?: 'pre';
     region?: string;
-    slot?: number;
+    slot?: string;
     to: number;
     trackIndex?: number;
     trackUuid?: string;
@@ -2084,7 +3160,7 @@ export interface FxReorderParams {
 // @public
 export interface FxReorderResult {
     insertCount: number;
-    insertId: string;
+    instanceId: string;
     rack?: 'pre';
     region?: string;
     slot: number;
@@ -2093,103 +3169,21 @@ export interface FxReorderResult {
 }
 
 // @public
-export interface FxSavePresetParams {
-    insert?: string;
-    name: string;
+export interface FxSaveChainParams {
     overwrite?: boolean;
+    preset: string;
     rack?: 'pre';
     region?: string;
-    slot?: number;
     trackIndex?: number;
     trackUuid?: string;
 }
 
 // @public
-export interface FxSavePresetResult {
-    path: string;
-    presetId?: number;
-    presetName: string;
-    replaced: boolean;
-}
-
-// @public
-export interface FxScanParams {
-    full?: boolean;
-}
-
-// @public
-export interface FxScanResult {
-    full: boolean;
-    jobClass: string;
-    jobId: string;
-}
-
-// @public
-export interface FxSetParamParams {
-    insert?: string;
-    param: string;
-    rack?: 'pre';
-    region?: string;
-    slot?: number;
-    trackIndex?: number;
-    trackUuid?: string;
-    value: number;
-}
-
-// @public
-export interface FxSetParamResult {
-    insertId: string;
-    param: {
-        automatable: boolean;
-        choices?: string[];
-        defaultValue?: number;
-        group?: string;
-        index: number;
-        kind: 'continuous' | 'stepped' | 'boolean' | 'choice';
-        max?: number;
-        min?: number;
-        name: string;
-        paramId: string;
-        stepCount?: number;
-        unit?: string;
-        value: number;
-        valueText: string;
-    };
-}
-
-// @public
-export interface FxSetParams {
-    bypassed?: boolean;
-    enabled?: boolean;
-    insert?: string;
-    name?: string;
-    rack?: 'pre';
-    region?: string;
-    slot?: number;
-    trackIndex?: number;
-    trackUuid?: string;
-}
-
-// @public
-export interface FxSetResult {
-    insert: {
-        bypassed: boolean;
-        enabled: boolean;
-        format?: 'native' | 'vst3' | 'vst2' | 'au';
-        hasEditor?: boolean;
-        insertId: string;
-        missing: boolean;
-        name: string;
-        presetName?: string;
-        slot: number;
-        typeId: string;
-        vendor?: string;
-    };
+export interface FxSaveChainResult {
     insertCount: number;
-    rack?: 'pre';
-    region?: string;
-    trackIndex?: number;
-    trackUuid: string;
+    path: string;
+    preset: string;
+    replaced: boolean;
 }
 
 // @public
@@ -2217,7 +3211,7 @@ export interface FxSetRoomResult {
 }
 
 // @public
-export interface GenerativeAddLayerParams {
+export interface GenerativeAddALayerParams {
     from: number;
     instrument?: string;
     lyrics?: string;
@@ -2228,7 +3222,7 @@ export interface GenerativeAddLayerParams {
 }
 
 // @public
-export interface GenerativeAddLayerResult {
+export interface GenerativeAddALayerResult {
     cancellable: boolean;
     delivery: string;
     from?: number;
@@ -2239,60 +3233,62 @@ export interface GenerativeAddLayerResult {
 }
 
 // @public
-export interface GenerativeEnhanceParams {
-    clipUuid?: string;
-    influence?: number;
-    lyrics?: string;
-    path?: string;
-    prompt?: string;
-    title?: string;
+export interface GenerativeInspireMeHistoryGetParams {
+    taskId: string;
 }
 
 // @public
-export interface GenerativeEnhanceResult {
-    cancellable: boolean;
-    delivery: string;
-    jobClass: string;
-    jobId: string;
-    streamingCapable?: boolean;
+export interface GenerativeInspireMeHistoryGetResult {
+    generation?: {
+        audios: {
+            duration: number;
+            localPath?: string;
+            resultId: string;
+            state: 'streaming' | 'need-download' | 'downloading' | 'local-ready';
+        }[];
+        generatingNum?: number;
+        id: number;
+        lyrics: string;
+        status: 'generating' | 'succeeded' | 'failed';
+        tags: string;
+        taskId: string;
+        title: string;
+    };
+    status: 'warming' | 'ready';
 }
 
 // @public
-export interface GenerativeOperations {
-    addLayer(params: GenerativeAddLayerParams, options?: MutatingCallOptions): Promise<GenerativeAddLayerResult>;
-    enhance(params?: GenerativeEnhanceParams, options?: MutatingCallOptions): Promise<GenerativeEnhanceResult>;
-    seedAudio(params: GenerativeSeedAudioParams, options?: MutatingCallOptions): Promise<GenerativeSeedAudioResult>;
-    song(params?: GenerativeSongParams, options?: MutatingCallOptions): Promise<GenerativeSongResult>;
-    soundEffects(params: GenerativeSoundEffectsParams, options?: MutatingCallOptions): Promise<GenerativeSoundEffectsResult>;
-    stemSplit(params: GenerativeStemSplitParams, options?: MutatingCallOptions): Promise<GenerativeStemSplitResult>;
-    text2sample(params: GenerativeText2sampleParams, options?: MutatingCallOptions): Promise<GenerativeText2sampleResult>;
-    vocal2midi(params: GenerativeVocal2midiParams, options?: MutatingCallOptions): Promise<GenerativeVocal2midiResult>;
-    voiceChange(params: GenerativeVoiceChangeParams, options?: MutatingCallOptions): Promise<GenerativeVoiceChangeResult>;
+export interface GenerativeInspireMeHistoryListParams {
+    page?: number;
+    pageSize?: number;
+    refresh?: boolean;
 }
 
 // @public
-export interface GenerativeSeedAudioParams {
-    from: number;
-    prompt: string;
-    referenceAudio?: string[];
-    referenceImage?: string;
-    to: number;
-    trackUuid: string;
+export interface GenerativeInspireMeHistoryListResult {
+    generations: {
+        audios: {
+            duration: number;
+            localPath?: string;
+            resultId: string;
+            state: 'streaming' | 'need-download' | 'downloading' | 'local-ready';
+        }[];
+        generatingNum?: number;
+        id: number;
+        lyrics: string;
+        status: 'generating' | 'succeeded' | 'failed';
+        tags: string;
+        taskId: string;
+        title: string;
+    }[];
+    page: number;
+    pageSize: number;
+    status: 'warming' | 'ready';
+    total: number;
 }
 
 // @public
-export interface GenerativeSeedAudioResult {
-    cancellable: boolean;
-    delivery: string;
-    from?: number;
-    jobClass: string;
-    jobId: string;
-    to?: number;
-    trackUuid: string;
-}
-
-// @public
-export interface GenerativeSongParams {
+export interface GenerativeInspireMeParams {
     instrumental?: boolean;
     lyrics?: string;
     prompt?: string;
@@ -2300,7 +3296,7 @@ export interface GenerativeSongParams {
 }
 
 // @public
-export interface GenerativeSongResult {
+export interface GenerativeInspireMeResult {
     cancellable: boolean;
     delivery: string;
     jobClass: string;
@@ -2309,28 +3305,97 @@ export interface GenerativeSongResult {
 }
 
 // @public
-export interface GenerativeSoundEffectsParams {
-    from: number;
-    influence?: 'low' | 'mid' | 'high';
-    loop?: boolean;
-    prompt: string;
-    to: number;
-    trackUuid: string;
+export interface GenerativeMusicEnhancerHistoryGetParams {
+    taskId: string;
 }
 
 // @public
-export interface GenerativeSoundEffectsResult {
+export interface GenerativeMusicEnhancerHistoryGetResult {
+    generation?: {
+        audios: {
+            duration: number;
+            localPath?: string;
+            resultId: string;
+            state: 'streaming' | 'need-download' | 'downloading' | 'local-ready';
+        }[];
+        generatingNum?: number;
+        id: number;
+        lyrics: string;
+        status: 'generating' | 'succeeded' | 'failed';
+        tags: string;
+        taskId: string;
+        title: string;
+    };
+    status: 'warming' | 'ready';
+}
+
+// @public
+export interface GenerativeMusicEnhancerHistoryListParams {
+    page?: number;
+    pageSize?: number;
+    refresh?: boolean;
+}
+
+// @public
+export interface GenerativeMusicEnhancerHistoryListResult {
+    generations: {
+        audios: {
+            duration: number;
+            localPath?: string;
+            resultId: string;
+            state: 'streaming' | 'need-download' | 'downloading' | 'local-ready';
+        }[];
+        generatingNum?: number;
+        id: number;
+        lyrics: string;
+        status: 'generating' | 'succeeded' | 'failed';
+        tags: string;
+        taskId: string;
+        title: string;
+    }[];
+    page: number;
+    pageSize: number;
+    status: 'warming' | 'ready';
+    total: number;
+}
+
+// @public
+export interface GenerativeMusicEnhancerParams {
+    influence?: number;
+    lyrics?: string;
+    prompt?: string;
+    title?: string;
+}
+
+// @public
+export interface GenerativeMusicEnhancerResult {
     cancellable: boolean;
     delivery: string;
-    from?: number;
+    from: number;
     jobClass: string;
     jobId: string;
-    to?: number;
-    trackUuid: string;
+    streamingCapable?: boolean;
+    to: number;
+    trackUuids: string[];
 }
 
 // @public
-export interface GenerativeStemSplitParams {
+export interface GenerativeOperations {
+    addALayer(params: GenerativeAddALayerParams, options?: MutatingCallOptions): Promise<GenerativeAddALayerResult>;
+    inspireMe(params?: GenerativeInspireMeParams, options?: MutatingCallOptions): Promise<GenerativeInspireMeResult>;
+    inspireMeHistoryGet(params: GenerativeInspireMeHistoryGetParams, options?: CallOptions): Promise<GenerativeInspireMeHistoryGetResult>;
+    inspireMeHistoryList(params?: GenerativeInspireMeHistoryListParams, options?: CallOptions): Promise<GenerativeInspireMeHistoryListResult>;
+    musicEnhancer(params?: GenerativeMusicEnhancerParams, options?: MutatingCallOptions): Promise<GenerativeMusicEnhancerResult>;
+    musicEnhancerHistoryGet(params: GenerativeMusicEnhancerHistoryGetParams, options?: CallOptions): Promise<GenerativeMusicEnhancerHistoryGetResult>;
+    musicEnhancerHistoryList(params?: GenerativeMusicEnhancerHistoryListParams, options?: CallOptions): Promise<GenerativeMusicEnhancerHistoryListResult>;
+    stemSplitter(params: GenerativeStemSplitterParams, options?: MutatingCallOptions): Promise<GenerativeStemSplitterResult>;
+    vocalToMidi(params: GenerativeVocalToMidiParams, options?: MutatingCallOptions): Promise<GenerativeVocalToMidiResult>;
+    voiceChangerConvert(params: GenerativeVoiceChangerConvertParams, options?: MutatingCallOptions): Promise<GenerativeVoiceChangerConvertResult>;
+    voiceChangerModels(params?: GenerativeVoiceChangerModelsParams, options?: MutatingCallOptions): Promise<GenerativeVoiceChangerModelsResult>;
+}
+
+// @public
+export interface GenerativeStemSplitterParams {
     clipUuid: string;
     mode?: 'basic' | 'professional' | 'advanced' | 'customized';
     prompt?: string;
@@ -2338,7 +3403,7 @@ export interface GenerativeStemSplitParams {
 }
 
 // @public
-export interface GenerativeStemSplitResult {
+export interface GenerativeStemSplitterResult {
     // (undocumented)
     cancellable: boolean;
     clipUuid: string;
@@ -2351,28 +3416,7 @@ export interface GenerativeStemSplitResult {
 }
 
 // @public
-export interface GenerativeText2sampleParams {
-    from: number;
-    prompt: string;
-    referenceAudio?: string;
-    soundHint?: string;
-    to: number;
-    trackUuid: string;
-}
-
-// @public
-export interface GenerativeText2sampleResult {
-    cancellable: boolean;
-    delivery: string;
-    from?: number;
-    jobClass: string;
-    jobId: string;
-    to?: number;
-    trackUuid: string;
-}
-
-// @public
-export interface GenerativeVocal2midiParams {
+export interface GenerativeVocalToMidiParams {
     applyPitch?: boolean;
     clipUuid: string;
     language: 'chinese' | 'english' | 'japanese' | 'spanish' | 'korean' | 'french' | 'italian' | 'portuguese' | 'notes-only';
@@ -2380,7 +3424,7 @@ export interface GenerativeVocal2midiParams {
 }
 
 // @public
-export interface GenerativeVocal2midiResult {
+export interface GenerativeVocalToMidiResult {
     cancellable: boolean;
     delivery: string;
     from?: number;
@@ -2391,7 +3435,7 @@ export interface GenerativeVocal2midiResult {
 }
 
 // @public
-export interface GenerativeVoiceChangeParams {
+export interface GenerativeVoiceChangerConvertParams {
     correctToKey?: string;
     correctToScale?: string;
     from: number;
@@ -2406,7 +3450,7 @@ export interface GenerativeVoiceChangeParams {
 }
 
 // @public
-export interface GenerativeVoiceChangeResult {
+export interface GenerativeVoiceChangerConvertResult {
     // (undocumented)
     cancellable: boolean;
     delivery: string;
@@ -2415,6 +3459,28 @@ export interface GenerativeVoiceChangeResult {
     jobId: string;
     modelIds: number[];
     trackUuids: string[];
+}
+
+// @public
+export interface GenerativeVoiceChangerModelsParams {
+    kind?: ('voice' | 'instrument' | 'cloned')[];
+}
+
+// @public
+export interface GenerativeVoiceChangerModelsResult {
+    // (undocumented)
+    count: number;
+    models: {
+        avatarUrl?: string;
+        id: number;
+        kind: 'voice' | 'instrument' | 'cloned';
+        name: string;
+        seedId?: number;
+        tags: string[];
+        trialAudioUrl?: string;
+        version?: string;
+    }[];
+    status: 'ready' | 'warming';
 }
 
 // @public
@@ -2524,7 +3590,21 @@ export interface ImportFileResult {
     clipType?: string;
     clipUuid?: string;
     createdTrack?: boolean;
-    geometry?: Record<string, unknown>;
+    geometry?: {
+        clipIn: number;
+        clipInSec: number;
+        dur: number;
+        durSec: number;
+        end: number;
+        endSec: number;
+        nativeUnit: 'second' | 'tick';
+        pos: number;
+        posSec: number;
+        sourceDur: number;
+        sourceDurSec: number;
+        sourcePos: number;
+        sourcePosSec: number;
+    };
     loadingState?: string;
     naturalDur?: number;
     naturalDurSec?: number;
@@ -2553,47 +3633,7 @@ export type InDomainOf<Rows extends SurfaceRow, T extends string> = Exclude<Reac
 }>;
 
 // @public
-export interface InstrumentDisableParams {
-    region?: string;
-    trackIndex?: number;
-    trackUuid?: string;
-}
-
-// @public
-export interface InstrumentDisableResult {
-    enabled: boolean;
-    format?: string;
-    midiChannel: string;
-    name: string;
-    region: string;
-    trackIndex: number;
-    trackUuid: string;
-    vendor?: string;
-}
-
-// @public
-export interface InstrumentEnableParams {
-    region?: string;
-    trackIndex?: number;
-    trackUuid?: string;
-}
-
-// @public
-export interface InstrumentEnableResult {
-    enabled: boolean;
-    format?: string;
-    midiChannel: string;
-    name: string;
-    region: string;
-    trackIndex: number;
-    trackUuid: string;
-    vendor?: string;
-}
-
-// @public
 export interface InstrumentOperations {
-    disable(params?: InstrumentDisableParams, options?: MutatingCallOptions): Promise<InstrumentDisableResult>;
-    enable(params?: InstrumentEnableParams, options?: MutatingCallOptions): Promise<InstrumentEnableResult>;
     set(params: InstrumentSetParams, options?: MutatingCallOptions): Promise<InstrumentSetResult>;
 }
 
@@ -2634,6 +3674,17 @@ export interface JobDiscardResultParams {
 }
 
 // @public
+export interface JobDownloadParams {
+    resultId: string;
+}
+
+// @public
+export interface JobDownloadResult {
+    jobId: string;
+    resultId: string;
+}
+
+// @public
 export interface JobGetParams {
     id: string;
 }
@@ -2645,6 +3696,7 @@ export interface JobGetResult {
     errorCode?: string;
     errorMessage?: string;
     hasProgress: boolean;
+    hint?: string;
     id: string;
     jobClass: string;
     launcher: 'ui' | 'cli' | 'extension' | 'agent';
@@ -2652,8 +3704,9 @@ export interface JobGetResult {
     lifecycle: 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
     progress?: number;
     results: {
+        errorCode?: string;
+        errorMessage?: string;
         id: string;
-        payload?: Record<string, unknown>;
         state: 'pending' | 'streaming' | 'settled' | 'failed';
     }[];
     streamingCapable: boolean;
@@ -2682,6 +3735,7 @@ export interface JobListResult {
         errorCode?: string;
         errorMessage?: string;
         hasProgress: boolean;
+        hint?: string;
         id: string;
         jobClass: string;
         launcher: 'ui' | 'cli' | 'extension' | 'agent';
@@ -2689,8 +3743,9 @@ export interface JobListResult {
         lifecycle: 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
         progress?: number;
         results: {
+            errorCode?: string;
+            errorMessage?: string;
             id: string;
-            payload?: Record<string, unknown>;
             state: 'pending' | 'streaming' | 'settled' | 'failed';
         }[];
         streamingCapable: boolean;
@@ -2701,6 +3756,7 @@ export interface JobListResult {
 export interface JobOperations {
     cancel(params: JobCancelParams, options?: MutatingCallOptions): Promise<void>;
     discardResult(params: JobDiscardResultParams, options?: MutatingCallOptions): Promise<void>;
+    download(params: JobDownloadParams, options?: MutatingCallOptions): Promise<JobDownloadResult>;
     get(params: JobGetParams, options?: CallOptions): Promise<JobGetResult>;
     list(params?: JobListParams, options?: CallOptions): Promise<JobListResult>;
     onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
@@ -2743,8 +3799,9 @@ export interface JobResultsParams {
 // @public
 export interface JobResultsResult {
     results: {
+        errorCode?: string;
+        errorMessage?: string;
         id: string;
-        payload?: Record<string, unknown>;
         state: 'pending' | 'streaming' | 'settled' | 'failed';
     }[];
 }
@@ -2782,6 +3839,7 @@ export interface JobWaitResult {
         errorCode?: string;
         errorMessage?: string;
         hasProgress: boolean;
+        hint?: string;
         id: string;
         jobClass: string;
         launcher: 'ui' | 'cli' | 'extension' | 'agent';
@@ -2789,8 +3847,9 @@ export interface JobWaitResult {
         lifecycle: 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
         progress?: number;
         results: {
+            errorCode?: string;
+            errorMessage?: string;
             id: string;
-            payload?: Record<string, unknown>;
             state: 'pending' | 'streaming' | 'settled' | 'failed';
         }[];
         streamingCapable: boolean;
@@ -2834,6 +3893,226 @@ export class LocalSocketTransport implements Transport {
     onMessage(handler: (message: string) => void): void;
     // (undocumented)
     send(message: string): void;
+}
+
+// @public
+export interface LyricFillParams {
+    alignLinesToSentences?: boolean;
+    asBatchEditor?: boolean;
+    clipUuid?: string;
+    continueFill?: boolean;
+    dryRun?: boolean;
+    filler?: 'one-by-one' | 'tenuto-standby';
+    fillScope?: 'target' | 'to-clip-end';
+    followNoteLanguage?: boolean;
+    followUiPreferences?: boolean;
+    fromSentence?: boolean;
+    fromSingleNote?: boolean;
+    matchGraphemeLanguage?: boolean;
+    noteUuids?: string[];
+    sentenceIndex?: number;
+    skipTenuto?: boolean;
+    text: string;
+}
+
+// @public
+export interface LyricFillResult {
+    clipUuid: string;
+    discardedText: string;
+    dryRun: boolean;
+    intent: 'from-sentence' | 'from-single-note' | 'as-batch-editor' | 'mechanism';
+    mechanism: {
+        fillScope: 'target' | 'to-clip-end';
+        filler: 'one-by-one' | 'tenuto-standby';
+        followNoteLanguage: boolean;
+        matchGraphemeLanguage: boolean;
+        singleNoteMode: boolean;
+        skipTenuto: boolean;
+    };
+    normalizedText: string;
+    // (undocumented)
+    noteCount: number;
+    notes: {
+        clearedOverride: boolean;
+        dur: number;
+        filled: boolean;
+        languageAfter: string;
+        languageBefore: string;
+        languageChanged: boolean;
+        lyricAfter: string;
+        lyricBefore: string;
+        noteUuid: string;
+        pos: number;
+        promoted: boolean;
+    }[];
+    notesFilled: number;
+    sentences?: {
+        index: number;
+        sentenceBegin: number;
+        sentenceEnd: number;
+        text: string;
+    }[];
+    timeBase: string;
+    undoPushed: boolean;
+}
+
+// @public
+export interface LyricOperations {
+    fill(params: LyricFillParams, options?: PreconditionCallOptions): Promise<LyricFillResult>;
+}
+
+// @public
+export interface MidiparamClearParams {
+    clipUuid: string;
+    lane: string;
+}
+
+// @public
+export interface MidiparamClearResult {
+    clipUuid: string;
+    fingerprint: Fingerprint;
+    lane: string;
+    removedCount: number;
+}
+
+// @public
+export interface MidiparamListLanesParams {
+    clipUuid: string;
+}
+
+// @public
+export interface MidiparamListLanesResult {
+    clipUuid: string;
+    laneCount: number;
+    lanes: {
+        controller?: number;
+        count: number;
+        key: string;
+        name?: string;
+    }[];
+}
+
+// @public
+export interface MidiparamOperations {
+    clear(params: MidiparamClearParams, options?: PreconditionCallOptions): Promise<MidiparamClearResult>;
+    listLanes(params: MidiparamListLanesParams, options?: CallOptions): Promise<MidiparamListLanesResult>;
+    read(params: MidiparamReadParams, options?: CallOptions): Promise<MidiparamReadResult>;
+    removePoint(params: MidiparamRemovePointParams, options?: PreconditionCallOptions): Promise<MidiparamRemovePointResult>;
+    setPoint(params: MidiparamSetPointParams, options?: PreconditionCallOptions): Promise<MidiparamSetPointResult>;
+    setVelocity(params: MidiparamSetVelocityParams, options?: PreconditionCallOptions): Promise<MidiparamSetVelocityResult>;
+    velocity(params: MidiparamVelocityParams, options?: CallOptions): Promise<MidiparamVelocityResult>;
+    write(params: MidiparamWriteParams, options?: PreconditionCallOptions): Promise<MidiparamWriteResult>;
+}
+
+// @public
+export interface MidiparamReadParams {
+    clipUuid: string;
+    lane: string;
+    posBegin?: number;
+    posEnd?: number;
+}
+
+// @public
+export interface MidiparamReadResult {
+    clipUuid: string;
+    controller: number;
+    defaultValue: number;
+    empty: boolean;
+    fingerprint: Fingerprint;
+    lane: string;
+    maxValue: number;
+    name?: string;
+    pointCount: number;
+    points: {
+        pos: number;
+        value: number;
+    }[];
+}
+
+// @public
+export interface MidiparamRemovePointParams {
+    clipUuid: string;
+    lane: string;
+    pos: number;
+}
+
+// @public
+export interface MidiparamRemovePointResult {
+    clipUuid: string;
+    fingerprint: Fingerprint;
+    lane: string;
+    pointCount: number;
+    pos: number;
+    replaced: boolean;
+}
+
+// @public
+export interface MidiparamSetPointParams {
+    clipUuid: string;
+    lane: string;
+    pos: number;
+    value: number;
+}
+
+// @public
+export interface MidiparamSetPointResult {
+    clipUuid: string;
+    fingerprint: Fingerprint;
+    lane: string;
+    pointCount: number;
+    pos: number;
+    replaced: boolean;
+}
+
+// @public
+export interface MidiparamSetVelocityParams {
+    noteUuids: string[];
+    velocity: number;
+}
+
+// @public
+export interface MidiparamSetVelocityResult {
+    clipUuid: string;
+    fingerprint: Fingerprint;
+    updatedCount: number;
+}
+
+// @public
+export interface MidiparamVelocityParams {
+    clipUuid: string;
+    noteUuids?: string[];
+}
+
+// @public
+export interface MidiparamVelocityResult {
+    clipUuid: string;
+    fingerprint: Fingerprint;
+    noteCount: number;
+    notes: {
+        noteUuid: string;
+        pos: number;
+        velocity: number;
+    }[];
+}
+
+// @public
+export interface MidiparamWriteParams {
+    clipUuid: string;
+    lane: string;
+    points: {
+        pos: number;
+        value: number;
+    }[];
+    replace?: 'lane';
+}
+
+// @public
+export interface MidiparamWriteResult {
+    clipUuid: string;
+    fingerprint: Fingerprint;
+    lane: string;
+    pointCount: number;
+    wroteCount: number;
 }
 
 // @public
@@ -2929,7 +4208,8 @@ export interface NoteOperations {
     move(params: NoteMoveParams, options?: PreconditionCallOptions): Promise<NoteMoveResult>;
     resize(params: NoteResizeParams, options?: PreconditionCallOptions): Promise<NoteResizeResult>;
     setArticulation(params: NoteSetArticulationParams, options?: PreconditionCallOptions): Promise<NoteSetArticulationResult>;
-    setLyric(params: NoteSetLyricParams, options?: PreconditionCallOptions): Promise<NoteSetLyricResult>;
+    setGrapheme(params: NoteSetGraphemeParams, options?: PreconditionCallOptions): Promise<NoteSetGraphemeResult>;
+    setLanguage(params: NoteSetLanguageParams, options?: PreconditionCallOptions): Promise<NoteSetLanguageResult>;
     split(params: NoteSplitParams, options?: PreconditionCallOptions): Promise<NoteSplitResult>;
 }
 
@@ -2978,7 +4258,7 @@ export interface NoteSetArticulationResult {
 }
 
 // @public
-export interface NoteSetLyricParams {
+export interface NoteSetGraphemeParams {
     language?: string;
     lyric?: string;
     lyrics?: string[];
@@ -2986,12 +4266,37 @@ export interface NoteSetLyricParams {
 }
 
 // @public
-export interface NoteSetLyricResult {
+export interface NoteSetGraphemeResult {
     notes: {
         language: string;
         lyric: string;
         noteUuid: string;
     }[];
+    updatedCount: number;
+}
+
+// @public
+export interface NoteSetLanguageParams {
+    language: string;
+    noteUuids: string[];
+}
+
+// @public
+export interface NoteSetLanguageResult {
+    clipUuid: string;
+    discardedText: string;
+    notes: {
+        clearedOverride: boolean;
+        dur: number;
+        languageAfter: string;
+        languageBefore: string;
+        languageChanged: boolean;
+        lyricAfter: string;
+        lyricBefore: string;
+        noteUuid: string;
+        pos: number;
+    }[];
+    undoPushed: boolean;
     updatedCount: number;
 }
 
@@ -3099,6 +4404,296 @@ export interface OperationDescriptor {
 
 // @public
 export const OPERATIONS: readonly [{
+    readonly path: "audio-plugin apply-preset";
+    readonly wire: "audioPlugin.applyPreset";
+    readonly domain: "audio-plugin";
+    readonly method: "applyPreset";
+    readonly capability: "audioplugin.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin editor capture";
+    readonly wire: "audioPlugin.editor.capture";
+    readonly domain: "audio-plugin";
+    readonly method: "editorCapture";
+    readonly capability: "audioplugin.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin editor click";
+    readonly wire: "audioPlugin.editor.click";
+    readonly domain: "audio-plugin";
+    readonly method: "editorClick";
+    readonly capability: "audioplugin.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin editor close";
+    readonly wire: "audioPlugin.editor.close";
+    readonly domain: "audio-plugin";
+    readonly method: "editorClose";
+    readonly capability: "ui.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin editor dblclick";
+    readonly wire: "audioPlugin.editor.dblclick";
+    readonly domain: "audio-plugin";
+    readonly method: "editorDblclick";
+    readonly capability: "audioplugin.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin editor drag";
+    readonly wire: "audioPlugin.editor.drag";
+    readonly domain: "audio-plugin";
+    readonly method: "editorDrag";
+    readonly capability: "audioplugin.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin editor hover";
+    readonly wire: "audioPlugin.editor.hover";
+    readonly domain: "audio-plugin";
+    readonly method: "editorHover";
+    readonly capability: "audioplugin.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin editor info";
+    readonly wire: "audioPlugin.editor.info";
+    readonly domain: "audio-plugin";
+    readonly method: "editorInfo";
+    readonly capability: "audioplugin.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin editor key";
+    readonly wire: "audioPlugin.editor.key";
+    readonly domain: "audio-plugin";
+    readonly method: "editorKey";
+    readonly capability: "audioplugin.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin editor open";
+    readonly wire: "audioPlugin.editor.open";
+    readonly domain: "audio-plugin";
+    readonly method: "editorOpen";
+    readonly capability: "ui.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin editor resize";
+    readonly wire: "audioPlugin.editor.resize";
+    readonly domain: "audio-plugin";
+    readonly method: "editorResize";
+    readonly capability: "audioplugin.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin editor type";
+    readonly wire: "audioPlugin.editor.type";
+    readonly domain: "audio-plugin";
+    readonly method: "editorType";
+    readonly capability: "audioplugin.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin editor wheel";
+    readonly wire: "audioPlugin.editor.wheel";
+    readonly domain: "audio-plugin";
+    readonly method: "editorWheel";
+    readonly capability: "audioplugin.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin export-preset";
+    readonly wire: "audioPlugin.exportPreset";
+    readonly domain: "audio-plugin";
+    readonly method: "exportPreset";
+    readonly capability: "audioplugin.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin find-presets";
+    readonly wire: "audioPlugin.findPresets";
+    readonly domain: "audio-plugin";
+    readonly method: "findPresets";
+    readonly capability: "audioplugin.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin get-params";
+    readonly wire: "audioPlugin.getParams";
+    readonly domain: "audio-plugin";
+    readonly method: "getParams";
+    readonly capability: "audioplugin.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin get-state";
+    readonly wire: "audioPlugin.getState";
+    readonly domain: "audio-plugin";
+    readonly method: "getState";
+    readonly capability: "audioplugin.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin import-preset";
+    readonly wire: "audioPlugin.importPreset";
+    readonly domain: "audio-plugin";
+    readonly method: "importPreset";
+    readonly capability: "audioplugin.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin list-available";
+    readonly wire: "audioPlugin.listAvailable";
+    readonly domain: "audio-plugin";
+    readonly method: "listAvailable";
+    readonly capability: "audioplugin.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin list-params";
+    readonly wire: "audioPlugin.listParams";
+    readonly domain: "audio-plugin";
+    readonly method: "listParams";
+    readonly capability: "audioplugin.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin list-presets";
+    readonly wire: "audioPlugin.listPresets";
+    readonly domain: "audio-plugin";
+    readonly method: "listPresets";
+    readonly capability: "audioplugin.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin move-preset";
+    readonly wire: "audioPlugin.movePreset";
+    readonly domain: "audio-plugin";
+    readonly method: "movePreset";
+    readonly capability: "audioplugin.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin remove-preset";
+    readonly wire: "audioPlugin.removePreset";
+    readonly domain: "audio-plugin";
+    readonly method: "removePreset";
+    readonly capability: "audioplugin.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin save-preset";
+    readonly wire: "audioPlugin.savePreset";
+    readonly domain: "audio-plugin";
+    readonly method: "savePreset";
+    readonly capability: "audioplugin.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin scan";
+    readonly wire: "audioPlugin.scan";
+    readonly domain: "audio-plugin";
+    readonly method: "scan";
+    readonly capability: "audioplugin.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin set";
+    readonly wire: "audioPlugin.set";
+    readonly domain: "audio-plugin";
+    readonly method: "set";
+    readonly capability: "audioplugin.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin set-param";
+    readonly wire: "audioPlugin.setParam";
+    readonly domain: "audio-plugin";
+    readonly method: "setParam";
+    readonly capability: "audioplugin.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin set-state";
+    readonly wire: "audioPlugin.setState";
+    readonly domain: "audio-plugin";
+    readonly method: "setState";
+    readonly capability: "audioplugin.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "audio-plugin slots";
+    readonly wire: "audioPlugin.slots";
+    readonly domain: "audio-plugin";
+    readonly method: "slots";
+    readonly capability: "audioplugin.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
     readonly path: "blend add";
     readonly wire: "blend.add";
     readonly domain: "blend";
@@ -3187,6 +4782,36 @@ export const OPERATIONS: readonly [{
     readonly ungated: false;
     readonly mutating: true;
     readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "breath list";
+    readonly wire: "breath.list";
+    readonly domain: "breath";
+    readonly method: "list";
+    readonly capability: "vocalparam.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "breath remove";
+    readonly wire: "breath.remove";
+    readonly domain: "breath";
+    readonly method: "remove";
+    readonly capability: "vocalparam.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "breath set";
+    readonly wire: "breath.set";
+    readonly domain: "breath";
+    readonly method: "set";
+    readonly capability: "vocalparam.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
     readonly takesParams: true;
 }, {
     readonly path: "canvas effective-size";
@@ -3299,10 +4924,60 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
+    readonly path: "chord delete";
+    readonly wire: "chord.delete";
+    readonly domain: "chord";
+    readonly method: "delete";
+    readonly capability: "chord.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "chord insert";
+    readonly wire: "chord.insert";
+    readonly domain: "chord";
+    readonly method: "insert";
+    readonly capability: "chord.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "chord list";
+    readonly wire: "chord.list";
+    readonly domain: "chord";
+    readonly method: "list";
+    readonly capability: "chord.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "chord set";
+    readonly wire: "chord.set";
+    readonly domain: "chord";
+    readonly method: "set";
+    readonly capability: "chord.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
     readonly path: "clip audio-content";
     readonly wire: "clip.audioContent";
     readonly domain: "clip";
     readonly method: "audioContent";
+    readonly capability: "clip.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "clip beat-content";
+    readonly wire: "clip.beatContent";
+    readonly domain: "clip";
+    readonly method: "beatContent";
     readonly capability: "clip.read";
     readonly ungated: false;
     readonly mutating: false;
@@ -3709,16 +5384,6 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
-    readonly path: "export fcpxml";
-    readonly wire: "export.fcpxml";
-    readonly domain: "export";
-    readonly method: "fcpxml";
-    readonly capability: "export.invoke";
-    readonly ungated: false;
-    readonly mutating: true;
-    readonly fingerprintPrecondition: false;
-    readonly takesParams: true;
-}, {
     readonly path: "export lrc";
     readonly wire: "export.lrc";
     readonly domain: "export";
@@ -3750,6 +5415,16 @@ export const OPERATIONS: readonly [{
     readonly takesParams: true;
     readonly entitlement: "membership";
 }, {
+    readonly path: "export timeline";
+    readonly wire: "export.timeline";
+    readonly domain: "export";
+    readonly method: "timeline";
+    readonly capability: "export.invoke";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
     readonly path: "export video";
     readonly wire: "export.video";
     readonly domain: "export";
@@ -3775,67 +5450,77 @@ export const OPERATIONS: readonly [{
     readonly wire: "fx.add";
     readonly domain: "fx";
     readonly method: "add";
-    readonly capability: "fx.write";
+    readonly capability: "audioplugin.write";
     readonly ungated: false;
     readonly mutating: true;
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
-    readonly path: "fx apply-preset";
-    readonly wire: "fx.applyPreset";
+    readonly path: "fx apply-chain";
+    readonly wire: "fx.applyChain";
     readonly domain: "fx";
-    readonly method: "applyPreset";
-    readonly capability: "fx.write";
+    readonly method: "applyChain";
+    readonly capability: "audioplugin.write";
     readonly ungated: false;
     readonly mutating: true;
-    readonly fingerprintPrecondition: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
-    readonly path: "fx get-params";
-    readonly wire: "fx.getParams";
+    readonly path: "fx export-chain";
+    readonly wire: "fx.exportChain";
     readonly domain: "fx";
-    readonly method: "getParams";
-    readonly capability: "fx.read";
+    readonly method: "exportChain";
+    readonly capability: "audioplugin.read";
     readonly ungated: false;
     readonly mutating: false;
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
-    readonly path: "fx list";
-    readonly wire: "fx.list";
+    readonly path: "fx find-chains";
+    readonly wire: "fx.findChains";
     readonly domain: "fx";
-    readonly method: "list";
-    readonly capability: "fx.read";
+    readonly method: "findChains";
+    readonly capability: "audioplugin.read";
     readonly ungated: false;
     readonly mutating: false;
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
-    readonly path: "fx list-available";
-    readonly wire: "fx.listAvailable";
+    readonly path: "fx import-chain";
+    readonly wire: "fx.importChain";
     readonly domain: "fx";
-    readonly method: "listAvailable";
-    readonly capability: "fx.read";
+    readonly method: "importChain";
+    readonly capability: "audioplugin.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "fx insert-chain";
+    readonly wire: "fx.insertChain";
+    readonly domain: "fx";
+    readonly method: "insertChain";
+    readonly capability: "audioplugin.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "fx list-chains";
+    readonly wire: "fx.listChains";
+    readonly domain: "fx";
+    readonly method: "listChains";
+    readonly capability: "audioplugin.read";
     readonly ungated: false;
     readonly mutating: false;
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
-    readonly path: "fx list-params";
-    readonly wire: "fx.listParams";
+    readonly path: "fx move-chain";
+    readonly wire: "fx.moveChain";
     readonly domain: "fx";
-    readonly method: "listParams";
-    readonly capability: "fx.read";
-    readonly ungated: false;
-    readonly mutating: false;
-    readonly fingerprintPrecondition: false;
-    readonly takesParams: true;
-}, {
-    readonly path: "fx open-editor";
-    readonly wire: "fx.openEditor";
-    readonly domain: "fx";
-    readonly method: "openEditor";
-    readonly capability: "ui.control";
+    readonly method: "moveChain";
+    readonly capability: "audioplugin.write";
     readonly ungated: false;
     readonly mutating: true;
     readonly fingerprintPrecondition: false;
@@ -3845,7 +5530,17 @@ export const OPERATIONS: readonly [{
     readonly wire: "fx.remove";
     readonly domain: "fx";
     readonly method: "remove";
-    readonly capability: "fx.write";
+    readonly capability: "audioplugin.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "fx remove-chain";
+    readonly wire: "fx.removeChain";
+    readonly domain: "fx";
+    readonly method: "removeChain";
+    readonly capability: "audioplugin.write";
     readonly ungated: false;
     readonly mutating: true;
     readonly fingerprintPrecondition: false;
@@ -3855,154 +5550,141 @@ export const OPERATIONS: readonly [{
     readonly wire: "fx.reorder";
     readonly domain: "fx";
     readonly method: "reorder";
-    readonly capability: "fx.write";
+    readonly capability: "audioplugin.write";
     readonly ungated: false;
     readonly mutating: true;
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
-    readonly path: "fx save-preset";
-    readonly wire: "fx.savePreset";
+    readonly path: "fx save-chain";
+    readonly wire: "fx.saveChain";
     readonly domain: "fx";
-    readonly method: "savePreset";
-    readonly capability: "fx.write";
+    readonly method: "saveChain";
+    readonly capability: "audioplugin.write";
     readonly ungated: false;
     readonly mutating: true;
     readonly fingerprintPrecondition: false;
-    readonly takesParams: true;
-}, {
-    readonly path: "fx scan";
-    readonly wire: "fx.scan";
-    readonly domain: "fx";
-    readonly method: "scan";
-    readonly capability: "fx.write";
-    readonly ungated: false;
-    readonly mutating: true;
-    readonly fingerprintPrecondition: false;
-    readonly takesParams: true;
-}, {
-    readonly path: "fx set";
-    readonly wire: "fx.set";
-    readonly domain: "fx";
-    readonly method: "set";
-    readonly capability: "fx.write";
-    readonly ungated: false;
-    readonly mutating: true;
-    readonly fingerprintPrecondition: false;
-    readonly takesParams: true;
-}, {
-    readonly path: "fx set-param";
-    readonly wire: "fx.setParam";
-    readonly domain: "fx";
-    readonly method: "setParam";
-    readonly capability: "fx.write";
-    readonly ungated: false;
-    readonly mutating: true;
-    readonly fingerprintPrecondition: true;
     readonly takesParams: true;
 }, {
     readonly path: "fx set-room";
     readonly wire: "fx.setRoom";
     readonly domain: "fx";
     readonly method: "setRoom";
-    readonly capability: "fx.write";
+    readonly capability: "audioplugin.write";
     readonly ungated: false;
     readonly mutating: true;
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
-    readonly path: "generative add-layer";
-    readonly wire: "generative.addLayer";
+    readonly path: "generative add-a-layer";
+    readonly wire: "generative.addALayer";
     readonly domain: "generative";
-    readonly method: "addLayer";
-    readonly capability: "generative.add-layer";
+    readonly method: "addALayer";
+    readonly capability: "generative.add-a-layer";
     readonly ungated: false;
     readonly mutating: true;
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
     readonly entitlement: "credits(add-a-layer)";
 }, {
-    readonly path: "generative enhance";
-    readonly wire: "generative.enhance";
+    readonly path: "generative inspire-me";
+    readonly wire: "generative.inspireMe";
     readonly domain: "generative";
-    readonly method: "enhance";
-    readonly capability: "generative.enhance";
-    readonly ungated: false;
-    readonly mutating: true;
-    readonly fingerprintPrecondition: false;
-    readonly takesParams: true;
-    readonly entitlement: "credits(music-enhancer)";
-}, {
-    readonly path: "generative seed-audio";
-    readonly wire: "generative.seedAudio";
-    readonly domain: "generative";
-    readonly method: "seedAudio";
-    readonly capability: "generative.seed-audio";
-    readonly ungated: false;
-    readonly mutating: true;
-    readonly fingerprintPrecondition: false;
-    readonly takesParams: true;
-    readonly entitlement: "credits(seed-audio)";
-}, {
-    readonly path: "generative song";
-    readonly wire: "generative.song";
-    readonly domain: "generative";
-    readonly method: "song";
-    readonly capability: "generative.song";
+    readonly method: "inspireMe";
+    readonly capability: "generative.inspire-me";
     readonly ungated: false;
     readonly mutating: true;
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
     readonly entitlement: "credits(song-generator)";
 }, {
-    readonly path: "generative sound-effects";
-    readonly wire: "generative.soundEffects";
+    readonly path: "generative inspire-me history get";
+    readonly wire: "generative.inspireMe.history.get";
     readonly domain: "generative";
-    readonly method: "soundEffects";
-    readonly capability: "generative.sound-effects";
+    readonly method: "inspireMeHistoryGet";
+    readonly capability: "generative-history.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "generative inspire-me history list";
+    readonly wire: "generative.inspireMe.history.list";
+    readonly domain: "generative";
+    readonly method: "inspireMeHistoryList";
+    readonly capability: "generative-history.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "generative music-enhancer";
+    readonly wire: "generative.musicEnhancer";
+    readonly domain: "generative";
+    readonly method: "musicEnhancer";
+    readonly capability: "generative.music-enhancer";
     readonly ungated: false;
     readonly mutating: true;
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
-    readonly entitlement: "credits(sound-effects)";
+    readonly entitlement: "credits(music-enhancer)";
 }, {
-    readonly path: "generative stem-split";
-    readonly wire: "generative.stemSplit";
+    readonly path: "generative music-enhancer history get";
+    readonly wire: "generative.musicEnhancer.history.get";
     readonly domain: "generative";
-    readonly method: "stemSplit";
-    readonly capability: "generative.stem-split";
+    readonly method: "musicEnhancerHistoryGet";
+    readonly capability: "generative-history.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "generative music-enhancer history list";
+    readonly wire: "generative.musicEnhancer.history.list";
+    readonly domain: "generative";
+    readonly method: "musicEnhancerHistoryList";
+    readonly capability: "generative-history.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "generative stem-splitter";
+    readonly wire: "generative.stemSplitter";
+    readonly domain: "generative";
+    readonly method: "stemSplitter";
+    readonly capability: "generative.stem-splitter";
     readonly ungated: false;
     readonly mutating: true;
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
     readonly entitlement: "credits(stem-splitter)";
 }, {
-    readonly path: "generative text2sample";
-    readonly wire: "generative.text2sample";
+    readonly path: "generative vocal-to-midi";
+    readonly wire: "generative.vocalToMidi";
     readonly domain: "generative";
-    readonly method: "text2sample";
-    readonly capability: "generative.text2sample";
-    readonly ungated: false;
-    readonly mutating: true;
-    readonly fingerprintPrecondition: false;
-    readonly takesParams: true;
-    readonly entitlement: "credits(text2sample)";
-}, {
-    readonly path: "generative vocal2midi";
-    readonly wire: "generative.vocal2midi";
-    readonly domain: "generative";
-    readonly method: "vocal2midi";
-    readonly capability: "generative.vocal2midi";
+    readonly method: "vocalToMidi";
+    readonly capability: "generative.vocal-to-midi";
     readonly ungated: false;
     readonly mutating: true;
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
-    readonly path: "generative voice-change";
-    readonly wire: "generative.voiceChange";
+    readonly path: "generative voice-changer convert";
+    readonly wire: "generative.voiceChanger.convert";
     readonly domain: "generative";
-    readonly method: "voiceChange";
-    readonly capability: "generative.voice-change";
+    readonly method: "voiceChangerConvert";
+    readonly capability: "generative.voice-changer";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "generative voice-changer models";
+    readonly wire: "generative.voiceChanger.models";
+    readonly domain: "generative";
+    readonly method: "voiceChangerModels";
+    readonly capability: "generative.voice-changer";
     readonly ungated: false;
     readonly mutating: true;
     readonly fingerprintPrecondition: false;
@@ -4048,26 +5730,6 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
-    readonly path: "instrument disable";
-    readonly wire: "instrument.disable";
-    readonly domain: "instrument";
-    readonly method: "disable";
-    readonly capability: "soundsource.write";
-    readonly ungated: false;
-    readonly mutating: true;
-    readonly fingerprintPrecondition: false;
-    readonly takesParams: true;
-}, {
-    readonly path: "instrument enable";
-    readonly wire: "instrument.enable";
-    readonly domain: "instrument";
-    readonly method: "enable";
-    readonly capability: "soundsource.write";
-    readonly ungated: false;
-    readonly mutating: true;
-    readonly fingerprintPrecondition: false;
-    readonly takesParams: true;
-}, {
     readonly path: "instrument set";
     readonly wire: "instrument.set";
     readonly domain: "instrument";
@@ -4092,6 +5754,16 @@ export const OPERATIONS: readonly [{
     readonly wire: "job.discardResult";
     readonly domain: "job";
     readonly method: "discardResult";
+    readonly capability: "job.control";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "job download";
+    readonly wire: "job.download";
+    readonly domain: "job";
+    readonly method: "download";
     readonly capability: "job.control";
     readonly ungated: false;
     readonly mutating: true;
@@ -4146,6 +5818,96 @@ export const OPERATIONS: readonly [{
     readonly ungated: false;
     readonly mutating: false;
     readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "lyric fill";
+    readonly wire: "lyric.fill";
+    readonly domain: "lyric";
+    readonly method: "fill";
+    readonly capability: "lyric.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "midiparam clear";
+    readonly wire: "midiparam.clear";
+    readonly domain: "midiparam";
+    readonly method: "clear";
+    readonly capability: "midiparam.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "midiparam list-lanes";
+    readonly wire: "midiparam.listLanes";
+    readonly domain: "midiparam";
+    readonly method: "listLanes";
+    readonly capability: "midiparam.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "midiparam read";
+    readonly wire: "midiparam.read";
+    readonly domain: "midiparam";
+    readonly method: "read";
+    readonly capability: "midiparam.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "midiparam remove-point";
+    readonly wire: "midiparam.removePoint";
+    readonly domain: "midiparam";
+    readonly method: "removePoint";
+    readonly capability: "midiparam.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "midiparam set-point";
+    readonly wire: "midiparam.setPoint";
+    readonly domain: "midiparam";
+    readonly method: "setPoint";
+    readonly capability: "midiparam.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "midiparam set-velocity";
+    readonly wire: "midiparam.setVelocity";
+    readonly domain: "midiparam";
+    readonly method: "setVelocity";
+    readonly capability: "midiparam.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "midiparam velocity";
+    readonly wire: "midiparam.velocity";
+    readonly domain: "midiparam";
+    readonly method: "velocity";
+    readonly capability: "midiparam.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "midiparam write";
+    readonly wire: "midiparam.write";
+    readonly domain: "midiparam";
+    readonly method: "write";
+    readonly capability: "midiparam.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
     readonly takesParams: true;
 }, {
     readonly path: "note add";
@@ -4208,10 +5970,20 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: true;
     readonly takesParams: true;
 }, {
-    readonly path: "note set-lyric";
-    readonly wire: "note.setLyric";
+    readonly path: "note set-grapheme";
+    readonly wire: "note.setGrapheme";
     readonly domain: "note";
-    readonly method: "setLyric";
+    readonly method: "setGrapheme";
+    readonly capability: "note.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "note set-language";
+    readonly wire: "note.setLanguage";
+    readonly domain: "note";
+    readonly method: "setLanguage";
     readonly capability: "note.write";
     readonly ungated: false;
     readonly mutating: true;
@@ -4223,6 +5995,96 @@ export const OPERATIONS: readonly [{
     readonly domain: "note";
     readonly method: "split";
     readonly capability: "note.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "phoneme g2p";
+    readonly wire: "phoneme.g2p";
+    readonly domain: "phoneme";
+    readonly method: "g2p";
+    readonly capability: "lyric.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "phoneme inventory";
+    readonly wire: "phoneme.inventory";
+    readonly domain: "phoneme";
+    readonly method: "inventory";
+    readonly capability: "lyric.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "phoneme list";
+    readonly wire: "phoneme.list";
+    readonly domain: "phoneme";
+    readonly method: "list";
+    readonly capability: "lyric.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "phoneme move-boundary";
+    readonly wire: "phoneme.moveBoundary";
+    readonly domain: "phoneme";
+    readonly method: "moveBoundary";
+    readonly capability: "lyric.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "phoneme reset";
+    readonly wire: "phoneme.reset";
+    readonly domain: "phoneme";
+    readonly method: "reset";
+    readonly capability: "lyric.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "phoneme reset-override";
+    readonly wire: "phoneme.resetOverride";
+    readonly domain: "phoneme";
+    readonly method: "resetOverride";
+    readonly capability: "lyric.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "phoneme reset-timing";
+    readonly wire: "phoneme.resetTiming";
+    readonly domain: "phoneme";
+    readonly method: "resetTiming";
+    readonly capability: "lyric.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "phoneme set";
+    readonly wire: "phoneme.set";
+    readonly domain: "phoneme";
+    readonly method: "set";
+    readonly capability: "lyric.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "phoneme set-consonant-timing";
+    readonly wire: "phoneme.setConsonantTiming";
+    readonly domain: "phoneme";
+    readonly method: "setConsonantTiming";
+    readonly capability: "lyric.write";
     readonly ungated: false;
     readonly mutating: true;
     readonly fingerprintPrecondition: true;
@@ -4458,6 +6320,16 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: false;
 }, {
+    readonly path: "tempo get-analysis";
+    readonly wire: "tempo.getAnalysis";
+    readonly domain: "tempo";
+    readonly method: "getAnalysis";
+    readonly capability: "tempo.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
     readonly path: "tempo points";
     readonly wire: "tempo.points";
     readonly domain: "tempo";
@@ -4556,6 +6428,46 @@ export const OPERATIONS: readonly [{
     readonly ungated: false;
     readonly mutating: true;
     readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "track audition note";
+    readonly wire: "track.audition.note";
+    readonly domain: "track";
+    readonly method: "auditionNote";
+    readonly capability: "track.audition";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "track audition note-clear";
+    readonly wire: "track.audition.noteClear";
+    readonly domain: "track";
+    readonly method: "auditionNoteClear";
+    readonly capability: "track.audition";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "track audition note-off";
+    readonly wire: "track.audition.noteOff";
+    readonly domain: "track";
+    readonly method: "auditionNoteOff";
+    readonly capability: "track.audition";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
+    readonly path: "track audition note-on";
+    readonly wire: "track.audition.noteOn";
+    readonly domain: "track";
+    readonly method: "auditionNoteOn";
+    readonly capability: "track.audition";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
     readonly path: "track create";
@@ -4838,6 +6750,26 @@ export const OPERATIONS: readonly [{
     readonly fingerprintPrecondition: false;
     readonly takesParams: true;
 }, {
+    readonly path: "vocalparam set-voicing";
+    readonly wire: "vocalparam.setVoicing";
+    readonly domain: "vocalparam";
+    readonly method: "setVoicing";
+    readonly capability: "vocalparam.write";
+    readonly ungated: false;
+    readonly mutating: true;
+    readonly fingerprintPrecondition: true;
+    readonly takesParams: true;
+}, {
+    readonly path: "vocalparam voicing";
+    readonly wire: "vocalparam.voicing";
+    readonly domain: "vocalparam";
+    readonly method: "voicing";
+    readonly capability: "vocalparam.read";
+    readonly ungated: false;
+    readonly mutating: false;
+    readonly fingerprintPrecondition: false;
+    readonly takesParams: true;
+}, {
     readonly path: "vocalparam write";
     readonly wire: "vocalparam.write";
     readonly domain: "vocalparam";
@@ -4897,6 +6829,267 @@ export interface OperationWarning {
 }
 
 // @public
+export interface PhonemeG2pParams {
+    graphemes: string[];
+    index?: number;
+    language: string;
+}
+
+// @public
+export interface PhonemeG2pResult {
+    contextSupported: boolean;
+    language: string;
+    syllables: {
+        fromContext: boolean;
+        grapheme: string;
+        headConsonants: string[];
+        index: number;
+        phonemes: string[];
+        resolved: boolean;
+        tailConsonants: string[];
+        vowels: string[];
+    }[];
+}
+
+// @public
+export interface PhonemeInventoryParams {
+    language: string;
+}
+
+// @public
+export interface PhonemeInventoryResult {
+    consonants: string[];
+    contextSupported: boolean;
+    defaultGrapheme: string;
+    defaultPhonemes: string[];
+    language: string;
+    phoneticsHints: Record<string, string>;
+    vowels: string[];
+}
+
+// @public
+export interface PhonemeListParams {
+    clipUuid?: string;
+    noteUuids?: string[];
+    onlyEdited?: boolean;
+    rangeBegin?: number;
+    rangeEnd?: number;
+    rangeScope?: 'project' | 'clip-local';
+    withTimings?: 'durations' | 'boundaries' | 'both';
+}
+
+// @public
+export interface PhonemeListResult {
+    capabilities: {
+        maxVowels?: number;
+        supportsVowelSpan: boolean;
+    };
+    clipUuid: string;
+    filteredRange?: {
+        begin: number;
+        end: number;
+        scope: 'project' | 'clip-local';
+    };
+    fingerprint: Fingerprint;
+    modelGeneration?: string;
+    notes: {
+        defaultPhonemes: string[];
+        dur: number;
+        endSec: number;
+        headConsonants: string[];
+        isOverride: boolean;
+        language: string;
+        lyric: string;
+        noteUuid: string;
+        overrideLegal?: boolean;
+        phonemes: string[];
+        pos: number;
+        startSec: number;
+        tailConsonants: string[];
+        timingKinds: ('pins' | 'consonant-lengths')[];
+        timings?: {
+            boundaryDraggable?: boolean;
+            boundaryMaxSec?: number;
+            boundaryMinSec?: number;
+            durationSec?: number;
+            effectiveDurationSec?: number;
+            index: number;
+            isPinned: boolean;
+            isVowel: boolean;
+            name: string;
+            spanIndex: number;
+            startSec?: number;
+        }[];
+        vowels: string[];
+    }[];
+    spans?: {
+        available: boolean;
+        endSec: number;
+        index: number;
+        kind: 'note' | 'gap' | 'lead-in';
+        members: {
+            index: number;
+            noteUuid: string;
+        }[];
+        startSec: number;
+        unavailableReason?: 'not-synthesized' | 'partial-span';
+    }[];
+    timeBase: string;
+}
+
+// @public
+export interface PhonemeMoveBoundaryParams {
+    dryRun?: boolean;
+    index: number;
+    noteUuids: string[];
+    targetStartSec: number;
+}
+
+// @public
+export interface PhonemeMoveBoundaryResult {
+    boundaryStartSec: number;
+    clipUuid: string;
+    dryRun: boolean;
+    pinned: {
+        index: number;
+        noteUuid: string;
+    }[];
+    representation: 'pins' | 'consonant-lengths';
+    timeBase: string;
+    undoPushed: boolean;
+    writes: {
+        durationSec: number;
+        effectiveDurationSec?: number;
+        index: number;
+        name: string;
+        noteUuid: string;
+    }[];
+}
+
+// @public
+export interface PhonemeOperations {
+    g2p(params: PhonemeG2pParams, options?: CallOptions): Promise<PhonemeG2pResult>;
+    inventory(params: PhonemeInventoryParams, options?: CallOptions): Promise<PhonemeInventoryResult>;
+    list(params?: PhonemeListParams, options?: CallOptions): Promise<PhonemeListResult>;
+    moveBoundary(params: PhonemeMoveBoundaryParams, options?: PreconditionCallOptions): Promise<PhonemeMoveBoundaryResult>;
+    reset(params: PhonemeResetParams, options?: PreconditionCallOptions): Promise<PhonemeResetResult>;
+    resetOverride(params: PhonemeResetOverrideParams, options?: PreconditionCallOptions): Promise<PhonemeResetOverrideResult>;
+    resetTiming(params: PhonemeResetTimingParams, options?: PreconditionCallOptions): Promise<PhonemeResetTimingResult>;
+    set(params: PhonemeSetParams, options?: PreconditionCallOptions): Promise<PhonemeSetResult>;
+    setConsonantTiming(params: PhonemeSetConsonantTimingParams, options?: PreconditionCallOptions): Promise<PhonemeSetConsonantTimingResult>;
+}
+
+// @public
+export interface PhonemeResetOverrideParams {
+    noteUuids: string[];
+}
+
+// @public
+export interface PhonemeResetOverrideResult {
+    clipUuid: string;
+    notes: {
+        clearedOverride: boolean;
+        clearedTimings: ('pins' | 'consonant-lengths')[];
+        isOverride: boolean;
+        language: string;
+        lyric: string;
+        noteUuid: string;
+        phonemes: string[];
+    }[];
+    undoPushed: boolean;
+}
+
+// @public
+export interface PhonemeResetParams {
+    noteUuids: string[];
+}
+
+// @public
+export interface PhonemeResetResult {
+    clipUuid: string;
+    notes: {
+        clearedOverride: boolean;
+        clearedTimings: ('pins' | 'consonant-lengths')[];
+        isOverride: boolean;
+        language: string;
+        lyric: string;
+        noteUuid: string;
+        phonemes: string[];
+    }[];
+    undoPushed: boolean;
+}
+
+// @public
+export interface PhonemeResetTimingParams {
+    noteUuids: string[];
+}
+
+// @public
+export interface PhonemeResetTimingResult {
+    clipUuid: string;
+    notes: {
+        clearedOverride: boolean;
+        clearedTimings: ('pins' | 'consonant-lengths')[];
+        isOverride: boolean;
+        language: string;
+        lyric: string;
+        noteUuid: string;
+        phonemes: string[];
+    }[];
+    undoPushed: boolean;
+}
+
+// @public
+export interface PhonemeSetConsonantTimingParams {
+    dryRun?: boolean;
+    index: number;
+    lengthSec: number;
+    noteUuids: string[];
+}
+
+// @public
+export interface PhonemeSetConsonantTimingResult {
+    boundaryStartSec: number;
+    clipUuid: string;
+    dryRun: boolean;
+    pinned: {
+        index: number;
+        noteUuid: string;
+    }[];
+    representation: 'pins' | 'consonant-lengths';
+    timeBase: string;
+    undoPushed: boolean;
+    writes: {
+        durationSec: number;
+        effectiveDurationSec?: number;
+        index: number;
+        name: string;
+        noteUuid: string;
+    }[];
+}
+
+// @public
+export interface PhonemeSetParams {
+    noteUuids: string[];
+    phonemes: string[];
+}
+
+// @public
+export interface PhonemeSetResult {
+    clipUuid: string;
+    notes: {
+        clearedOverride: boolean;
+        clearedTimings: ('pins' | 'consonant-lengths')[];
+        isOverride: boolean;
+        language: string;
+        lyric: string;
+        noteUuid: string;
+        phonemes: string[];
+    }[];
+    undoPushed: boolean;
+}
+
+// @public
 export interface PingParams {
     nonce: string;
 }
@@ -4921,12 +7114,12 @@ export type ProfileName = keyof typeof PROFILES;
 
 // @public
 export const PROFILES: {
-    readonly 'surface.cli-mcp': readonly ["canvas.read", "caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "fx.read", "fx.write", "generative.add-layer", "generative.enhance", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "soundsource.read", "soundsource.write", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.read", "track.write", "transport.control", "transport.state", "ui.control", "ui.state", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write"];
+    readonly 'surface.cli-mcp': readonly ["audioplugin.control", "audioplugin.read", "audioplugin.write", "canvas.read", "caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "generative-history.read", "generative.add-a-layer", "generative.inspire-me", "generative.music-enhancer", "generative.stem-splitter", "generative.vocal-to-midi", "generative.voice-changer", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "midiparam.read", "midiparam.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "soundsource.read", "soundsource.write", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.audition", "track.read", "track.write", "transport.control", "transport.state", "ui.control", "ui.state", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write"];
     readonly 'surface.extension-sdk': readonly ["canvas.read", "session.handshake", "session.move", "session.ping", "session.shutdown", "workflow.dev", "workflow.ui"];
     readonly 'transport.v1': readonly ["transport.control"];
     readonly 'ui.v1': readonly ["workflow.ui"];
     readonly 'timeline.tempo.v1': readonly ["tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write"];
-    readonly 'generative.all.v1': readonly ["generative.add-layer", "generative.enhance", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change"];
+    readonly 'generative.all.v1': readonly ["generative.add-a-layer", "generative.inspire-me", "generative.music-enhancer", "generative.stem-splitter", "generative.vocal-to-midi", "generative.voice-changer"];
 };
 
 // @public
@@ -5078,6 +7271,296 @@ export const PROTOCOL_VERSION = 2;
 // @public
 export const PUBLIC_SURFACE: {
     readonly operations: readonly [{
+        readonly path: "audio-plugin apply-preset";
+        readonly wire: "audioPlugin.applyPreset";
+        readonly domain: "audio-plugin";
+        readonly method: "applyPreset";
+        readonly capability: "audioplugin.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin editor capture";
+        readonly wire: "audioPlugin.editor.capture";
+        readonly domain: "audio-plugin";
+        readonly method: "editorCapture";
+        readonly capability: "audioplugin.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin editor click";
+        readonly wire: "audioPlugin.editor.click";
+        readonly domain: "audio-plugin";
+        readonly method: "editorClick";
+        readonly capability: "audioplugin.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin editor close";
+        readonly wire: "audioPlugin.editor.close";
+        readonly domain: "audio-plugin";
+        readonly method: "editorClose";
+        readonly capability: "ui.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin editor dblclick";
+        readonly wire: "audioPlugin.editor.dblclick";
+        readonly domain: "audio-plugin";
+        readonly method: "editorDblclick";
+        readonly capability: "audioplugin.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin editor drag";
+        readonly wire: "audioPlugin.editor.drag";
+        readonly domain: "audio-plugin";
+        readonly method: "editorDrag";
+        readonly capability: "audioplugin.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin editor hover";
+        readonly wire: "audioPlugin.editor.hover";
+        readonly domain: "audio-plugin";
+        readonly method: "editorHover";
+        readonly capability: "audioplugin.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin editor info";
+        readonly wire: "audioPlugin.editor.info";
+        readonly domain: "audio-plugin";
+        readonly method: "editorInfo";
+        readonly capability: "audioplugin.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin editor key";
+        readonly wire: "audioPlugin.editor.key";
+        readonly domain: "audio-plugin";
+        readonly method: "editorKey";
+        readonly capability: "audioplugin.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin editor open";
+        readonly wire: "audioPlugin.editor.open";
+        readonly domain: "audio-plugin";
+        readonly method: "editorOpen";
+        readonly capability: "ui.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin editor resize";
+        readonly wire: "audioPlugin.editor.resize";
+        readonly domain: "audio-plugin";
+        readonly method: "editorResize";
+        readonly capability: "audioplugin.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin editor type";
+        readonly wire: "audioPlugin.editor.type";
+        readonly domain: "audio-plugin";
+        readonly method: "editorType";
+        readonly capability: "audioplugin.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin editor wheel";
+        readonly wire: "audioPlugin.editor.wheel";
+        readonly domain: "audio-plugin";
+        readonly method: "editorWheel";
+        readonly capability: "audioplugin.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin export-preset";
+        readonly wire: "audioPlugin.exportPreset";
+        readonly domain: "audio-plugin";
+        readonly method: "exportPreset";
+        readonly capability: "audioplugin.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin find-presets";
+        readonly wire: "audioPlugin.findPresets";
+        readonly domain: "audio-plugin";
+        readonly method: "findPresets";
+        readonly capability: "audioplugin.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin get-params";
+        readonly wire: "audioPlugin.getParams";
+        readonly domain: "audio-plugin";
+        readonly method: "getParams";
+        readonly capability: "audioplugin.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin get-state";
+        readonly wire: "audioPlugin.getState";
+        readonly domain: "audio-plugin";
+        readonly method: "getState";
+        readonly capability: "audioplugin.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin import-preset";
+        readonly wire: "audioPlugin.importPreset";
+        readonly domain: "audio-plugin";
+        readonly method: "importPreset";
+        readonly capability: "audioplugin.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin list-available";
+        readonly wire: "audioPlugin.listAvailable";
+        readonly domain: "audio-plugin";
+        readonly method: "listAvailable";
+        readonly capability: "audioplugin.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin list-params";
+        readonly wire: "audioPlugin.listParams";
+        readonly domain: "audio-plugin";
+        readonly method: "listParams";
+        readonly capability: "audioplugin.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin list-presets";
+        readonly wire: "audioPlugin.listPresets";
+        readonly domain: "audio-plugin";
+        readonly method: "listPresets";
+        readonly capability: "audioplugin.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin move-preset";
+        readonly wire: "audioPlugin.movePreset";
+        readonly domain: "audio-plugin";
+        readonly method: "movePreset";
+        readonly capability: "audioplugin.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin remove-preset";
+        readonly wire: "audioPlugin.removePreset";
+        readonly domain: "audio-plugin";
+        readonly method: "removePreset";
+        readonly capability: "audioplugin.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin save-preset";
+        readonly wire: "audioPlugin.savePreset";
+        readonly domain: "audio-plugin";
+        readonly method: "savePreset";
+        readonly capability: "audioplugin.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin scan";
+        readonly wire: "audioPlugin.scan";
+        readonly domain: "audio-plugin";
+        readonly method: "scan";
+        readonly capability: "audioplugin.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin set";
+        readonly wire: "audioPlugin.set";
+        readonly domain: "audio-plugin";
+        readonly method: "set";
+        readonly capability: "audioplugin.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin set-param";
+        readonly wire: "audioPlugin.setParam";
+        readonly domain: "audio-plugin";
+        readonly method: "setParam";
+        readonly capability: "audioplugin.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin set-state";
+        readonly wire: "audioPlugin.setState";
+        readonly domain: "audio-plugin";
+        readonly method: "setState";
+        readonly capability: "audioplugin.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "audio-plugin slots";
+        readonly wire: "audioPlugin.slots";
+        readonly domain: "audio-plugin";
+        readonly method: "slots";
+        readonly capability: "audioplugin.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
         readonly path: "blend add";
         readonly wire: "blend.add";
         readonly domain: "blend";
@@ -5166,6 +7649,36 @@ export const PUBLIC_SURFACE: {
         readonly ungated: false;
         readonly mutating: true;
         readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "breath list";
+        readonly wire: "breath.list";
+        readonly domain: "breath";
+        readonly method: "list";
+        readonly capability: "vocalparam.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "breath remove";
+        readonly wire: "breath.remove";
+        readonly domain: "breath";
+        readonly method: "remove";
+        readonly capability: "vocalparam.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "breath set";
+        readonly wire: "breath.set";
+        readonly domain: "breath";
+        readonly method: "set";
+        readonly capability: "vocalparam.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
         readonly takesParams: true;
     }, {
         readonly path: "canvas effective-size";
@@ -5278,10 +7791,60 @@ export const PUBLIC_SURFACE: {
         readonly fingerprintPrecondition: false;
         readonly takesParams: true;
     }, {
+        readonly path: "chord delete";
+        readonly wire: "chord.delete";
+        readonly domain: "chord";
+        readonly method: "delete";
+        readonly capability: "chord.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "chord insert";
+        readonly wire: "chord.insert";
+        readonly domain: "chord";
+        readonly method: "insert";
+        readonly capability: "chord.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "chord list";
+        readonly wire: "chord.list";
+        readonly domain: "chord";
+        readonly method: "list";
+        readonly capability: "chord.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "chord set";
+        readonly wire: "chord.set";
+        readonly domain: "chord";
+        readonly method: "set";
+        readonly capability: "chord.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
         readonly path: "clip audio-content";
         readonly wire: "clip.audioContent";
         readonly domain: "clip";
         readonly method: "audioContent";
+        readonly capability: "clip.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "clip beat-content";
+        readonly wire: "clip.beatContent";
+        readonly domain: "clip";
+        readonly method: "beatContent";
         readonly capability: "clip.read";
         readonly ungated: false;
         readonly mutating: false;
@@ -5688,16 +8251,6 @@ export const PUBLIC_SURFACE: {
         readonly fingerprintPrecondition: false;
         readonly takesParams: true;
     }, {
-        readonly path: "export fcpxml";
-        readonly wire: "export.fcpxml";
-        readonly domain: "export";
-        readonly method: "fcpxml";
-        readonly capability: "export.invoke";
-        readonly ungated: false;
-        readonly mutating: true;
-        readonly fingerprintPrecondition: false;
-        readonly takesParams: true;
-    }, {
         readonly path: "export lrc";
         readonly wire: "export.lrc";
         readonly domain: "export";
@@ -5729,6 +8282,16 @@ export const PUBLIC_SURFACE: {
         readonly takesParams: true;
         readonly entitlement: "membership";
     }, {
+        readonly path: "export timeline";
+        readonly wire: "export.timeline";
+        readonly domain: "export";
+        readonly method: "timeline";
+        readonly capability: "export.invoke";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
         readonly path: "export video";
         readonly wire: "export.video";
         readonly domain: "export";
@@ -5754,67 +8317,77 @@ export const PUBLIC_SURFACE: {
         readonly wire: "fx.add";
         readonly domain: "fx";
         readonly method: "add";
-        readonly capability: "fx.write";
+        readonly capability: "audioplugin.write";
         readonly ungated: false;
         readonly mutating: true;
         readonly fingerprintPrecondition: false;
         readonly takesParams: true;
     }, {
-        readonly path: "fx apply-preset";
-        readonly wire: "fx.applyPreset";
+        readonly path: "fx apply-chain";
+        readonly wire: "fx.applyChain";
         readonly domain: "fx";
-        readonly method: "applyPreset";
-        readonly capability: "fx.write";
+        readonly method: "applyChain";
+        readonly capability: "audioplugin.write";
         readonly ungated: false;
         readonly mutating: true;
-        readonly fingerprintPrecondition: true;
+        readonly fingerprintPrecondition: false;
         readonly takesParams: true;
     }, {
-        readonly path: "fx get-params";
-        readonly wire: "fx.getParams";
+        readonly path: "fx export-chain";
+        readonly wire: "fx.exportChain";
         readonly domain: "fx";
-        readonly method: "getParams";
-        readonly capability: "fx.read";
+        readonly method: "exportChain";
+        readonly capability: "audioplugin.read";
         readonly ungated: false;
         readonly mutating: false;
         readonly fingerprintPrecondition: false;
         readonly takesParams: true;
     }, {
-        readonly path: "fx list";
-        readonly wire: "fx.list";
+        readonly path: "fx find-chains";
+        readonly wire: "fx.findChains";
         readonly domain: "fx";
-        readonly method: "list";
-        readonly capability: "fx.read";
+        readonly method: "findChains";
+        readonly capability: "audioplugin.read";
         readonly ungated: false;
         readonly mutating: false;
         readonly fingerprintPrecondition: false;
         readonly takesParams: true;
     }, {
-        readonly path: "fx list-available";
-        readonly wire: "fx.listAvailable";
+        readonly path: "fx import-chain";
+        readonly wire: "fx.importChain";
         readonly domain: "fx";
-        readonly method: "listAvailable";
-        readonly capability: "fx.read";
+        readonly method: "importChain";
+        readonly capability: "audioplugin.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "fx insert-chain";
+        readonly wire: "fx.insertChain";
+        readonly domain: "fx";
+        readonly method: "insertChain";
+        readonly capability: "audioplugin.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "fx list-chains";
+        readonly wire: "fx.listChains";
+        readonly domain: "fx";
+        readonly method: "listChains";
+        readonly capability: "audioplugin.read";
         readonly ungated: false;
         readonly mutating: false;
         readonly fingerprintPrecondition: false;
         readonly takesParams: true;
     }, {
-        readonly path: "fx list-params";
-        readonly wire: "fx.listParams";
+        readonly path: "fx move-chain";
+        readonly wire: "fx.moveChain";
         readonly domain: "fx";
-        readonly method: "listParams";
-        readonly capability: "fx.read";
-        readonly ungated: false;
-        readonly mutating: false;
-        readonly fingerprintPrecondition: false;
-        readonly takesParams: true;
-    }, {
-        readonly path: "fx open-editor";
-        readonly wire: "fx.openEditor";
-        readonly domain: "fx";
-        readonly method: "openEditor";
-        readonly capability: "ui.control";
+        readonly method: "moveChain";
+        readonly capability: "audioplugin.write";
         readonly ungated: false;
         readonly mutating: true;
         readonly fingerprintPrecondition: false;
@@ -5824,7 +8397,17 @@ export const PUBLIC_SURFACE: {
         readonly wire: "fx.remove";
         readonly domain: "fx";
         readonly method: "remove";
-        readonly capability: "fx.write";
+        readonly capability: "audioplugin.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "fx remove-chain";
+        readonly wire: "fx.removeChain";
+        readonly domain: "fx";
+        readonly method: "removeChain";
+        readonly capability: "audioplugin.write";
         readonly ungated: false;
         readonly mutating: true;
         readonly fingerprintPrecondition: false;
@@ -5834,154 +8417,141 @@ export const PUBLIC_SURFACE: {
         readonly wire: "fx.reorder";
         readonly domain: "fx";
         readonly method: "reorder";
-        readonly capability: "fx.write";
+        readonly capability: "audioplugin.write";
         readonly ungated: false;
         readonly mutating: true;
         readonly fingerprintPrecondition: false;
         readonly takesParams: true;
     }, {
-        readonly path: "fx save-preset";
-        readonly wire: "fx.savePreset";
+        readonly path: "fx save-chain";
+        readonly wire: "fx.saveChain";
         readonly domain: "fx";
-        readonly method: "savePreset";
-        readonly capability: "fx.write";
+        readonly method: "saveChain";
+        readonly capability: "audioplugin.write";
         readonly ungated: false;
         readonly mutating: true;
         readonly fingerprintPrecondition: false;
-        readonly takesParams: true;
-    }, {
-        readonly path: "fx scan";
-        readonly wire: "fx.scan";
-        readonly domain: "fx";
-        readonly method: "scan";
-        readonly capability: "fx.write";
-        readonly ungated: false;
-        readonly mutating: true;
-        readonly fingerprintPrecondition: false;
-        readonly takesParams: true;
-    }, {
-        readonly path: "fx set";
-        readonly wire: "fx.set";
-        readonly domain: "fx";
-        readonly method: "set";
-        readonly capability: "fx.write";
-        readonly ungated: false;
-        readonly mutating: true;
-        readonly fingerprintPrecondition: false;
-        readonly takesParams: true;
-    }, {
-        readonly path: "fx set-param";
-        readonly wire: "fx.setParam";
-        readonly domain: "fx";
-        readonly method: "setParam";
-        readonly capability: "fx.write";
-        readonly ungated: false;
-        readonly mutating: true;
-        readonly fingerprintPrecondition: true;
         readonly takesParams: true;
     }, {
         readonly path: "fx set-room";
         readonly wire: "fx.setRoom";
         readonly domain: "fx";
         readonly method: "setRoom";
-        readonly capability: "fx.write";
+        readonly capability: "audioplugin.write";
         readonly ungated: false;
         readonly mutating: true;
         readonly fingerprintPrecondition: false;
         readonly takesParams: true;
     }, {
-        readonly path: "generative add-layer";
-        readonly wire: "generative.addLayer";
+        readonly path: "generative add-a-layer";
+        readonly wire: "generative.addALayer";
         readonly domain: "generative";
-        readonly method: "addLayer";
-        readonly capability: "generative.add-layer";
+        readonly method: "addALayer";
+        readonly capability: "generative.add-a-layer";
         readonly ungated: false;
         readonly mutating: true;
         readonly fingerprintPrecondition: false;
         readonly takesParams: true;
         readonly entitlement: "credits(add-a-layer)";
     }, {
-        readonly path: "generative enhance";
-        readonly wire: "generative.enhance";
+        readonly path: "generative inspire-me";
+        readonly wire: "generative.inspireMe";
         readonly domain: "generative";
-        readonly method: "enhance";
-        readonly capability: "generative.enhance";
-        readonly ungated: false;
-        readonly mutating: true;
-        readonly fingerprintPrecondition: false;
-        readonly takesParams: true;
-        readonly entitlement: "credits(music-enhancer)";
-    }, {
-        readonly path: "generative seed-audio";
-        readonly wire: "generative.seedAudio";
-        readonly domain: "generative";
-        readonly method: "seedAudio";
-        readonly capability: "generative.seed-audio";
-        readonly ungated: false;
-        readonly mutating: true;
-        readonly fingerprintPrecondition: false;
-        readonly takesParams: true;
-        readonly entitlement: "credits(seed-audio)";
-    }, {
-        readonly path: "generative song";
-        readonly wire: "generative.song";
-        readonly domain: "generative";
-        readonly method: "song";
-        readonly capability: "generative.song";
+        readonly method: "inspireMe";
+        readonly capability: "generative.inspire-me";
         readonly ungated: false;
         readonly mutating: true;
         readonly fingerprintPrecondition: false;
         readonly takesParams: true;
         readonly entitlement: "credits(song-generator)";
     }, {
-        readonly path: "generative sound-effects";
-        readonly wire: "generative.soundEffects";
+        readonly path: "generative inspire-me history get";
+        readonly wire: "generative.inspireMe.history.get";
         readonly domain: "generative";
-        readonly method: "soundEffects";
-        readonly capability: "generative.sound-effects";
+        readonly method: "inspireMeHistoryGet";
+        readonly capability: "generative-history.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "generative inspire-me history list";
+        readonly wire: "generative.inspireMe.history.list";
+        readonly domain: "generative";
+        readonly method: "inspireMeHistoryList";
+        readonly capability: "generative-history.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "generative music-enhancer";
+        readonly wire: "generative.musicEnhancer";
+        readonly domain: "generative";
+        readonly method: "musicEnhancer";
+        readonly capability: "generative.music-enhancer";
         readonly ungated: false;
         readonly mutating: true;
         readonly fingerprintPrecondition: false;
         readonly takesParams: true;
-        readonly entitlement: "credits(sound-effects)";
+        readonly entitlement: "credits(music-enhancer)";
     }, {
-        readonly path: "generative stem-split";
-        readonly wire: "generative.stemSplit";
+        readonly path: "generative music-enhancer history get";
+        readonly wire: "generative.musicEnhancer.history.get";
         readonly domain: "generative";
-        readonly method: "stemSplit";
-        readonly capability: "generative.stem-split";
+        readonly method: "musicEnhancerHistoryGet";
+        readonly capability: "generative-history.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "generative music-enhancer history list";
+        readonly wire: "generative.musicEnhancer.history.list";
+        readonly domain: "generative";
+        readonly method: "musicEnhancerHistoryList";
+        readonly capability: "generative-history.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "generative stem-splitter";
+        readonly wire: "generative.stemSplitter";
+        readonly domain: "generative";
+        readonly method: "stemSplitter";
+        readonly capability: "generative.stem-splitter";
         readonly ungated: false;
         readonly mutating: true;
         readonly fingerprintPrecondition: false;
         readonly takesParams: true;
         readonly entitlement: "credits(stem-splitter)";
     }, {
-        readonly path: "generative text2sample";
-        readonly wire: "generative.text2sample";
+        readonly path: "generative vocal-to-midi";
+        readonly wire: "generative.vocalToMidi";
         readonly domain: "generative";
-        readonly method: "text2sample";
-        readonly capability: "generative.text2sample";
-        readonly ungated: false;
-        readonly mutating: true;
-        readonly fingerprintPrecondition: false;
-        readonly takesParams: true;
-        readonly entitlement: "credits(text2sample)";
-    }, {
-        readonly path: "generative vocal2midi";
-        readonly wire: "generative.vocal2midi";
-        readonly domain: "generative";
-        readonly method: "vocal2midi";
-        readonly capability: "generative.vocal2midi";
+        readonly method: "vocalToMidi";
+        readonly capability: "generative.vocal-to-midi";
         readonly ungated: false;
         readonly mutating: true;
         readonly fingerprintPrecondition: false;
         readonly takesParams: true;
     }, {
-        readonly path: "generative voice-change";
-        readonly wire: "generative.voiceChange";
+        readonly path: "generative voice-changer convert";
+        readonly wire: "generative.voiceChanger.convert";
         readonly domain: "generative";
-        readonly method: "voiceChange";
-        readonly capability: "generative.voice-change";
+        readonly method: "voiceChangerConvert";
+        readonly capability: "generative.voice-changer";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "generative voice-changer models";
+        readonly wire: "generative.voiceChanger.models";
+        readonly domain: "generative";
+        readonly method: "voiceChangerModels";
+        readonly capability: "generative.voice-changer";
         readonly ungated: false;
         readonly mutating: true;
         readonly fingerprintPrecondition: false;
@@ -6027,26 +8597,6 @@ export const PUBLIC_SURFACE: {
         readonly fingerprintPrecondition: false;
         readonly takesParams: true;
     }, {
-        readonly path: "instrument disable";
-        readonly wire: "instrument.disable";
-        readonly domain: "instrument";
-        readonly method: "disable";
-        readonly capability: "soundsource.write";
-        readonly ungated: false;
-        readonly mutating: true;
-        readonly fingerprintPrecondition: false;
-        readonly takesParams: true;
-    }, {
-        readonly path: "instrument enable";
-        readonly wire: "instrument.enable";
-        readonly domain: "instrument";
-        readonly method: "enable";
-        readonly capability: "soundsource.write";
-        readonly ungated: false;
-        readonly mutating: true;
-        readonly fingerprintPrecondition: false;
-        readonly takesParams: true;
-    }, {
         readonly path: "instrument set";
         readonly wire: "instrument.set";
         readonly domain: "instrument";
@@ -6071,6 +8621,16 @@ export const PUBLIC_SURFACE: {
         readonly wire: "job.discardResult";
         readonly domain: "job";
         readonly method: "discardResult";
+        readonly capability: "job.control";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "job download";
+        readonly wire: "job.download";
+        readonly domain: "job";
+        readonly method: "download";
         readonly capability: "job.control";
         readonly ungated: false;
         readonly mutating: true;
@@ -6125,6 +8685,96 @@ export const PUBLIC_SURFACE: {
         readonly ungated: false;
         readonly mutating: false;
         readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "lyric fill";
+        readonly wire: "lyric.fill";
+        readonly domain: "lyric";
+        readonly method: "fill";
+        readonly capability: "lyric.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "midiparam clear";
+        readonly wire: "midiparam.clear";
+        readonly domain: "midiparam";
+        readonly method: "clear";
+        readonly capability: "midiparam.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "midiparam list-lanes";
+        readonly wire: "midiparam.listLanes";
+        readonly domain: "midiparam";
+        readonly method: "listLanes";
+        readonly capability: "midiparam.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "midiparam read";
+        readonly wire: "midiparam.read";
+        readonly domain: "midiparam";
+        readonly method: "read";
+        readonly capability: "midiparam.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "midiparam remove-point";
+        readonly wire: "midiparam.removePoint";
+        readonly domain: "midiparam";
+        readonly method: "removePoint";
+        readonly capability: "midiparam.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "midiparam set-point";
+        readonly wire: "midiparam.setPoint";
+        readonly domain: "midiparam";
+        readonly method: "setPoint";
+        readonly capability: "midiparam.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "midiparam set-velocity";
+        readonly wire: "midiparam.setVelocity";
+        readonly domain: "midiparam";
+        readonly method: "setVelocity";
+        readonly capability: "midiparam.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "midiparam velocity";
+        readonly wire: "midiparam.velocity";
+        readonly domain: "midiparam";
+        readonly method: "velocity";
+        readonly capability: "midiparam.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "midiparam write";
+        readonly wire: "midiparam.write";
+        readonly domain: "midiparam";
+        readonly method: "write";
+        readonly capability: "midiparam.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
         readonly takesParams: true;
     }, {
         readonly path: "note add";
@@ -6187,10 +8837,20 @@ export const PUBLIC_SURFACE: {
         readonly fingerprintPrecondition: true;
         readonly takesParams: true;
     }, {
-        readonly path: "note set-lyric";
-        readonly wire: "note.setLyric";
+        readonly path: "note set-grapheme";
+        readonly wire: "note.setGrapheme";
         readonly domain: "note";
-        readonly method: "setLyric";
+        readonly method: "setGrapheme";
+        readonly capability: "note.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "note set-language";
+        readonly wire: "note.setLanguage";
+        readonly domain: "note";
+        readonly method: "setLanguage";
         readonly capability: "note.write";
         readonly ungated: false;
         readonly mutating: true;
@@ -6202,6 +8862,96 @@ export const PUBLIC_SURFACE: {
         readonly domain: "note";
         readonly method: "split";
         readonly capability: "note.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "phoneme g2p";
+        readonly wire: "phoneme.g2p";
+        readonly domain: "phoneme";
+        readonly method: "g2p";
+        readonly capability: "lyric.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "phoneme inventory";
+        readonly wire: "phoneme.inventory";
+        readonly domain: "phoneme";
+        readonly method: "inventory";
+        readonly capability: "lyric.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "phoneme list";
+        readonly wire: "phoneme.list";
+        readonly domain: "phoneme";
+        readonly method: "list";
+        readonly capability: "lyric.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "phoneme move-boundary";
+        readonly wire: "phoneme.moveBoundary";
+        readonly domain: "phoneme";
+        readonly method: "moveBoundary";
+        readonly capability: "lyric.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "phoneme reset";
+        readonly wire: "phoneme.reset";
+        readonly domain: "phoneme";
+        readonly method: "reset";
+        readonly capability: "lyric.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "phoneme reset-override";
+        readonly wire: "phoneme.resetOverride";
+        readonly domain: "phoneme";
+        readonly method: "resetOverride";
+        readonly capability: "lyric.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "phoneme reset-timing";
+        readonly wire: "phoneme.resetTiming";
+        readonly domain: "phoneme";
+        readonly method: "resetTiming";
+        readonly capability: "lyric.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "phoneme set";
+        readonly wire: "phoneme.set";
+        readonly domain: "phoneme";
+        readonly method: "set";
+        readonly capability: "lyric.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "phoneme set-consonant-timing";
+        readonly wire: "phoneme.setConsonantTiming";
+        readonly domain: "phoneme";
+        readonly method: "setConsonantTiming";
+        readonly capability: "lyric.write";
         readonly ungated: false;
         readonly mutating: true;
         readonly fingerprintPrecondition: true;
@@ -6437,6 +9187,16 @@ export const PUBLIC_SURFACE: {
         readonly fingerprintPrecondition: false;
         readonly takesParams: false;
     }, {
+        readonly path: "tempo get-analysis";
+        readonly wire: "tempo.getAnalysis";
+        readonly domain: "tempo";
+        readonly method: "getAnalysis";
+        readonly capability: "tempo.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
         readonly path: "tempo points";
         readonly wire: "tempo.points";
         readonly domain: "tempo";
@@ -6535,6 +9295,46 @@ export const PUBLIC_SURFACE: {
         readonly ungated: false;
         readonly mutating: true;
         readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "track audition note";
+        readonly wire: "track.audition.note";
+        readonly domain: "track";
+        readonly method: "auditionNote";
+        readonly capability: "track.audition";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "track audition note-clear";
+        readonly wire: "track.audition.noteClear";
+        readonly domain: "track";
+        readonly method: "auditionNoteClear";
+        readonly capability: "track.audition";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "track audition note-off";
+        readonly wire: "track.audition.noteOff";
+        readonly domain: "track";
+        readonly method: "auditionNoteOff";
+        readonly capability: "track.audition";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
+        readonly path: "track audition note-on";
+        readonly wire: "track.audition.noteOn";
+        readonly domain: "track";
+        readonly method: "auditionNoteOn";
+        readonly capability: "track.audition";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: false;
         readonly takesParams: true;
     }, {
         readonly path: "track create";
@@ -6817,6 +9617,26 @@ export const PUBLIC_SURFACE: {
         readonly fingerprintPrecondition: false;
         readonly takesParams: true;
     }, {
+        readonly path: "vocalparam set-voicing";
+        readonly wire: "vocalparam.setVoicing";
+        readonly domain: "vocalparam";
+        readonly method: "setVoicing";
+        readonly capability: "vocalparam.write";
+        readonly ungated: false;
+        readonly mutating: true;
+        readonly fingerprintPrecondition: true;
+        readonly takesParams: true;
+    }, {
+        readonly path: "vocalparam voicing";
+        readonly wire: "vocalparam.voicing";
+        readonly domain: "vocalparam";
+        readonly method: "voicing";
+        readonly capability: "vocalparam.read";
+        readonly ungated: false;
+        readonly mutating: false;
+        readonly fingerprintPrecondition: false;
+        readonly takesParams: true;
+    }, {
         readonly path: "vocalparam write";
         readonly wire: "vocalparam.write";
         readonly domain: "vocalparam";
@@ -6913,8 +9733,37 @@ export const PUBLIC_SURFACE: {
         readonly method: "onChanged";
         readonly capability: "ui.state";
     }];
-    readonly tokens: readonly ["canvas.read", "caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "fx.read", "fx.write", "generative.add-layer", "generative.enhance", "generative.seed-audio", "generative.song", "generative.sound-effects", "generative.stem-split", "generative.text2sample", "generative.vocal2midi", "generative.voice-change", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "session.handshake", "session.move", "session.ping", "session.shutdown", "soundsource.read", "soundsource.write", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.read", "track.write", "transport.control", "transport.state", "ui.control", "ui.state", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write", "workflow.dev", "workflow.ui"];
+    readonly tokens: readonly ["audioplugin.control", "audioplugin.read", "audioplugin.write", "canvas.read", "caret.read", "caret.write", "chord.read", "chord.write", "clip.read", "clip.write", "device.read", "device.write", "editor.read", "editor.write", "export.invoke", "generative-history.read", "generative.add-a-layer", "generative.inspire-me", "generative.music-enhancer", "generative.stem-splitter", "generative.vocal-to-midi", "generative.voice-changer", "history.control", "history.read", "import.invoke", "job.control", "job.read", "lyric.read", "lyric.write", "midiparam.read", "midiparam.write", "note.read", "note.write", "project.lifecycle", "project.read", "recording.control", "selection.read", "selection.write", "session.handshake", "session.move", "session.ping", "session.shutdown", "soundsource.read", "soundsource.write", "tempo.analyze", "tempo.applyV2", "tempo.read", "tempo.write", "timesig.read", "timesig.write", "track.audition", "track.read", "track.write", "transport.control", "transport.state", "ui.control", "ui.state", "vocalparam.read", "vocalparam.write", "voice.read", "voice.write", "workflow.dev", "workflow.ui"];
     readonly requiredTokens: {
+        readonly 'audio-plugin apply-preset': "audioplugin.write";
+        readonly 'audio-plugin editor capture': "audioplugin.read";
+        readonly 'audio-plugin editor click': "audioplugin.control";
+        readonly 'audio-plugin editor close': "ui.control";
+        readonly 'audio-plugin editor dblclick': "audioplugin.control";
+        readonly 'audio-plugin editor drag': "audioplugin.control";
+        readonly 'audio-plugin editor hover': "audioplugin.control";
+        readonly 'audio-plugin editor info': "audioplugin.read";
+        readonly 'audio-plugin editor key': "audioplugin.control";
+        readonly 'audio-plugin editor open': "ui.control";
+        readonly 'audio-plugin editor resize': "audioplugin.control";
+        readonly 'audio-plugin editor type': "audioplugin.control";
+        readonly 'audio-plugin editor wheel': "audioplugin.control";
+        readonly 'audio-plugin export-preset': "audioplugin.read";
+        readonly 'audio-plugin find-presets': "audioplugin.read";
+        readonly 'audio-plugin get-params': "audioplugin.read";
+        readonly 'audio-plugin get-state': "audioplugin.read";
+        readonly 'audio-plugin import-preset': "audioplugin.write";
+        readonly 'audio-plugin list-available': "audioplugin.read";
+        readonly 'audio-plugin list-params': "audioplugin.read";
+        readonly 'audio-plugin list-presets': "audioplugin.read";
+        readonly 'audio-plugin move-preset': "audioplugin.write";
+        readonly 'audio-plugin remove-preset': "audioplugin.write";
+        readonly 'audio-plugin save-preset': "audioplugin.write";
+        readonly 'audio-plugin scan': "audioplugin.write";
+        readonly 'audio-plugin set': "audioplugin.write";
+        readonly 'audio-plugin set-param': "audioplugin.write";
+        readonly 'audio-plugin set-state': "audioplugin.write";
+        readonly 'audio-plugin slots': "audioplugin.read";
         readonly 'blend add': "voice.write";
         readonly 'blend create': "voice.write";
         readonly 'blend delete': "voice.write";
@@ -6924,6 +9773,9 @@ export const PUBLIC_SURFACE: {
         readonly 'blend remove': "voice.write";
         readonly 'blend reorder': "voice.write";
         readonly 'blend set': "voice.write";
+        readonly 'breath list': "vocalparam.read";
+        readonly 'breath remove': "vocalparam.write";
+        readonly 'breath set': "vocalparam.write";
         readonly 'canvas effective-size': "canvas.read";
         readonly 'canvas info': "canvas.read";
         readonly 'caret get': "caret.read";
@@ -6935,7 +9787,12 @@ export const PUBLIC_SURFACE: {
         readonly 'choir remove': "soundsource.write";
         readonly 'choir reorder': "soundsource.write";
         readonly 'choir set': "soundsource.write";
+        readonly 'chord delete': "chord.write";
+        readonly 'chord insert': "chord.write";
+        readonly 'chord list': "chord.read";
+        readonly 'chord set': "chord.write";
         readonly 'clip audio-content': "clip.read";
+        readonly 'clip beat-content': "clip.read";
         readonly 'clip consolidate': "clip.write";
         readonly 'clip create': "clip.write";
         readonly 'clip delete': "clip.write";
@@ -6970,57 +9827,76 @@ export const PUBLIC_SURFACE: {
         readonly 'ensemble reorder': "soundsource.write";
         readonly 'ensemble set': "soundsource.write";
         readonly 'export audio': "export.invoke";
-        readonly 'export fcpxml': "export.invoke";
         readonly 'export lrc': "export.invoke";
         readonly 'export midi': "export.invoke";
         readonly 'export song-template': "export.invoke";
+        readonly 'export timeline': "export.invoke";
         readonly 'export video': "export.invoke";
         readonly 'export vocal-sample': "export.invoke";
-        readonly 'fx add': "fx.write";
-        readonly 'fx apply-preset': "fx.write";
-        readonly 'fx get-params': "fx.read";
-        readonly 'fx list': "fx.read";
-        readonly 'fx list-available': "fx.read";
-        readonly 'fx list-params': "fx.read";
-        readonly 'fx open-editor': "ui.control";
-        readonly 'fx remove': "fx.write";
-        readonly 'fx reorder': "fx.write";
-        readonly 'fx save-preset': "fx.write";
-        readonly 'fx scan': "fx.write";
-        readonly 'fx set': "fx.write";
-        readonly 'fx set-param': "fx.write";
-        readonly 'fx set-room': "fx.write";
-        readonly 'generative add-layer': "generative.add-layer";
-        readonly 'generative enhance': "generative.enhance";
-        readonly 'generative seed-audio': "generative.seed-audio";
-        readonly 'generative song': "generative.song";
-        readonly 'generative sound-effects': "generative.sound-effects";
-        readonly 'generative stem-split': "generative.stem-split";
-        readonly 'generative text2sample': "generative.text2sample";
-        readonly 'generative vocal2midi': "generative.vocal2midi";
-        readonly 'generative voice-change': "generative.voice-change";
+        readonly 'fx add': "audioplugin.write";
+        readonly 'fx apply-chain': "audioplugin.write";
+        readonly 'fx export-chain': "audioplugin.read";
+        readonly 'fx find-chains': "audioplugin.read";
+        readonly 'fx import-chain': "audioplugin.write";
+        readonly 'fx insert-chain': "audioplugin.write";
+        readonly 'fx list-chains': "audioplugin.read";
+        readonly 'fx move-chain': "audioplugin.write";
+        readonly 'fx remove': "audioplugin.write";
+        readonly 'fx remove-chain': "audioplugin.write";
+        readonly 'fx reorder': "audioplugin.write";
+        readonly 'fx save-chain': "audioplugin.write";
+        readonly 'fx set-room': "audioplugin.write";
+        readonly 'generative add-a-layer': "generative.add-a-layer";
+        readonly 'generative inspire-me': "generative.inspire-me";
+        readonly 'generative inspire-me history get': "generative-history.read";
+        readonly 'generative inspire-me history list': "generative-history.read";
+        readonly 'generative music-enhancer': "generative.music-enhancer";
+        readonly 'generative music-enhancer history get': "generative-history.read";
+        readonly 'generative music-enhancer history list': "generative-history.read";
+        readonly 'generative stem-splitter': "generative.stem-splitter";
+        readonly 'generative vocal-to-midi': "generative.vocal-to-midi";
+        readonly 'generative voice-changer convert': "generative.voice-changer";
+        readonly 'generative voice-changer models': "generative.voice-changer";
         readonly 'history list': "history.read";
         readonly 'history redo': "history.control";
         readonly 'history undo': "history.control";
         readonly 'import file': "import.invoke";
-        readonly 'instrument disable': "soundsource.write";
-        readonly 'instrument enable': "soundsource.write";
         readonly 'instrument set': "soundsource.write";
         readonly 'job cancel': "job.control";
         readonly 'job discard-result': "job.control";
+        readonly 'job download': "job.control";
         readonly 'job get': "job.read";
         readonly 'job list': "job.read";
         readonly 'job place': "clip.write";
         readonly 'job results': "job.read";
         readonly 'job wait': "job.read";
+        readonly 'lyric fill': "lyric.write";
+        readonly 'midiparam clear': "midiparam.write";
+        readonly 'midiparam list-lanes': "midiparam.read";
+        readonly 'midiparam read': "midiparam.read";
+        readonly 'midiparam remove-point': "midiparam.write";
+        readonly 'midiparam set-point': "midiparam.write";
+        readonly 'midiparam set-velocity': "midiparam.write";
+        readonly 'midiparam velocity': "midiparam.read";
+        readonly 'midiparam write': "midiparam.write";
         readonly 'note add': "note.write";
         readonly 'note delete': "note.write";
         readonly 'note get': "note.read";
         readonly 'note move': "note.write";
         readonly 'note resize': "note.write";
         readonly 'note set-articulation': "note.write";
-        readonly 'note set-lyric': "note.write";
+        readonly 'note set-grapheme': "note.write";
+        readonly 'note set-language': "note.write";
         readonly 'note split': "note.write";
+        readonly 'phoneme g2p': "lyric.read";
+        readonly 'phoneme inventory': "lyric.read";
+        readonly 'phoneme list': "lyric.read";
+        readonly 'phoneme move-boundary': "lyric.write";
+        readonly 'phoneme reset': "lyric.write";
+        readonly 'phoneme reset-override': "lyric.write";
+        readonly 'phoneme reset-timing': "lyric.write";
+        readonly 'phoneme set': "lyric.write";
+        readonly 'phoneme set-consonant-timing': "lyric.write";
         readonly 'project collect-save': "project.lifecycle";
         readonly 'project dirty': "project.read";
         readonly 'project info': "project.read";
@@ -7044,6 +9920,7 @@ export const PUBLIC_SURFACE: {
         readonly 'tempo analyze': "tempo.analyze";
         readonly 'tempo apply-beat-analysis': "tempo.applyV2";
         readonly 'tempo get': "tempo.read";
+        readonly 'tempo get-analysis': "tempo.read";
         readonly 'tempo points': "tempo.read";
         readonly 'tempo remove-point': "tempo.write";
         readonly 'tempo set': "tempo.write";
@@ -7054,6 +9931,10 @@ export const PUBLIC_SURFACE: {
         readonly 'timesig remove-at': "timesig.write";
         readonly 'timesig set': "timesig.write";
         readonly 'timesig set-at': "timesig.write";
+        readonly 'track audition note': "track.audition";
+        readonly 'track audition note-clear': "track.audition";
+        readonly 'track audition note-off': "track.audition";
+        readonly 'track audition note-on': "track.audition";
         readonly 'track create': "track.write";
         readonly 'track delete': "track.write";
         readonly 'track duplicate': "track.write";
@@ -7082,6 +9963,8 @@ export const PUBLIC_SURFACE: {
         readonly 'ui show-window': "ui.control";
         readonly 'vocalparam layers': "vocalparam.read";
         readonly 'vocalparam read': "vocalparam.read";
+        readonly 'vocalparam set-voicing': "vocalparam.write";
+        readonly 'vocalparam voicing': "vocalparam.read";
         readonly 'vocalparam write': "vocalparam.write";
         readonly 'voice collect': "voice.write";
         readonly 'voice community': "voice.read";
@@ -7090,21 +9973,57 @@ export const PUBLIC_SURFACE: {
     };
     readonly fieldCapabilities: {};
     readonly bulk: {
-        readonly params: {};
-        readonly result: {};
+        readonly params: {
+            readonly 'audio-plugin import-preset': readonly [{
+                readonly field: "blob";
+                readonly dtype: "u8";
+            }];
+            readonly 'audio-plugin set-state': readonly [{
+                readonly field: "blob";
+                readonly dtype: "u8";
+            }];
+            readonly 'fx import-chain': readonly [{
+                readonly field: "blob";
+                readonly dtype: "u8";
+            }];
+        };
+        readonly result: {
+            readonly 'audio-plugin editor capture': readonly [{
+                readonly field: "png";
+                readonly dtype: "u8";
+            }];
+            readonly 'audio-plugin export-preset': readonly [{
+                readonly field: "blob";
+                readonly dtype: "u8";
+            }];
+            readonly 'audio-plugin get-state': readonly [{
+                readonly field: "blob";
+                readonly dtype: "u8";
+            }];
+            readonly 'fx export-chain': readonly [{
+                readonly field: "blob";
+                readonly dtype: "u8";
+            }];
+        };
     };
 };
 
 // @public
 export interface PublicBindings {
     // (undocumented)
+    readonly audioPlugin: AudioPluginOperations;
+    // (undocumented)
     readonly blend: BlendOperations;
+    // (undocumented)
+    readonly breath: BreathOperations;
     // (undocumented)
     readonly canvas: CanvasOperations;
     // (undocumented)
     readonly caret: CaretOperations;
     // (undocumented)
     readonly choir: ChoirOperations;
+    // (undocumented)
+    readonly chord: ChordOperations;
     // (undocumented)
     readonly clip: ClipOperations;
     // (undocumented)
@@ -7130,7 +10049,13 @@ export interface PublicBindings {
     // (undocumented)
     readonly job: JobOperations;
     // (undocumented)
+    readonly lyric: LyricOperations;
+    // (undocumented)
+    readonly midiparam: MidiparamOperations;
+    // (undocumented)
     readonly note: NoteOperations;
+    // (undocumented)
+    readonly phoneme: PhonemeOperations;
     // (undocumented)
     readonly project: ProjectOperations;
     // (undocumented)
@@ -7180,9 +10105,11 @@ export interface RecordingStartResult {
         trackName: string;
         trackType: string;
     }[];
+    beginSec: number;
     beginTick: number;
     countIn: boolean;
     countInBars: number;
+    nativeUnit: 'tick';
     recording: boolean;
 }
 
@@ -7211,6 +10138,35 @@ export interface RequestOptions {
 
 // @public
 export const REQUIRED_TOKENS: {
+    readonly 'audio-plugin apply-preset': "audioplugin.write";
+    readonly 'audio-plugin editor capture': "audioplugin.read";
+    readonly 'audio-plugin editor click': "audioplugin.control";
+    readonly 'audio-plugin editor close': "ui.control";
+    readonly 'audio-plugin editor dblclick': "audioplugin.control";
+    readonly 'audio-plugin editor drag': "audioplugin.control";
+    readonly 'audio-plugin editor hover': "audioplugin.control";
+    readonly 'audio-plugin editor info': "audioplugin.read";
+    readonly 'audio-plugin editor key': "audioplugin.control";
+    readonly 'audio-plugin editor open': "ui.control";
+    readonly 'audio-plugin editor resize': "audioplugin.control";
+    readonly 'audio-plugin editor type': "audioplugin.control";
+    readonly 'audio-plugin editor wheel': "audioplugin.control";
+    readonly 'audio-plugin export-preset': "audioplugin.read";
+    readonly 'audio-plugin find-presets': "audioplugin.read";
+    readonly 'audio-plugin get-params': "audioplugin.read";
+    readonly 'audio-plugin get-state': "audioplugin.read";
+    readonly 'audio-plugin import-preset': "audioplugin.write";
+    readonly 'audio-plugin list-available': "audioplugin.read";
+    readonly 'audio-plugin list-params': "audioplugin.read";
+    readonly 'audio-plugin list-presets': "audioplugin.read";
+    readonly 'audio-plugin move-preset': "audioplugin.write";
+    readonly 'audio-plugin remove-preset': "audioplugin.write";
+    readonly 'audio-plugin save-preset': "audioplugin.write";
+    readonly 'audio-plugin scan': "audioplugin.write";
+    readonly 'audio-plugin set': "audioplugin.write";
+    readonly 'audio-plugin set-param': "audioplugin.write";
+    readonly 'audio-plugin set-state': "audioplugin.write";
+    readonly 'audio-plugin slots': "audioplugin.read";
     readonly 'blend add': "voice.write";
     readonly 'blend create': "voice.write";
     readonly 'blend delete': "voice.write";
@@ -7220,6 +10176,9 @@ export const REQUIRED_TOKENS: {
     readonly 'blend remove': "voice.write";
     readonly 'blend reorder': "voice.write";
     readonly 'blend set': "voice.write";
+    readonly 'breath list': "vocalparam.read";
+    readonly 'breath remove': "vocalparam.write";
+    readonly 'breath set': "vocalparam.write";
     readonly 'canvas effective-size': "canvas.read";
     readonly 'canvas info': "canvas.read";
     readonly 'caret get': "caret.read";
@@ -7231,7 +10190,12 @@ export const REQUIRED_TOKENS: {
     readonly 'choir remove': "soundsource.write";
     readonly 'choir reorder': "soundsource.write";
     readonly 'choir set': "soundsource.write";
+    readonly 'chord delete': "chord.write";
+    readonly 'chord insert': "chord.write";
+    readonly 'chord list': "chord.read";
+    readonly 'chord set': "chord.write";
     readonly 'clip audio-content': "clip.read";
+    readonly 'clip beat-content': "clip.read";
     readonly 'clip consolidate': "clip.write";
     readonly 'clip create': "clip.write";
     readonly 'clip delete': "clip.write";
@@ -7266,57 +10230,76 @@ export const REQUIRED_TOKENS: {
     readonly 'ensemble reorder': "soundsource.write";
     readonly 'ensemble set': "soundsource.write";
     readonly 'export audio': "export.invoke";
-    readonly 'export fcpxml': "export.invoke";
     readonly 'export lrc': "export.invoke";
     readonly 'export midi': "export.invoke";
     readonly 'export song-template': "export.invoke";
+    readonly 'export timeline': "export.invoke";
     readonly 'export video': "export.invoke";
     readonly 'export vocal-sample': "export.invoke";
-    readonly 'fx add': "fx.write";
-    readonly 'fx apply-preset': "fx.write";
-    readonly 'fx get-params': "fx.read";
-    readonly 'fx list': "fx.read";
-    readonly 'fx list-available': "fx.read";
-    readonly 'fx list-params': "fx.read";
-    readonly 'fx open-editor': "ui.control";
-    readonly 'fx remove': "fx.write";
-    readonly 'fx reorder': "fx.write";
-    readonly 'fx save-preset': "fx.write";
-    readonly 'fx scan': "fx.write";
-    readonly 'fx set': "fx.write";
-    readonly 'fx set-param': "fx.write";
-    readonly 'fx set-room': "fx.write";
-    readonly 'generative add-layer': "generative.add-layer";
-    readonly 'generative enhance': "generative.enhance";
-    readonly 'generative seed-audio': "generative.seed-audio";
-    readonly 'generative song': "generative.song";
-    readonly 'generative sound-effects': "generative.sound-effects";
-    readonly 'generative stem-split': "generative.stem-split";
-    readonly 'generative text2sample': "generative.text2sample";
-    readonly 'generative vocal2midi': "generative.vocal2midi";
-    readonly 'generative voice-change': "generative.voice-change";
+    readonly 'fx add': "audioplugin.write";
+    readonly 'fx apply-chain': "audioplugin.write";
+    readonly 'fx export-chain': "audioplugin.read";
+    readonly 'fx find-chains': "audioplugin.read";
+    readonly 'fx import-chain': "audioplugin.write";
+    readonly 'fx insert-chain': "audioplugin.write";
+    readonly 'fx list-chains': "audioplugin.read";
+    readonly 'fx move-chain': "audioplugin.write";
+    readonly 'fx remove': "audioplugin.write";
+    readonly 'fx remove-chain': "audioplugin.write";
+    readonly 'fx reorder': "audioplugin.write";
+    readonly 'fx save-chain': "audioplugin.write";
+    readonly 'fx set-room': "audioplugin.write";
+    readonly 'generative add-a-layer': "generative.add-a-layer";
+    readonly 'generative inspire-me': "generative.inspire-me";
+    readonly 'generative inspire-me history get': "generative-history.read";
+    readonly 'generative inspire-me history list': "generative-history.read";
+    readonly 'generative music-enhancer': "generative.music-enhancer";
+    readonly 'generative music-enhancer history get': "generative-history.read";
+    readonly 'generative music-enhancer history list': "generative-history.read";
+    readonly 'generative stem-splitter': "generative.stem-splitter";
+    readonly 'generative vocal-to-midi': "generative.vocal-to-midi";
+    readonly 'generative voice-changer convert': "generative.voice-changer";
+    readonly 'generative voice-changer models': "generative.voice-changer";
     readonly 'history list': "history.read";
     readonly 'history redo': "history.control";
     readonly 'history undo': "history.control";
     readonly 'import file': "import.invoke";
-    readonly 'instrument disable': "soundsource.write";
-    readonly 'instrument enable': "soundsource.write";
     readonly 'instrument set': "soundsource.write";
     readonly 'job cancel': "job.control";
     readonly 'job discard-result': "job.control";
+    readonly 'job download': "job.control";
     readonly 'job get': "job.read";
     readonly 'job list': "job.read";
     readonly 'job place': "clip.write";
     readonly 'job results': "job.read";
     readonly 'job wait': "job.read";
+    readonly 'lyric fill': "lyric.write";
+    readonly 'midiparam clear': "midiparam.write";
+    readonly 'midiparam list-lanes': "midiparam.read";
+    readonly 'midiparam read': "midiparam.read";
+    readonly 'midiparam remove-point': "midiparam.write";
+    readonly 'midiparam set-point': "midiparam.write";
+    readonly 'midiparam set-velocity': "midiparam.write";
+    readonly 'midiparam velocity': "midiparam.read";
+    readonly 'midiparam write': "midiparam.write";
     readonly 'note add': "note.write";
     readonly 'note delete': "note.write";
     readonly 'note get': "note.read";
     readonly 'note move': "note.write";
     readonly 'note resize': "note.write";
     readonly 'note set-articulation': "note.write";
-    readonly 'note set-lyric': "note.write";
+    readonly 'note set-grapheme': "note.write";
+    readonly 'note set-language': "note.write";
     readonly 'note split': "note.write";
+    readonly 'phoneme g2p': "lyric.read";
+    readonly 'phoneme inventory': "lyric.read";
+    readonly 'phoneme list': "lyric.read";
+    readonly 'phoneme move-boundary': "lyric.write";
+    readonly 'phoneme reset': "lyric.write";
+    readonly 'phoneme reset-override': "lyric.write";
+    readonly 'phoneme reset-timing': "lyric.write";
+    readonly 'phoneme set': "lyric.write";
+    readonly 'phoneme set-consonant-timing': "lyric.write";
     readonly 'project collect-save': "project.lifecycle";
     readonly 'project dirty': "project.read";
     readonly 'project info': "project.read";
@@ -7340,6 +10323,7 @@ export const REQUIRED_TOKENS: {
     readonly 'tempo analyze': "tempo.analyze";
     readonly 'tempo apply-beat-analysis': "tempo.applyV2";
     readonly 'tempo get': "tempo.read";
+    readonly 'tempo get-analysis': "tempo.read";
     readonly 'tempo points': "tempo.read";
     readonly 'tempo remove-point': "tempo.write";
     readonly 'tempo set': "tempo.write";
@@ -7350,6 +10334,10 @@ export const REQUIRED_TOKENS: {
     readonly 'timesig remove-at': "timesig.write";
     readonly 'timesig set': "timesig.write";
     readonly 'timesig set-at': "timesig.write";
+    readonly 'track audition note': "track.audition";
+    readonly 'track audition note-clear': "track.audition";
+    readonly 'track audition note-off': "track.audition";
+    readonly 'track audition note-on': "track.audition";
     readonly 'track create': "track.write";
     readonly 'track delete': "track.write";
     readonly 'track duplicate': "track.write";
@@ -7378,6 +10366,8 @@ export const REQUIRED_TOKENS: {
     readonly 'ui show-window': "ui.control";
     readonly 'vocalparam layers': "vocalparam.read";
     readonly 'vocalparam read': "vocalparam.read";
+    readonly 'vocalparam set-voicing': "vocalparam.write";
+    readonly 'vocalparam voicing': "vocalparam.read";
     readonly 'vocalparam write': "vocalparam.write";
     readonly 'voice collect': "voice.write";
     readonly 'voice community': "voice.read";
@@ -7417,7 +10407,7 @@ export type SdkErrorCode =
 
 // @public
 export interface SelectionGetParams {
-    scope: string;
+    scope?: string;
 }
 
 // @public
@@ -7433,6 +10423,7 @@ export interface SelectionGetResult {
         endSec: number;
     };
     isLineSelection?: boolean;
+    nativeUnit: 'tick';
     notes?: {
         dur: number;
         endPos: number;
@@ -7459,9 +10450,9 @@ export interface SelectionGetResult {
 
 // @public
 export interface SelectionOperations {
-    get(params: SelectionGetParams, options?: CallOptions): Promise<SelectionGetResult>;
+    get(params?: SelectionGetParams, options?: CallOptions): Promise<SelectionGetResult>;
     onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
-    set(params: SelectionSetParams, options?: MutatingCallOptions): Promise<SelectionSetResult>;
+    set(params?: SelectionSetParams, options?: MutatingCallOptions): Promise<SelectionSetResult>;
 }
 
 // @public
@@ -7469,6 +10460,10 @@ export interface SelectionSetParams {
     horizontalSelection?: {
         begin: number;
         end: number;
+    };
+    horizontalSelectionSec?: {
+        beginSec: number;
+        endSec: number;
     };
     mode?: string;
     notesToDeselect?: {
@@ -7478,8 +10473,10 @@ export interface SelectionSetParams {
         uuid: string;
     }[];
     rangeBegin?: number;
+    rangeBeginSec?: number;
     rangeEnd?: number;
-    scope: string;
+    rangeEndSec?: number;
+    scope?: string;
     selectNotes?: boolean;
     tracks?: {
         region?: string;
@@ -7503,16 +10500,27 @@ export interface SelectionSetResult {
         begin: number;
         end: number;
     };
+    horizontalSelectionSec?: {
+        beginSec: number;
+        endSec: number;
+    };
     itemsSelected?: number;
+    nativeUnit?: 'tick';
     notesDeselected?: number;
     notesNotFound?: number;
     notesSelected?: number;
     rangeBegin?: number;
+    rangeBeginSec?: number;
     rangeEnd?: number;
+    rangeEndSec?: number;
     selectionCount?: number;
     selectionRange?: {
         begin: number;
         end: number;
+    };
+    selectionRangeSec?: {
+        beginSec: number;
+        endSec: number;
     };
     success?: boolean;
     verticalSelection?: {
@@ -7575,6 +10583,7 @@ export interface SoundSourceGetResult {
     hasSource: boolean;
     midiChannel?: string;
     model?: {
+        generation?: string;
         id?: number;
         name?: string;
         supportedLanguages?: string[];
@@ -7741,7 +10750,7 @@ export interface SoundSourceUnloadResult {
 }
 
 // @public
-export const SURFACE_VERSION = "9.0";
+export const SURFACE_VERSION = "17.2";
 
 // @public
 export interface SurfaceRow {
@@ -7752,7 +10761,8 @@ export interface SurfaceRow {
 
 // @public
 export interface TempoAnalyzeParams {
-    clipUuid: string;
+    clipUuid?: string;
+    filePath?: string;
 }
 
 // @public
@@ -7777,6 +10787,43 @@ export interface TempoApplyBeatAnalysisResult {
 }
 
 // @public
+export interface TempoGetAnalysisParams {
+    analysisId: string;
+}
+
+// @public
+export interface TempoGetAnalysisResult {
+    analysisId: string;
+    anchorSec?: number;
+    beats: number[];
+    bpm: number;
+    downbeats: number[];
+    gridDownbeats: number[];
+    nativeUnit: 'second';
+    projection?: {
+        anchorTick: number;
+        beats: number[];
+        downbeats: number[];
+        gridDownbeats: number[];
+    };
+    state: 'ready' | 'applied';
+    tempoCurve: {
+        bpm: number;
+        posSec: number;
+    }[];
+    timeSignatures: {
+        barIndex: number;
+        denominator: number;
+        numerator: number;
+        posSec: number;
+    }[];
+    window: {
+        lengthSec: number;
+        offsetSec: number;
+    };
+}
+
+// @public
 export interface TempoGetResult {
     pointCount: number;
     points: {
@@ -7788,9 +10835,10 @@ export interface TempoGetResult {
 
 // @public
 export interface TempoOperations {
-    analyze(params: TempoAnalyzeParams, options?: MutatingCallOptions): Promise<TempoAnalyzeResult>;
+    analyze(params?: TempoAnalyzeParams, options?: MutatingCallOptions): Promise<TempoAnalyzeResult>;
     applyBeatAnalysis(params: TempoApplyBeatAnalysisParams, options?: MutatingCallOptions): Promise<TempoApplyBeatAnalysisResult>;
     get(options?: CallOptions): Promise<TempoGetResult>;
+    getAnalysis(params: TempoGetAnalysisParams, options?: CallOptions): Promise<TempoGetAnalysisResult>;
     onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
     points(options?: CallOptions): Promise<TempoPointsResult>;
     removePoint(params: TempoRemovePointParams, options?: PreconditionCallOptions): Promise<TempoRemovePointResult>;
@@ -7933,6 +10981,40 @@ export interface TimesigSetParams {
 export type TokensOfProfile<Profiles extends Readonly<Record<string, readonly string[]>>, P extends keyof Profiles> = Profiles[P][number];
 
 // @public
+export interface TrackAuditionNoteClearParams {
+    region?: string;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface TrackAuditionNoteOffParams {
+    pitches: number[];
+    region?: string;
+    trackIndex?: number;
+    trackUuid?: string;
+}
+
+// @public
+export interface TrackAuditionNoteOnParams {
+    pitches: number[];
+    region?: string;
+    trackIndex?: number;
+    trackUuid?: string;
+    velocity?: number;
+}
+
+// @public
+export interface TrackAuditionNoteParams {
+    duration?: number;
+    pitches: number[];
+    region?: string;
+    trackIndex?: number;
+    trackUuid?: string;
+    velocity?: number;
+}
+
+// @public
 export interface TrackCreateParams {
     index?: number;
     name?: string;
@@ -8072,6 +11154,10 @@ export interface TrackListResult {
 
 // @public
 export interface TrackOperations {
+    auditionNote(params: TrackAuditionNoteParams, options?: MutatingCallOptions): Promise<void>;
+    auditionNoteClear(params?: TrackAuditionNoteClearParams, options?: MutatingCallOptions): Promise<void>;
+    auditionNoteOff(params: TrackAuditionNoteOffParams, options?: MutatingCallOptions): Promise<void>;
+    auditionNoteOn(params: TrackAuditionNoteOnParams, options?: MutatingCallOptions): Promise<void>;
     create(params?: TrackCreateParams, options?: MutatingCallOptions): Promise<TrackCreateResult>;
     delete(params?: TrackDeleteParams, options?: MutatingCallOptions): Promise<TrackDeleteResult>;
     duplicate(params?: TrackDuplicateParams, options?: MutatingCallOptions): Promise<TrackDuplicateResult>;
@@ -8189,9 +11275,12 @@ export interface Transport {
 // @public
 export interface TransportLoopResult {
     active: boolean;
+    endSec: number;
     endTick: number;
     fingerprint: Fingerprint;
     isValid: boolean;
+    nativeUnit: 'tick';
+    startSec: number;
     startTick: number;
 }
 
@@ -8206,7 +11295,7 @@ export interface TransportOperations {
     metronome(params: TransportMetronomeParams, options?: MutatingCallOptions): Promise<void>;
     onChanged(listener: (event: ChangeEvent) => void): Unsubscribe;
     play(options?: MutatingCallOptions): Promise<void>;
-    seek(params: TransportSeekParams, options?: MutatingCallOptions): Promise<void>;
+    seek(params?: TransportSeekParams, options?: MutatingCallOptions): Promise<void>;
     setLoop(params?: TransportSetLoopParams, options?: PreconditionCallOptions): Promise<void>;
     state(options?: CallOptions): Promise<TransportStateResult>;
     stop(options?: MutatingCallOptions): Promise<void>;
@@ -8221,19 +11310,24 @@ export interface TransportPair {
 
 // @public
 export interface TransportSeekParams {
-    time: number;
+    tick?: number;
+    time?: number;
 }
 
 // @public
 export interface TransportSetLoopParams {
     active?: boolean;
+    endSec?: number;
     endTick?: number;
+    startSec?: number;
     startTick?: number;
 }
 
 // @public
 export interface TransportStateResult {
+    nativeUnit: 'second';
     position: number;
+    positionTick: number;
     status: string;
 }
 
@@ -8329,21 +11423,26 @@ export type Unsubscribe = () => void;
 
 // @public
 export interface VocalparamLayersParams {
-    category?: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
     clipUuid: string;
+    param?: string;
 }
 
 // @public
 export interface VocalparamLayersResult {
-    categories: {
+    clipUuid: string;
+    engineGeneration: string;
+    paramCount: number;
+    params: {
         available: boolean;
-        category: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
+        displayName: string;
         layers: {
             access: 'read-only' | 'read-write';
-            layer: 'baseline' | 'user' | 'envelope' | 'direct' | 'effective';
+            layer: 'baseline' | 'user' | 'envelope' | 'direct' | 'global' | 'effective';
             role: string;
+            shape: 'dense' | 'points' | 'scalar';
             sparse: boolean;
         }[];
+        param: string;
         scale?: string;
         unavailableReason?: string;
         valueRange?: {
@@ -8351,42 +11450,43 @@ export interface VocalparamLayersResult {
             min?: number;
         };
     }[];
-    categoryCount: number;
-    clipUuid: string;
-    engineGeneration: string;
+    vocalControlRoute: 'dynamic' | 'legacy-four-params';
 }
 
 // @public
 export interface VocalparamOperations {
     layers(params: VocalparamLayersParams, options?: CallOptions): Promise<VocalparamLayersResult>;
     read(params: VocalparamReadParams, options?: CallOptions): Promise<VocalparamReadResult>;
+    setVoicing(params: VocalparamSetVoicingParams, options?: PreconditionCallOptions): Promise<VocalparamSetVoicingResult>;
+    voicing(params: VocalparamVoicingParams, options?: CallOptions): Promise<VocalparamVoicingResult>;
     write(params: VocalparamWriteParams, options?: PreconditionCallOptions): Promise<VocalparamWriteResult>;
 }
 
 // @public
 export interface VocalparamReadParams {
-    category: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
     clipUuid: string;
     encoding?: 'json' | 'base64';
-    layer?: 'baseline' | 'user' | 'envelope' | 'direct' | 'effective';
+    layer?: 'baseline' | 'user' | 'envelope' | 'direct' | 'global' | 'effective';
+    param: string;
     rangeBegin?: number;
     rangeEnd?: number;
 }
 
 // @public
 export interface VocalparamReadResult {
-    category: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
     clipUuid: string;
     count: number;
-    effective: {
+    displayName: string;
+    effective?: {
         access: 'read-only' | 'read-write';
         drawnRanges?: {
             begin: number;
             end: number;
         }[];
-        layer: 'baseline' | 'user' | 'envelope' | 'direct' | 'effective';
+        layer: 'baseline' | 'user' | 'envelope' | 'direct' | 'global' | 'effective';
         points: unknown;
         role: string;
+        shape: 'dense' | 'points' | 'scalar';
         sparse: boolean;
     };
     engineGeneration: string;
@@ -8397,11 +11497,13 @@ export interface VocalparamReadResult {
             begin: number;
             end: number;
         }[];
-        layer: 'baseline' | 'user' | 'envelope' | 'direct' | 'effective';
+        layer: 'baseline' | 'user' | 'envelope' | 'direct' | 'global' | 'effective';
         points: unknown;
         role: string;
+        shape: 'dense' | 'points' | 'scalar';
         sparse: boolean;
     }[];
+    param: string;
     posBegin: number;
     scale?: string;
     unvoiced?: {
@@ -8415,24 +11517,76 @@ export interface VocalparamReadResult {
 }
 
 // @public
+export interface VocalparamSetVoicingParams {
+    begin: number;
+    clipUuid: string;
+    end: number;
+    mode: 'auto' | 'voiced' | 'unvoiced';
+}
+
+// @public
+export interface VocalparamSetVoicingResult {
+    clipUuid: string;
+    fingerprint: Fingerprint;
+    mode: 'auto' | 'voiced' | 'unvoiced';
+    requested: {
+        begin: number;
+        end: number;
+    };
+    spans: {
+        begin: number;
+        end: number;
+        mode: 'voiced' | 'unvoiced';
+    }[];
+}
+
+// @public
+export interface VocalparamVoicingParams {
+    clipUuid: string;
+    rangeBegin?: number;
+    rangeEnd?: number;
+}
+
+// @public
+export interface VocalparamVoicingResult {
+    clipUuid: string;
+    fingerprint: Fingerprint;
+    rangeBegin: number;
+    rangeEnd: number;
+    spans: {
+        begin: number;
+        end: number;
+        mode: 'voiced' | 'unvoiced';
+    }[];
+    support: {
+        begin: number;
+        end: number;
+    }[];
+    unvoiced: {
+        begin: number;
+        end: number;
+    }[];
+}
+
+// @public
 export interface VocalparamWriteParams {
-    category: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
     clipUuid: string;
     encoding?: 'json' | 'base64';
-    layer: 'baseline' | 'user' | 'envelope' | 'direct';
+    layer: 'baseline' | 'user' | 'envelope' | 'direct' | 'global';
+    param: string;
     points: unknown;
-    posBegin: number;
+    posBegin?: number;
 }
 
 // @public
 export interface VocalparamWriteResult {
-    category: 'pitch' | 'energy' | 'tension' | 'air' | 'falsetto' | 'formant';
     clearedCount?: number;
     clipUuid: string;
     count: number;
     fingerprint: Fingerprint;
-    layer: 'baseline' | 'user' | 'envelope' | 'direct';
-    posBegin: number;
+    layer: 'baseline' | 'user' | 'envelope' | 'direct' | 'global';
+    param: string;
+    posBegin?: number;
 }
 
 // @public

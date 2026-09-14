@@ -4,6 +4,110 @@ The `track` operations, mirroring the canonical operation tree 1:1, and the subs
 
 ## Methods
 
+### auditionNote()
+
+```ts
+auditionNote(params, options?): Promise<void>;
+```
+
+Play one or more pitches on a track's sound source, then release them automatically after `duration` seconds. The safe default door: a one-shot can never leave a note sounding, because the server-side timer owes the release even when the caller never calls again.
+
+Requires the `track.audition` capability.
+
+#### Parameters
+
+##### params
+
+[`TrackAuditionNoteParams`](TrackAuditionNoteParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<`void`\>
+
+***
+
+### auditionNoteClear()
+
+```ts
+auditionNoteClear(params?, options?): Promise<void>;
+```
+
+All-notes-off on a track: silence everything an audition left sounding, including a one-shot whose timer has not fired yet. The escape hatch after a caller — or a crashed peer — loses track of what it started.
+
+Requires the `track.audition` capability.
+
+#### Parameters
+
+##### params?
+
+[`TrackAuditionNoteClearParams`](TrackAuditionNoteClearParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<`void`\>
+
+***
+
+### auditionNoteOff()
+
+```ts
+auditionNoteOff(params, options?): Promise<void>;
+```
+
+Release pitches started by `track audition note-on`. Releasing a pitch that is not sounding succeeds as a no-op.
+
+Requires the `track.audition` capability.
+
+#### Parameters
+
+##### params
+
+[`TrackAuditionNoteOffParams`](TrackAuditionNoteOffParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<`void`\>
+
+***
+
+### auditionNoteOn()
+
+```ts
+auditionNoteOn(params, options?): Promise<void>;
+```
+
+Start one or more pitches on a track's sound source and hold them until a later `track audition note-off` or `note-clear`. The deliberate-hold door: choose it when the workflow needs a note to span other operations.
+
+Requires the `track.audition` capability.
+
+#### Parameters
+
+##### params
+
+[`TrackAuditionNoteOnParams`](TrackAuditionNoteOnParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<`void`\>
+
+***
+
 ### create()
 
 ```ts

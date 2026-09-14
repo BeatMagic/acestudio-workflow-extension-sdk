@@ -20,7 +20,7 @@ Force playback to seek to the new position even while the transport is playing. 
 optional is_global_tick?: boolean;
 ```
 
-Whether `tick` is in global (project-level) coordinates. False treats it as a tick local to the open editor clip. Omitted means global.
+Whether the target is in global (project-level) coordinates. False treats it as local to the open editor clip. Omitted means global. Selects the space for whichever unit was named: it reads `tick` as a local tick, and `sec` as elapsed wall clock from that clip's start.
 
 ***
 
@@ -54,6 +54,16 @@ Scope to target: `"arrangement"` / `"global"`, or `"editor"`. Omitted targets wh
 
 ***
 
+### sec?
+
+```ts
+optional sec?: number;
+```
+
+The target in seconds instead of ticks. Must be non-negative. Converted under the tempo curve, in the coordinate space `is_global_tick` selects — so with `is_global_tick: false` this is elapsed wall clock from the open clip's start, matching what `caret get` reports under `editor` scope.
+
+***
+
 ### set\_to\_line\_selection?
 
 ```ts
@@ -64,13 +74,13 @@ Whether to snap the selection to line selection after moving. Omitted means it d
 
 ***
 
-### tick
+### tick?
 
 ```ts
-tick: number;
+optional tick?: number;
 ```
 
-Target position in ticks. Must be non-negative.
+Target position in ticks. Must be non-negative. One of `tick` / `sec` is required, and naming neither is refused rather than read as tick 0. When both are named `tick` wins: the caret is tick-native, so it is the value that reaches the caret with nothing rounded (ADR 0032 §5).
 
 ***
 
@@ -90,4 +100,4 @@ optional trackIndex?: number;
 optional trackUuid?: string;
 ```
 
-UUID of the target track, in braces. Names a track in any region, so it needs no `region` beside it. Mutually exclusive with `trackIndex`.
+UUID of the target track, in braces. Names a track in any region, so it needs no `region` beside it. Mutually exclusive with `trackIndex`. `master` names the master bus, which the other two forms cannot: it has no index. The caret rests there like it does on any other row, which is what lets a master track's plugin editors park and return with it (ADR 0152 §1).

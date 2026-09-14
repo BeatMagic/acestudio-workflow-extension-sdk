@@ -27,7 +27,7 @@ Filter by name substring, case-insensitive.
 ### kind?
 
 ```ts
-optional kind?: ("voice" | "choir" | "instrument" | "ensemble" | "external-instrument")[];
+optional kind?: ("instrument" | "voice" | "choir" | "ensemble" | "external-instrument")[];
 ```
 
 Only list sources of these kinds. Omit for everything.
@@ -40,7 +40,7 @@ Only list sources of these kinds. Omit for everything.
 optional language?: string;
 ```
 
-Filter by language, as a full English name such as `Japanese`. Applies to voices and choirs; other kinds have no language.
+Filter by *native* language, as a full English name such as `Japanese` -- the language a source was mainly trained on, and so the one it sings most like a native speaker of. Applies to voices and choirs; other kinds have no language. It does not match `supportedLanguages`. What a source *can* sing is a property of its vocal synth model, not of the source: every voice on a current model sings every language that model ships with, so matching the supported list would return the whole roster and answer nothing. To ask what a source can sing, filter by `model` instead.
 
 ***
 
@@ -50,14 +50,14 @@ Filter by language, as a full English name such as `Japanese`. Applies to voices
 optional model?: string;
 ```
 
-Only list voices that work with this vocal synth model. Takes either a model name (`Verse24`) or a generation (`v1`, `v2`), and a generation selects the voices that generation recommends a model for.
+Only list sources that play through this model: voices whose vocal synth models include it, and AI instruments whose own model carries the name. Takes a model name (`Verse24`), or for voices a generation (`v1`, `v2`), which selects the voices that generation recommends a model for. Kinds with no model never match.
 
 ***
 
 ### origin?
 
 ```ts
-optional origin?: ("premade" | "cloned" | "community" | "blended")[];
+optional origin?: ("cloned" | "premade" | "community" | "blended")[];
 ```
 
 Only list sources from these libraries. Omit for everything.

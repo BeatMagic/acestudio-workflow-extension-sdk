@@ -4,6 +4,53 @@ Success payload of `clip get`.
 
 ## Properties
 
+### audioMedia?
+
+```ts
+optional audioMedia?: {
+  clipInSec: number;
+  loadingState: string;
+  sourceDurationSec: number;
+  sourcePath: string;
+};
+```
+
+The media an Audio clip points at — the counterpart [`ClipVideoMedia`] gives a Video clip: which file it plays, whether that file has loaded, and how its visible region is trimmed out of the source. Not every `ClipVideoMedia` field has a counterpart here: `muted` and `hasAudio` are video-specific concepts (an audio clip's silence is its gain and its `enabled` flag, not a detached-embedded-audio state), and `libraryAsset` has no audio counterpart at all — an audio clip never carries a Library asset reference: the MV drop resolves the active version once and binds a plain file, so there is no `stableId` for a caller to map back to.
+
+#### clipInSec
+
+```ts
+clipInSec: number;
+```
+
+The clip's *clip in*: the offset into the SOURCE MEDIA at which the visible region starts — the head trimmed off. SECONDS ONLY, for the reason [`ClipVideoMedia`]'s `clipInSec` gives (ADR 0069 §1). 0 for an untrimmed clip, and when no source window is knowable (a streaming clip before its download commits a local file, or a clip whose source length has not been established). Read off the clip's stored source window, because a warp-following audio clip's Second geometry is OUTPUT seconds under the map (ADR 0117 §6); a clip playing at its native rate falls back to the visible region's source-seconds offset, where output-local seconds ARE source seconds.
+
+#### loadingState
+
+```ts
+loadingState: string;
+```
+
+Audio load state: `not_loaded`, `loaded_success`, or `loaded_failed` — the same value `clip audio-content` reports, out of the same mapping. Reported here so a caller mirroring a timeline learns that a clip's media has loaded from the same call that enumerates it, rather than one `clip audio-content` per clip.
+
+#### sourceDurationSec
+
+```ts
+sourceDurationSec: number;
+```
+
+The source file's own length in seconds, on the source-media axis — not the clip's editable canvas, which a remote audio import may grow past the source, and not the clip's visible duration, which a warp-following clip reports as OUTPUT seconds under the map (ADR 0117 §6). 0 when no source length is known: a source that has not yielded decoded audio yet, or a stream that has not finished buffering. Read off the warp model's recorded length for a warp-following clip, and off the audio backend's decoded length for a native-rate one (fresher than the model's record after a sample replacement), where output-local seconds ARE source seconds.
+
+#### sourcePath
+
+```ts
+sourcePath: string;
+```
+
+Absolute path to the backing audio file — the file a caller must open to work on the media. Unlike `clip audio-content`'s `audioFileName`, nothing is truncated for privacy: this is the path, as [`ClipVideoMedia`] reports it. EMPTY when the clip's source did not resolve (an MV audio drop whose asset was unavailable when it landed): the clip is then unavailable rather than pathless, so an empty path is a state to handle, not a malformed result. A streaming clip reports its stream URL until the download commits a local file.
+
+***
+
 ### clipName
 
 ```ts
@@ -54,6 +101,16 @@ Whether the clip is enabled. The clip's own switch: a disabled clip is skipped a
 
 ***
 
+### gain?
+
+```ts
+optional gain?: number;
+```
+
+Clip gain in decibels: `0` is unity and negative values attenuate. The domain is the audio-clip gain range, -70 to +30 (`AudioGainConstantConfig::LEVEL_MIN` … `LEVEL_MAX`) — the range the clip's own gain control drags through, wider than a track's -70 to +6. The same value `clip set-gain` writes, so it round-trips through that write unchanged. Present only for the two clip types `clip set-gain` accepts (Audio and Video).
+
+***
+
 ### geometry
 
 ```ts
@@ -76,7 +133,7 @@ geometry: {
   end: number;
   endSec: number;
   endTick: number;
-  nativeUnit: "second" | "tick";
+  nativeUnit: "tick" | "second";
   pos: number;
   posSec: number;
   posTick: number;
@@ -232,7 +289,7 @@ Pattern end on the global timeline, in ticks.
 #### nativeUnit
 
 ```ts
-nativeUnit: "second" | "tick";
+nativeUnit: "tick" | "second";
 ```
 
 Which unit an entity's geometry is stored in — the one value that is exact, with the other reported beside it as a conversion under the current tempo curve (ADR 0032 §2-4). Declared here because every group that reports geometry names it. It follows the entity's own anchoring, which `PatternFactory::preferredGeometryTimeUnit` is the source of truth for: media that plays at wall-clock speed is second-native, content written against the grid is tick-native.
@@ -309,7 +366,7 @@ optional videoMedia?: {
 };
 ```
 
-The media a clip points at — the half of a clip's identity its geometry does not carry: which file it shows, which Library asset it references, whether its embedded audio is silent, and how its visible region is trimmed out of the source. Reported by BOTH `clip list` (per row) and `clip get`, out of one producer, so the two reads cannot answer differently about the same clip. On the row for the reason `enabled` is: a caller mirroring the timeline needs the media of every clip it enumerates, and per-clip media would make that one `clip get` per clip. Present only for a clip that HAS media, the way `noteCount` is present only for a note-based one — today that means a Video clip (which is also how a still image is placed). An Audio clip's file and load state are `clip audio-content`'s answer and are not restated here. Every field is present whenever the struct itself is: each is read straight off the clip, which always has an answer, so there is no "carried by a newer writer only" tier inside it.
+The media a Video clip points at — the half of a clip's identity its geometry does not carry: which file it shows, which Library asset it references, whether its embedded audio is silent, and how its visible region is trimmed out of the source. On `clip list`'s rows as well as `clip get`, so a caller mirroring the timeline does not need one `clip get` per clip. A still image is placed as a Video clip.
 
 #### clipInSec
 

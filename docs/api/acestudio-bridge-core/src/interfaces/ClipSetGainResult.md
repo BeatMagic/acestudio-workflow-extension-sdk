@@ -30,4 +30,4 @@ UUID of the clip, with braces.
 gain: number;
 ```
 
-The clip's gain after the write, in decibels.
+The clip's gain after the write, in decibels. Also readable as `gain` on `clip get`.

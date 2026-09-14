@@ -14,10 +14,10 @@ How many inserts the chain holds afterwards.
 
 ***
 
-### insertId
+### instanceId
 
 ```ts
-insertId: string;
+instanceId: string;
 ```
 
 Instance id of the insert that was removed or moved.
@@ -30,7 +30,7 @@ Instance id of the insert that was removed or moved.
 optional rack?: "pre";
 ```
 
-Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header.
+Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see `Fx.acerpc`.
 
 ***
 
@@ -50,7 +50,7 @@ Which index space `trackIndex` counts in: `arrangement`, `video` or `marker`. Ab
 slot: number;
 ```
 
-Its slot afterwards. For a removal, the slot it left.
+Its slot afterwards: for a move, the slot the insert now sits in; for a removal, the slot it left. A move reports where the insert landed rather than the slot the call asked for, so this is worth reading back.
 
 ***
 

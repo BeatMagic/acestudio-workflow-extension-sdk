@@ -13,6 +13,126 @@ Entries from 0.3.2 down were reconstructed from git history rather than written 
 the time, so read them as a summary of each release's headline change and the PR as
 the record.
 
+## [0.8.0] — 2026-09-14
+
+Regenerated against the host's contract surface **17.2**; the last release was
+generated from **9.0**. The public surface goes from 178 operations to 241 — 86
+added, 23 removed or renamed — and six operation groups are new. Nothing in this
+package is hand-written: the numbers below are what the host now serves.
+
+### Breaking
+
+- **Plugin instances are addressed as `audioPlugin.*`, not `fx.*`.** `fx` now means
+  the chain — the slots on a track, and the saved chains you can apply to one — and
+  the verbs that address a plugin *in* a slot moved out of it. Eleven methods were
+  removed from `fx`:
+
+  | was | now |
+  | --- | --- |
+  | `fx.set` | `audioPlugin.set` |
+  | `fx.list` | `audioPlugin.slots` |
+  | `fx.scan` | `audioPlugin.scan` |
+  | `fx.listAvailable` | `audioPlugin.listAvailable` |
+  | `fx.getParams` | `audioPlugin.getParams` |
+  | `fx.listParams` | `audioPlugin.listParams` |
+  | `fx.setParam` | `audioPlugin.setParam` |
+  | `fx.applyPreset` | `audioPlugin.applyPreset` |
+  | `fx.savePreset` | `audioPlugin.savePreset` |
+  | `fx.openEditor` | `audioPlugin.editor.open` |
+
+  `fx.add`, `fx.remove`, `fx.reorder` and `fx.setRoom` keep their names.
+
+- **The `fx.read` and `fx.write` capability tokens are gone**, replaced by
+  `audioplugin.read`, `audioplugin.write` and `audioplugin.control`. The tokens are
+  the contract, so a grant asking for `fx.write` now asks for a token that does not
+  exist. The surviving `fx.*` methods are gated by `audioplugin.write` as well — the
+  chain verbs and the plugin verbs share one write token.
+
+  Bindings refuse an ungranted call locally, before the wire, so a stale grant shows
+  up as a refusal from this package rather than an error from the host.
+
+- **The generative operations were renamed to the features they are.**
+
+  | was | now |
+  | --- | --- |
+  | `generative.addLayer` | `generative.addALayer` |
+  | `generative.song` | `generative.inspireMe` |
+  | `generative.enhance` | `generative.musicEnhancer` |
+  | `generative.stemSplit` | `generative.stemSplitter` |
+  | `generative.vocal2midi` | `generative.vocalToMidi` |
+  | `generative.voiceChange` | `generative.voiceChanger.convert` |
+
+  Their capability tokens were renamed to match — `generative.song` →
+  `generative.inspire-me`, and so on for each.
+
+- **`note.setLyric` is now `note.setGrapheme`.** What it takes is a grapheme, which
+  is what the host has always read it as.
+
+- **`export.fcpxml` is now `export.timeline`**, and writes AAF as well as FCPXML —
+  the output path's extension picks the format.
+
+- **A result child no longer carries `payload`.** `job get`, `job list`,
+  `job results` and `job wait` all reported an open `payload` map on each result
+  child. The field is now `@unpresented` — withdrawn from the published surface,
+  not deleted — because it was never the delivery contract: a data class's answer
+  is read through the retrieval its launch declares. Each child gained
+  `errorCode?` and `errorMessage?` in its place, so a failed result says why.
+
+  **Migration:** read the product through the class's own retrieval. For a beat
+  analysis that is the new `tempo.getAnalysis`, which takes the `analysisId`
+  that `tempo.analyzeContextAudio` answered and works whenever the caller asks —
+  not only while someone was watching the job settle. It needs `tempo.read`, so
+  a caller holding only `audio.context` must ask for that token too.
+
+- **An FX slot is an *instance*, not an *insert*.** `fx.remove` and `fx.reorder`
+  take `instance` where they took `insert`, and answer `instanceId` where they
+  answered `insertId`; `fx.add`'s `insert.insertId` is now `insert.instanceId`.
+  `fx.add` also reports `insert.editorState` (`open`, `parked`).
+
+- **`vocalparam` addresses a *param*, not a *category*.** `vocalparam.read`,
+  `vocalparam.write` and `vocalparam.layers` take `param` where they took
+  `category`, and report it back under that name. `vocalparam.layers` renames
+  the collection to match — `categories` → `params`, `categoryCount` →
+  `paramCount` — and each entry gains `displayName` and `shape`, with
+  `vocalControlRoute` on the result.
+
+- **Removed with no replacement on this surface:** `generative.seedAudio`,
+  `generative.soundEffects`, `generative.text2sample`, `instrument.enable` and
+  `instrument.disable`. A call to any of these was already answered `-32601` by a
+  current host.
+
+### Added
+
+- **Six new operation groups**: `audioPlugin` (29 methods, including a full
+  `audioPlugin.editor.*` input surface), `phoneme` (9), `midiparam` (8), `chord` (4),
+  `breath` (3) and `lyric` (1).
+- **Saved FX chains**: `fx.applyChain`, `fx.saveChain`, `fx.listChains`,
+  `fx.findChains`, `fx.insertChain`, `fx.moveChain`, `fx.removeChain`,
+  `fx.importChain`, `fx.exportChain`.
+- **Generative run history**: `generative.inspireMe.history.list` / `.get` and
+  `generative.musicEnhancer.history.list` / `.get`, plus
+  `generative.voiceChanger.models`, behind the new `generative-history.read` token.
+- **Note language**: `note.setLanguage`, beside `note.setGrapheme`.
+- **Track audition**: `track.audition.note`, `.noteOn`, `.noteOff` and `.noteClear`,
+  behind the new `track.audition` token.
+- **Also new**: `clip.beatContent`, `job.download`, `tempo.getAnalysis`,
+  `vocalparam.setVoicing`, and the `midiparam.read` / `midiparam.write` tokens.
+- **Dual-unit geometry** reaches the reads that were still tick-only:
+  `selection.get` now reports `nativeUnit`, and `clip.list` rows carry `audioMedia`
+  and `videoMedia`, so a caller mirroring a timeline no longer needs one `clip.get`
+  per clip.
+
+### Changed
+
+- **`SURFACE_VERSION` is `'17.2'`.** It advises and counts; it gates nothing. The
+  protocol version is the only number the handshake refuses over, so a consumer on
+  an older surface still connects and simply cannot reach what it has no bindings
+  for.
+- **37 writes declare a fingerprint precondition**, up from 18 — every write in the
+  new `phoneme`, `midiparam`, `chord`, `breath` and `lyric` groups, plus
+  `audio-plugin apply-preset`, `audio-plugin set-param` and `vocalparam
+  set-voicing`.
+
 ## [0.7.0] — 2026-08-22
 
 ### Breaking

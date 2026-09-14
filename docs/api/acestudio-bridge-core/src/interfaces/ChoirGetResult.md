@@ -59,7 +59,7 @@ The members in order. Index 0 is the leader.
 gain: number;
 ```
 
-Member gain in dB.
+Member gain in dB: -50 to +20 (`ChoirSingerInfo::kGainRange`), with 0 = unity and negative values attenuating.
 
 #### index
 
@@ -141,7 +141,7 @@ How many seed voices the member's recipe names. Every voice is a recipe of seeds
 optional offset?: number;
 ```
 
-Timing offset between members, in milliseconds. The UI calls this Offset.
+Timing offset between members: a proportion of the engine's maximum doubling offset, 0 (none) to 0.3 (the maximum), default 0.08 (`EnsembleConfigInfo::kOffsetRange`). The UI calls this Offset and shows it as a percentage, 0% to 30%. It is not a time: the value scales the maximum offset rather than naming a duration.
 
 ***
 
@@ -161,7 +161,7 @@ Which index space `trackIndex` counts in: `arrangement`, the only region whose t
 optional spread?: number;
 ```
 
-Stereo spread across the members, 0 to 1. The UI calls this Spread.
+Stereo spread across the members on the UI's Spread scale: 0 to 10, default 3 (`EnsembleConfigInfo::kSpreadRange`). Not a normalized 0 to 1 width — the default alone sits above such a scale. The UI calls this Spread.
 
 ***
 

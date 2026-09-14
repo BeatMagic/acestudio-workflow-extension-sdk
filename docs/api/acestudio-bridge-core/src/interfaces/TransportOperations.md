@@ -10,7 +10,7 @@ The `transport` operations, mirroring the canonical operation tree 1:1, and the 
 loop(options?): Promise<TransportLoopResult>;
 ```
 
-Read the project loop region (active flag + start/end ticks).
+Read the project loop region (active flag + bounds in both units).
 
 Requires the `transport.state` capability.
 
@@ -105,16 +105,16 @@ Requires the `transport.control` capability.
 ### seek()
 
 ```ts
-seek(params, options?): Promise<void>;
+seek(params?, options?): Promise<void>;
 ```
 
-Seek the playhead to a time position in seconds.
+Seek the playhead to a position given in seconds or in ticks.
 
 Requires the `transport.control` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`TransportSeekParams`](TransportSeekParams.md)
 

@@ -4,10 +4,26 @@ Every published operation, grouped by domain. A connection's client implements t
 
 ## Properties
 
+### audioPlugin
+
+```ts
+readonly audioPlugin: AudioPluginOperations;
+```
+
+***
+
 ### blend
 
 ```ts
 readonly blend: BlendOperations;
+```
+
+***
+
+### breath
+
+```ts
+readonly breath: BreathOperations;
 ```
 
 ***
@@ -32,6 +48,14 @@ readonly caret: CaretOperations;
 
 ```ts
 readonly choir: ChoirOperations;
+```
+
+***
+
+### chord
+
+```ts
+readonly chord: ChordOperations;
 ```
 
 ***
@@ -132,10 +156,34 @@ readonly job: JobOperations;
 
 ***
 
+### lyric
+
+```ts
+readonly lyric: LyricOperations;
+```
+
+***
+
+### midiparam
+
+```ts
+readonly midiparam: MidiparamOperations;
+```
+
+***
+
 ### note
 
 ```ts
 readonly note: NoteOperations;
+```
+
+***
+
+### phoneme
+
+```ts
+readonly phoneme: PhonemeOperations;
 ```
 
 ***

@@ -118,7 +118,7 @@ Display name.
 optional nativeLanguage?: string;
 ```
 
-Full English name of the voice's native language.
+Full English name of the voice's native language -- what its training data mainly sits in, and so where it sounds most native. This is what the `language` filter matches.
 
 #### ref
 
@@ -134,7 +134,7 @@ Ref for this voice, in the form `singer:\@\<id\>`. Accepted by `voice collect --
 optional supportedLanguages?: string[];
 ```
 
-Full English names of the languages it can sing on its default model.
+Full English names of the languages it can sing on its default model. The *model's* roster, not a measure of how well the voice sings each one -- read `nativeLanguage` for that.
 
 #### tags
 

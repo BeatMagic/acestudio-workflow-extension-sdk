@@ -17,7 +17,7 @@ Which plugin format was mounted (`vst3`, `vst2`, `au`). Always reported for an e
 ### kind
 
 ```ts
-kind: "voice" | "choir" | "instrument" | "ensemble" | "external-instrument";
+kind: "instrument" | "voice" | "choir" | "ensemble" | "external-instrument";
 ```
 
 What a sound source is — the roster every `kind` takes, whether it filters a listing or reports what a row turned out to be. A track carries exactly one kind at a time, and loading a source of another kind converts the track to suit it.
@@ -40,7 +40,7 @@ Full English name of the track's default note language. Emitted only when the lo
 optional modelName?: string;
 ```
 
-The vocal synth model the source sings through. Voices and choirs only.
+The model the source plays through: a voice's vocal synth model, or an AI instrument's own model. Absent for the kinds that carry none.
 
 ***
 

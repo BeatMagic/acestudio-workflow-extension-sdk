@@ -10,7 +10,7 @@ Arguments for `ensemble set`.
 optional gain?: number;
 ```
 
-Member gain in dB. Requires `member`.
+Member gain in dB: -50 to +20 (`EnsembleInstrumentInfo::kGainRange`). Requires `member`.
 
 ***
 
@@ -40,7 +40,7 @@ Whether to mute this member. Requires `member`.
 optional offset?: number;
 ```
 
-Timing offset between members, in milliseconds. Ensemble-level.
+Timing offset between members: a proportion of the engine's maximum doubling offset, 0 to 0.3 (`EnsembleConfigInfo::kOffsetRange`, the bound the handler enforces), where 0.3 applies the maximum. The UI shows this as 0% to 30%. It is not a time — the value scales the maximum offset rather than naming a duration. Ensemble-level; out-of-range values are refused, not clamped.
 
 ***
 
@@ -60,7 +60,7 @@ Which index space `trackIndex` counts in. Only `arrangement` can hold a track th
 optional spread?: number;
 ```
 
-Stereo spread across the members, 0 to 1. Ensemble-level.
+Stereo spread across the members on the UI's Spread scale: 0 to 10 (`EnsembleConfigInfo::kSpreadRange`, default 3). Not a normalized 0 to 1 width. Ensemble-level; out-of-range values are refused, not clamped.
 
 ***
 

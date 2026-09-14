@@ -56,13 +56,39 @@ Requires the `job.control` capability.
 
 ***
 
+### download()
+
+```ts
+download(params, options?): Promise<JobDownloadResult>;
+```
+
+Fetch a settled result's audio into the local download folder.
+
+Requires the `job.control` capability.
+
+#### Parameters
+
+##### params
+
+[`JobDownloadParams`](JobDownloadParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`JobDownloadResult`](JobDownloadResult.md)\>
+
+***
+
 ### get()
 
 ```ts
 get(params, options?): Promise<JobGetResult>;
 ```
 
-Show one job with its result children and states.
+Show one job with its results and their states.
 
 Requires the `job.read` capability.
 
@@ -165,7 +191,7 @@ Requires the `clip.write` capability.
 results(params, options?): Promise<JobResultsResult>;
 ```
 
-List a job's result children and their settling states.
+List a job's results and their settling states.
 
 Requires the `job.read` capability.
 

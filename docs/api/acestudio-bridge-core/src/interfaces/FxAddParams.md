@@ -20,7 +20,7 @@ optional at?: number;
 optional preset?: string;
 ```
 
-Apply this library preset to the new insert instead of leaving it at the plugin's defaults. Matched by name against that plugin's presets.
+Apply this library preset to the new insert instead of leaving it at the plugin's defaults: its path in that plugin's preset library, as `list-presets` reports it (`Vocals/Warm Verb`, or a bare name at the root).
 
 ***
 
@@ -30,7 +30,7 @@ Apply this library preset to the new insert instead of leaving it at the plugin'
 optional rack?: "pre";
 ```
 
-Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header.
+Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see `Fx.acerpc`.
 
 ***
 

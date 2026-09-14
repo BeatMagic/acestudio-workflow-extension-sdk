@@ -4,10 +4,20 @@ Arguments for `tempo analyze`.
 
 ## Properties
 
-### clipUuid
+### clipUuid?
 
 ```ts
-clipUuid: string;
+optional clipUuid?: string;
 ```
 
-The audio clip to analyze, by UUID (`clip list` reports it). Required: analysis is always of a specific piece of audio, never of "the project".
+The audio clip to analyze, by UUID (`clip list` reports it). An empty value is refused. Mutually exclusive with `filePath`: exactly one of the two is required.
+
+***
+
+### filePath?
+
+```ts
+optional filePath?: string;
+```
+
+Path of an audio file to analyze where it sits — it is not imported, and nothing in the project changes until `tempo apply-beat-analysis`. An empty value is refused. Mutually exclusive with `clipUuid`: exactly one of the two is required. A file-sourced analysis carries no anchor, so the apply needs one.

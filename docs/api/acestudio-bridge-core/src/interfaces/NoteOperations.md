@@ -160,10 +160,10 @@ Requires the `note.write` capability.
 
 ***
 
-### setLyric()
+### setGrapheme()
 
 ```ts
-setLyric(params, options?): Promise<NoteSetLyricResult>;
+setGrapheme(params, options?): Promise<NoteSetGraphemeResult>;
 ```
 
 Set the lyric (and optionally language) of Sing notes by id.
@@ -174,7 +174,7 @@ Requires the `note.write` capability.
 
 ##### params
 
-[`NoteSetLyricParams`](NoteSetLyricParams.md)
+[`NoteSetGraphemeParams`](NoteSetGraphemeParams.md)
 
 ##### options?
 
@@ -182,7 +182,33 @@ Requires the `note.write` capability.
 
 #### Returns
 
-`Promise`\<[`NoteSetLyricResult`](NoteSetLyricResult.md)\>
+`Promise`\<[`NoteSetGraphemeResult`](NoteSetGraphemeResult.md)\>
+
+***
+
+### setLanguage()
+
+```ts
+setLanguage(params, options?): Promise<NoteSetLanguageResult>;
+```
+
+Change the language of Sing notes, refilling their lyrics the way the pattern editor's note-language control does.
+
+Requires the `note.write` capability.
+
+#### Parameters
+
+##### params
+
+[`NoteSetLanguageParams`](NoteSetLanguageParams.md)
+
+##### options?
+
+[`PreconditionCallOptions`](PreconditionCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`NoteSetLanguageResult`](NoteSetLanguageResult.md)\>
 
 ***
 

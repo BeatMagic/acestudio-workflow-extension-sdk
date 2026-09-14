@@ -20,7 +20,7 @@ Which audio input the track now records from, named as the device names it. Audi
 optional midiInput?: {
   channel?: string;
   deviceName?: string;
-  sourceType?: "keyboard" | "custom" | "none" | "all";
+  sourceType?: "none" | "keyboard" | "custom" | "all";
 };
 ```
 
@@ -45,7 +45,7 @@ The device name, when `sourceType` is custom.
 #### sourceType?
 
 ```ts
-optional sourceType?: "keyboard" | "custom" | "none" | "all";
+optional sourceType?: "none" | "keyboard" | "custom" | "all";
 ```
 
 Where a note track's MIDI takes its input from. `custom` is the only value that carries a device: it means one named device, reported in the sibling `deviceName`. `all` listens to every connected device at once and `none` listens to nothing, so neither names one. `keyboard` is the computer keyboard playing notes, not a MIDI device at all. The values are the same vocabulary `track set-input`'s `midiDevice` takes, so a value read here can be handed straight back to a write.

@@ -62,7 +62,7 @@ optional horizontalSelectionSec?: {
 };
 ```
 
-The selected time range in seconds, beside the tick range that names the same span. Its own type rather than two more fields on [`SelectionRange`], which the editor's note range shares — and that range is local ticks, where seconds would be a possibility that does not exist. Same reason `clip resize` echoes its own row type rather than reusing a plain one. Reported because a caller that lays the selection over video thinks in seconds while the timeline is ticks, and converting between them needs the tempo curve. `convert tick-to-time` is not that route: it takes an `i32` tick, and a selection range is `i64`, so far enough along the timeline there is no conversion to make.
+A selected time range in seconds, beside the tick range that names the same span. Its own type rather than two more fields on [`SelectionRange`]: this one is always the derived reading, and folding it in would leave one struct whose halves have different authority with nothing on it saying so. Same reason `clip resize` echoes its own row type rather than reusing a plain one. **Counts in whatever space the tick range beside it counts in** — global seconds beside an arrangement range, and beside an editor range the elapsed wall clock from the open clip's start, so 0 falls where local tick 0 does. A seconds field that silently changed coordinate space from its own tick range would be the trap the pair exists to close. `editor tick-range`'s `beginSec` lifts a local reading to global seconds, exactly, both being measured from the same converted instant. Reported because a caller that lays the selection over video thinks in seconds while the timeline is ticks, and converting between them needs the tempo curve. `convert tick-to-time` is not that route: it takes an `i32` tick, and a selection range is `i64`, so far enough along the timeline there is no conversion to make.
 
 #### beginSec
 
@@ -89,6 +89,16 @@ optional isLineSelection?: boolean;
 ```
 
 True when the selection is a zero-width vertical line (caret) rather than an area.
+
+***
+
+### nativeUnit
+
+```ts
+nativeUnit: "tick";
+```
+
+The unit a selection's time range is authoritative in. Always `tick`: both scopes hold their range on the grid — `TrackViewState::horizontalSelectionRange` for the arrangement, scene ticks for the editor — so every `*Sec` on this group is a conversion under the current tempo curve. Not about [`VerticalSelection`], whose two forms are a bijection with neither derived from the other (ADR 0129 §6). This names the horizontal axis only.
 
 ***
 

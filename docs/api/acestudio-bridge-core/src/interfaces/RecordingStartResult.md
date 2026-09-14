@@ -60,6 +60,16 @@ Track type: Audio, Sing, Instrument, or GenericMidi.
 
 ***
 
+### beginSec
+
+```ts
+beginSec: number;
+```
+
+The same start in seconds, under the current tempo curve. A conversion (`nativeUnit` is `tick`), reported because a take is eventually an audio file and lining one up against video or another recording is wall-clock work. When the transport was already rolling this is the playhead's own seconds put through a tick and back, so it can differ from `transport state`'s `position` by the rounding of that tick — the take really did start on the tick, which is why that is the value reported as exact.
+
+***
+
 ### beginTick
 
 ```ts
@@ -87,6 +97,16 @@ countInBars: number;
 ```
 
 Bars of count-in this call will play: the user's preference, or 0 when the transport was already rolling (which skips it).
+
+***
+
+### nativeUnit
+
+```ts
+nativeUnit: "tick";
+```
+
+The unit a take's start is authoritative in. Always `tick`: the start comes from the caret or the live playback tick, and the recorder is handed a tick (`startRecording(beginTick)`), so the seconds reported beside it are a conversion under the current tempo curve.
 
 ***
 

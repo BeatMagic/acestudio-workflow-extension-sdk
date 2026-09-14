@@ -20,7 +20,7 @@ Palette color hex string, e.g. `#EC4F44`. Must be one of the values `color-palet
 optional gain?: number;
 ```
 
-Volume gain level: 0.0 and above; 1.0 = unity; above 1.0 = boost. The only property the master bus accepts.
+Volume gain in **decibels**: -70 (effectively silent) to +6, with 0 = unity and negative values attenuating. Out-of-range values are refused with `INVALID_ARG`, not clamped. The only property the master bus accepts.
 
 ***
 
@@ -50,7 +50,7 @@ Mute the track (true) or unmute (false). When muted the track is silenced but st
 optional pan?: number;
 ```
 
-Stereo pan position: -1.0 (full left) to 1.0 (full right); 0.0 = center. The master bus has no pan.
+Stereo pan on the mixer's **±10 scale**: -10 (full left) to +10 (full right), 0 = center. This is the scale the mixer strip displays, NOT the normalized -1.0…1.0 pan convention some other DAWs use. The master bus has no pan.
 
 ***
 

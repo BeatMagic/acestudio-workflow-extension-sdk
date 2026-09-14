@@ -12,7 +12,7 @@ add(params, options?): Promise<FxAddResult>;
 
 Insert an effect into a chain, by default at the end.
 
-Requires the `fx.write` capability.
+Requires the `audioplugin.write` capability.
 
 #### Parameters
 
@@ -30,151 +30,21 @@ Requires the `fx.write` capability.
 
 ***
 
-### applyPreset()
+### applyChain()
 
 ```ts
-applyPreset(params?, options?): Promise<FxApplyPresetResult>;
+applyChain(params, options?): Promise<FxApplyChainResult>;
 ```
 
-Apply a library preset to an insert, replacing its current parameter state.
+Replace a track's chain with a saved one: every insert out, the saved inserts in, each a fresh instance carrying its saved state. One undo step.
 
-Requires the `fx.write` capability.
+Requires the `audioplugin.write` capability.
 
 #### Parameters
 
-##### params?
+##### params
 
-[`FxApplyPresetParams`](FxApplyPresetParams.md)
-
-##### options?
-
-[`PreconditionCallOptions`](PreconditionCallOptions.md)
-
-#### Returns
-
-`Promise`\<[`FxApplyPresetResult`](FxApplyPresetResult.md)\>
-
-***
-
-### getParams()
-
-```ts
-getParams(params?, options?): Promise<FxGetParamsResult>;
-```
-
-List one insert's parameters — id, range, current value and display text — with the token the reserved `fingerprint` argument carries back.
-
-Requires the `fx.read` capability.
-
-#### Parameters
-
-##### params?
-
-[`FxGetParamsParams`](FxGetParamsParams.md)
-
-##### options?
-
-[`CallOptions`](CallOptions.md)
-
-#### Returns
-
-`Promise`\<[`FxGetParamsResult`](FxGetParamsResult.md)\>
-
-***
-
-### list()
-
-```ts
-list(params?, options?): Promise<FxListResult>;
-```
-
-List the inserts on one chain, in order, with the instance ids the other verbs address them by.
-
-Requires the `fx.read` capability.
-
-#### Parameters
-
-##### params?
-
-[`FxListParams`](FxListParams.md)
-
-##### options?
-
-[`CallOptions`](CallOptions.md)
-
-#### Returns
-
-`Promise`\<[`FxListResult`](FxListResult.md)\>
-
-***
-
-### listAvailable()
-
-```ts
-listAvailable(params?, options?): Promise<FxListAvailableResult>;
-```
-
-List every effect that can be inserted: ACE's built-in set plus the third-party plugins the last scan found.
-
-Requires the `fx.read` capability.
-
-#### Parameters
-
-##### params?
-
-[`FxListAvailableParams`](FxListAvailableParams.md)
-
-##### options?
-
-[`CallOptions`](CallOptions.md)
-
-#### Returns
-
-`Promise`\<[`FxListAvailableResult`](FxListAvailableResult.md)\>
-
-***
-
-### listParams()
-
-```ts
-listParams(params?, options?): Promise<FxListParamsResult>;
-```
-
-List the names of one insert's parameters, so a caller can see what is there before reading any of it. `detail` adds each one's shape; values come from `fx get-params`.
-
-Requires the `fx.read` capability.
-
-#### Parameters
-
-##### params?
-
-[`FxListParamsParams`](FxListParamsParams.md)
-
-##### options?
-
-[`CallOptions`](CallOptions.md)
-
-#### Returns
-
-`Promise`\<[`FxListParamsResult`](FxListParamsResult.md)\>
-
-***
-
-### openEditor()
-
-```ts
-openEditor(params?, options?): Promise<FxOpenEditorResult>;
-```
-
-Open a third-party plugin's own editor window for one insert.
-
-Requires the `ui.control` capability.
-
-#### Parameters
-
-##### params?
-
-[`FxOpenEditorParams`](FxOpenEditorParams.md)
+[`FxApplyChainParams`](FxApplyChainParams.md)
 
 ##### options?
 
@@ -182,7 +52,163 @@ Requires the `ui.control` capability.
 
 #### Returns
 
-`Promise`\<[`FxOpenEditorResult`](FxOpenEditorResult.md)\>
+`Promise`\<[`FxApplyChainResult`](FxApplyChainResult.md)\>
+
+***
+
+### exportChain()
+
+```ts
+exportChain(params?, options?): Promise<FxExportChainResult>;
+```
+
+Export a chain as an `.acefxchainpreset` file, returning the file bytes.
+
+Requires the `audioplugin.read` capability.
+
+#### Parameters
+
+##### params?
+
+[`FxExportChainParams`](FxExportChainParams.md)
+
+##### options?
+
+[`CallOptions`](CallOptions.md)
+
+#### Returns
+
+`Promise`\<[`FxExportChainResult`](FxExportChainResult.md)\>
+
+***
+
+### findChains()
+
+```ts
+findChains(params, options?): Promise<FxFindChainsResult>;
+```
+
+Find saved chains by name, in every folder of the library — the grep beside `list-chains`'s `ls`.
+
+Requires the `audioplugin.read` capability.
+
+#### Parameters
+
+##### params
+
+[`FxFindChainsParams`](FxFindChainsParams.md)
+
+##### options?
+
+[`CallOptions`](CallOptions.md)
+
+#### Returns
+
+`Promise`\<[`FxFindChainsResult`](FxFindChainsResult.md)\>
+
+***
+
+### importChain()
+
+```ts
+importChain(params, options?): Promise<FxImportChainResult>;
+```
+
+Import an `.acefxchainpreset` file into a chain from bytes.
+
+Requires the `audioplugin.write` capability.
+
+#### Parameters
+
+##### params
+
+[`FxImportChainParams`](FxImportChainParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`FxImportChainResult`](FxImportChainResult.md)\>
+
+***
+
+### insertChain()
+
+```ts
+insertChain(params, options?): Promise<FxInsertChainResult>;
+```
+
+Insert a saved chain into a track's chain at a slot, the way dropping one onto the FX panel does: the inserts already there stay, the saved inserts arrive as fresh instances carrying their saved state. One undo step.
+
+Requires the `audioplugin.write` capability.
+
+#### Parameters
+
+##### params
+
+[`FxInsertChainParams`](FxInsertChainParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`FxInsertChainResult`](FxInsertChainResult.md)\>
+
+***
+
+### listChains()
+
+```ts
+listChains(params?, options?): Promise<FxListChainsResult>;
+```
+
+List one folder of the FX chain library — the chains in it, each with a summary of its inserts, and the folders under it, the way `ls` would — or, with `recursive`, the whole tree beneath it. The chains that ship with Studio sit at the root, marked `factory`.
+
+Requires the `audioplugin.read` capability.
+
+#### Parameters
+
+##### params?
+
+[`FxListChainsParams`](FxListChainsParams.md)
+
+##### options?
+
+[`CallOptions`](CallOptions.md)
+
+#### Returns
+
+`Promise`\<[`FxListChainsResult`](FxListChainsResult.md)\>
+
+***
+
+### moveChain()
+
+```ts
+moveChain(params, options?): Promise<FxMoveChainResult>;
+```
+
+Move a saved chain within the library — into another folder, to a new name, or both — the file manager's `mv`, with the destination folder created on demand. Library state, so it is not undoable. Factory chains are refused.
+
+Requires the `audioplugin.write` capability.
+
+#### Parameters
+
+##### params
+
+[`FxMoveChainParams`](FxMoveChainParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`FxMoveChainResult`](FxMoveChainResult.md)\>
 
 ***
 
@@ -194,7 +220,7 @@ remove(params?, options?): Promise<FxRemoveResult>;
 
 Take one insert out of a chain.
 
-Requires the `fx.write` capability.
+Requires the `audioplugin.write` capability.
 
 #### Parameters
 
@@ -212,6 +238,32 @@ Requires the `fx.write` capability.
 
 ***
 
+### removeChain()
+
+```ts
+removeChain(params, options?): Promise<FxRemoveChainResult>;
+```
+
+Remove a saved chain, sending its file to the system trash, or remove an empty folder. Library state, so it is not undoable — the trash is the undo, which is the level of destructiveness this verb is meant to have. A folder that still holds anything is refused, and so is a factory chain.
+
+Requires the `audioplugin.write` capability.
+
+#### Parameters
+
+##### params
+
+[`FxRemoveChainParams`](FxRemoveChainParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`FxRemoveChainResult`](FxRemoveChainResult.md)\>
+
+***
+
 ### reorder()
 
 ```ts
@@ -220,7 +272,7 @@ reorder(params, options?): Promise<FxReorderResult>;
 
 Move one insert to another slot in the same chain. The plugin keeps its instance id and its DSP state.
 
-Requires the `fx.write` capability.
+Requires the `audioplugin.write` capability.
 
 #### Parameters
 
@@ -238,21 +290,21 @@ Requires the `fx.write` capability.
 
 ***
 
-### savePreset()
+### saveChain()
 
 ```ts
-savePreset(params, options?): Promise<FxSavePresetResult>;
+saveChain(params, options?): Promise<FxSaveChainResult>;
 ```
 
-Save an insert's current parameter state to the preset library under a name. Library state, so it is not undoable.
+Save a chain — its plugins in order, their switches and each one's whole state — to the FX chain library at a path, creating the folders on the way. Library state, so it is not undoable.
 
-Requires the `fx.write` capability.
+Requires the `audioplugin.write` capability.
 
 #### Parameters
 
 ##### params
 
-[`FxSavePresetParams`](FxSavePresetParams.md)
+[`FxSaveChainParams`](FxSaveChainParams.md)
 
 ##### options?
 
@@ -260,85 +312,7 @@ Requires the `fx.write` capability.
 
 #### Returns
 
-`Promise`\<[`FxSavePresetResult`](FxSavePresetResult.md)\>
-
-***
-
-### scan()
-
-```ts
-scan(params?, options?): Promise<FxScanResult>;
-```
-
-Scan the system for third-party plugins and update the app's plugin registry. Answers with a job id; settle it with `job wait`.
-
-Requires the `fx.write` capability.
-
-#### Parameters
-
-##### params?
-
-[`FxScanParams`](FxScanParams.md)
-
-##### options?
-
-[`MutatingCallOptions`](MutatingCallOptions.md)
-
-#### Returns
-
-`Promise`\<[`FxScanResult`](FxScanResult.md)\>
-
-***
-
-### set()
-
-```ts
-set(params?, options?): Promise<FxSetResult>;
-```
-
-Set an insert's enabled state, bypass, or display name.
-
-Requires the `fx.write` capability.
-
-#### Parameters
-
-##### params?
-
-[`FxSetParams`](FxSetParams.md)
-
-##### options?
-
-[`MutatingCallOptions`](MutatingCallOptions.md)
-
-#### Returns
-
-`Promise`\<[`FxSetResult`](FxSetResult.md)\>
-
-***
-
-### setParam()
-
-```ts
-setParam(params, options?): Promise<FxSetParamResult>;
-```
-
-Set one of an insert's parameters by its stable id, as a normalized 0..1 value.
-
-Requires the `fx.write` capability.
-
-#### Parameters
-
-##### params
-
-[`FxSetParamParams`](FxSetParamParams.md)
-
-##### options?
-
-[`PreconditionCallOptions`](PreconditionCallOptions.md)
-
-#### Returns
-
-`Promise`\<[`FxSetParamResult`](FxSetParamResult.md)\>
+`Promise`\<[`FxSaveChainResult`](FxSaveChainResult.md)\>
 
 ***
 
@@ -350,7 +324,7 @@ setRoom(params?, options?): Promise<FxSetRoomResult>;
 
 Set a Sing track's Room Effect: on or off, which room, and where the voice stands in it.
 
-Requires the `fx.write` capability.
+Requires the `audioplugin.write` capability.
 
 #### Parameters
 

@@ -40,7 +40,7 @@ UUID (with braces) of the current clip. Present only when a clip is loaded.
 optional defaultArticulation?: string;
 ```
 
-Display name of the track's default articulation. Present only for Instrument clips.
+Display name of the track's default articulation. Every instrument supports the default, so this is one of `supportedArticulations` whenever the track has an instrument mounted — but it is reported even when that list is empty, where no articulation can be written at all. A track left on the default articulation reports its display name, currently "Smart". Present only for Instrument clips.
 
 ***
 
@@ -100,7 +100,7 @@ Which index space `trackIndex` counts in: `arrangement`, `video`, `marker` or `c
 optional supportedArticulations?: string[];
 ```
 
-Articulation display names supported by the whole ensemble. Present only for Instrument clips.
+Articulation display names supported by the whole ensemble (the intersection over its instruments) — exactly the vocabulary every articulation argument on this surface accepts, matched case-insensitively. The live source of truth: read it rather than hardcoding names, since the server config can rename one. Empty when the track has no instrument mounted, and then no articulation can be written. Present only for Instrument clips.
 
 ***
 

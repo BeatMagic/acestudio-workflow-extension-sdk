@@ -88,7 +88,7 @@ Notes overlapping the filter range, in pattern order.
 optional articulation?: string;
 ```
 
-Instrument notes only: the note's articulation.
+Instrument notes only: the note's articulation, as an articulation display name (`editor status` lists the track's in `supportedArticulations`). A note left on the track default reads as the default's display name, currently "Smart" — never an empty string. Normally a value this surface accepts back verbatim. Two cases are not: a note whose articulation the track's *current* instrument cannot play, and one carrying a value written before this surface validated its input, which reads as an empty string. Both are refused by a write, which names the track's vocabulary.
 
 #### dur
 

@@ -77,7 +77,7 @@ UUID of the created clip, with braces. Address it with `clip get`, `note add`, a
 ### nativeUnit
 
 ```ts
-nativeUnit: "second" | "tick";
+nativeUnit: "tick" | "second";
 ```
 
 Which unit an entity's geometry is stored in — the one value that is exact, with the other reported beside it as a conversion under the current tempo curve (ADR 0032 §2-4). Declared here because every group that reports geometry names it. It follows the entity's own anchoring, which `PatternFactory::preferredGeometryTimeUnit` is the source of truth for: media that plays at wall-clock speed is second-native, content written against the grid is tick-native.

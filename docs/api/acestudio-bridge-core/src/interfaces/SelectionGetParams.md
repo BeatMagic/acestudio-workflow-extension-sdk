@@ -4,10 +4,10 @@ Arguments for `selection get`.
 
 ## Properties
 
-### scope
+### scope?
 
 ```ts
-scope: string;
+optional scope?: string;
 ```
 
-Selection scope: `arrangement` (timeline, default) or `editor` (piano-roll note selection).
+Selection scope: `arrangement` (timeline) or `editor` (piano-roll note selection). Omitted reads the arrangement.

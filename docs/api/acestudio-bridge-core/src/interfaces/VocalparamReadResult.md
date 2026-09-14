@@ -4,16 +4,6 @@ Success payload of `vocalparam read`.
 
 ## Properties
 
-### category
-
-```ts
-category: "pitch" | "energy" | "tension" | "air" | "falsetto" | "formant";
-```
-
-Which vocal characteristic a curve controls. Spellings follow the vocal-control UI's own face names: `pitch` is the melodic line as a delta in semitones, `energy` the loudness/effort curve, `tension` the vocal strain, `air` the breathiness, `falsetto` the head-voice mix, and `formant` the gender channel. Two of the UI's faces are deliberately absent, because neither is a curve: its "Breath" face places breath *marks* (the `breath` group) and its "Pronounce" face edits phoneme timing (the `lyric` group). Every category is addressable, but not every category exists on every clip: which ones do depends on the singer's engine generation, and `vocalparam layers` reports that as an availability matrix rather than by omitting a row.
-
-***
-
 ### clipUuid
 
 ```ts
@@ -30,22 +20,33 @@ The clip read from.
 count: number;
 ```
 
-Elements per layer: one per clip-local tick, so the last covers tick `posBegin + count - 1`.
+Elements per `dense` layer: one per clip-local tick, so the last covers tick `posBegin + count - 1`.
 
 ***
 
-### effective
+### displayName
 
 ```ts
-effective: {
+displayName: string;
+```
+
+The parameter's display name, as the vocal-control panel shows it.
+
+***
+
+### effective?
+
+```ts
+optional effective?: {
   access: "read-only" | "read-write";
   drawnRanges?: {
      begin: number;
      end: number;
   }[];
-  layer: "direct" | "baseline" | "user" | "envelope" | "effective";
+  layer: "direct" | "baseline" | "user" | "envelope" | "global" | "effective";
   points: unknown;
   role: string;
+  shape: "dense" | "points" | "scalar";
   sparse: boolean;
 };
 ```
@@ -69,15 +70,15 @@ optional drawnRanges?: {
 }[];
 ```
 
-For a sparse layer, the clip-local tick ranges that carry drawn values. Absent on a dense layer. Reading this is cheaper than scanning `points` for gaps.
+For a sparse layer, the clip-local tick ranges that carry drawn values. Absent on a non-sparse layer. Reading this is cheaper than scanning `points` for gaps.
 
 #### layer
 
 ```ts
-layer: "direct" | "baseline" | "user" | "envelope" | "effective";
+layer: "direct" | "baseline" | "user" | "envelope" | "global" | "effective";
 ```
 
-One layer of a parameter's curve stack, including the merged result. A vocal parameter is not one curve: it is a stack the engine merges. `baseline` is what the engine produced unprompted (the model's analyzed curve, or the generation's synthesized default) and is read-only, because it shifts with every re-render. `user` and `direct` are drawn overrides that win wherever they carry a value and are undrawn elsewhere. `envelope` is a multiplier over what lies under it. `effective` is the merged curve the synth actually consumes: engine-computed, always readable, never writable — never reconstruct it from the layers. Which of these a given (generation x category) has is a host fact, not a property of this roster: `vocalparam layers` reports the matrix, and `effective` exists for every available category.
+One layer of a parameter's curve stack, including the merged result. A vocal parameter is not one curve: it is a stack the engine merges. `baseline` is what the engine produced unprompted (the model's analyzed curve, or the generation's synthesized default) and is read-only, because it shifts with every re-render. `user` and `direct` are drawn overrides that win wherever they carry a value and are undrawn elsewhere. `envelope` is a multiplier over what lies under it. `global` is a control lane's scalar offset, added to its drawn points. `effective` is the merged curve the synth actually consumes — present on a parameter where something merges (ADR 0155) — never reconstruct it from the layers. Which of these a given (generation x parameter) has is a host fact, not a property of this roster: `vocalparam layers` reports the matrix, and the merge's result (`effective`, where it exists) is always readable.
 
 #### points
 
@@ -85,7 +86,7 @@ One layer of a parameter's curve stack, including the merged result. A vocal par
 points: unknown;
 ```
 
-The layer's values, one per clip-local tick from `posBegin`. Shaped by the sibling `encoding` argument: under `json` (the default) a plain array of numbers, `null` at a gap; under `base64` a `PointsEnvelope`, a gap a NaN bit pattern. No IDL type spans both shapes, so this field is declared `json` — see `PointsEnvelope`'s doc comment.
+The layer's values, in the layer's declared `shape`: for `dense`, one value per clip-local tick from `posBegin` — a plain array under `encoding: json` (`null` at a gap), a `PointsEnvelope` under `base64` (a NaN bit pattern at a gap); for `points`, `[[tick, value], …]` anchors with `[tick, null]` gap markers; for `scalar`, one bare number. No IDL type spans these shapes, so this field is declared `json` — see `PointsEnvelope`'s doc comment.
 
 #### role
 
@@ -94,6 +95,14 @@ role: string;
 ```
 
 See `LayerDeclaration.role`.
+
+#### shape
+
+```ts
+shape: "dense" | "points" | "scalar";
+```
+
+The shape a layer's points take, declared on every layer so a consumer introspects it rather than special-casing by parameter. The verbs follow the declaration: `posBegin` and the two-consecutive-tick run rule are `dense`-only. `effective` is `dense` and read-only wherever the parameter has a merge — shape polymorphism only ever touches writable layers.
 
 #### sparse
 
@@ -121,7 +130,7 @@ The clip's singer engine generation.
 fingerprint: Fingerprint;
 ```
 
-Content token for this category's writable layers (ADR 0088 §5). Carry it into `vocalparam write`'s reserved `fingerprint` argument to fail STALE_WRITE rather than overwrite an edit that landed in between.
+Content token for this parameter's writable layers (ADR 0088 §5). Carry it into `vocalparam write`'s reserved `fingerprint` argument to fail STALE_WRITE rather than overwrite an edit that landed in between.
 
 ***
 
@@ -134,14 +143,15 @@ layers: {
      begin: number;
      end: number;
   }[];
-  layer: "direct" | "baseline" | "user" | "envelope" | "effective";
+  layer: "direct" | "baseline" | "user" | "envelope" | "global" | "effective";
   points: unknown;
   role: string;
+  shape: "dense" | "points" | "scalar";
   sparse: boolean;
 }[];
 ```
 
-Every layer this (generation x category) has, merge order first.
+Every layer this (generation x parameter) has, merge order first.
 
 #### access
 
@@ -160,15 +170,15 @@ optional drawnRanges?: {
 }[];
 ```
 
-For a sparse layer, the clip-local tick ranges that carry drawn values. Absent on a dense layer. Reading this is cheaper than scanning `points` for gaps.
+For a sparse layer, the clip-local tick ranges that carry drawn values. Absent on a non-sparse layer. Reading this is cheaper than scanning `points` for gaps.
 
 #### layer
 
 ```ts
-layer: "direct" | "baseline" | "user" | "envelope" | "effective";
+layer: "direct" | "baseline" | "user" | "envelope" | "global" | "effective";
 ```
 
-One layer of a parameter's curve stack, including the merged result. A vocal parameter is not one curve: it is a stack the engine merges. `baseline` is what the engine produced unprompted (the model's analyzed curve, or the generation's synthesized default) and is read-only, because it shifts with every re-render. `user` and `direct` are drawn overrides that win wherever they carry a value and are undrawn elsewhere. `envelope` is a multiplier over what lies under it. `effective` is the merged curve the synth actually consumes: engine-computed, always readable, never writable — never reconstruct it from the layers. Which of these a given (generation x category) has is a host fact, not a property of this roster: `vocalparam layers` reports the matrix, and `effective` exists for every available category.
+One layer of a parameter's curve stack, including the merged result. A vocal parameter is not one curve: it is a stack the engine merges. `baseline` is what the engine produced unprompted (the model's analyzed curve, or the generation's synthesized default) and is read-only, because it shifts with every re-render. `user` and `direct` are drawn overrides that win wherever they carry a value and are undrawn elsewhere. `envelope` is a multiplier over what lies under it. `global` is a control lane's scalar offset, added to its drawn points. `effective` is the merged curve the synth actually consumes — present on a parameter where something merges (ADR 0155) — never reconstruct it from the layers. Which of these a given (generation x parameter) has is a host fact, not a property of this roster: `vocalparam layers` reports the matrix, and the merge's result (`effective`, where it exists) is always readable.
 
 #### points
 
@@ -176,7 +186,7 @@ One layer of a parameter's curve stack, including the merged result. A vocal par
 points: unknown;
 ```
 
-The layer's values, one per clip-local tick from `posBegin`. Shaped by the sibling `encoding` argument: under `json` (the default) a plain array of numbers, `null` at a gap; under `base64` a `PointsEnvelope`, a gap a NaN bit pattern. No IDL type spans both shapes, so this field is declared `json` — see `PointsEnvelope`'s doc comment.
+The layer's values, in the layer's declared `shape`: for `dense`, one value per clip-local tick from `posBegin` — a plain array under `encoding: json` (`null` at a gap), a `PointsEnvelope` under `base64` (a NaN bit pattern at a gap); for `points`, `[[tick, value], …]` anchors with `[tick, null]` gap markers; for `scalar`, one bare number. No IDL type spans these shapes, so this field is declared `json` — see `PointsEnvelope`'s doc comment.
 
 #### role
 
@@ -185,6 +195,14 @@ role: string;
 ```
 
 See `LayerDeclaration.role`.
+
+#### shape
+
+```ts
+shape: "dense" | "points" | "scalar";
+```
+
+The shape a layer's points take, declared on every layer so a consumer introspects it rather than special-casing by parameter. The verbs follow the declaration: `posBegin` and the two-consecutive-tick run rule are `dense`-only. `effective` is `dense` and read-only wherever the parameter has a merge — shape polymorphism only ever touches writable layers.
 
 #### sparse
 
@@ -196,13 +214,23 @@ See `LayerDeclaration.sparse`.
 
 ***
 
+### param
+
+```ts
+param: string;
+```
+
+The parameter read.
+
+***
+
 ### posBegin
 
 ```ts
 posBegin: number;
 ```
 
-Clip-local tick of element 0. Shared by every layer and by the effective curve, and the value a write restates.
+Clip-local tick of element 0 of every `dense` layer. Shared by the effective curve, and the value a `dense` write restates. `points` layers carry their own ticks.
 
 ***
 
@@ -250,7 +278,7 @@ optional valueRange?: {
 };
 ```
 
-Inclusive bounds of a legal value in a category's scale.
+Inclusive bounds of a legal value in a parameter's scale.
 
 #### max?
 

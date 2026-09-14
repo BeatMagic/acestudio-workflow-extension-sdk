@@ -30,32 +30,6 @@ Requires the `export.invoke` capability.
 
 ***
 
-### fcpxml()
-
-```ts
-fcpxml(params, options?): Promise<ExportFcpxmlResult>;
-```
-
-Write the timeline out as FCPXML or AAF for an NLE.
-
-Requires the `export.invoke` capability.
-
-#### Parameters
-
-##### params
-
-[`ExportFcpxmlParams`](ExportFcpxmlParams.md)
-
-##### options?
-
-[`MutatingCallOptions`](MutatingCallOptions.md)
-
-#### Returns
-
-`Promise`\<[`ExportFcpxmlResult`](ExportFcpxmlResult.md)\>
-
-***
-
 ### lrc()
 
 ```ts
@@ -133,6 +107,32 @@ Pay-gated on `membership`: an account that does not satisfy it is refused, witho
 #### Returns
 
 `Promise`\<[`ExportSongTemplateResult`](ExportSongTemplateResult.md)\>
+
+***
+
+### timeline()
+
+```ts
+timeline(params, options?): Promise<ExportTimelineResult>;
+```
+
+Write the timeline out as FCPXML or AAF for an NLE.
+
+Requires the `export.invoke` capability.
+
+#### Parameters
+
+##### params
+
+[`ExportTimelineParams`](ExportTimelineParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`ExportTimelineResult`](ExportTimelineResult.md)\>
 
 ***
 

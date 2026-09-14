@@ -13,22 +13,24 @@ jobs: {
   errorCode?: string;
   errorMessage?: string;
   hasProgress: boolean;
+  hint?: string;
   id: string;
   jobClass: string;
   launcher: "ui" | "cli" | "extension" | "agent";
   launcherLabel: string;
-  lifecycle: "queued" | "running" | "succeeded" | "failed" | "cancelled";
+  lifecycle: "succeeded" | "failed" | "queued" | "running" | "cancelled";
   progress?: number;
   results: {
+     errorCode?: string;
+     errorMessage?: string;
      id: string;
-     payload?: Record<string, unknown>;
-     state: "failed" | "pending" | "streaming" | "settled";
+     state: "streaming" | "failed" | "pending" | "settled";
   }[];
   streamingCapable: boolean;
 }[];
 ```
 
-The current project session's jobs, newest last.
+The current project session's jobs, newest last — the work this session performed, from every launcher. This is a job listing, not an inventory of every result the caller can reach: reading the account-scoped generated-results history adds nothing here, because a history result has no job and reaching it invents none.
 
 #### cancelable
 
@@ -70,6 +72,14 @@ hasProgress: boolean;
 
 Whether the producer reports a real numeric progress fraction.
 
+#### hint?
+
+```ts
+optional hint?: string;
+```
+
+A remedy sentence for the failure — what the caller can do about it ("narrow the selection and fire again"). Mirrors `CommandError::hint` on the refusal path: a failed *job* cannot return a CommandError, so the remedy rides the job state itself instead. Composed at the error site where the producer knows a recovery, present only when it has one. Free text — branch on `errorCode`, never on this.
+
 #### id
 
 ```ts
@@ -84,7 +94,7 @@ Stable job id.
 jobClass: string;
 ```
 
-The producing function's class id, e.g. "stem-split".
+The producing function's class id, e.g. "stem-splitter".
 
 #### launcher
 
@@ -105,7 +115,7 @@ Free-form launcher attribution (peer/session name); may be empty.
 #### lifecycle
 
 ```ts
-lifecycle: "queued" | "running" | "succeeded" | "failed" | "cancelled";
+lifecycle: "succeeded" | "failed" | "queued" | "running" | "cancelled";
 ```
 
 A job's normalized lifecycle — the same five states whatever the producer is. `queued` is accepted but not started, `running` is in flight, and `succeeded`, `failed` and `cancelled` are terminal: a job in one of those never transitions again. A job reaches `cancelled` only through an explicit `job cancel` or the producer cancelling itself, never through a peer disconnecting.
@@ -122,13 +132,14 @@ Progress fraction 0..1; present only for classes that declare progress.
 
 ```ts
 results: {
+  errorCode?: string;
+  errorMessage?: string;
   id: string;
-  payload?: Record<string, unknown>;
-  state: "failed" | "pending" | "streaming" | "settled";
+  state: "streaming" | "failed" | "pending" | "settled";
 }[];
 ```
 
-The job's 0..N result children, each settling on its own.
+The job's 0..N result artifacts, each settling on its own — the results this job produced. A result reached through the account-scoped history belongs to no job here; it is addressed by its id alone.
 
 #### streamingCapable
 

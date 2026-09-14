@@ -30,7 +30,7 @@ Which index space `trackIndex` counts in. Only `arrangement`, the default, can h
 resultId: string;
 ```
 
-The staged result id to place (from `job results`).
+The staged result id to place (from `job results`, or the account-scoped history surface). The result's job need not exist in this session, be listed, or ever have run on this machine (ADR 0084).
 
 ***
 

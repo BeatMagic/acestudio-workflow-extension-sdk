@@ -76,7 +76,7 @@ Requires the `editor.read` capability.
 tickRange(options?): Promise<EditorTickRangeResult>;
 ```
 
-Read the editor's total tick range (tickBegin / tickEnd).
+Read the editor's total range, in ticks and in seconds.
 
 Requires the `editor.read` capability.
 

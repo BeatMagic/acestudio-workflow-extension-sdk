@@ -43,6 +43,35 @@ Exclusive end of the range.
 
 ***
 
+### horizontalSelectionSec?
+
+```ts
+optional horizontalSelectionSec?: {
+  beginSec: number;
+  endSec: number;
+};
+```
+
+A selected time range in seconds, beside the tick range that names the same span. Its own type rather than two more fields on [`SelectionRange`]: this one is always the derived reading, and folding it in would leave one struct whose halves have different authority with nothing on it saying so. Same reason `clip resize` echoes its own row type rather than reusing a plain one. **Counts in whatever space the tick range beside it counts in** — global seconds beside an arrangement range, and beside an editor range the elapsed wall clock from the open clip's start, so 0 falls where local tick 0 does. A seconds field that silently changed coordinate space from its own tick range would be the trap the pair exists to close. `editor tick-range`'s `beginSec` lifts a local reading to global seconds, exactly, both being measured from the same converted instant. Reported because a caller that lays the selection over video thinks in seconds while the timeline is ticks, and converting between them needs the tempo curve. `convert tick-to-time` is not that route: it takes an `i32` tick, and a selection range is `i64`, so far enough along the timeline there is no conversion to make.
+
+#### beginSec
+
+```ts
+beginSec: number;
+```
+
+Inclusive start of the range, in seconds.
+
+#### endSec
+
+```ts
+endSec: number;
+```
+
+Exclusive end of the range, in seconds.
+
+***
+
 ### itemsSelected?
 
 ```ts
@@ -50,6 +79,16 @@ optional itemsSelected?: number;
 ```
 
 Number of notes/chords selected (range form).
+
+***
+
+### nativeUnit?
+
+```ts
+optional nativeUnit?: "tick";
+```
+
+The unit a selection's time range is authoritative in. Always `tick`: both scopes hold their range on the grid — `TrackViewState::horizontalSelectionRange` for the arrangement, scene ticks for the editor — so every `*Sec` on this group is a conversion under the current tempo curve. Not about [`VerticalSelection`], whose two forms are a bijection with neither derived from the other (ADR 0129 §6). This names the horizontal axis only.
 
 ***
 
@@ -93,6 +132,16 @@ Inclusive selection start applied, in local ticks (range form).
 
 ***
 
+### rangeBeginSec?
+
+```ts
+optional rangeBeginSec?: number;
+```
+
+`rangeBegin` in editor-local seconds — elapsed wall clock from the open clip's start, the space [`TimeRangeSeconds`] describes. Present exactly when `rangeBegin` is.
+
+***
+
 ### rangeEnd?
 
 ```ts
@@ -100,6 +149,16 @@ optional rangeEnd?: number;
 ```
 
 Exclusive selection end applied, in local ticks (range form).
+
+***
+
+### rangeEndSec?
+
+```ts
+optional rangeEndSec?: number;
+```
+
+`rangeEnd` in editor-local seconds, on the same terms.
 
 ***
 
@@ -139,6 +198,35 @@ end: number;
 ```
 
 Exclusive end of the range.
+
+***
+
+### selectionRangeSec?
+
+```ts
+optional selectionRangeSec?: {
+  beginSec: number;
+  endSec: number;
+};
+```
+
+A selected time range in seconds, beside the tick range that names the same span. Its own type rather than two more fields on [`SelectionRange`]: this one is always the derived reading, and folding it in would leave one struct whose halves have different authority with nothing on it saying so. Same reason `clip resize` echoes its own row type rather than reusing a plain one. **Counts in whatever space the tick range beside it counts in** — global seconds beside an arrangement range, and beside an editor range the elapsed wall clock from the open clip's start, so 0 falls where local tick 0 does. A seconds field that silently changed coordinate space from its own tick range would be the trap the pair exists to close. `editor tick-range`'s `beginSec` lifts a local reading to global seconds, exactly, both being measured from the same converted instant. Reported because a caller that lays the selection over video thinks in seconds while the timeline is ticks, and converting between them needs the tempo curve. `convert tick-to-time` is not that route: it takes an `i32` tick, and a selection range is `i64`, so far enough along the timeline there is no conversion to make.
+
+#### beginSec
+
+```ts
+beginSec: number;
+```
+
+Inclusive start of the range, in seconds.
+
+#### endSec
+
+```ts
+endSec: number;
+```
+
+Exclusive end of the range, in seconds.
 
 ***
 

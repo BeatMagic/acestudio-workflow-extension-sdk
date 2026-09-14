@@ -17,7 +17,7 @@ The result id — what `client.job.place` and `discardResult` take.
 ### state
 
 ```ts
-readonly state: "failed" | "pending" | "streaming" | "settled";
+readonly state: "streaming" | "failed" | "pending" | "settled";
 ```
 
 How far the result has settled. `streaming` means playable and still

@@ -4,10 +4,10 @@ Arguments for `fx remove`.
 
 ## Properties
 
-### insert?
+### instance?
 
 ```ts
-optional insert?: string;
+optional instance?: string;
 ```
 
 Instance id of the insert, as `fx list` reports it.
@@ -20,7 +20,7 @@ Instance id of the insert, as `fx list` reports it.
 optional rack?: "pre";
 ```
 
-Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see the header.
+Which master rack a result came from. Present on every master-addressed result and on none of the track ones, so a reader can tell the two apart without inspecting `trackUuid`. Only `pre` occurs — see `Fx.acerpc`.
 
 ***
 
@@ -37,10 +37,10 @@ Which index space `trackIndex` counts in: `arrangement` (the default), `video` o
 ### slot?
 
 ```ts
-optional slot?: number;
+optional slot?: string;
 ```
 
-0-based slot in the chain. Mutually exclusive with `insert`.
+0-based slot in the chain, sent as a decimal string. Mutually exclusive with `instance`. The reserved word `instrument` is refused on every `fx` verb — the instrument slot is not a chain insert (see the group header).
 
 ***
 

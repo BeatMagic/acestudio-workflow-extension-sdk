@@ -33,6 +33,35 @@ Exclusive end of the range.
 
 ***
 
+### horizontalSelectionSec?
+
+```ts
+optional horizontalSelectionSec?: {
+  beginSec: number;
+  endSec: number;
+};
+```
+
+A selected time range in seconds, beside the tick range that names the same span. Its own type rather than two more fields on [`SelectionRange`]: this one is always the derived reading, and folding it in would leave one struct whose halves have different authority with nothing on it saying so. Same reason `clip resize` echoes its own row type rather than reusing a plain one. **Counts in whatever space the tick range beside it counts in** — global seconds beside an arrangement range, and beside an editor range the elapsed wall clock from the open clip's start, so 0 falls where local tick 0 does. A seconds field that silently changed coordinate space from its own tick range would be the trap the pair exists to close. `editor tick-range`'s `beginSec` lifts a local reading to global seconds, exactly, both being measured from the same converted instant. Reported because a caller that lays the selection over video thinks in seconds while the timeline is ticks, and converting between them needs the tempo curve. `convert tick-to-time` is not that route: it takes an `i32` tick, and a selection range is `i64`, so far enough along the timeline there is no conversion to make.
+
+#### beginSec
+
+```ts
+beginSec: number;
+```
+
+Inclusive start of the range, in seconds.
+
+#### endSec
+
+```ts
+endSec: number;
+```
+
+Exclusive end of the range, in seconds.
+
+***
+
 ### mode?
 
 ```ts
@@ -85,7 +114,17 @@ uuid: string;
 optional rangeBegin?: number;
 ```
 
-[editor] Inclusive start of the selection range, editor-local ticks.
+[editor] Inclusive start of the selection range, editor-local ticks. Wins over `rangeBeginSec` when both are named — the editor range is tick-native (ADR 0032 §5).
+
+***
+
+### rangeBeginSec?
+
+```ts
+optional rangeBeginSec?: number;
+```
+
+[editor] The start in editor-local SECONDS instead — elapsed wall clock from the open clip's start, the space `caret get` reports under `editor` scope. Converted under the tempo curve. Local rather than global for the reason [`TimeRangeSeconds`] gives: a seconds argument that counted in a different space from the tick argument beside it would silently address a different instant. Add `editor tick-range`'s `beginSec` to convert a global reading down.
 
 ***
 
@@ -95,17 +134,27 @@ optional rangeBegin?: number;
 optional rangeEnd?: number;
 ```
 
-[editor] Exclusive end of the selection range, editor-local ticks. Must be greater than `rangeBegin`.
+[editor] Exclusive end of the selection range, editor-local ticks. Must be greater than the start. Wins over `rangeEndSec` on the same terms.
 
 ***
 
-### scope
+### rangeEndSec?
 
 ```ts
-scope: string;
+optional rangeEndSec?: number;
 ```
 
-Selection scope: `arrangement` (timeline, default) or `editor`.
+[editor] The end in editor-local seconds instead, on the same terms.
+
+***
+
+### scope?
+
+```ts
+optional scope?: string;
+```
+
+Selection scope: `arrangement` (timeline) or `editor`. Omitted targets the arrangement.
 
 ***
 

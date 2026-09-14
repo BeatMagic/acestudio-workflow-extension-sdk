@@ -48,6 +48,7 @@ Which MIDI channel the external instrument listens on: `1` through `16`, or `all
 
 ```ts
 optional model?: {
+  generation?: string;
   id?: number;
   name?: string;
   supportedLanguages?: string[];
@@ -56,6 +57,14 @@ optional model?: {
 ```
 
 The vocal synth model a mounted voice or choir sings through, as `sound-source get` reports it.
+
+#### generation?
+
+```ts
+optional generation?: string;
+```
+
+Which generation this model belongs to: `v1` or `v2`. The same vocabulary `--model` accepts, so what a read reports can be written straight back. It is here because a generation decides how phoneme timing on this track behaves — which representation a write lands in, and whether it survives synthesis (ADR 0142 §4) — and a caller should not have to recognise a model NAME to learn that. Model names are published at runtime and supersede one another; a caller matching on one would be hardcoding a roster.
 
 #### id?
 
@@ -112,13 +121,13 @@ optional soundSource?: {
   group?: string;
   id?: number;
   isCollected?: boolean;
-  kind?: "voice" | "choir" | "instrument" | "ensemble" | "external-instrument";
+  kind?: "instrument" | "voice" | "choir" | "ensemble" | "external-instrument";
   memberCount?: number;
   modelId?: number;
   modelName?: string;
   name?: string;
   nativeLanguage?: string;
-  origin?: "premade" | "cloned" | "community" | "blended";
+  origin?: "cloned" | "premade" | "community" | "blended";
   ref?: string;
   saveState?: "unmixed" | "unsaved" | "saved" | "changed";
   seedCount?: number;
@@ -190,7 +199,7 @@ Whether a community voice is already in your library.
 #### kind?
 
 ```ts
-optional kind?: "voice" | "choir" | "instrument" | "ensemble" | "external-instrument";
+optional kind?: "instrument" | "voice" | "choir" | "ensemble" | "external-instrument";
 ```
 
 What a sound source is — the roster every `kind` takes, whether it filters a listing or reports what a row turned out to be. A track carries exactly one kind at a time, and loading a source of another kind converts the track to suit it.
@@ -233,12 +242,12 @@ Display name.
 optional nativeLanguage?: string;
 ```
 
-Full English name of the language this source sings natively. Voices and choirs only.
+Full English name of the language this source sings natively -- what its training data mainly sits in, and so where it sounds most native. Voices and choirs only.
 
 #### origin?
 
 ```ts
-optional origin?: "premade" | "cloned" | "community" | "blended";
+optional origin?: "cloned" | "premade" | "community" | "blended";
 ```
 
 Where a sound source comes from: the Voice Library's tabs, which is how a user thinks about it, and the project file's `group` discriminator spelled in words. An external instrument has none — it comes from the plugin scan, not from the account's library.
@@ -273,7 +282,7 @@ How many voice seeds the mounted mix's recipe holds. Every voice is a recipe of 
 optional supportedLanguages?: string[];
 ```
 
-Full English names of every language this source can sing on its current model. Voices and choirs only.
+Full English names of every language this source can sing on its current model. This is the *model's* language roster, not a measure of how well the source sings each one -- read `nativeLanguage` for that. Voices and choirs only.
 
 #### tags?
 

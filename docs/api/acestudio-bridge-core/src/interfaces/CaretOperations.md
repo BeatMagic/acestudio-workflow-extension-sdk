@@ -10,7 +10,7 @@ The `caret` operations, mirroring the canonical operation tree 1:1.
 get(params?, options?): Promise<CaretGetResult>;
 ```
 
-Read the caret position (track index, tick, scope) and which view holds focus.
+Read the caret position (track index, tick and seconds, scope) and which view holds focus.
 
 Requires the `caret.read` capability.
 
@@ -33,16 +33,16 @@ Requires the `caret.read` capability.
 ### set()
 
 ```ts
-set(params, options?): Promise<void>;
+set(params?, options?): Promise<void>;
 ```
 
-Move the caret to a specified tick position.
+Move the caret to a position given in ticks or in seconds.
 
 Requires the `caret.write` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`CaretSetParams`](CaretSetParams.md)
 

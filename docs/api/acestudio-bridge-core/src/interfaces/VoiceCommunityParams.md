@@ -30,7 +30,7 @@ Filter by name substring, case-insensitive.
 optional language?: string;
 ```
 
-Filter by language, as a full English name such as `Japanese`.
+Filter by *native* language, as a full English name such as `Japanese` -- the language a voice was mainly trained on, and so the one it sings most like a native speaker of. Not what it can sing: cross-language singing is a property of the vocal synth model, so the supported list would match nearly everything.
 
 ***
 

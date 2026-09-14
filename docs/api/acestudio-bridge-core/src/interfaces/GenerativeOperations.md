@@ -4,15 +4,15 @@ The `generative` operations, mirroring the canonical operation tree 1:1.
 
 ## Methods
 
-### addLayer()
+### addALayer()
 
 ```ts
-addLayer(params, options?): Promise<GenerativeAddLayerResult>;
+addALayer(params, options?): Promise<GenerativeAddALayerResult>;
 ```
 
 Generate an accompaniment layer over what the project already plays.
 
-Requires the `generative.add-layer` capability.
+Requires the `generative.add-a-layer` capability.
 
 Pay-gated on `credits(add-a-layer)`: an account that does not satisfy it is refused, without a purchase prompt.
 
@@ -20,7 +20,7 @@ Pay-gated on `credits(add-a-layer)`: an account that does not satisfy it is refu
 
 ##### params
 
-[`GenerativeAddLayerParams`](GenerativeAddLayerParams.md)
+[`GenerativeAddALayerParams`](GenerativeAddALayerParams.md)
 
 ##### options?
 
@@ -28,75 +28,19 @@ Pay-gated on `credits(add-a-layer)`: an account that does not satisfy it is refu
 
 #### Returns
 
-`Promise`\<[`GenerativeAddLayerResult`](GenerativeAddLayerResult.md)\>
+`Promise`\<[`GenerativeAddALayerResult`](GenerativeAddALayerResult.md)\>
 
 ***
 
-### enhance()
+### inspireMe()
 
 ```ts
-enhance(params?, options?): Promise<GenerativeEnhanceResult>;
-```
-
-Re-produce existing audio as a new arrangement. Launches a staged job.
-
-Requires the `generative.enhance` capability.
-
-Pay-gated on `credits(music-enhancer)`: an account that does not satisfy it is refused, without a purchase prompt.
-
-#### Parameters
-
-##### params?
-
-[`GenerativeEnhanceParams`](GenerativeEnhanceParams.md)
-
-##### options?
-
-[`MutatingCallOptions`](MutatingCallOptions.md)
-
-#### Returns
-
-`Promise`\<[`GenerativeEnhanceResult`](GenerativeEnhanceResult.md)\>
-
-***
-
-### seedAudio()
-
-```ts
-seedAudio(params, options?): Promise<GenerativeSeedAudioResult>;
-```
-
-Generate audio from a prompt plus reference material onto a track.
-
-Requires the `generative.seed-audio` capability.
-
-Pay-gated on `credits(seed-audio)`: an account that does not satisfy it is refused, without a purchase prompt.
-
-#### Parameters
-
-##### params
-
-[`GenerativeSeedAudioParams`](GenerativeSeedAudioParams.md)
-
-##### options?
-
-[`MutatingCallOptions`](MutatingCallOptions.md)
-
-#### Returns
-
-`Promise`\<[`GenerativeSeedAudioResult`](GenerativeSeedAudioResult.md)\>
-
-***
-
-### song()
-
-```ts
-song(params?, options?): Promise<GenerativeSongResult>;
+inspireMe(params?, options?): Promise<GenerativeInspireMeResult>;
 ```
 
 Generate a song from an idea or from lyrics. Launches a staged job.
 
-Requires the `generative.song` capability.
+Requires the `generative.inspire-me` capability.
 
 Pay-gated on `credits(song-generator)`: an account that does not satisfy it is refused, without a purchase prompt.
 
@@ -104,7 +48,7 @@ Pay-gated on `credits(song-generator)`: an account that does not satisfy it is r
 
 ##### params?
 
-[`GenerativeSongParams`](GenerativeSongParams.md)
+[`GenerativeInspireMeParams`](GenerativeInspireMeParams.md)
 
 ##### options?
 
@@ -112,27 +56,79 @@ Pay-gated on `credits(song-generator)`: an account that does not satisfy it is r
 
 #### Returns
 
-`Promise`\<[`GenerativeSongResult`](GenerativeSongResult.md)\>
+`Promise`\<[`GenerativeInspireMeResult`](GenerativeInspireMeResult.md)\>
 
 ***
 
-### soundEffects()
+### inspireMeHistoryGet()
 
 ```ts
-soundEffects(params, options?): Promise<GenerativeSoundEffectsResult>;
+inspireMeHistoryGet(params, options?): Promise<GenerativeInspireMeHistoryGetResult>;
 ```
 
-Generate a sound effect from a text prompt onto a track.
+One Inspire Me generation by task id, from the pages `history list` fetched.
 
-Requires the `generative.sound-effects` capability.
-
-Pay-gated on `credits(sound-effects)`: an account that does not satisfy it is refused, without a purchase prompt.
+Requires the `generative-history.read` capability.
 
 #### Parameters
 
 ##### params
 
-[`GenerativeSoundEffectsParams`](GenerativeSoundEffectsParams.md)
+[`GenerativeInspireMeHistoryGetParams`](GenerativeInspireMeHistoryGetParams.md)
+
+##### options?
+
+[`CallOptions`](CallOptions.md)
+
+#### Returns
+
+`Promise`\<[`GenerativeInspireMeHistoryGetResult`](GenerativeInspireMeHistoryGetResult.md)\>
+
+***
+
+### inspireMeHistoryList()
+
+```ts
+inspireMeHistoryList(params?, options?): Promise<GenerativeInspireMeHistoryListResult>;
+```
+
+List the account's Inspire Me results, newest first. Registers what it reads into the job ledger, so an id from here places with `job place`.
+
+Requires the `generative-history.read` capability.
+
+#### Parameters
+
+##### params?
+
+[`GenerativeInspireMeHistoryListParams`](GenerativeInspireMeHistoryListParams.md)
+
+##### options?
+
+[`CallOptions`](CallOptions.md)
+
+#### Returns
+
+`Promise`\<[`GenerativeInspireMeHistoryListResult`](GenerativeInspireMeHistoryListResult.md)\>
+
+***
+
+### musicEnhancer()
+
+```ts
+musicEnhancer(params?, options?): Promise<GenerativeMusicEnhancerResult>;
+```
+
+Re-produce the current arrangement selection as a new arrangement. Launches a staged job. Set the source first with `selection set`; the operation reads the live selection exactly as the panel does, and refuses before any credit-charged work when it is missing, degenerate, or outside the Enhancer's duration window.
+
+Requires the `generative.music-enhancer` capability.
+
+Pay-gated on `credits(music-enhancer)`: an account that does not satisfy it is refused, without a purchase prompt.
+
+#### Parameters
+
+##### params?
+
+[`GenerativeMusicEnhancerParams`](GenerativeMusicEnhancerParams.md)
 
 ##### options?
 
@@ -140,19 +136,71 @@ Pay-gated on `credits(sound-effects)`: an account that does not satisfy it is re
 
 #### Returns
 
-`Promise`\<[`GenerativeSoundEffectsResult`](GenerativeSoundEffectsResult.md)\>
+`Promise`\<[`GenerativeMusicEnhancerResult`](GenerativeMusicEnhancerResult.md)\>
 
 ***
 
-### stemSplit()
+### musicEnhancerHistoryGet()
 
 ```ts
-stemSplit(params, options?): Promise<GenerativeStemSplitResult>;
+musicEnhancerHistoryGet(params, options?): Promise<GenerativeMusicEnhancerHistoryGetResult>;
+```
+
+One Music Enhancer generation by task id, from the pages `history list` fetched.
+
+Requires the `generative-history.read` capability.
+
+#### Parameters
+
+##### params
+
+[`GenerativeMusicEnhancerHistoryGetParams`](GenerativeMusicEnhancerHistoryGetParams.md)
+
+##### options?
+
+[`CallOptions`](CallOptions.md)
+
+#### Returns
+
+`Promise`\<[`GenerativeMusicEnhancerHistoryGetResult`](GenerativeMusicEnhancerHistoryGetResult.md)\>
+
+***
+
+### musicEnhancerHistoryList()
+
+```ts
+musicEnhancerHistoryList(params?, options?): Promise<GenerativeMusicEnhancerHistoryListResult>;
+```
+
+List the account's Music Enhancer results, newest first. Registers what it reads into the job ledger, so an id from here places with `job place`.
+
+Requires the `generative-history.read` capability.
+
+#### Parameters
+
+##### params?
+
+[`GenerativeMusicEnhancerHistoryListParams`](GenerativeMusicEnhancerHistoryListParams.md)
+
+##### options?
+
+[`CallOptions`](CallOptions.md)
+
+#### Returns
+
+`Promise`\<[`GenerativeMusicEnhancerHistoryListResult`](GenerativeMusicEnhancerHistoryListResult.md)\>
+
+***
+
+### stemSplitter()
+
+```ts
+stemSplitter(params, options?): Promise<GenerativeStemSplitterResult>;
 ```
 
 Split audio clips into separate stems on new tracks.
 
-Requires the `generative.stem-split` capability.
+Requires the `generative.stem-splitter` capability.
 
 Pay-gated on `credits(stem-splitter)`: an account that does not satisfy it is refused, without a purchase prompt.
 
@@ -160,7 +208,7 @@ Pay-gated on `credits(stem-splitter)`: an account that does not satisfy it is re
 
 ##### params
 
-[`GenerativeStemSplitParams`](GenerativeStemSplitParams.md)
+[`GenerativeStemSplitterParams`](GenerativeStemSplitterParams.md)
 
 ##### options?
 
@@ -168,53 +216,25 @@ Pay-gated on `credits(stem-splitter)`: an account that does not satisfy it is re
 
 #### Returns
 
-`Promise`\<[`GenerativeStemSplitResult`](GenerativeStemSplitResult.md)\>
+`Promise`\<[`GenerativeStemSplitterResult`](GenerativeStemSplitterResult.md)\>
 
 ***
 
-### text2sample()
+### vocalToMidi()
 
 ```ts
-text2sample(params, options?): Promise<GenerativeText2sampleResult>;
-```
-
-Generate an audio sample from a text prompt onto a track.
-
-Requires the `generative.text2sample` capability.
-
-Pay-gated on `credits(text2sample)`: an account that does not satisfy it is refused, without a purchase prompt.
-
-#### Parameters
-
-##### params
-
-[`GenerativeText2sampleParams`](GenerativeText2sampleParams.md)
-
-##### options?
-
-[`MutatingCallOptions`](MutatingCallOptions.md)
-
-#### Returns
-
-`Promise`\<[`GenerativeText2sampleResult`](GenerativeText2sampleResult.md)\>
-
-***
-
-### vocal2midi()
-
-```ts
-vocal2midi(params, options?): Promise<GenerativeVocal2midiResult>;
+vocalToMidi(params, options?): Promise<GenerativeVocalToMidiResult>;
 ```
 
 Transcribe an audio clip's vocal into notes on a Sing track.
 
-Requires the `generative.vocal2midi` capability.
+Requires the `generative.vocal-to-midi` capability.
 
 #### Parameters
 
 ##### params
 
-[`GenerativeVocal2midiParams`](GenerativeVocal2midiParams.md)
+[`GenerativeVocalToMidiParams`](GenerativeVocalToMidiParams.md)
 
 ##### options?
 
@@ -222,25 +242,25 @@ Requires the `generative.vocal2midi` capability.
 
 #### Returns
 
-`Promise`\<[`GenerativeVocal2midiResult`](GenerativeVocal2midiResult.md)\>
+`Promise`\<[`GenerativeVocalToMidiResult`](GenerativeVocalToMidiResult.md)\>
 
 ***
 
-### voiceChange()
+### voiceChangerConvert()
 
 ```ts
-voiceChange(params, options?): Promise<GenerativeVoiceChangeResult>;
+voiceChangerConvert(params, options?): Promise<GenerativeVoiceChangerConvertResult>;
 ```
 
 Re-sing rendered audio in one or more other voices.
 
-Requires the `generative.voice-change` capability.
+Requires the `generative.voice-changer` capability.
 
 #### Parameters
 
 ##### params
 
-[`GenerativeVoiceChangeParams`](GenerativeVoiceChangeParams.md)
+[`GenerativeVoiceChangerConvertParams`](GenerativeVoiceChangerConvertParams.md)
 
 ##### options?
 
@@ -248,4 +268,30 @@ Requires the `generative.voice-change` capability.
 
 #### Returns
 
-`Promise`\<[`GenerativeVoiceChangeResult`](GenerativeVoiceChangeResult.md)\>
+`Promise`\<[`GenerativeVoiceChangerConvertResult`](GenerativeVoiceChangerConvertResult.md)\>
+
+***
+
+### voiceChangerModels()
+
+```ts
+voiceChangerModels(params?, options?): Promise<GenerativeVoiceChangerModelsResult>;
+```
+
+List the Voice Changer models this account can convert with — every id `generative voice-changer convert` accepts, across all three of the panel's pages.
+
+Requires the `generative.voice-changer` capability.
+
+#### Parameters
+
+##### params?
+
+[`GenerativeVoiceChangerModelsParams`](GenerativeVoiceChangerModelsParams.md)
+
+##### options?
+
+[`MutatingCallOptions`](MutatingCallOptions.md)
+
+#### Returns
+
+`Promise`\<[`GenerativeVoiceChangerModelsResult`](GenerativeVoiceChangerModelsResult.md)\>

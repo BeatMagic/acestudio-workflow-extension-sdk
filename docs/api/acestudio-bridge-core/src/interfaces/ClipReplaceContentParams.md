@@ -35,7 +35,7 @@ The clip's new notes, in clip-local ticks. An empty array clears the clip.
 optional articulation?: string;
 ```
 
-Articulation name for Instrument clips. Defaults to the track's default articulation.
+Articulation display name for Instrument clips — the name the app's Articulation menu shows ("Smart", "Legato", ...), matched case-insensitively. `editor status` reports the live per-track list in `supportedArticulations`; that list is the source of truth, so read it rather than hardcoding names (the server config can rename one). Internal keys are not accepted. Defaults to the track's default articulation when omitted.
 
 #### dur
 

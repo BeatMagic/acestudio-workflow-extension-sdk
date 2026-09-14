@@ -7,16 +7,16 @@ The `tempo` operations, mirroring the canonical operation tree 1:1, and the subs
 ### analyze()
 
 ```ts
-analyze(params, options?): Promise<TempoAnalyzeResult>;
+analyze(params?, options?): Promise<TempoAnalyzeResult>;
 ```
 
-Start beat/tempo analysis of an audio clip. Returns a job id immediately; observe it with the job group.
+Start beat/tempo analysis of an audio clip or an audio file. Returns a job id immediately; observe it with the job group. Read the finished analysis by id with `tempo get-analysis`.
 
 Requires the `tempo.analyze` capability.
 
 #### Parameters
 
-##### params
+##### params?
 
 [`TempoAnalyzeParams`](TempoAnalyzeParams.md)
 
@@ -75,6 +75,32 @@ Requires the `tempo.read` capability.
 #### Returns
 
 `Promise`\<[`TempoGetResult`](TempoGetResult.md)\>
+
+***
+
+### getAnalysis()
+
+```ts
+getAnalysis(params, options?): Promise<TempoGetAnalysisResult>;
+```
+
+Read a filed beat analysis by the id `tempo analyze` reported: its beats, downbeats, tempo and meter. Reading never consumes it, so the answer survives an apply and can be fetched at any time by anyone holding the id.
+
+Requires the `tempo.read` capability.
+
+#### Parameters
+
+##### params
+
+[`TempoGetAnalysisParams`](TempoGetAnalysisParams.md)
+
+##### options?
+
+[`CallOptions`](CallOptions.md)
+
+#### Returns
+
+`Promise`\<[`TempoGetAnalysisResult`](TempoGetAnalysisResult.md)\>
 
 ***
 

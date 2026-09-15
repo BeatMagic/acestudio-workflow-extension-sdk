@@ -60,30 +60,3 @@ expected: number;
 ```
 
 The bridge protocol version this SDK speaks.
-
-***
-
-### SURFACE\_VERSION\_MISMATCH
-
-```ts
-SURFACE_VERSION_MISMATCH: {
-  actual: string;
-  expected: string;
-};
-```
-
-#### actual
-
-```ts
-actual: string;
-```
-
-The surface version the host reported.
-
-#### expected
-
-```ts
-expected: string;
-```
-
-The surface version the bindings were generated from.

@@ -13,6 +13,27 @@ Entries from 0.3.2 down were reconstructed from git history rather than written 
 the time, so read them as a summary of each release's headline change and the PR as
 the record.
 
+## [0.8.1] — 2026-09-15
+
+### Breaking
+
+- **The `SURFACE_VERSION_MISMATCH` code is gone.** It was declared in `SdkErrorCode`,
+  given an `expected`/`actual` entry in `BridgeErrorDetails`, and listed among the
+  handshake failures `connect()` passes through — but nothing ever raised it, and there
+  was no `surfaceMismatch()` beside `protocolMismatch()` to construct one. It was the
+  discarded first half of a whole-surface gate: one scalar cannot say whether a caller's
+  methods have the shape it expects, so refusing a session over it would manufacture
+  breakage in setups that function (ADR 0154 §1).
+
+  **Migration:** no runtime path produced it, so what a `catch` sees is unchanged — but
+  `SdkErrorCode` is exported, so source naming the literal (an exhaustive switch, or
+  `isCode(error, "SURFACE_VERSION_MISMATCH")`) stops compiling and must drop the branch.
+
+  **Why a patch and not the usual minor.** Dropping an exported union member is
+  source-breaking for code that names it, which the policy above puts in the minor slot.
+  It ships as a patch anyway because no consumer of this package names the code; the
+  source break is accepted rather than paid for with a minor bump.
+
 ## [0.8.0] — 2026-09-14
 
 Regenerated against the host's contract surface **17.2**; the last release was

@@ -1206,11 +1206,6 @@ export interface BridgeErrorDetails {
         expected: number;
         actual: number;
     };
-    // (undocumented)
-    SURFACE_VERSION_MISMATCH: {
-        expected: string;
-        actual: string;
-    };
 }
 
 // @public
@@ -10400,8 +10395,6 @@ export type SdkErrorCode =
 | "MALFORMED_PAYLOAD"
 /** The host speaks a different major of the bridge wire itself. */
 | "PROTOCOL_VERSION_MISMATCH"
-/** The host's contract surface is a different major than the bindings'. */
-| "SURFACE_VERSION_MISMATCH"
 /** A local deadline expired, or the caller's `AbortSignal` fired. */
 | "TIMEOUT";
 

@@ -23,15 +23,16 @@ the record.
   was no `surfaceMismatch()` beside `protocolMismatch()` to construct one. It was the
   discarded first half of a whole-surface gate: one scalar cannot say whether a caller's
   methods have the shape it expects, so refusing a session over it would manufacture
-  breakage in setups that function (ADR 0154 §1). Nothing to migrate: a caller could not
-  have caught a code that was never thrown, and no package re-exports it.
+  breakage in setups that function (ADR 0154 §1).
 
-  **Why a patch and not the usual minor.** Removing an exported member of a public union
-  is normally a breaking change, and the versioning policy above puts breaking changes in
-  the minor slot. This one ships as a patch because the member was unobservable — never
-  raised, never constructed, and not referenced by any consumer — so no caller can detect
-  its absence. The caret-range concern the policy guards against does not arise for a
-  change nobody can observe.
+  **Migration:** no runtime path produced it, so what a `catch` sees is unchanged — but
+  `SdkErrorCode` is exported, so source naming the literal (an exhaustive switch, or
+  `isCode(error, "SURFACE_VERSION_MISMATCH")`) stops compiling and must drop the branch.
+
+  **Why a patch and not the usual minor.** Dropping an exported union member is
+  source-breaking for code that names it, which the policy above puts in the minor slot.
+  It ships as a patch anyway because no consumer of this package names the code; the
+  source break is accepted rather than paid for with a minor bump.
 
 ## [0.8.0] — 2026-09-14
 

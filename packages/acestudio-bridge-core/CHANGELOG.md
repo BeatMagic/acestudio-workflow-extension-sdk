@@ -13,6 +13,26 @@ Entries from 0.3.2 down were reconstructed from git history rather than written 
 the time, so read them as a summary of each release's headline change and the PR as
 the record.
 
+## [0.8.1] — 2026-09-15
+
+### Removed
+
+- **The `SURFACE_VERSION_MISMATCH` code is gone.** It was declared in `SdkErrorCode`,
+  given an `expected`/`actual` entry in `BridgeErrorDetails`, and listed among the
+  handshake failures `connect()` passes through — but nothing ever raised it, and there
+  was no `surfaceMismatch()` beside `protocolMismatch()` to construct one. It was the
+  discarded first half of a whole-surface gate: one scalar cannot say whether a caller's
+  methods have the shape it expects, so refusing a session over it would manufacture
+  breakage in setups that function (ADR 0154 §1). Nothing to migrate: a caller could not
+  have caught a code that was never thrown, and no package re-exports it.
+
+  **Why a patch and not the usual minor.** Removing an exported member of a public union
+  is normally a breaking change, and the versioning policy above puts breaking changes in
+  the minor slot. This one ships as a patch because the member was unobservable — never
+  raised, never constructed, and not referenced by any consumer — so no caller can detect
+  its absence. The caret-range concern the policy guards against does not arise for a
+  change nobody can observe.
+
 ## [0.8.0] — 2026-09-14
 
 Regenerated against the host's contract surface **17.2**; the last release was

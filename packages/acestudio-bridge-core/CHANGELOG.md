@@ -15,7 +15,7 @@ the record.
 
 ## [0.8.1] — 2026-09-15
 
-### Removed
+### Breaking
 
 - **The `SURFACE_VERSION_MISMATCH` code is gone.** It was declared in `SdkErrorCode`,
   given an `expected`/`actual` entry in `BridgeErrorDetails`, and listed among the
